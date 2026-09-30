@@ -165,6 +165,7 @@
       color: inherit;
       -webkit-tap-highlight-color: transparent;
       transition: opacity 0.15s ease;
+      cursor: pointer;
     }
     .function-item:active { opacity: 0.6; }
     .function-icon {
@@ -694,427 +695,1107 @@
       margin-top: 4px;
     }
     .manage-cancel:active { color: #55606b; }
+
+    /* ============ 字卡收纳盒页面 ============ */
+    .page {
+      display: none;
+      width: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      min-height: 100dvh;
+      flex-direction: column;
+    }
+    .page.active { display: flex; }
+
+    .card-page {
+      background: #f7f8fa;
+      position: relative;
+    }
+
+    /* 字卡顶栏 */
+    .card-header {
+      flex-shrink: 0;
+      padding: 16px 18px 10px 18px;
+      background: #f7f8fa;
+    }
+    .card-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .card-header-top i {
+      font-size: 17px;
+      color: #55606b;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 1px;
+    }
+    .card-subtitle {
+      font-size: 10px;
+      color: #a8b4c0;
+      letter-spacing: 1.5px;
+      text-align: center;
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    /* 分类标签区 */
+    .card-categories {
+      margin: 4px 16px 12px 16px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 14px rgba(150, 170, 190, 0.08);
+      padding: 12px 8px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .cat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #55606b;
+      position: relative;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 12px;
+      transition: background 0.15s ease;
+    }
+    .cat-item:active { background: #f2f6fa; }
+    .cat-badge {
+      position: absolute;
+      top: -2px;
+      right: -4px;
+      background: #f8b4b4;
+      color: #fff;
+      font-size: 9px;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+      font-weight: 700;
+    }
+    .cat-item.active {
+      color: #e58b8b;
+      font-weight: 700;
+    }
+    .cat-item.active i { color: #e58b8b; }
+
+    /* 操作按钮区 */
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin: 0 16px 12px 16px;
+    }
+    .card-action-btn {
+      flex: 1;
+      padding: 10px 0;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #eef1f4;
+      font-size: 12px;
+      color: #55606b;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .card-action-btn:active {
+      background: #f2f6fa;
+      transform: scale(0.97);
+    }
+    .card-action-btn i { font-size: 12px; }
+
+    /* 去重行 */
+    .dedup-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 16px 12px 16px;
+      padding: 0 4px;
+    }
+    .dedup-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #55606b;
+      cursor: pointer;
+    }
+    .dedup-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      border: 1.5px solid #cbd4dc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      background: #fff;
+    }
+    .dedup-checkbox.checked {
+      background: #f8b4b4;
+      border-color: #f8b4b4;
+    }
+    .dedup-checkbox.checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #fff;
+      font-size: 9px;
+    }
+    .dedup-now {
+      font-size: 12px;
+      color: #8fa8bd;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .dedup-now:active { color: #6a8ca8; }
+
+    /* 分组区 */
+    .group-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 16px 10px 16px;
+    }
+    .group-select {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid #eef1f4;
+      background: #fff;
+      font-size: 12px;
+      color: #55606b;
+      outline: none;
+      cursor: pointer;
+    }
+    .group-buttons {
+      display: flex;
+      gap: 6px;
+      margin-left: 8px;
+    }
+    .group-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid #eef1f4;
+      font-size: 11px;
+      color: #55606b;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s ease;
+    }
+    .group-btn:active { background: #f2f6fa; }
+
+    /* 搜索框 */
+    .card-search-wrap {
+      margin: 0 16px 14px 16px;
+    }
+    .card-search {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid #eef1f4;
+      background: #fff;
+      font-size: 13px;
+      color: #333;
+      outline: none;
+    }
+    .card-search::placeholder { color: #b6c2cd; }
+    .card-search:focus {
+      border-color: #b8d4ec;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.15);
+    }
+
+    /* 字卡列表 */
+    .card-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 20px 16px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .card-list::-webkit-scrollbar { display: none; }
+
+    .word-card-item {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(150, 170, 190, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      animation: popIn 0.2s ease;
+    }
+    .word-card-text {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .word-card-delete {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      background: #fdf0f0;
+      color: #e58b8b;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .word-card-delete:active { background: #f8d8d8; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #b6c2cd;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+    .empty-state i {
+      font-size: 36px;
+      color: #dde6ee;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    /* 底部状态栏 */
+    .card-status-bar {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 11px;
+      color: #a8b4c0;
+      letter-spacing: 0.5px;
+      border-top: 1px solid #eef1f4;
+      background: #f7f8fa;
+    }
+
+    /* 字卡底部导航 */
+    .card-bottom-nav {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      background: #fff;
+      border-top: 1px solid #eef1f4;
+    }
+    .card-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 10px;
+      color: #a8b4c0;
+      cursor: pointer;
+      position: relative;
+      padding: 4px 8px;
+      transition: color 0.2s ease;
+    }
+    .card-nav-item i { font-size: 18px; }
+    .card-nav-item.active {
+      color: #6fa3cc;
+      font-weight: 700;
+    }
+    .card-nav-badge {
+      position: absolute;
+      top: -2px;
+      right: 2px;
+      background: #f8b4b4;
+      color: #fff;
+      font-size: 9px;
+      min-width: 15px;
+      height: 15px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+      font-weight: 700;
+    }
+
+    /* 添加字卡弹窗 */
+    .word-add-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.3);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .word-add-modal.active { display: flex; }
+    .word-add-panel {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 22px 20px;
+      animation: popIn 0.22s ease;
+    }
+    .word-add-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .word-add-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(200, 210, 220, 0.7);
+      background: rgba(250, 251, 253, 0.9);
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      margin-bottom: 16px;
+      resize: none;
+      min-height: 80px;
+      font-family: inherit;
+    }
+    .word-add-input:focus {
+      border-color: #f8b4b4;
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.2);
+    }
+    .word-add-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .word-add-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 18px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .word-add-btn:active { transform: scale(0.97); }
+    .word-add-cancel {
+      background: rgba(240, 244, 248, 0.95);
+      color: #55606b;
+      border: 1px solid rgba(200, 210, 220, 0.5);
+    }
+    .word-add-confirm {
+      background: #f8b4b4;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
+    }
   </style>
 </head>
 <body>
-  <div class="bg-dream" id="bgDream"></div>
-  <div class="bg-overlay"></div>
 
-  <div class="app-container w-full max-w-[430px] mx-auto relative">
+  <!-- ==================== 主页 ==================== -->
+  <div class="page active" id="pageHome">
+    <div class="bg-dream" id="bgDream"></div>
+    <div class="bg-overlay"></div>
 
-    <div class="px-5 pt-4 pb-1 flex-shrink-0">
-      <div class="header-card flex flex-col items-center justify-center text-center" id="headerCard">
-        <div class="glass-avatar p-0.5 w-12 h-12 flex items-center justify-center flex-shrink-0">
-          <img id="avatarImg" src="https://picsum.photos/100/100?random=1" alt="头像" class="w-full h-full object-cover rounded-full border border-white/80">
-        </div>
-        <div class="flex flex-col items-center justify-center mt-1">
-          <h1 class="text-lg font-bold text-[#333] leading-tight tracking-wide">阿晏</h1>
-          <p class="text-[11px] text-[#5a6b7a] font-medium tracking-wide leading-tight">地球online</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="main-content px-5">
-      <div class="search-glass flex items-center px-4 py-2.5 gap-3 mt-1">
-        <i class="fa-solid fa-magnifying-glass text-[#8899a6] text-sm"></i>
-        <input type="text" placeholder="Search" class="flex-1 bg-transparent border-none outline-none text-[#333] text-sm placeholder-[#8899a6] font-normal tracking-wide">
-      </div>
-
-      <div class="mt-3 flex justify-center">
-        <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
-          <div class="photo-scroll-item">
-            <img id="photo1" src="https://picsum.photos/200/200?random=2" alt="展示图1" class="w-full h-full object-cover">
+    <div class="app-container w-full max-w-[430px] mx-auto relative">
+      <div class="px-5 pt-4 pb-1 flex-shrink-0">
+        <div class="header-card flex flex-col items-center justify-center text-center" id="headerCard">
+          <div class="glass-avatar p-0.5 w-12 h-12 flex items-center justify-center flex-shrink-0">
+            <img id="avatarImg" src="https://picsum.photos/100/100?random=1" alt="头像" class="w-full h-full object-cover rounded-full border border-white/80">
           </div>
-          <div class="photo-scroll-item">
-            <img id="photo2" src="https://picsum.photos/200/200?random=3" alt="展示图2" class="w-full h-full object-cover">
-          </div>
-          <div class="photo-scroll-item">
-            <img id="photo3" src="https://picsum.photos/200/200?random=4" alt="展示图3" class="w-full h-full object-cover">
+          <div class="flex flex-col items-center justify-center mt-1">
+            <h1 class="text-lg font-bold text-[#333] leading-tight tracking-wide">阿晏</h1>
+            <p class="text-[11px] text-[#5a6b7a] font-medium tracking-wide leading-tight">地球online</p>
           </div>
         </div>
       </div>
 
-      <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
-        <div class="vinyl-cover w-12 h-12" id="vinylCover">
-          <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
-          <i id="albumIcon" class="fa-solid fa-music text-white/70 text-base"></i>
+      <div class="main-content px-5">
+        <div class="search-glass flex items-center px-4 py-2.5 gap-3 mt-1">
+          <i class="fa-solid fa-magnifying-glass text-[#8899a6] text-sm"></i>
+          <input type="text" placeholder="Search" class="flex-1 bg-transparent border-none outline-none text-[#333] text-sm placeholder-[#8899a6] font-normal tracking-wide">
         </div>
-        <div class="flex-1 min-w-0">
-          <h4 class="text-[#333] font-semibold text-sm truncate" id="songTitle">My love</h4>
-          <p class="text-[#8899a6] text-[10px] truncate mt-0.5" id="songArtist">颜人中</p>
+
+        <div class="mt-3 flex justify-center">
+          <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
+            <div class="photo-scroll-item">
+              <img id="photo1" src="https://picsum.photos/200/200?random=2" alt="展示图1" class="w-full h-full object-cover">
+            </div>
+            <div class="photo-scroll-item">
+              <img id="photo2" src="https://picsum.photos/200/200?random=3" alt="展示图2" class="w-full h-full object-cover">
+            </div>
+            <div class="photo-scroll-item">
+              <img id="photo3" src="https://picsum.photos/200/200?random=4" alt="展示图3" class="w-full h-full object-cover">
+            </div>
+          </div>
         </div>
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <button class="w-7 h-7 flex items-center justify-center text-[#555] active:opacity-60 transition" id="uploadBtn">
-            <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
+
+        <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
+          <div class="vinyl-cover w-12 h-12" id="vinylCover">
+            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
+            <i id="albumIcon" class="fa-solid fa-music text-white/70 text-base"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[#333] font-semibold text-sm truncate" id="songTitle">My love</h4>
+            <p class="text-[#8899a6] text-[10px] truncate mt-0.5" id="songArtist">颜人中</p>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button class="w-7 h-7 flex items-center justify-center text-[#555] active:opacity-60 transition" id="uploadBtn">
+              <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
+            </button>
+            <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="prevBtn">
+              <i class="fa-solid fa-backward-step text-sm"></i>
+            </button>
+            <button class="play-btn w-8 h-8 rounded-full flex items-center justify-center shadow-md active:scale-95 transition" id="playBtn">
+              <i class="fa-solid fa-play text-xs pl-0.5" id="playIcon"></i>
+            </button>
+            <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="nextBtn">
+              <i class="fa-solid fa-forward-step text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <audio id="audioPlayer" preload="metadata"></audio>
+
+        <div class="function-grid mt-4 mb-2">
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-house text-[#222] text-lg"></i></div>
+            <span class="function-label">主页</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-cloud text-[#222] text-lg"></i></div>
+            <span class="function-label">词云</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-regular fa-calendar-days text-[#222] text-lg"></i></div>
+            <span class="function-label">重要日</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-book-open text-[#222] text-lg"></i></div>
+            <span class="function-label">心晴手账</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-envelope text-[#222] text-lg"></i></div>
+            <span class="function-label">信箱</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
+            <span class="function-label">朋友圈</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-list-check text-[#222] text-lg"></i></div>
+            <span class="function-label">梦向问卷</span>
+          </a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+            <div class="function-icon"><i class="fa-solid fa-gift text-[#222] text-lg"></i></div>
+            <span class="function-label">心意集市</span>
+          </a>
+        </div>
+
+        <div class="h-8"></div>
+      </div>
+
+      <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
+        <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto" id="bottomTabBar">
+          <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message" id="tabMessage">
+            <i class="fa-regular fa-comment-dots text-xl"></i>
+            <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
           </button>
-          <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="prevBtn">
-            <i class="fa-solid fa-backward-step text-sm"></i>
+          <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="card" id="tabCard">
+            <i class="fa-regular fa-clone text-xl"></i>
+            <span class="text-[10px] font-medium mt-1 tracking-wide">字卡</span>
           </button>
-          <button class="play-btn w-8 h-8 rounded-full flex items-center justify-center shadow-md active:scale-95 transition" id="playBtn">
-            <i class="fa-solid fa-play text-xs pl-0.5" id="playIcon"></i>
-          </button>
-          <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="nextBtn">
-            <i class="fa-solid fa-forward-step text-sm"></i>
+          <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="settings" id="tabSettingsHome">
+            <i class="fa-solid fa-gear text-xl"></i>
+            <span class="text-[10px] font-medium mt-1 tracking-wide">设置</span>
           </button>
         </div>
       </div>
 
-      <audio id="audioPlayer" preload="metadata"></audio>
-
-      <div class="function-grid mt-4 mb-2">
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-house text-[#222] text-lg"></i></div>
-          <span class="function-label">主页</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-cloud text-[#222] text-lg"></i></div>
-          <span class="function-label">词云</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-regular fa-calendar-days text-[#222] text-lg"></i></div>
-          <span class="function-label">重要日</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-book-open text-[#222] text-lg"></i></div>
-          <span class="function-label">心晴手账</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-envelope text-[#222] text-lg"></i></div>
-          <span class="function-label">信箱</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
-          <span class="function-label">朋友圈</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-list-check text-[#222] text-lg"></i></div>
-          <span class="function-label">梦向问卷</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-          <div class="function-icon"><i class="fa-solid fa-gift text-[#222] text-lg"></i></div>
-          <span class="function-label">心意集市</span>
-        </a>
-      </div>
-
-      <div class="h-8"></div>
+      <div class="h-0 w-full safe-bottom"></div>
     </div>
 
-    <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
-      <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto" id="bottomTabBar">
-        <!-- 传讯按钮：点击跳转到 chat.html -->
-        <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message" id="tabMessage">
-          <i class="fa-regular fa-comment-dots text-xl"></i>
-          <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
+    <button class="floating-settings" id="openSettings" title="自定义图片">
+      <i class="fa-solid fa-palette text-lg"></i>
+    </button>
+
+    <div class="settings-modal" id="settingsModal">
+      <div class="settings-panel">
+        <div class="settings-title">
+          <span><i class="fa-solid fa-image mr-2 text-[#55606b]"></i>自定义图片 / 音乐</span>
+          <button class="settings-close" id="closeSettings">&times;</button>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-mountain-sun"></i>背景图</div>
+          <input type="text" class="settings-input" id="inputBg" placeholder="粘贴图片 URL">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="fileBg"><i class="fa-solid fa-upload"></i>上传文件</label>
+            <input type="file" id="fileBg" accept="image/*" style="display:none;">
+            <span class="settings-file-name" id="nameBg">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-user"></i>头像</div>
+          <input type="text" class="settings-input" id="inputAvatar" placeholder="粘贴图片 URL">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="fileAvatar"><i class="fa-solid fa-upload"></i>上传文件</label>
+            <input type="file" id="fileAvatar" accept="image/*" style="display:none;">
+            <span class="settings-file-name" id="nameAvatar">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 1</div>
+          <input type="text" class="settings-input" id="inputPhoto1" placeholder="粘贴图片 URL">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="filePhoto1"><i class="fa-solid fa-upload"></i>上传文件</label>
+            <input type="file" id="filePhoto1" accept="image/*" style="display:none;">
+            <span class="settings-file-name" id="namePhoto1">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 2</div>
+          <input type="text" class="settings-input" id="inputPhoto2" placeholder="粘贴图片 URL">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="filePhoto2"><i class="fa-solid fa-upload"></i>上传文件</label>
+            <input type="file" id="filePhoto2" accept="image/*" style="display:none;">
+            <span class="settings-file-name" id="namePhoto2">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 3</div>
+          <input type="text" class="settings-input" id="inputPhoto3" placeholder="粘贴图片 URL">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="filePhoto3"><i class="fa-solid fa-upload"></i>上传文件</label>
+            <input type="file" id="filePhoto3" accept="image/*" style="display:none;">
+            <span class="settings-file-name" id="namePhoto3">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-music"></i>专辑封面</div>
+          <input type="text" class="settings-input" id="inputAlbum" placeholder="粘贴图片 URL">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="fileAlbum"><i class="fa-solid fa-upload"></i>上传文件</label>
+            <input type="file" id="fileAlbum" accept="image/*" style="display:none;">
+            <span class="settings-file-name" id="nameAlbum">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-label"><i class="fa-solid fa-link"></i>自定义音乐 URL</div>
+          <input type="text" class="settings-input" id="inputMusicUrl" placeholder="粘贴音频文件 URL（mp3 等）">
+          <div class="settings-file-row">
+            <label class="settings-file-btn" for="fileMusic"><i class="fa-solid fa-upload"></i>上传音乐</label>
+            <input type="file" id="fileMusic" accept="audio/*" style="display:none;">
+            <span class="settings-file-name" id="nameMusic">未选择文件</span>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="settings-btn btn-cancel" id="cancelSettings">取消</button>
+          <button class="settings-btn btn-confirm" id="confirmSettings">应用</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="playlist-sheet" id="playlistSheet">
+      <div class="playlist-sheet-panel">
+        <div class="playlist-sheet-header">
+          <span class="playlist-sheet-deco">.°♫.°</span>
+          <div class="playlist-sheet-actions">
+            <button class="playlist-sheet-icon-btn" id="openManageBtn" title="歌单管理">
+              <i class="fa-solid fa-folder-open"></i>
+            </button>
+            <button class="playlist-sheet-icon-btn" id="searchSongBtn" title="搜索">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            <button class="playlist-sheet-icon-btn" id="openAddBtn" title="添加歌曲">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+        <div class="playlist-scroll" id="playlistScroll"></div>
+      </div>
+    </div>
+
+    <div class="add-modal" id="addModal">
+      <div class="add-panel">
+        <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
+        <input type="text" class="add-input" id="addTitle" placeholder="歌曲名称（例如：这里的风景）">
+        <input type="text" class="add-input" id="addArtist" placeholder="歌手 / 备注（例如：你的名字）">
+        <input type="text" class="add-input" id="addUrl" placeholder="音频链接 (mp3/m4a 链接)">
+        <div class="add-actions">
+          <button class="add-btn add-btn-cancel" id="addCancel">取消</button>
+          <button class="add-btn add-btn-confirm" id="addConfirm">添加播放</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="manage-modal" id="manageModal">
+      <div class="manage-panel">
+        <div class="manage-title">歌单管理</div>
+        <button class="manage-btn" id="importPlaylistBtn">
+          <i class="fa-solid fa-file-import"></i>
+          <span>导入歌单文件</span>
         </button>
-        <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="card">
-          <i class="fa-regular fa-clone text-xl"></i>
-          <span class="text-[10px] font-medium mt-1 tracking-wide">字卡</span>
+        <input type="file" id="importFileInput" accept=".json,.txt,application/json" style="display:none;">
+        <button class="manage-btn" id="exportPlaylistBtn">
+          <i class="fa-solid fa-file-export"></i>
+          <span>导出当前歌单</span>
         </button>
-        <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="settings">
-          <i class="fa-solid fa-gear text-xl"></i>
-          <span class="text-[10px] font-medium mt-1 tracking-wide">设置</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="h-0 w-full safe-bottom"></div>
-  </div>
-
-  <button class="floating-settings" id="openSettings" title="自定义图片">
-    <i class="fa-solid fa-palette text-lg"></i>
-  </button>
-
-  <div class="settings-modal" id="settingsModal">
-    <div class="settings-panel">
-      <div class="settings-title">
-        <span><i class="fa-solid fa-image mr-2 text-[#55606b]"></i>自定义图片 / 音乐</span>
-        <button class="settings-close" id="closeSettings">&times;</button>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-mountain-sun"></i>背景图</div>
-        <input type="text" class="settings-input" id="inputBg" placeholder="粘贴图片 URL">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="fileBg"><i class="fa-solid fa-upload"></i>上传文件</label>
-          <input type="file" id="fileBg" accept="image/*" style="display:none;">
-          <span class="settings-file-name" id="nameBg">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-user"></i>头像</div>
-        <input type="text" class="settings-input" id="inputAvatar" placeholder="粘贴图片 URL">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="fileAvatar"><i class="fa-solid fa-upload"></i>上传文件</label>
-          <input type="file" id="fileAvatar" accept="image/*" style="display:none;">
-          <span class="settings-file-name" id="nameAvatar">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 1</div>
-        <input type="text" class="settings-input" id="inputPhoto1" placeholder="粘贴图片 URL">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="filePhoto1"><i class="fa-solid fa-upload"></i>上传文件</label>
-          <input type="file" id="filePhoto1" accept="image/*" style="display:none;">
-          <span class="settings-file-name" id="namePhoto1">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 2</div>
-        <input type="text" class="settings-input" id="inputPhoto2" placeholder="粘贴图片 URL">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="filePhoto2"><i class="fa-solid fa-upload"></i>上传文件</label>
-          <input type="file" id="filePhoto2" accept="image/*" style="display:none;">
-          <span class="settings-file-name" id="namePhoto2">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 3</div>
-        <input type="text" class="settings-input" id="inputPhoto3" placeholder="粘贴图片 URL">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="filePhoto3"><i class="fa-solid fa-upload"></i>上传文件</label>
-          <input type="file" id="filePhoto3" accept="image/*" style="display:none;">
-          <span class="settings-file-name" id="namePhoto3">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-music"></i>专辑封面</div>
-        <input type="text" class="settings-input" id="inputAlbum" placeholder="粘贴图片 URL">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="fileAlbum"><i class="fa-solid fa-upload"></i>上传文件</label>
-          <input type="file" id="fileAlbum" accept="image/*" style="display:none;">
-          <span class="settings-file-name" id="nameAlbum">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-row">
-        <div class="settings-label"><i class="fa-solid fa-link"></i>自定义音乐 URL</div>
-        <input type="text" class="settings-input" id="inputMusicUrl" placeholder="粘贴音频文件 URL（mp3 等）">
-        <div class="settings-file-row">
-          <label class="settings-file-btn" for="fileMusic"><i class="fa-solid fa-upload"></i>上传音乐</label>
-          <input type="file" id="fileMusic" accept="audio/*" style="display:none;">
-          <span class="settings-file-name" id="nameMusic">未选择文件</span>
-        </div>
-      </div>
-
-      <div class="settings-actions">
-        <button class="settings-btn btn-cancel" id="cancelSettings">取消</button>
-        <button class="settings-btn btn-confirm" id="confirmSettings">应用</button>
+        <button class="manage-cancel" id="manageCancel">取消</button>
       </div>
     </div>
   </div>
 
-  <div class="playlist-sheet" id="playlistSheet">
-    <div class="playlist-sheet-panel">
-      <div class="playlist-sheet-header">
-        <span class="playlist-sheet-deco">.°♫.°</span>
-        <div class="playlist-sheet-actions">
-          <button class="playlist-sheet-icon-btn" id="openManageBtn" title="歌单管理">
-            <i class="fa-solid fa-folder-open"></i>
-          </button>
-          <button class="playlist-sheet-icon-btn" id="searchSongBtn" title="搜索">
-            <i class="fa-solid fa-magnifying-glass"></i>
-          </button>
-          <button class="playlist-sheet-icon-btn" id="openAddBtn" title="添加歌曲">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
+  <!-- ==================== 字卡收纳盒页面 ==================== -->
+  <div class="page card-page" id="pageCard">
+    <!-- 顶栏 -->
+    <div class="card-header">
+      <div class="card-header-top">
+        <i class="fa-solid fa-arrow-left" id="cardBackBtn"></i>
+        <span class="card-title">字卡收纳盒</span>
+        <i class="fa-solid fa-pencil" id="cardEditBtn"></i>
       </div>
-      <div class="playlist-scroll" id="playlistScroll"></div>
+      <div class="card-subtitle">LITTLE WORDS, LOTS OF YOU.</div>
+    </div>
+
+    <!-- 分类标签区 -->
+    <div class="card-categories" id="cardCategories">
+      <div class="cat-item active" data-cat="reply">
+        <i class="fa-regular fa-comment-dots text-base"></i>
+        <span>回复</span>
+        <span class="cat-badge" id="badgeReply">0</span>
+      </div>
+      <div class="cat-item" data-cat="kaomoji">
+        <i class="fa-regular fa-face-smile text-base"></i>
+        <span>颜文字</span>
+        <span class="cat-badge" id="badgeKaomoji">0</span>
+      </div>
+      <div class="cat-item" data-cat="place">
+        <i class="fa-solid fa-location-dot text-base"></i>
+        <span>地点</span>
+        <span class="cat-badge" id="badgePlace">0</span>
+      </div>
+      <div class="cat-item" data-cat="mood">
+        <i class="fa-regular fa-heart text-base"></i>
+        <span>心情</span>
+        <span class="cat-badge" id="badgeMood">0</span>
+      </div>
+      <div class="cat-item" data-cat="emoji">
+        <i class="fa-regular fa-image text-base"></i>
+        <span>表情包</span>
+        <span class="cat-badge" id="badgeEmoji">0</span>
+      </div>
+      <div class="cat-item" data-cat="album">
+        <i class="fa-regular fa-images text-base"></i>
+        <span>相册</span>
+        <span class="cat-badge" id="badgeAlbum">0</span>
+      </div>
+    </div>
+
+    <!-- 操作按钮区 -->
+    <div class="card-actions">
+      <button class="card-action-btn" id="cardImportBtn"><i class="fa-solid fa-file-import"></i>导入</button>
+      <button class="card-action-btn" id="cardExportBtn"><i class="fa-solid fa-file-export"></i>导出</button>
+      <button class="card-action-btn" id="cardAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+    </div>
+
+    <!-- 去重行 -->
+    <div class="dedup-row">
+      <div class="dedup-left" id="dedupToggle">
+        <div class="dedup-checkbox" id="dedupCheckbox"></div>
+        <span>自动去重</span>
+      </div>
+      <span class="dedup-now" id="dedupNow">立即去重</span>
+    </div>
+
+    <!-- 分组区 -->
+    <div class="group-row">
+      <select class="group-select" id="groupSelect">
+        <option>亲爱的的回复 · 0 条</option>
+      </select>
+      <div class="group-buttons">
+        <button class="group-btn" id="groupNewBtn">新建分组</button>
+        <button class="group-btn" id="groupRenameBtn">重命名</button>
+        <button class="group-btn" id="groupOrganizeBtn">整理</button>
+      </div>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="card-search-wrap">
+      <input type="text" class="card-search" id="cardSearchInput" placeholder="找一句话、一种心情...">
+    </div>
+
+    <!-- 字卡列表 -->
+    <div class="card-list" id="cardList"></div>
+
+    <!-- 底部状态栏 -->
+    <div class="card-status-bar" id="cardStatusBar">0条回复 · 0个表情 · 0个地点 · 0种心情</div>
+
+    <!-- 底部导航 -->
+    <div class="card-bottom-nav" id="cardBottomNav">
+      <div class="card-nav-item" data-nav="home">
+        <i class="fa-solid fa-house"></i>
+        <span>主页</span>
+      </div>
+      <div class="card-nav-item" data-nav="message">
+        <i class="fa-regular fa-comment-dots"></i>
+        <span>传讯</span>
+        <span class="card-nav-badge" id="navMsgBadge">0</span>
+      </div>
+      <div class="card-nav-item" data-nav="headphone">
+        <i class="fa-solid fa-headphones"></i>
+        <span>耳机</span>
+      </div>
+      <div class="card-nav-item" data-nav="place">
+        <i class="fa-solid fa-location-dot"></i>
+        <span>地点</span>
+      </div>
+      <div class="card-nav-item" data-nav="apps">
+        <i class="fa-solid fa-grip"></i>
+        <span>应用</span>
+      </div>
     </div>
   </div>
 
-  <div class="add-modal" id="addModal">
-    <div class="add-panel">
-      <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
-      <input type="text" class="add-input" id="addTitle" placeholder="歌曲名称（例如：这里的风景）">
-      <input type="text" class="add-input" id="addArtist" placeholder="歌手 / 备注（例如：你的名字）">
-      <input type="text" class="add-input" id="addUrl" placeholder="音频链接 (mp3/m4a 链接)">
-      <div class="add-actions">
-        <button class="add-btn add-btn-cancel" id="addCancel">取消</button>
-        <button class="add-btn add-btn-confirm" id="addConfirm">添加播放</button>
+  <!-- ==================== 传讯页面 ==================== -->
+  <div class="page" id="pageChat">
+    <div class="chat-header">
+      <img class="chat-avatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
+      <div class="chat-name">Ta</div>
+      <div class="chat-actions">
+        <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
+        <div class="chat-action-icon" title="电话"><i class="fa-solid fa-phone"></i></div>
+        <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
+        <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
+        <div class="chat-action-icon" title="更多"><i class="fa-solid fa-ellipsis"></i></div>
       </div>
     </div>
-  </div>
 
-  <div class="manage-modal" id="manageModal">
-    <div class="manage-panel">
-      <div class="manage-title">歌单管理</div>
-      <button class="manage-btn" id="importPlaylistBtn">
-        <i class="fa-solid fa-file-import"></i>
-        <span>导入歌单文件</span>
+    <div class="chat-messages" id="chatMessages">
+      <div class="message-row other">
+        <div class="message-bubble">你好呀，我是 Ta 👋</div>
+      </div>
+    </div>
+
+    <div class="sos-btn" id="sosBtn" title="急救">
+      <i class="fa-solid fa-kit-medical"></i>
+      <span>急救</span>
+    </div>
+
+    <div class="chat-input-bar">
+      <div class="input-left-icons">
+        <i class="fa-regular fa-images" title="相册"></i>
+        <i class="fa-regular fa-image" title="图片"></i>
+        <i class="fa-regular fa-face-smile" title="表情"></i>
+      </div>
+      <input type="text" class="chat-input" id="chatInput" placeholder="输入消息...">
+      <button class="send-btn" id="sendBtn" disabled>
+        <i class="fa-solid fa-arrow-up"></i>
       </button>
-      <input type="file" id="importFileInput" accept=".json,.txt,application/json" style="display:none;">
-      <button class="manage-btn" id="exportPlaylistBtn">
-        <i class="fa-solid fa-file-export"></i>
-        <span>导出当前歌单</span>
-      </button>
-      <button class="manage-cancel" id="manageCancel">取消</button>
     </div>
   </div>
 
+  <!-- 传讯页面样式 -->
+  <style>
+    #pageChat {
+      background: #ffffff;
+      height: 100vh;
+      height: 100dvh;
+      max-width: 430px;
+      margin: 0 auto;
+    }
+    #pageChat .chat-header {
+      flex-shrink: 0;
+      padding: 14px 16px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafbfc;
+      border-bottom: 1px solid #eef1f4;
+    }
+    #pageChat .chat-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 2px solid #e8eef4;
+      box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+    }
+    #pageChat .chat-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-top: 8px;
+    }
+    #pageChat .chat-actions {
+      display: flex;
+      gap: 22px;
+      margin-top: 12px;
+    }
+    #pageChat .chat-action-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8fb8d8;
+      font-size: 17px;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    #pageChat .chat-action-icon:active {
+      transform: scale(0.9);
+      color: #6fa3cc;
+    }
+    #pageChat .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 24px 16px;
+      background: #ffffff;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: relative;
+    }
+    #pageChat .chat-messages::-webkit-scrollbar { display: none; }
+    #pageChat .sos-btn {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 30;
+      width: 46px;
+      height: 46px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #f5a3a3;
+      color: #e57373;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    #pageChat .sos-btn:active {
+      transform: translateY(-50%) scale(0.94);
+      background: rgba(255, 245, 245, 1);
+    }
+    #pageChat .sos-btn i {
+      font-size: 14px;
+      margin-bottom: 1px;
+    }
+    #pageChat .message-row {
+      display: flex;
+      margin-bottom: 14px;
+    }
+    #pageChat .message-row.self { justify-content: flex-end; }
+    #pageChat .message-row.other { justify-content: flex-start; }
+    #pageChat .message-bubble {
+      max-width: 72%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.45;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    #pageChat .message-row.self .message-bubble {
+      background: #d8ecfb;
+      color: #1a3a52;
+      border-bottom-right-radius: 4px;
+    }
+    #pageChat .message-row.other .message-bubble {
+      background: #f3f5f7;
+      color: #333;
+      border-bottom-left-radius: 4px;
+    }
+    #pageChat .chat-input-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border-top: 1px solid #eef1f4;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    #pageChat .input-left-icons {
+      display: flex;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    #pageChat .input-left-icons i {
+      color: #8fa8bd;
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    #pageChat .input-left-icons i:active {
+      color: #6a8ca8;
+      transform: scale(0.92);
+    }
+    #pageChat .chat-input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      border-radius: 22px;
+      border: 1px solid #e2e8ee;
+      background: #ffffff;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    #pageChat .chat-input::placeholder { color: #b6c2cd; }
+    #pageChat .chat-input:focus {
+      border-color: #b8d4ec;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
+    }
+    #pageChat .send-btn {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background: #6fb1e8;
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+      box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
+    }
+    #pageChat .send-btn:active {
+      transform: scale(0.92);
+      background: #5a9ed6;
+    }
+    #pageChat .send-btn:disabled {
+      background: #c6d9ea;
+      box-shadow: none;
+      cursor: default;
+    }
+  </style>
+
+  <!-- 添加字卡弹窗 -->
+  <div class="word-add-modal" id="wordAddModal">
+    <div class="word-add-panel">
+      <div class="word-add-title"><i class="fa-solid fa-pen-nib text-[#f8b4b4]"></i>添加字卡</div>
+      <textarea class="word-add-input" id="wordAddInput" placeholder="输入你想说的话..."></textarea>
+      <div class="word-add-actions">
+        <button class="word-add-btn word-add-cancel" id="wordAddCancel">取消</button>
+        <button class="word-add-btn word-add-confirm" id="wordAddConfirm">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/card.js"></script>
+  <script src="./js/chat.js"></script>
   <script>
+    // ==================== 页面切换逻辑 ====================
     (function() {
-      document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) e.preventDefault();
-      }, { passive: false });
+      const pageHome = document.getElementById('pageHome');
+      const pageCard = document.getElementById('pageCard');
+      const pageChat = document.getElementById('pageChat');
 
-      // ==================== 图片自定义逻辑 ====================
-      const openBtn = document.getElementById('openSettings');
-      const modal = document.getElementById('settingsModal');
-      const closeBtn = document.getElementById('closeSettings');
-      const cancelBtn = document.getElementById('cancelSettings');
-      const confirmBtn = document.getElementById('confirmSettings');
-
-      const objectUrls = { bg: null, avatar: null, photo1: null, photo2: null, photo3: null, album: null, music: null };
-
-      const inputBg = document.getElementById('inputBg');
-      const inputAvatar = document.getElementById('inputAvatar');
-      const inputPhoto1 = document.getElementById('inputPhoto1');
-      const inputPhoto2 = document.getElementById('inputPhoto2');
-      const inputPhoto3 = document.getElementById('inputPhoto3');
-      const inputAlbum = document.getElementById('inputAlbum');
-      const inputMusicUrl = document.getElementById('inputMusicUrl');
-
-      const fileBg = document.getElementById('fileBg');
-      const fileAvatar = document.getElementById('fileAvatar');
-      const filePhoto1 = document.getElementById('filePhoto1');
-      const filePhoto2 = document.getElementById('filePhoto2');
-      const filePhoto3 = document.getElementById('filePhoto3');
-      const fileAlbum = document.getElementById('fileAlbum');
-      const fileMusic = document.getElementById('fileMusic');
-
-      const nameBg = document.getElementById('nameBg');
-      const nameAvatar = document.getElementById('nameAvatar');
-      const namePhoto1 = document.getElementById('namePhoto1');
-      const namePhoto2 = document.getElementById('namePhoto2');
-      const namePhoto3 = document.getElementById('namePhoto3');
-      const nameAlbum = document.getElementById('nameAlbum');
-      const nameMusic = document.getElementById('nameMusic');
-
-      const bgDream = document.getElementById('bgDream');
-      const avatarImg = document.getElementById('avatarImg');
-      const photo1 = document.getElementById('photo1');
-      const photo2 = document.getElementById('photo2');
-      const photo3 = document.getElementById('photo3');
-      const albumCover = document.getElementById('albumCover');
-      const albumIcon = document.getElementById('albumIcon');
-
-      const currentImages = {
-        bg: 'https://picsum.photos/1200/1800?random=10',
-        avatar: 'https://picsum.photos/100/100?random=1',
-        photo1: 'https://picsum.photos/200/200?random=2',
-        photo2: 'https://picsum.photos/200/200?random=3',
-        photo3: 'https://picsum.photos/200/200?random=4',
-        album: null,
-        music: null
-      };
-
-      function openModal() {
-        inputBg.value = currentImages.bg || '';
-        inputAvatar.value = currentImages.avatar || '';
-        inputPhoto1.value = currentImages.photo1 || '';
-        inputPhoto2.value = currentImages.photo2 || '';
-        inputPhoto3.value = currentImages.photo3 || '';
-        inputAlbum.value = currentImages.album || '';
-        inputMusicUrl.value = currentImages.music || '';
-        nameBg.textContent = '未选择文件';
-        nameAvatar.textContent = '未选择文件';
-        namePhoto1.textContent = '未选择文件';
-        namePhoto2.textContent = '未选择文件';
-        namePhoto3.textContent = '未选择文件';
-        nameAlbum.textContent = '未选择文件';
-        nameMusic.textContent = '未选择文件';
-        modal.classList.add('active');
+      function hideAllPages() {
+        pageHome.classList.remove('active');
+        pageCard.classList.remove('active');
+        pageChat.classList.remove('active');
       }
 
-      function closeModal() { modal.classList.remove('active'); }
-
-      openBtn.addEventListener('click', openModal);
-      closeBtn.addEventListener('click', closeModal);
-      cancelBtn.addEventListener('click', closeModal);
-      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-      function handleFile(input, nameSpan) {
-        input.addEventListener('change', () => {
-          const file = input.files && input.files[0];
-          nameSpan.textContent = file ? file.name : '未选择文件';
-        });
-      }
-      handleFile(fileBg, nameBg);
-      handleFile(fileAvatar, nameAvatar);
-      handleFile(filePhoto1, namePhoto1);
-      handleFile(filePhoto2, namePhoto2);
-      handleFile(filePhoto3, namePhoto3);
-      handleFile(fileAlbum, nameAlbum);
-      handleFile(fileMusic, nameMusic);
-
-      function clearFileSelections() {
-        fileBg.value = ''; fileAvatar.value = ''; filePhoto1.value = ''; filePhoto2.value = '';
-        filePhoto3.value = ''; fileAlbum.value = ''; fileMusic.value = '';
-        nameBg.textContent = '未选择文件'; nameAvatar.textContent = '未选择文件';
-        namePhoto1.textContent = '未选择文件'; namePhoto2.textContent = '未选择文件';
-        namePhoto3.textContent = '未选择文件'; nameAlbum.textContent = '未选择文件';
-        nameMusic.textContent = '未选择文件';
+      function showPage(page) {
+        hideAllPages();
+        page.classList.add('active');
+        // 切换页面时滚动到顶部
+        window.scrollTo(0, 0);
       }
 
-      cancelBtn.addEventListener('click', clearFileSelections);
-      closeBtn.addEventListener('click', clearFileSelections);
-
-      confirmBtn.addEventListener('click', () => {
-        function processItem(fileInput, urlInput, key, applyFn) {
-          const file = fileInput.files && fileInput.files[0];
-          if (file) {
-            if (objectUrls[key]) URL.revokeObjectURL(objectUrls[key]);
-            const newUrl = URL.createObjectURL(file);
-            objectUrls[key] = newUrl;
-            applyFn(newUrl);
-            currentImages[key] = newUrl;
-          } else {
-            const url = urlInput.value.trim();
-            if (url) {
-              if (objectUrls[key]) { URL.revokeObjectURL(objectUrls[key]); objectUrls[key] = null; }
-              applyFn(url);
-              currentImages[key] = url;
-            }
-          }
-        }
-
-        processItem(fileBg, inputBg, 'bg', (url) => { bgDream.style.backgroundImage = `url('${url}')`; });
-        processItem(fileAvatar, inputAvatar, 'avatar', (url) => { avatarImg.src = url; });
-        processItem(filePhoto1, inputPhoto1, 'photo1', (url) => { photo1.src = url; });
-        processItem(filePhoto2, inputPhoto2, 'photo2', (url) => { photo2.src = url; });
-        processItem(filePhoto3, inputPhoto3, 'photo3', (url) => { photo3.src = url; });
-        processItem(fileAlbum, inputAlbum, 'album', (url) => {
-          albumCover.src = url;
-          albumCover.style.display = 'block';
-          albumIcon.style.display = 'none';
-          currentImages.album = url;
-        });
-
-        const musicFile = fileMusic.files && fileMusic.files[0];
-        if (musicFile) {
-          if (objectUrls.music) URL.revokeObjectURL(objectUrls.music);
-          const newUrl = URL.createObjectURL(musicFile);
-          objectUrls.music = newUrl;
-          currentImages.music = newUrl;
-        } else {
-          const url = inputMusicUrl.value.trim();
-          if (url) {
-            if (objectUrls.music) { URL.revokeObjectURL(objectUrls.music); objectUrls.music = null; }
-            currentImages.music = url;
-          }
-        }
-
-        closeModal();
-        clearFileSelections();
+      // 主页 → 传讯
+      document.getElementById('tabMessage').addEventListener('click', function(e) {
+        e.preventDefault();
+        showPage(pageChat);
+        if (window.initChatPage) window.initChatPage();
       });
 
-      // ==================== 音乐播放器核心 ====================
+      // 主页 → 字卡
+      document.getElementById('tabCard').addEventListener('click', function(e) {
+        e.preventDefault();
+        showPage(pageCard);
+        if (window.refreshCardUI) window.refreshCardUI();
+      });
+
+      // 字卡返回按钮
+      document.getElementById('cardBackBtn').addEventListener('click', function() {
+        showPage(pageHome);
+      });
+
+      // 字卡底部导航
+      document.querySelectorAll('#cardBottomNav .card-nav-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          const nav = item.getAttribute('data-nav');
+          if (nav === 'home') {
+            showPage(pageHome);
+          } else if (nav === 'message') {
+            showPage(pageChat);
+            if (window.initChatPage) window.initChatPage();
+          }
+          // 其他导航暂不处理
+        });
+      });
+
+      // 暴露切换函数供外部使用
+      window.showPage = showPage;
+      window.pageHome = pageHome;
+      window.pageCard = pageCard;
+      window.pageChat = pageChat;
+    })();
+
+    // ==================== 主页音乐播放器（保持原有逻辑） ====================
+    (function() {
       const audio = document.getElementById('audioPlayer');
       const songTitle = document.getElementById('songTitle');
       const songArtist = document.getElementById('songArtist');
@@ -1125,47 +1806,16 @@
       const vinylCover = document.getElementById('vinylCover');
 
       let playlist = [
-        {
-          title: 'My love',
-          artist: '颜人中',
-          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-          cover: 'https://picsum.photos/100/100?random=20',
-          lyric: '我的爱 像风一样 来了又走'
-        },
-        {
-          title: '夜曲',
-          artist: '周杰伦',
-          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-          cover: 'https://picsum.photos/100/100?random=21',
-          lyric: '一群嗜血的蚂蚁 被腐肉所吸引'
-        },
-        {
-          title: '晴天',
-          artist: '周杰伦',
-          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-          cover: 'https://picsum.photos/100/100?random=22',
-          lyric: '故事的小黄花 从出生那年就飘着'
-        },
-        {
-          title: '起风了',
-          artist: '买辣椒也用券',
-          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-          cover: 'https://picsum.photos/100/100?random=23',
-          lyric: '这一路上走走停停 顺着少年漂流的痕迹'
-        }
+        { title: 'My love', artist: '颜人中', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', cover: 'https://picsum.photos/100/100?random=20', lyric: '我的爱 像风一样 来了又走' },
+        { title: '夜曲', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', cover: 'https://picsum.photos/100/100?random=21', lyric: '一群嗜血的蚂蚁 被腐肉所吸引' },
+        { title: '晴天', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', cover: 'https://picsum.photos/100/100?random=22', lyric: '故事的小黄花 从出生那年就飘着' },
+        { title: '起风了', artist: '买辣椒也用券', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', cover: 'https://picsum.photos/100/100?random=23', lyric: '这一路上走走停停 顺着少年漂流的痕迹' }
       ];
 
       let currentSongIndex = 0;
       let isPlaying = false;
       let currentCustomMusicMode = false;
-
-      function updateCurrentSongCover(url) {
-        if (url) {
-          albumCover.src = url;
-          albumCover.style.display = 'block';
-          albumIcon.style.display = 'none';
-        }
-      }
+      const currentImages = { album: null, music: null };
 
       function playSong(index) {
         if (currentCustomMusicMode && currentImages.music) {
@@ -1173,12 +1823,9 @@
           songTitle.textContent = '自定义音乐';
           songArtist.textContent = '来自设置面板';
           if (currentImages.album) {
-            albumCover.src = currentImages.album;
-            albumCover.style.display = 'block';
-            albumIcon.style.display = 'none';
-          } else {
-            albumCover.style.display = 'none';
-            albumIcon.style.display = 'block';
+            document.getElementById('albumCover').src = currentImages.album;
+            document.getElementById('albumCover').style.display = 'block';
+            document.getElementById('albumIcon').style.display = 'none';
           }
         } else {
           if (index < 0 || index >= playlist.length) return;
@@ -1187,13 +1834,13 @@
           songTitle.textContent = song.title;
           songArtist.textContent = song.artist;
           if (currentImages.album) {
-            albumCover.src = currentImages.album;
-            albumCover.style.display = 'block';
-            albumIcon.style.display = 'none';
+            document.getElementById('albumCover').src = currentImages.album;
+            document.getElementById('albumCover').style.display = 'block';
+            document.getElementById('albumIcon').style.display = 'none';
           } else {
-            albumCover.src = song.cover || '';
-            albumCover.style.display = 'block';
-            albumIcon.style.display = 'none';
+            document.getElementById('albumCover').src = song.cover;
+            document.getElementById('albumCover').style.display = 'block';
+            document.getElementById('albumIcon').style.display = 'none';
           }
         }
         audio.play().then(() => {
@@ -1207,10 +1854,9 @@
           playIcon.classList.add('fa-play');
           vinylCover.classList.remove('spinning');
         });
-        renderPlaylistSheet();
       }
 
-      playBtn.addEventListener('click', () => {
+      playBtn.addEventListener('click', function() {
         if (!audio.src) { playSong(currentSongIndex); return; }
         if (isPlaying) {
           audio.pause();
@@ -1228,27 +1874,19 @@
         }
       });
 
-      prevBtn.addEventListener('click', () => {
-        if (currentCustomMusicMode) {
-          currentCustomMusicMode = false;
-          currentSongIndex = 0;
-        } else {
-          currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
-        }
+      prevBtn.addEventListener('click', function() {
+        if (currentCustomMusicMode) { currentCustomMusicMode = false; currentSongIndex = 0; }
+        else { currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length; }
         playSong(currentSongIndex);
       });
 
-      nextBtn.addEventListener('click', () => {
-        if (currentCustomMusicMode) {
-          currentCustomMusicMode = false;
-          currentSongIndex = 0;
-        } else {
-          currentSongIndex = (currentSongIndex + 1) % playlist.length;
-        }
+      nextBtn.addEventListener('click', function() {
+        if (currentCustomMusicMode) { currentCustomMusicMode = false; currentSongIndex = 0; }
+        else { currentSongIndex = (currentSongIndex + 1) % playlist.length; }
         playSong(currentSongIndex);
       });
 
-      audio.addEventListener('ended', () => {
+      audio.addEventListener('ended', function() {
         if (currentCustomMusicMode) {
           isPlaying = false;
           playIcon.classList.remove('fa-pause');
@@ -1259,283 +1897,15 @@
         }
       });
 
-      function initPlayer() {
-        if (playlist.length === 0) return;
-        const song = playlist[0];
-        songTitle.textContent = song.title;
-        songArtist.textContent = song.artist;
-        audio.src = song.url;
-        albumCover.src = song.cover || '';
-        albumCover.style.display = 'block';
-        albumIcon.style.display = 'none';
-        isPlaying = false;
-        playIcon.classList.add('fa-play');
-        playIcon.classList.remove('fa-pause');
-        vinylCover.classList.remove('spinning');
+      // 初始化
+      if (playlist.length > 0) {
+        songTitle.textContent = playlist[0].title;
+        songArtist.textContent = playlist[0].artist;
+        audio.src = playlist[0].url;
+        document.getElementById('albumCover').src = playlist[0].cover;
+        document.getElementById('albumCover').style.display = 'block';
+        document.getElementById('albumIcon').style.display = 'none';
       }
-      initPlayer();
-
-      // ==================== 歌曲列表底部弹窗 ====================
-      const playlistSheet = document.getElementById('playlistSheet');
-      const playlistScroll = document.getElementById('playlistScroll');
-      const openManageBtn = document.getElementById('openManageBtn');
-      const searchSongBtn = document.getElementById('searchSongBtn');
-      const openAddBtn = document.getElementById('openAddBtn');
-
-      function renderPlaylistSheet() {
-        playlistScroll.innerHTML = '';
-
-        playlist.forEach((song, index) => {
-          const row = document.createElement('div');
-          row.className = 'song-row' + (index === currentSongIndex && !currentCustomMusicMode ? ' current' : '');
-          row.innerHTML = `
-            <div class="song-row-info">
-              <div class="song-row-title">${escapeHtml(song.title)}</div>
-              <div class="song-row-artist">${escapeHtml(song.lyric || song.artist)}</div>
-            </div>
-            <div class="song-row-radio"></div>
-          `;
-          row.addEventListener('click', () => {
-            currentCustomMusicMode = false;
-            currentSongIndex = index;
-            playSong(index);
-            closePlaylistSheet();
-          });
-          playlistScroll.appendChild(row);
-        });
-
-        if (currentImages.music) {
-          const customRow = document.createElement('div');
-          customRow.className = 'song-row' + (currentCustomMusicMode ? ' current' : '');
-          customRow.innerHTML = `
-            <div class="song-row-info">
-              <div class="song-row-title">自定义音乐</div>
-              <div class="song-row-artist">来自设置面板</div>
-            </div>
-            <div class="song-row-radio"></div>
-          `;
-          customRow.addEventListener('click', () => {
-            currentCustomMusicMode = true;
-            playSong(currentSongIndex);
-            closePlaylistSheet();
-          });
-          playlistScroll.appendChild(customRow);
-        }
-      }
-
-      function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, (m) => ({
-          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        })[m]);
-      }
-
-      function openPlaylistSheet() {
-        renderPlaylistSheet();
-        playlistSheet.classList.add('active');
-      }
-      function closePlaylistSheet() {
-        playlistSheet.classList.remove('active');
-      }
-
-      vinylCover.addEventListener('click', openPlaylistSheet);
-
-      playlistSheet.addEventListener('click', (e) => {
-        if (e.target === playlistSheet) closePlaylistSheet();
-      });
-
-      // ==================== 添加自定义歌曲模态框 ====================
-      const addModal = document.getElementById('addModal');
-      const addTitle = document.getElementById('addTitle');
-      const addArtist = document.getElementById('addArtist');
-      const addUrl = document.getElementById('addUrl');
-      const addCancel = document.getElementById('addCancel');
-      const addConfirm = document.getElementById('addConfirm');
-
-      function openAddModal() {
-        addTitle.value = '';
-        addArtist.value = '';
-        addUrl.value = '';
-        addModal.classList.add('active');
-      }
-      function closeAddModal() {
-        addModal.classList.remove('active');
-      }
-
-      openAddBtn.addEventListener('click', () => {
-        openAddModal();
-      });
-
-      addCancel.addEventListener('click', closeAddModal);
-      addModal.addEventListener('click', (e) => {
-        if (e.target === addModal) closeAddModal();
-      });
-
-      addConfirm.addEventListener('click', () => {
-        const title = addTitle.value.trim() || '未命名歌曲';
-        const artist = addArtist.value.trim() || '未知歌手';
-        const url = addUrl.value.trim();
-
-        if (!url) {
-          alert('请填写音频链接');
-          return;
-        }
-
-        const newSong = {
-          title: title,
-          artist: artist,
-          url: url,
-          cover: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
-          lyric: artist
-        };
-        playlist.push(newSong);
-
-        currentCustomMusicMode = false;
-        currentSongIndex = playlist.length - 1;
-        playSong(currentSongIndex);
-
-        closeAddModal();
-        closePlaylistSheet();
-      });
-
-      // ==================== 歌单管理模态框 ====================
-      const manageModal = document.getElementById('manageModal');
-      const importPlaylistBtn = document.getElementById('importPlaylistBtn');
-      const exportPlaylistBtn = document.getElementById('exportPlaylistBtn');
-      const importFileInput = document.getElementById('importFileInput');
-      const manageCancel = document.getElementById('manageCancel');
-
-      function openManageModal() {
-        manageModal.classList.add('active');
-      }
-      function closeManageModal() {
-        manageModal.classList.remove('active');
-      }
-
-      openManageBtn.addEventListener('click', () => {
-        openManageModal();
-      });
-      manageCancel.addEventListener('click', closeManageModal);
-      manageModal.addEventListener('click', (e) => {
-        if (e.target === manageModal) closeManageModal();
-      });
-
-      importPlaylistBtn.addEventListener('click', () => {
-        importFileInput.click();
-      });
-
-      importFileInput.addEventListener('change', () => {
-        const file = importFileInput.files && importFileInput.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const content = e.target.result;
-            let importedSongs = [];
-
-            try {
-              const parsed = JSON.parse(content);
-              if (Array.isArray(parsed)) {
-                importedSongs = parsed;
-              } else if (parsed && Array.isArray(parsed.songs)) {
-                importedSongs = parsed.songs;
-              }
-            } catch (jsonErr) {
-              const lines = content.split('\n').filter(l => l.trim());
-              importedSongs = lines.map(line => {
-                const parts = line.split('|').map(p => p.trim());
-                return {
-                  title: parts[0] || '未命名歌曲',
-                  artist: parts[1] || '未知歌手',
-                  url: parts[2] || '',
-                  cover: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
-                  lyric: parts[1] || ''
-                };
-              }).filter(s => s.url);
-            }
-
-            const validSongs = importedSongs.filter(s => s && s.url).map(s => ({
-              title: s.title || '未命名歌曲',
-              artist: s.artist || '未知歌手',
-              url: s.url,
-              cover: s.cover || 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
-              lyric: s.lyric || s.artist || ''
-            }));
-
-            if (validSongs.length === 0) {
-              alert('未找到有效的歌曲数据');
-              return;
-            }
-
-            playlist = playlist.concat(validSongs);
-            alert('成功导入 ' + validSongs.length + ' 首歌曲');
-            renderPlaylistSheet();
-            closeManageModal();
-
-          } catch (err) {
-            alert('导入失败：文件解析错误');
-          }
-          importFileInput.value = '';
-        };
-        reader.readAsText(file);
-      });
-
-      exportPlaylistBtn.addEventListener('click', () => {
-        const data = {
-          songs: playlist.map(s => ({
-            title: s.title,
-            artist: s.artist,
-            url: s.url,
-            cover: s.cover || '',
-            lyric: s.lyric || ''
-          }))
-        };
-        const jsonStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'playlist.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        closeManageModal();
-      });
-
-      searchSongBtn.addEventListener('click', () => {
-        const keyword = prompt('搜索歌曲名称：');
-        if (keyword) {
-          const found = playlist.findIndex(s => s.title.includes(keyword));
-          if (found >= 0) {
-            currentCustomMusicMode = false;
-            currentSongIndex = found;
-            playSong(found);
-            closePlaylistSheet();
-          } else {
-            alert('未找到匹配的歌曲');
-          }
-        }
-      });
-
-      // ==================== 底部 Tab 选中状态切换 ====================
-      const tabButtons = document.querySelectorAll('#bottomTabBar .tab-btn');
-      tabButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          tabButtons.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-        });
-      });
-
-      // ==================== 传讯按钮跳转 ====================
-      const tabMessage = document.getElementById('tabMessage');
-      tabMessage.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = 'chat.html';
-      });
-
     })();
   </script>
 </body>
