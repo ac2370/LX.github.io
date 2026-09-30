@@ -360,10 +360,7 @@
       font-weight: 700;
     }
 
-    /* 分类内容容器 */
-    .cat-panel {
-      display: none;
-    }
+    .cat-panel { display: none; }
     .cat-panel.active {
       display: block;
       animation: fadeIn 0.2s ease;
@@ -455,9 +452,7 @@
     }
     .card-dedup-now:active { color: #6a8ca8; }
 
-    .card-group-section {
-      margin-bottom: 12px;
-    }
+    .card-group-section { margin-bottom: 12px; }
     .card-group-label {
       font-size: 11px;
       color: #8899a6;
@@ -526,9 +521,7 @@
       box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.15);
     }
 
-    .card-list {
-      margin-bottom: 12px;
-    }
+    .card-list { margin-bottom: 12px; }
     .word-card-item {
       background: #ffffff;
       border-radius: 16px;
@@ -540,7 +533,6 @@
       justify-content: space-between;
       gap: 10px;
       animation: popIn 0.2s ease;
-      transition: background 0.15s ease;
     }
     @keyframes popIn {
       from { opacity: 0; transform: scale(0.96); }
@@ -570,97 +562,6 @@
     }
     .word-card-delete:active { background: #f8d8d8; }
 
-    /* 整理模式复选框 */
-    .word-card-checkbox {
-      flex-shrink: 0;
-      width: 22px;
-      height: 22px;
-      border-radius: 9999px;
-      border: 2px solid #cbd4dc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
-      background: #fff;
-      cursor: pointer;
-      margin-right: 4px;
-    }
-    .word-card-checkbox.checked {
-      background: #f8b4b4;
-      border-color: #f8b4b4;
-    }
-    .word-card-checkbox.checked::after {
-      content: '\f00c';
-      font-family: 'Font Awesome 6 Free';
-      font-weight: 900;
-      color: #fff;
-      font-size: 11px;
-    }
-    .word-card-item.selected {
-      background: #fdf8f8;
-    }
-
-    /* 整理模式底部操作栏 */
-    .organize-bar {
-      display: none;
-      flex-shrink: 0;
-      padding: 12px 16px;
-      background: #ffffff;
-      border-top: 1px solid #eef1f4;
-      box-shadow: 0 -4px 16px rgba(150, 170, 190, 0.08);
-    }
-    .organize-bar.active {
-      display: block;
-    }
-    .organize-bar-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .organize-count {
-      font-size: 13px;
-      color: #55606b;
-      font-weight: 600;
-    }
-    .organize-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .organize-btn {
-      padding: 8px 12px;
-      border-radius: 12px;
-      background: #fafbfc;
-      border: 1px solid #eef1f4;
-      font-size: 11px;
-      color: #55606b;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .organize-btn:active {
-      background: #f2f6fa;
-      transform: scale(0.97);
-    }
-    .organize-btn.danger {
-      color: #e58b8b;
-      background: #fdf0f0;
-      border-color: #f8d8d8;
-    }
-    .organize-btn.danger:active {
-      background: #f8d8d8;
-    }
-    .organize-hint {
-      font-size: 11px;
-      color: #b6c2cd;
-      text-align: center;
-      letter-spacing: 0.5px;
-    }
-
     .card-list-placeholder {
       text-align: center;
       padding: 40px 20px 20px 20px;
@@ -675,7 +576,6 @@
       display: block;
     }
 
-    /* 表情包网格 */
     .emoji-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -795,10 +695,15 @@
       user-select: none;
     }
     #pageChat .chat-name:active { background: #f0f4f8; }
+
+    /* 顶栏图标：水平居中，等距排列 */
     #pageChat .chat-actions {
       display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 22px;
       margin-top: 12px;
+      width: 100%;
     }
     #pageChat .chat-action-icon {
       width: 24px;
@@ -826,12 +731,45 @@
     }
     #pageChat .chat-messages::-webkit-scrollbar { display: none; }
 
-    #pageChat .home-return-btn {
+    /* 原急救按钮样式（保留，但通过新增类隐藏） */
+    #pageChat .sos-btn {
       position: fixed;
       right: 16px;
       top: 50%;
       transform: translateY(-50%);
       z-index: 30;
+      width: 46px;
+      height: 46px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #f5a3a3;
+      color: #e57373;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    #pageChat .sos-btn:active {
+      transform: translateY(-50%) scale(0.94);
+      background: rgba(255, 245, 245, 1);
+    }
+    #pageChat .sos-btn i {
+      font-size: 14px;
+      margin-bottom: 1px;
+    }
+
+    /* 返回主页按钮（新增，与 sos-btn 位置一致但样式不同） */
+    #pageChat .home-return-btn {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 31;
       width: 46px;
       height: 46px;
       border-radius: 9999px;
@@ -983,68 +921,313 @@
       cursor: default;
     }
 
-    /* 摸鱼面板 */
-    .fishing-panel {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 200;
-      width: 240px;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 12px 40px rgba(0, 20, 30, 0.18);
-      padding: 20px 18px 16px 18px;
-      display: none;
-      animation: popIn 0.22s ease;
-      text-align: center;
+    /* ============ 音乐播放器（黑胶/歌曲列表） ============ */
+    @keyframes spin-vinyl {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
-    .fishing-panel.active { display: block; }
-    .fishing-panel-title {
-      font-size: 13px;
-      color: #8899a6;
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
-    }
-    .fishing-panel-status {
-      font-size: 16px;
-      color: #333;
-      font-weight: 700;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
-    .fishing-panel-close {
-      width: 100%;
-      padding: 9px 0;
+    .vinyl-cover {
+      position: relative;
+      overflow: hidden;
       border-radius: 12px;
-      background: #f5f6f8;
-      border: 1px solid #eef1f4;
-      color: #55606b;
-      font-size: 13px;
-      font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2a2a2a;
+      flex-shrink: 0;
     }
-    .fishing-panel-close:active {
-      background: #e8ecf0;
-      transform: scale(0.97);
+    .vinyl-cover.spinning .vinyl-img {
+      animation: spin-vinyl 4s linear infinite;
     }
-    .fishing-panel-overlay {
+    .vinyl-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      animation-play-state: paused;
+    }
+    .vinyl-cover.spinning .vinyl-img {
+      animation-play-state: running;
+    }
+
+    .playlist-sheet {
       position: fixed;
       inset: 0;
-      z-index: 199;
-      background: rgba(20, 30, 40, 0.15);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
+      z-index: 120;
       display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(20, 30, 40, 0.25);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
-    .fishing-panel-overlay.active { display: block; }
+    .playlist-sheet.active { display: flex; }
+    .playlist-sheet-panel {
+      width: 100%;
+      max-width: 430px;
+      max-height: 72vh;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.15);
+      padding: 16px 18px 24px 18px;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .playlist-sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .playlist-sheet-deco {
+      font-size: 13px;
+      color: #8899a6;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .playlist-sheet-actions { display: flex; gap: 8px; }
+    .playlist-sheet-icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 9999px;
+      background: rgba(245, 245, 248, 0.9);
+      border: 1px solid rgba(200, 210, 220, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #55606b;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .playlist-sheet-icon-btn:active {
+      background: rgba(235, 240, 248, 1);
+      transform: scale(0.94);
+    }
+    .playlist-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
+      padding-right: 4px;
+    }
+    .playlist-scroll::-webkit-scrollbar { width: 4px; }
+    .playlist-scroll::-webkit-scrollbar-thumb {
+      background: rgba(180, 190, 200, 0.5);
+      border-radius: 4px;
+    }
+    .playlist-scroll::-webkit-scrollbar-track { background: transparent; }
 
-    /* 编辑资料 */
+    .song-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 8px;
+      border-radius: 16px;
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+    .song-row:active { background: rgba(245, 248, 252, 0.9); }
+    .song-row.current { background: rgba(248, 240, 245, 0.7); }
+    .song-row-radio {
+      width: 20px;
+      height: 20px;
+      border-radius: 9999px;
+      border: 1.5px solid #cbd4dc;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      order: 3;
+    }
+    .song-row.current .song-row-radio {
+      border-color: #f8b4b4;
+      background: #f8b4b4;
+    }
+    .song-row.current .song-row-radio::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: #fff;
+    }
+    .song-row-info { flex: 1; min-width: 0; order: 1; }
+    .song-row-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-row-artist {
+      font-size: 11px;
+      color: #8899a6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 3px;
+    }
+
+    .add-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.3);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .add-modal.active { display: flex; }
+    .add-panel {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 22px 20px;
+      animation: popIn 0.22s ease;
+    }
+    .add-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .add-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(200, 210, 220, 0.7);
+      background: rgba(250, 251, 253, 0.9);
+      font-size: 13px;
+      color: #333;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .add-input:focus {
+      border-color: #f8b4b4;
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.2);
+    }
+    .add-input::placeholder { color: #a8b4c0; }
+    .add-actions { display: flex; gap: 12px; margin-top: 6px; }
+    .add-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 18px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .add-btn:active { transform: scale(0.97); }
+    .add-btn-cancel {
+      background: rgba(240, 244, 248, 0.95);
+      color: #55606b;
+      border: 1px solid rgba(200, 210, 220, 0.5);
+    }
+    .add-btn-confirm {
+      background: #f8b4b4;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
+    }
+
+    .manage-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.3);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .manage-modal.active { display: flex; }
+    .manage-panel {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 22px 20px;
+      animation: popIn 0.22s ease;
+    }
+    .manage-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .manage-btn {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(248, 250, 252, 0.95);
+      border: 1px solid rgba(210, 220, 230, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #333;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .manage-btn:active {
+      background: rgba(240, 245, 250, 1);
+      transform: scale(0.98);
+    }
+    .manage-btn i {
+      color: #f8b4b4;
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+    .manage-cancel {
+      width: 100%;
+      padding: 12px 0;
+      text-align: center;
+      color: #8899a6;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      background: none;
+      border: none;
+      margin-top: 4px;
+    }
+    .manage-cancel:active { color: #55606b; }
+
+    /* ============ 编辑资料 & 角色面板 ============ */
     .edit-profile-modal {
       position: fixed;
       inset: 0;
@@ -1121,11 +1304,7 @@
       box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
     }
     .edit-input::placeholder { color: #b6c2cd; }
-    .edit-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
+    .edit-actions { display: flex; gap: 12px; margin-top: 8px; }
     .edit-btn {
       flex: 1;
       padding: 12px 0;
@@ -1149,7 +1328,6 @@
       box-shadow: 0 4px 12px rgba(26, 42, 58, 0.2);
     }
 
-    /* 角色面板 */
     .role-panel-modal {
       position: fixed;
       inset: 0;
@@ -1365,10 +1543,6 @@
       flex-direction: column;
       animation: slideUp 0.28s ease;
       overflow: hidden;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
     }
     .reply-settings-header {
       flex-shrink: 0;
@@ -1666,184 +1840,6 @@
       box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
     }
     .hidden-file-input { display: none; }
-
-    /* 新增：分组弹窗（新建/重命名共用） */
-    .group-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 410;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .group-modal.active { display: flex; }
-    .group-panel {
-      width: 100%;
-      max-width: 360px;
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 24px 20px;
-      animation: popIn 0.22s ease;
-    }
-    .group-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 16px;
-      text-align: center;
-    }
-    .group-label {
-      font-size: 12px;
-      color: #8899a6;
-      font-weight: 600;
-      margin-bottom: 6px;
-      padding-left: 2px;
-    }
-    .group-input {
-      width: 100%;
-      padding: 11px 14px;
-      border-radius: 14px;
-      border: 1.5px solid #b8d4ec;
-      background: #fafbfc;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-      margin-bottom: 18px;
-    }
-    .group-input:focus {
-      border-color: #8fb8d8;
-      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.25);
-    }
-    .group-input::placeholder { color: #b6c2cd; }
-    .group-actions {
-      display: flex;
-      gap: 12px;
-    }
-    .group-btn {
-      flex: 1;
-      padding: 12px 0;
-      border-radius: 16px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .group-btn:active { transform: scale(0.97); }
-    .group-btn-cancel {
-      background: #ffffff;
-      color: #55606b;
-      border: 1px solid #eef1f4;
-    }
-    .group-btn-save {
-      background: #e8ecf0;
-      color: #333;
-    }
-    .group-btn-save:active {
-      background: #dce2e8;
-    }
-
-    /* 新增：添加字卡模态框 */
-    .add-card-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 420;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .add-card-modal.active { display: flex; }
-    .add-card-panel {
-      width: 100%;
-      max-width: 380px;
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 22px 20px;
-      animation: popIn 0.22s ease;
-      position: relative;
-    }
-    .add-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .add-card-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #333;
-    }
-    .add-card-close {
-      width: 30px;
-      height: 30px;
-      border-radius: 9999px;
-      background: #f5f6f8;
-      border: none;
-      color: #55606b;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .add-card-close:active { background: #e8ecf0; }
-    .add-card-textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #e2e8ee;
-      background: #fafbfc;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      resize: vertical;
-      min-height: 100px;
-      font-family: inherit;
-      line-height: 1.5;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .add-card-textarea:focus {
-      border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-    }
-    .add-card-textarea::placeholder { color: #b6c2cd; }
-    .add-card-hint {
-      font-size: 11px;
-      color: #b6c2cd;
-      margin-top: 6px;
-      padding-left: 2px;
-    }
-    .add-card-save {
-      width: 100%;
-      margin-top: 16px;
-      padding: 12px 0;
-      border-radius: 16px;
-      background: #f8b4b4;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-      box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
-    }
-    .add-card-save:active {
-      transform: scale(0.97);
-      opacity: 0.9;
-    }
   </style>
 </head>
 <body>
@@ -1886,9 +1882,10 @@
           </div>
         </div>
 
+        <!-- ============ 音乐播放器 ============ -->
         <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
-          <div class="vinyl-cover w-12 h-12" id="vinylCover" style="position:relative;border-radius:12px;overflow:hidden;background:#333;display:flex;align-items:center;justify-content:center;">
-            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;width:100%;height:100%;object-fit:cover;">
+          <div class="vinyl-cover w-12 h-12" id="vinylCover">
+            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
             <i id="albumIcon" class="fa-solid fa-music text-white/70 text-base"></i>
           </div>
           <div class="flex-1 min-w-0">
@@ -1984,7 +1981,6 @@
     </div>
 
     <div class="card-body">
-      <!-- 分类网格 -->
       <div class="cat-grid-card" id="catGrid">
         <div class="cat-grid-item active" data-cat="reply" id="catReply">
           <i class="fa-regular fa-comment-dots"></i>
@@ -2018,20 +2014,13 @@
         </div>
       </div>
 
-      <!-- ============ 面板：回复 ============ -->
+      <!-- 回复 -->
       <div class="cat-panel active" id="panel-reply">
         <div class="card-action-row">
-          <button class="card-action-btn" id="btnImport">
-            <i class="fa-solid fa-plus"></i>导入
-          </button>
-          <button class="card-action-btn" id="btnExport">
-            <i class="fa-solid fa-arrow-right"></i>导出
-          </button>
-          <button class="card-action-btn" id="btnAddCard">
-            <i class="fa-solid fa-plus"></i>添加
-          </button>
+          <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
         </div>
-
         <div class="card-dedup-row">
           <div class="card-dedup-left" id="dedupToggle">
             <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
@@ -2039,7 +2028,6 @@
           </div>
           <span class="card-dedup-now" id="dedupNowBtn">立即去重</span>
         </div>
-
         <div class="card-group-section">
           <div class="card-group-label">回复分组</div>
           <select class="card-group-select" id="groupSelect">
@@ -2052,7 +2040,6 @@
           </div>
           <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
         </div>
-
         <div class="card-list" id="cardList"></div>
         <div class="card-list-placeholder" id="cardListPlaceholder">
           <i class="fa-regular fa-note-sticky"></i>
@@ -2060,15 +2047,10 @@
         </div>
       </div>
 
-      <!-- ============ 面板：颜文字 ============ -->
+      <!-- 颜文字 -->
       <div class="cat-panel" id="panel-kaomoji">
-        <div class="card-action-row" style="flex-direction:row;flex-wrap:nowrap;gap:8px;">
-          <button class="card-action-btn" id="kaomojiAddBtn" style="flex:1;">
-            <i class="fa-solid fa-plus"></i>添加
-          </button>
-          <button class="card-action-btn" id="kaomojiOrganizeBtn" style="flex:1;">
-            <i class="fa-solid fa-broom"></i>整理
-          </button>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="kaomojiOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
         </div>
         <div class="card-group-section">
           <input type="text" class="card-search-input" id="kaomojiSearchInput" placeholder="找一个表情...">
@@ -2080,15 +2062,10 @@
         </div>
       </div>
 
-      <!-- ============ 面板：地点 ============ -->
+      <!-- 地点 -->
       <div class="cat-panel" id="panel-place">
-        <div class="card-action-row" style="flex-direction:row;flex-wrap:nowrap;gap:8px;">
-          <button class="card-action-btn" id="placeAddBtn" style="flex:1;">
-            <i class="fa-solid fa-plus"></i>添加
-          </button>
-          <button class="card-action-btn" id="placeOrganizeBtn" style="flex:1;">
-            <i class="fa-solid fa-broom"></i>整理
-          </button>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="placeOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
         </div>
         <div class="card-group-section">
           <input type="text" class="card-search-input" id="placeSearchInput" placeholder="找一个熟悉的地方...">
@@ -2100,15 +2077,10 @@
         </div>
       </div>
 
-      <!-- ============ 面板：心情 ============ -->
+      <!-- 心情 -->
       <div class="cat-panel" id="panel-mood">
-        <div class="card-action-row" style="flex-direction:row;flex-wrap:nowrap;gap:8px;">
-          <button class="card-action-btn" id="moodAddBtn" style="flex:1;">
-            <i class="fa-solid fa-plus"></i>添加
-          </button>
-          <button class="card-action-btn" id="moodOrganizeBtn" style="flex:1;">
-            <i class="fa-solid fa-broom"></i>整理
-          </button>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="moodOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
         </div>
         <div class="card-group-section">
           <input type="text" class="card-search-input" id="moodSearchInput" placeholder="找一句话、一种心情...">
@@ -2120,60 +2092,40 @@
         </div>
       </div>
 
-      <!-- ============ 面板：表情包 ============ -->
+      <!-- 表情包 -->
       <div class="cat-panel" id="panel-emoji">
         <div class="card-action-row">
-          <button class="card-action-btn" id="emojiImportLinkBtn">
-            <i class="fa-solid fa-link"></i>导入链接
-          </button>
-          <button class="card-action-btn" id="emojiExportBtn">
-            <i class="fa-solid fa-arrow-right"></i>导出
-          </button>
-          <button class="card-action-btn" id="emojiAddLinkBtn">
-            <i class="fa-solid fa-plus"></i>添加链接
-          </button>
-          <button class="card-action-btn" id="emojiUploadBtn">
-            <i class="fa-solid fa-upload"></i>上传图片
-          </button>
+          <button class="card-action-btn" id="emojiImportLinkBtn"><i class="fa-solid fa-link"></i>导入链接</button>
+          <button class="card-action-btn" id="emojiExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="emojiAddLinkBtn"><i class="fa-solid fa-plus"></i>添加链接</button>
+          <button class="card-action-btn" id="emojiUploadBtn"><i class="fa-solid fa-upload"></i>上传图片</button>
           <input type="file" id="emojiFileInput" class="hidden-file-input" accept="image/*" multiple>
         </div>
-
         <div class="card-group-section">
           <input type="text" class="card-search-input" id="emojiSearchInput" placeholder="搜索图片名称">
         </div>
-
         <div class="card-group-buttons">
           <button class="card-group-btn" id="emojiNewGroupBtn">新建分组</button>
           <button class="card-group-btn" id="emojiAllGroupBtn">
             全部分组 <i class="fa-solid fa-chevron-down" style="font-size:9px;margin-left:2px;"></i>
           </button>
         </div>
-
         <button class="card-action-btn" id="emojiOrganizeBtn" style="width:100%;margin-bottom:12px;">
           <i class="fa-solid fa-broom"></i>整理图片
         </button>
-
         <div class="emoji-grid" id="emojiGrid"></div>
-
         <div class="emoji-footer-hint" id="emojiFooterHint">他的表情包 · 随机主动发送已开启 &gt;</div>
         <div class="emoji-footer-sub" id="emojiFooterSub">这里还没有图片，试试上传图片、添加链接或换一个搜索词。</div>
         <div class="emoji-footer-count" id="emojiFooterCount">0 张 · 自动去重 · 轻点查看 / 管理</div>
       </div>
 
-      <!-- ============ 面板：状态 ============ -->
+      <!-- 状态 -->
       <div class="cat-panel" id="panel-status">
         <div class="card-action-row">
-          <button class="card-action-btn" id="statusImportBtn">
-            <i class="fa-solid fa-plus"></i>导入
-          </button>
-          <button class="card-action-btn" id="statusExportBtn">
-            <i class="fa-solid fa-arrow-right"></i>导出
-          </button>
-          <button class="card-action-btn" id="statusAddBtn">
-            <i class="fa-solid fa-plus"></i>添加
-          </button>
+          <button class="card-action-btn" id="statusImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="statusExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="statusAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
         </div>
-
         <div class="card-group-section">
           <div class="card-group-label">状态分组</div>
           <select class="card-group-select" id="statusGroupSelect">
@@ -2185,36 +2137,15 @@
           </div>
           <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
         </div>
-
         <div class="card-list" id="statusList"></div>
         <div class="card-list-placeholder" id="statusPlaceholder">
           <i class="fa-regular fa-circle-check"></i>
           添加一些状态，让 Ta 更生动。
         </div>
       </div>
-
     </div>
 
-    <!-- 整理模式底部操作栏 -->
-    <div class="organize-bar" id="organizeBar">
-      <div class="organize-bar-top">
-        <span class="organize-count" id="organizeCount">已选 0 条</span>
-        <div class="organize-actions">
-          <button class="organize-btn" id="organizeSelectAll">
-            <i class="fa-solid fa-check-double"></i>全选筛选结果
-          </button>
-          <button class="organize-btn danger" id="organizeDeleteSelected">
-            <i class="fa-solid fa-trash-can"></i>删除所选
-          </button>
-          <button class="organize-btn danger" id="organizeDeleteGroup">
-            <i class="fa-solid fa-trash-can"></i>删除此分组
-          </button>
-        </div>
-      </div>
-      <div class="organize-hint" id="organizeHint">已清理 0 条重复内容</div>
-    </div>
-
-    <div class="card-status-bar" id="cardStatusBar">
+    <div class="card-status-bar">
       <div class="card-status-counts" id="cardStatusCounts">0 条回复 · 0 个表情 · 0 个地点 · 0 种心情</div>
       <div class="card-status-slogan">SIDE BY SIDE · PRIVATE STUDY · NO REPOST</div>
     </div>
@@ -2227,12 +2158,13 @@
         <img class="chat-avatar" id="chatAvatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
         <div class="chat-name" id="chatName">Ta</div>
       </div>
+      <!-- 顶栏图标：水平居中 -->
       <div class="chat-actions">
         <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
+        <!-- 原电话图标位置：改为热茶/摸鱼图标 -->
         <div class="chat-action-icon" title="摸鱼" id="fishingIcon"><i class="fa-solid fa-mug-hot"></i></div>
         <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
         <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
-        <div class="chat-action-icon" title="更多"><i class="fa-solid fa-ellipsis"></i></div>
       </div>
     </div>
 
@@ -2242,6 +2174,13 @@
       </div>
     </div>
 
+    <!-- 原急救按钮：保留 DOM，但通过 CSS 隐藏 -->
+    <div class="sos-btn" id="sosBtn" style="display: none;" title="急救">
+      <i class="fa-solid fa-kit-medical"></i>
+      <span>急救</span>
+    </div>
+
+    <!-- 新增：返回主页按钮 -->
     <div class="home-return-btn" id="homeReturnBtn" title="返回主页">
       <i class="fa-solid fa-house"></i>
     </div>
@@ -2259,7 +2198,7 @@
     </div>
   </div>
 
-  <!-- 摸鱼面板 -->
+  <!-- ============ 摸鱼状态悬浮面板 ============ -->
   <div class="fishing-panel-overlay" id="fishingOverlay"></div>
   <div class="fishing-panel" id="fishingPanel">
     <div class="fishing-panel-title">当前状态</div>
@@ -2294,7 +2233,6 @@
         <span class="role-panel-title">角色面板</span>
         <button class="role-panel-close" id="rolePanelCloseBtn">关闭</button>
       </div>
-
       <div class="role-new-box">
         <div class="role-new-avatar-wrap" id="roleNewAvatarWrap">
           <img class="role-new-avatar" id="roleNewAvatarPreview" src="https://picsum.photos/100/100?random=1" alt="新角色头像">
@@ -2304,7 +2242,6 @@
         <input type="text" class="role-new-input" id="roleNewNameInput" placeholder="输入角色姓名...">
         <button class="role-new-save" id="roleNewSaveBtn">保存</button>
       </div>
-
       <div class="role-list-divider"></div>
       <div class="role-list-title">已有角色档案</div>
       <div id="roleListContainer"></div>
@@ -2320,13 +2257,11 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-
       <div class="reply-settings-tabs">
         <button class="reply-tab-btn active" data-tab="rhythm">回复节奏</button>
         <button class="reply-tab-btn" data-tab="proactive">主动消息</button>
         <button class="reply-tab-btn" data-tab="quote">引用/反应</button>
       </div>
-
       <div class="reply-settings-body">
         <div class="reply-tab-panel active" id="panel-rhythm">
           <div class="setting-row">
@@ -2339,7 +2274,6 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="input-row">
             <div class="input-item">
               <div class="input-item-label">最短等待 / 秒</div>
@@ -2357,7 +2291,6 @@
             </div>
           </div>
           <div class="input-hint">等待时间可设为 1-600 秒，回复将在该区间内随机延迟</div>
-
           <div class="input-row" style="margin-top:14px;">
             <div class="input-item">
               <div class="input-item-label">每次最少回复 / 条</div>
@@ -2374,7 +2307,6 @@
               </div>
             </div>
           </div>
-
           <div class="setting-row" style="margin-top:6px;">
             <div class="setting-row-label">
               <div class="setting-row-title">随机附加颜文字</div>
@@ -2385,10 +2317,8 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="setting-divider"></div>
           <div class="setting-section-title">输入状态</div>
-
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">显示三点输入气泡</div>
@@ -2399,10 +2329,8 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="setting-divider"></div>
           <div class="setting-section-title">已读与状态自动回复</div>
-
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">显示角色已读状态</div>
@@ -2412,7 +2340,6 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">开启自动回复（状态字卡）</div>
@@ -2423,13 +2350,10 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <button class="wide-btn" id="btnManageAutoReply">管理自动回复字卡</button>
           <button class="wide-btn" id="btnViewStatusCards">查看角色状态卡片</button>
-
           <div class="setting-divider"></div>
           <div class="setting-section-title">通讯节奏</div>
-
           <div class="input-row">
             <div class="input-item">
               <div class="input-item-label">最短等待 / 秒</div>
@@ -2446,7 +2370,6 @@
               </div>
             </div>
           </div>
-
           <div class="auto-save-hint">修改后自动保存</div>
         </div>
 
@@ -2461,7 +2384,6 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="input-row">
             <div class="input-item">
               <div class="input-item-label">最短间隔 / 秒</div>
@@ -2479,9 +2401,7 @@
             </div>
           </div>
           <div class="input-hint">主动消息间隔可设为 10-10800 秒，角色将在该区间内随机选择时间发送</div>
-
           <a class="blue-link" id="linkBackgroundKeep">后台保活与消息提醒</a>
-
           <div class="auto-save-hint">修改后自动保存</div>
         </div>
 
@@ -2496,7 +2416,6 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">允许随机贴反应</div>
@@ -2507,11 +2426,9 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
           <div class="input-hint" style="margin-top:12px;">
             引用和反应均为随机触发，触发概率由系统根据对话上下文自动计算。关闭后角色将不再引用或贴反应。
           </div>
-
           <div class="auto-save-hint">修改后自动保存</div>
         </div>
       </div>
@@ -2533,34 +2450,129 @@
     </div>
   </div>
 
-  <!-- 新增：添加字卡模态框（用于回复添加） -->
-  <div class="add-card-modal" id="addCardModal">
-    <div class="add-card-panel">
-      <div class="add-card-header">
-        <span class="add-card-title">添加字卡</span>
-        <button class="add-card-close" id="addCardCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+  <!-- 音乐播放器弹窗 -->
+  <div class="playlist-sheet" id="playlistSheet">
+    <div class="playlist-sheet-panel">
+      <div class="playlist-sheet-header">
+        <span class="playlist-sheet-deco">.°♫.°</span>
+        <div class="playlist-sheet-actions">
+          <button class="playlist-sheet-icon-btn" id="openManageBtn" title="歌单管理">
+            <i class="fa-solid fa-folder-open"></i>
+          </button>
+          <button class="playlist-sheet-icon-btn" id="searchSongBtn" title="搜索">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <button class="playlist-sheet-icon-btn" id="openAddBtn" title="添加歌曲">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
       </div>
-      <textarea class="add-card-textarea" id="addCardTextarea" placeholder="输入字卡内容..."></textarea>
-      <div class="add-card-hint">每行一条，可以一次添加多条。</div>
-      <button class="add-card-save" id="addCardSaveBtn">保存字卡</button>
+      <div class="playlist-scroll" id="playlistScroll"></div>
     </div>
   </div>
 
-  <!-- 新增：分组弹窗（新建/重命名共用） -->
-  <div class="group-modal" id="groupModal">
-    <div class="group-panel">
-      <div class="group-title" id="groupModalTitle">新建回复分组</div>
-      <div class="group-label">分组名称</div>
-      <input type="text" class="group-input" id="groupModalInput" placeholder="">
-      <div class="group-actions">
-        <button class="group-btn group-btn-cancel" id="groupModalCancel">取消</button>
-        <button class="group-btn group-btn-save" id="groupModalSave">保存</button>
+  <div class="add-modal" id="addModal">
+    <div class="add-panel">
+      <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
+      <input type="text" class="add-input" id="addTitle" placeholder="歌曲名称（例如：这里的风景）">
+      <input type="text" class="add-input" id="addArtist" placeholder="歌手 / 备注（例如：你的名字）">
+      <input type="text" class="add-input" id="addUrl" placeholder="音频链接 (mp3/m4a 链接)">
+      <div class="add-actions">
+        <button class="add-btn add-btn-cancel" id="addCancel">取消</button>
+        <button class="add-btn add-btn-confirm" id="addConfirm">添加播放</button>
       </div>
     </div>
   </div>
 
+  <div class="manage-modal" id="manageModal">
+    <div class="manage-panel">
+      <div class="manage-title">歌单管理</div>
+      <button class="manage-btn" id="importPlaylistBtn">
+        <i class="fa-solid fa-file-import"></i>
+        <span>导入歌单文件</span>
+      </button>
+      <input type="file" id="importFileInput" accept=".json,.txt,application/json" style="display:none;">
+      <button class="manage-btn" id="exportPlaylistBtn">
+        <i class="fa-solid fa-file-export"></i>
+        <span>导出当前歌单</span>
+      </button>
+      <button class="manage-cancel" id="manageCancel">取消</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       新增样式：摸鱼面板
+       ============================================================ -->
+  <style>
+    /* 摸鱼状态悬浮面板 */
+    .fishing-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 500;
+      width: 240px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 12px 40px rgba(0, 20, 30, 0.18);
+      padding: 20px 18px 16px 18px;
+      display: none;
+      text-align: center;
+      animation: popIn 0.22s ease;
+    }
+    .fishing-panel.active { display: block; }
+    .fishing-panel-title {
+      font-size: 13px;
+      color: #8899a6;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .fishing-panel-status {
+      font-size: 16px;
+      color: #333;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .fishing-panel-close {
+      width: 100%;
+      padding: 9px 0;
+      border-radius: 12px;
+      background: #f5f6f8;
+      border: 1px solid #eef1f4;
+      color: #55606b;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .fishing-panel-close:active {
+      background: #e8ecf0;
+      transform: scale(0.97);
+    }
+    .fishing-panel-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 499;
+      background: rgba(20, 30, 40, 0.15);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      display: none;
+    }
+    .fishing-panel-overlay.active { display: block; }
+  </style>
+
+  <!-- 原有脚本 -->
   <script src="./js/card.js"></script>
   <script src="./js/chat.js"></script>
+
+  <!-- ============================================================
+       新增脚本：页面切换、回复设定、编辑资料、角色面板、音乐播放器
+       ============================================================ -->
   <script>
     // ==================== 页面切换 ====================
     (function () {
@@ -2596,6 +2608,7 @@
         showPage(pageHome);
       });
 
+      // 返回主页按钮
       const homeReturnBtn = document.getElementById('homeReturnBtn');
       if (homeReturnBtn) {
         homeReturnBtn.addEventListener('click', function () {
@@ -2623,109 +2636,7 @@
       });
     })();
 
-    // ==================== 音乐播放器 ====================
-    (function () {
-      const audioPlayer = document.getElementById('audioPlayer');
-      const playBtn = document.getElementById('playBtn');
-      const playIcon = document.getElementById('playIcon');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const uploadBtn = document.getElementById('uploadBtn');
-      const songTitle = document.getElementById('songTitle');
-      const songArtist = document.getElementById('songArtist');
-      const albumCover = document.getElementById('albumCover');
-      const albumIcon = document.getElementById('albumIcon');
-
-      if (!audioPlayer || !playBtn) return;
-
-      const playlist = [
-        { title: 'My love', artist: '颜人中', url: '', cover: '' },
-        { title: '起风了', artist: '买辣椒也用券', url: '', cover: '' },
-        { title: '可能', artist: '程响', url: '', cover: '' }
-      ];
-      let currentIndex = 0;
-
-      function loadSong(index) {
-        const song = playlist[index];
-        if (!song) return;
-        songTitle.textContent = song.title;
-        songArtist.textContent = song.artist;
-        if (song.url) {
-          audioPlayer.src = song.url;
-        }
-        if (song.cover) {
-          albumCover.src = song.cover;
-          albumCover.style.display = 'block';
-          albumIcon.style.display = 'none';
-        } else {
-          albumCover.style.display = 'none';
-          albumIcon.style.display = 'block';
-        }
-      }
-
-      function playPause() {
-        if (!audioPlayer.src) {
-          if (playIcon.classList.contains('fa-play')) {
-            playIcon.classList.remove('fa-play');
-            playIcon.classList.add('fa-pause');
-          } else {
-            playIcon.classList.remove('fa-pause');
-            playIcon.classList.add('fa-play');
-          }
-          return;
-        }
-        if (audioPlayer.paused) {
-          audioPlayer.play();
-        } else {
-          audioPlayer.pause();
-        }
-      }
-
-      audioPlayer.addEventListener('play', function () {
-        playIcon.classList.remove('fa-play');
-        playIcon.classList.add('fa-pause');
-      });
-      audioPlayer.addEventListener('pause', function () {
-        playIcon.classList.remove('fa-pause');
-        playIcon.classList.add('fa-play');
-      });
-
-      playBtn.addEventListener('click', playPause);
-
-      prevBtn.addEventListener('click', function () {
-        currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
-        loadSong(currentIndex);
-        if (audioPlayer.src) audioPlayer.play();
-      });
-
-      nextBtn.addEventListener('click', function () {
-        currentIndex = (currentIndex + 1) % playlist.length;
-        loadSong(currentIndex);
-        if (audioPlayer.src) audioPlayer.play();
-      });
-
-      uploadBtn.addEventListener('click', function () {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'audio/*';
-        input.addEventListener('change', function (e) {
-          const file = e.target.files[0];
-          if (!file) return;
-          const url = URL.createObjectURL(file);
-          audioPlayer.src = url;
-          songTitle.textContent = file.name.replace(/\.[^.]+$/, '');
-          songArtist.textContent = '本地文件';
-          albumCover.style.display = 'none';
-          albumIcon.style.display = 'block';
-          audioPlayer.play();
-        });
-        input.click();
-      });
-
-      loadSong(0);
-    })();
-
-    // ==================== 摸鱼面板 ====================
+    // ==================== 摸鱼状态悬浮面板 ====================
     (function () {
       const fishingIcon = document.getElementById('fishingIcon');
       const fishingPanel = document.getElementById('fishingPanel');
@@ -3007,6 +2918,270 @@
       }
 
       loadContacts();
+    })();
+
+    // ==================== 主页音乐播放器 ====================
+    (function () {
+      const audio = document.getElementById('audioPlayer');
+      const songTitle = document.getElementById('songTitle');
+      const songArtist = document.getElementById('songArtist');
+      const playBtn = document.getElementById('playBtn');
+      const playIcon = document.getElementById('playIcon');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const vinylCover = document.getElementById('vinylCover');
+      const uploadBtn = document.getElementById('uploadBtn');
+
+      const playlistSheet = document.getElementById('playlistSheet');
+      const playlistScroll = document.getElementById('playlistScroll');
+      const openManageBtn = document.getElementById('openManageBtn');
+      const searchSongBtn = document.getElementById('searchSongBtn');
+      const openAddBtn = document.getElementById('openAddBtn');
+
+      const addModal = document.getElementById('addModal');
+      const addTitle = document.getElementById('addTitle');
+      const addArtist = document.getElementById('addArtist');
+      const addUrl = document.getElementById('addUrl');
+      const addCancel = document.getElementById('addCancel');
+      const addConfirm = document.getElementById('addConfirm');
+
+      const manageModal = document.getElementById('manageModal');
+      const importPlaylistBtn = document.getElementById('importPlaylistBtn');
+      const exportPlaylistBtn = document.getElementById('exportPlaylistBtn');
+      const importFileInput = document.getElementById('importFileInput');
+      const manageCancel = document.getElementById('manageCancel');
+
+      let playlist = [
+        { title: 'My love', artist: '颜人中', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', cover: 'https://picsum.photos/100/100?random=20', lyric: '我的爱 像风一样 来了又走' },
+        { title: '夜曲', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', cover: 'https://picsum.photos/100/100?random=21', lyric: '一群嗜血的蚂蚁 被腐肉所吸引' },
+        { title: '晴天', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', cover: 'https://picsum.photos/100/100?random=22', lyric: '故事的小黄花 从出生那年就飘着' },
+        { title: '起风了', artist: '买辣椒也用券', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', cover: 'https://picsum.photos/100/100?random=23', lyric: '这一路上走走停停 顺着少年漂流的痕迹' }
+      ];
+
+      let currentSongIndex = 0;
+      let isPlaying = false;
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, function (m) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+      }
+
+      function renderPlaylistSheet() {
+        playlistScroll.innerHTML = '';
+        playlist.forEach(function (song, index) {
+          const row = document.createElement('div');
+          row.className = 'song-row' + (index === currentSongIndex ? ' current' : '');
+          row.innerHTML = `
+            <div class="song-row-info">
+              <div class="song-row-title">${escapeHtml(song.title)}</div>
+              <div class="song-row-artist">${escapeHtml(song.lyric || song.artist)}</div>
+            </div>
+            <div class="song-row-radio"></div>
+          `;
+          row.addEventListener('click', function () {
+            currentSongIndex = index;
+            playSong(index);
+            closePlaylistSheet();
+          });
+          playlistScroll.appendChild(row);
+        });
+      }
+
+      function openPlaylistSheet() {
+        renderPlaylistSheet();
+        playlistSheet.classList.add('active');
+      }
+      function closePlaylistSheet() { playlistSheet.classList.remove('active'); }
+
+      function playSong(index) {
+        if (index < 0 || index >= playlist.length) return;
+        const song = playlist[index];
+        audio.src = song.url;
+        songTitle.textContent = song.title;
+        songArtist.textContent = song.artist;
+        if (song.cover) {
+          const albumCover = document.getElementById('albumCover');
+          const albumIcon = document.getElementById('albumIcon');
+          albumCover.src = song.cover;
+          albumCover.style.display = 'block';
+          albumIcon.style.display = 'none';
+        }
+        audio.play().then(function () {
+          isPlaying = true;
+          playIcon.classList.remove('fa-play');
+          playIcon.classList.add('fa-pause');
+          vinylCover.classList.add('spinning');
+        }).catch(function () {
+          isPlaying = false;
+          playIcon.classList.remove('fa-pause');
+          playIcon.classList.add('fa-play');
+          vinylCover.classList.remove('spinning');
+        });
+        renderPlaylistSheet();
+      }
+
+      playBtn.addEventListener('click', function () {
+        if (!audio.src) { playSong(currentSongIndex); return; }
+        if (isPlaying) {
+          audio.pause();
+          isPlaying = false;
+          playIcon.classList.remove('fa-pause');
+          playIcon.classList.add('fa-play');
+          vinylCover.classList.remove('spinning');
+        } else {
+          audio.play().then(function () {
+            isPlaying = true;
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+            vinylCover.classList.add('spinning');
+          }).catch(function () {});
+        }
+      });
+
+      prevBtn.addEventListener('click', function () {
+        currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+        playSong(currentSongIndex);
+      });
+      nextBtn.addEventListener('click', function () {
+        currentSongIndex = (currentSongIndex + 1) % playlist.length;
+        playSong(currentSongIndex);
+      });
+
+      audio.addEventListener('ended', function () { nextBtn.click(); });
+
+      vinylCover.addEventListener('click', openPlaylistSheet);
+      playlistSheet.addEventListener('click', function (e) {
+        if (e.target === playlistSheet) closePlaylistSheet();
+      });
+
+      uploadBtn.addEventListener('click', function () { openAddModal(); });
+
+      function openAddModal() {
+        addTitle.value = '';
+        addArtist.value = '';
+        addUrl.value = '';
+        addModal.classList.add('active');
+      }
+      function closeAddModal() { addModal.classList.remove('active'); }
+
+      openAddBtn.addEventListener('click', function () {
+        closePlaylistSheet();
+        openAddModal();
+      });
+      addCancel.addEventListener('click', closeAddModal);
+      addModal.addEventListener('click', function (e) {
+        if (e.target === addModal) closeAddModal();
+      });
+
+      addConfirm.addEventListener('click', function () {
+        const title = addTitle.value.trim() || '未命名歌曲';
+        const artist = addArtist.value.trim() || '未知歌手';
+        const url = addUrl.value.trim();
+        if (!url) { alert('请填写音频链接'); return; }
+        playlist.push({
+          title: title,
+          artist: artist,
+          url: url,
+          cover: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
+          lyric: artist
+        });
+        currentSongIndex = playlist.length - 1;
+        playSong(currentSongIndex);
+        closeAddModal();
+        closePlaylistSheet();
+      });
+
+      openManageBtn.addEventListener('click', function () {
+        manageModal.classList.add('active');
+      });
+      manageCancel.addEventListener('click', function () {
+        manageModal.classList.remove('active');
+      });
+      manageModal.addEventListener('click', function (e) {
+        if (e.target === manageModal) manageModal.classList.remove('active');
+      });
+
+      importPlaylistBtn.addEventListener('click', function () { importFileInput.click(); });
+      importFileInput.addEventListener('change', function () {
+        const file = importFileInput.files && importFileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const content = e.target.result;
+            let imported = [];
+            try {
+              const parsed = JSON.parse(content);
+              if (Array.isArray(parsed)) imported = parsed;
+              else if (parsed && Array.isArray(parsed.songs)) imported = parsed.songs;
+            } catch (err) {
+              imported = content.split('\n').filter(function (l) { return l.trim(); }).map(function (line) {
+                const parts = line.split('|').map(function (p) { return p.trim(); });
+                return { title: parts[0] || '未命名', artist: parts[1] || '未知', url: parts[2] || '' };
+              }).filter(function (s) { return s.url; });
+            }
+            const valid = imported.filter(function (s) { return s && s.url; }).map(function (s) {
+              return {
+                title: s.title || '未命名歌曲',
+                artist: s.artist || '未知歌手',
+                url: s.url,
+                cover: s.cover || 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
+                lyric: s.lyric || s.artist || ''
+              };
+            });
+            if (valid.length === 0) { alert('未找到有效歌曲'); return; }
+            playlist = playlist.concat(valid);
+            renderPlaylistSheet();
+            alert('成功导入 ' + valid.length + ' 首歌曲');
+          } catch (err) { alert('导入失败'); }
+          importFileInput.value = '';
+        };
+        reader.readAsText(file);
+      });
+
+      exportPlaylistBtn.addEventListener('click', function () {
+        const data = JSON.stringify({ songs: playlist }, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'playlist.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        manageModal.classList.remove('active');
+      });
+
+      searchSongBtn.addEventListener('click', function () {
+        const keyword = prompt('搜索歌曲名称：');
+        if (keyword) {
+          const found = playlist.findIndex(function (s) { return s.title.indexOf(keyword) >= 0; });
+          if (found >= 0) {
+            currentSongIndex = found;
+            playSong(found);
+            closePlaylistSheet();
+          } else {
+            alert('未找到匹配的歌曲');
+          }
+        }
+      });
+
+      // 初始化
+      if (playlist.length > 0) {
+        songTitle.textContent = playlist[0].title;
+        songArtist.textContent = playlist[0].artist;
+        audio.src = playlist[0].url;
+        const albumCover = document.getElementById('albumCover');
+        const albumIcon = document.getElementById('albumIcon');
+        if (playlist[0].cover) {
+          albumCover.src = playlist[0].cover;
+          albumCover.style.display = 'block';
+          albumIcon.style.display = 'none';
+        }
+      }
     })();
   </script>
 </body>
