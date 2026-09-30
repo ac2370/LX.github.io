@@ -540,6 +540,7 @@
       justify-content: space-between;
       gap: 10px;
       animation: popIn 0.2s ease;
+      transition: background 0.15s ease;
     }
     @keyframes popIn {
       from { opacity: 0; transform: scale(0.96); }
@@ -568,6 +569,97 @@
       transition: background 0.15s ease;
     }
     .word-card-delete:active { background: #f8d8d8; }
+
+    /* 整理模式复选框 */
+    .word-card-checkbox {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      border: 2px solid #cbd4dc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      background: #fff;
+      cursor: pointer;
+      margin-right: 4px;
+    }
+    .word-card-checkbox.checked {
+      background: #f8b4b4;
+      border-color: #f8b4b4;
+    }
+    .word-card-checkbox.checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #fff;
+      font-size: 11px;
+    }
+    .word-card-item.selected {
+      background: #fdf8f8;
+    }
+
+    /* 整理模式底部操作栏 */
+    .organize-bar {
+      display: none;
+      flex-shrink: 0;
+      padding: 12px 16px;
+      background: #ffffff;
+      border-top: 1px solid #eef1f4;
+      box-shadow: 0 -4px 16px rgba(150, 170, 190, 0.08);
+    }
+    .organize-bar.active {
+      display: block;
+    }
+    .organize-bar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .organize-count {
+      font-size: 13px;
+      color: #55606b;
+      font-weight: 600;
+    }
+    .organize-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .organize-btn {
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: #fafbfc;
+      border: 1px solid #eef1f4;
+      font-size: 11px;
+      color: #55606b;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .organize-btn:active {
+      background: #f2f6fa;
+      transform: scale(0.97);
+    }
+    .organize-btn.danger {
+      color: #e58b8b;
+      background: #fdf0f0;
+      border-color: #f8d8d8;
+    }
+    .organize-btn.danger:active {
+      background: #f8d8d8;
+    }
+    .organize-hint {
+      font-size: 11px;
+      color: #b6c2cd;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
 
     .card-list-placeholder {
       text-align: center;
@@ -1574,6 +1666,184 @@
       box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
     }
     .hidden-file-input { display: none; }
+
+    /* 新增：分组弹窗（新建/重命名共用） */
+    .group-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 410;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .group-modal.active { display: flex; }
+    .group-panel {
+      width: 100%;
+      max-width: 360px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 24px 20px;
+      animation: popIn 0.22s ease;
+    }
+    .group-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .group-label {
+      font-size: 12px;
+      color: #8899a6;
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding-left: 2px;
+    }
+    .group-input {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1.5px solid #b8d4ec;
+      background: #fafbfc;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      margin-bottom: 18px;
+    }
+    .group-input:focus {
+      border-color: #8fb8d8;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.25);
+    }
+    .group-input::placeholder { color: #b6c2cd; }
+    .group-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .group-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .group-btn:active { transform: scale(0.97); }
+    .group-btn-cancel {
+      background: #ffffff;
+      color: #55606b;
+      border: 1px solid #eef1f4;
+    }
+    .group-btn-save {
+      background: #e8ecf0;
+      color: #333;
+    }
+    .group-btn-save:active {
+      background: #dce2e8;
+    }
+
+    /* 新增：添加字卡模态框 */
+    .add-card-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 420;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .add-card-modal.active { display: flex; }
+    .add-card-panel {
+      width: 100%;
+      max-width: 380px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 22px 20px;
+      animation: popIn 0.22s ease;
+      position: relative;
+    }
+    .add-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .add-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+    }
+    .add-card-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 9999px;
+      background: #f5f6f8;
+      border: none;
+      color: #55606b;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .add-card-close:active { background: #e8ecf0; }
+    .add-card-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8ee;
+      background: #fafbfc;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+      line-height: 1.5;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .add-card-textarea:focus {
+      border-color: #f8b4b4;
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+    }
+    .add-card-textarea::placeholder { color: #b6c2cd; }
+    .add-card-hint {
+      font-size: 11px;
+      color: #b6c2cd;
+      margin-top: 6px;
+      padding-left: 2px;
+    }
+    .add-card-save {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px 0;
+      border-radius: 16px;
+      background: #f8b4b4;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+      box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+    }
+    .add-card-save:active {
+      transform: scale(0.97);
+      opacity: 0.9;
+    }
   </style>
 </head>
 <body>
@@ -1617,8 +1887,8 @@
         </div>
 
         <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
-          <div class="vinyl-cover w-12 h-12" id="vinylCover">
-            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
+          <div class="vinyl-cover w-12 h-12" id="vinylCover" style="position:relative;border-radius:12px;overflow:hidden;background:#333;display:flex;align-items:center;justify-content:center;">
+            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;width:100%;height:100%;object-fit:cover;">
             <i id="albumIcon" class="fa-solid fa-music text-white/70 text-base"></i>
           </div>
           <div class="flex-1 min-w-0">
@@ -1714,7 +1984,7 @@
     </div>
 
     <div class="card-body">
-      <!-- 分类网格：回复、颜文字、地点、心情、表情包、状态 -->
+      <!-- 分类网格 -->
       <div class="cat-grid-card" id="catGrid">
         <div class="cat-grid-item active" data-cat="reply" id="catReply">
           <i class="fa-regular fa-comment-dots"></i>
@@ -1792,8 +2062,11 @@
 
       <!-- ============ 面板：颜文字 ============ -->
       <div class="cat-panel" id="panel-kaomoji">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="kaomojiOrganizeBtn">
+        <div class="card-action-row" style="flex-direction:row;flex-wrap:nowrap;gap:8px;">
+          <button class="card-action-btn" id="kaomojiAddBtn" style="flex:1;">
+            <i class="fa-solid fa-plus"></i>添加
+          </button>
+          <button class="card-action-btn" id="kaomojiOrganizeBtn" style="flex:1;">
             <i class="fa-solid fa-broom"></i>整理
           </button>
         </div>
@@ -1809,8 +2082,11 @@
 
       <!-- ============ 面板：地点 ============ -->
       <div class="cat-panel" id="panel-place">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="placeOrganizeBtn">
+        <div class="card-action-row" style="flex-direction:row;flex-wrap:nowrap;gap:8px;">
+          <button class="card-action-btn" id="placeAddBtn" style="flex:1;">
+            <i class="fa-solid fa-plus"></i>添加
+          </button>
+          <button class="card-action-btn" id="placeOrganizeBtn" style="flex:1;">
             <i class="fa-solid fa-broom"></i>整理
           </button>
         </div>
@@ -1826,8 +2102,11 @@
 
       <!-- ============ 面板：心情 ============ -->
       <div class="cat-panel" id="panel-mood">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="moodOrganizeBtn">
+        <div class="card-action-row" style="flex-direction:row;flex-wrap:nowrap;gap:8px;">
+          <button class="card-action-btn" id="moodAddBtn" style="flex:1;">
+            <i class="fa-solid fa-plus"></i>添加
+          </button>
+          <button class="card-action-btn" id="moodOrganizeBtn" style="flex:1;">
             <i class="fa-solid fa-broom"></i>整理
           </button>
         </div>
@@ -1916,7 +2195,26 @@
 
     </div>
 
-    <div class="card-status-bar">
+    <!-- 整理模式底部操作栏 -->
+    <div class="organize-bar" id="organizeBar">
+      <div class="organize-bar-top">
+        <span class="organize-count" id="organizeCount">已选 0 条</span>
+        <div class="organize-actions">
+          <button class="organize-btn" id="organizeSelectAll">
+            <i class="fa-solid fa-check-double"></i>全选筛选结果
+          </button>
+          <button class="organize-btn danger" id="organizeDeleteSelected">
+            <i class="fa-solid fa-trash-can"></i>删除所选
+          </button>
+          <button class="organize-btn danger" id="organizeDeleteGroup">
+            <i class="fa-solid fa-trash-can"></i>删除此分组
+          </button>
+        </div>
+      </div>
+      <div class="organize-hint" id="organizeHint">已清理 0 条重复内容</div>
+    </div>
+
+    <div class="card-status-bar" id="cardStatusBar">
       <div class="card-status-counts" id="cardStatusCounts">0 条回复 · 0 个表情 · 0 个地点 · 0 种心情</div>
       <div class="card-status-slogan">SIDE BY SIDE · PRIVATE STUDY · NO REPOST</div>
     </div>
@@ -2235,6 +2533,32 @@
     </div>
   </div>
 
+  <!-- 新增：添加字卡模态框（用于回复添加） -->
+  <div class="add-card-modal" id="addCardModal">
+    <div class="add-card-panel">
+      <div class="add-card-header">
+        <span class="add-card-title">添加字卡</span>
+        <button class="add-card-close" id="addCardCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <textarea class="add-card-textarea" id="addCardTextarea" placeholder="输入字卡内容..."></textarea>
+      <div class="add-card-hint">每行一条，可以一次添加多条。</div>
+      <button class="add-card-save" id="addCardSaveBtn">保存字卡</button>
+    </div>
+  </div>
+
+  <!-- 新增：分组弹窗（新建/重命名共用） -->
+  <div class="group-modal" id="groupModal">
+    <div class="group-panel">
+      <div class="group-title" id="groupModalTitle">新建回复分组</div>
+      <div class="group-label">分组名称</div>
+      <input type="text" class="group-input" id="groupModalInput" placeholder="">
+      <div class="group-actions">
+        <button class="group-btn group-btn-cancel" id="groupModalCancel">取消</button>
+        <button class="group-btn group-btn-save" id="groupModalSave">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script src="./js/card.js"></script>
   <script src="./js/chat.js"></script>
   <script>
@@ -2297,6 +2621,108 @@
           btn.classList.add('active');
         });
       });
+    })();
+
+    // ==================== 音乐播放器 ====================
+    (function () {
+      const audioPlayer = document.getElementById('audioPlayer');
+      const playBtn = document.getElementById('playBtn');
+      const playIcon = document.getElementById('playIcon');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const uploadBtn = document.getElementById('uploadBtn');
+      const songTitle = document.getElementById('songTitle');
+      const songArtist = document.getElementById('songArtist');
+      const albumCover = document.getElementById('albumCover');
+      const albumIcon = document.getElementById('albumIcon');
+
+      if (!audioPlayer || !playBtn) return;
+
+      const playlist = [
+        { title: 'My love', artist: '颜人中', url: '', cover: '' },
+        { title: '起风了', artist: '买辣椒也用券', url: '', cover: '' },
+        { title: '可能', artist: '程响', url: '', cover: '' }
+      ];
+      let currentIndex = 0;
+
+      function loadSong(index) {
+        const song = playlist[index];
+        if (!song) return;
+        songTitle.textContent = song.title;
+        songArtist.textContent = song.artist;
+        if (song.url) {
+          audioPlayer.src = song.url;
+        }
+        if (song.cover) {
+          albumCover.src = song.cover;
+          albumCover.style.display = 'block';
+          albumIcon.style.display = 'none';
+        } else {
+          albumCover.style.display = 'none';
+          albumIcon.style.display = 'block';
+        }
+      }
+
+      function playPause() {
+        if (!audioPlayer.src) {
+          if (playIcon.classList.contains('fa-play')) {
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+          } else {
+            playIcon.classList.remove('fa-pause');
+            playIcon.classList.add('fa-play');
+          }
+          return;
+        }
+        if (audioPlayer.paused) {
+          audioPlayer.play();
+        } else {
+          audioPlayer.pause();
+        }
+      }
+
+      audioPlayer.addEventListener('play', function () {
+        playIcon.classList.remove('fa-play');
+        playIcon.classList.add('fa-pause');
+      });
+      audioPlayer.addEventListener('pause', function () {
+        playIcon.classList.remove('fa-pause');
+        playIcon.classList.add('fa-play');
+      });
+
+      playBtn.addEventListener('click', playPause);
+
+      prevBtn.addEventListener('click', function () {
+        currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+        loadSong(currentIndex);
+        if (audioPlayer.src) audioPlayer.play();
+      });
+
+      nextBtn.addEventListener('click', function () {
+        currentIndex = (currentIndex + 1) % playlist.length;
+        loadSong(currentIndex);
+        if (audioPlayer.src) audioPlayer.play();
+      });
+
+      uploadBtn.addEventListener('click', function () {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'audio/*';
+        input.addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const url = URL.createObjectURL(file);
+          audioPlayer.src = url;
+          songTitle.textContent = file.name.replace(/\.[^.]+$/, '');
+          songArtist.textContent = '本地文件';
+          albumCover.style.display = 'none';
+          albumIcon.style.display = 'block';
+          audioPlayer.play();
+        });
+        input.click();
+      });
+
+      loadSong(0);
     })();
 
     // ==================== 摸鱼面板 ====================
