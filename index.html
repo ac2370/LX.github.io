@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <!-- 主页图片自定义 - 新增样式 -->
+<!-- ============================================================
+     主页图片自定义 - 新增/修正样式
+     ============================================================ -->
 <style>
+  /* 主页设置按钮 */
   .home-settings-btn {
     position: absolute;
     right: 20px;
@@ -26,6 +29,7 @@
   }
   .home-settings-btn:active { transform: scale(0.92); }
 
+  /* 面板 */
   .home-settings-panel {
     position: fixed;
     inset: 0;
@@ -108,7 +112,10 @@
     cursor: pointer;
     transition: all 0.15s ease;
   }
-  .home-settings-tab.active { background: #fdf0f0; color: #e58b8b; }
+  .home-settings-tab.active {
+    background: #fdf0f0;
+    color: #e58b8b;
+  }
   .home-settings-tab:active { transform: scale(0.97); }
 
   .home-settings-body {
@@ -121,7 +128,10 @@
   .home-settings-body::-webkit-scrollbar { display: none; }
 
   .home-settings-tab-panel { display: none; }
-  .home-settings-tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+  .home-settings-tab-panel.active {
+    display: block;
+    animation: fadeIn 0.2s ease;
+  }
 
   .hs-row { margin-bottom: 16px; }
   .hs-label {
@@ -152,7 +162,12 @@
   }
   .hs-input::placeholder { color: #b6c2cd; }
 
-  .hs-file-row { display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+  .hs-file-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+    align-items: center;
+  }
   .hs-file-btn {
     display: inline-flex;
     align-items: center;
@@ -178,12 +193,14 @@
     flex: 1;
     min-width: 0;
   }
+
   .hs-hint {
     font-size: 11px;
     color: #a8b4c0;
     line-height: 1.6;
     padding: 8px 4px 4px 4px;
   }
+
   .hs-reset-btn {
     width: 100%;
     padding: 10px 0;
@@ -201,7 +218,10 @@
     justify-content: center;
     gap: 5px;
   }
-  .hs-reset-btn:active { background: #f2f6fa; transform: scale(0.98); }
+  .hs-reset-btn:active {
+    background: #f2f6fa;
+    transform: scale(0.98);
+  }
 
   .home-settings-footer {
     flex-shrink: 0;
