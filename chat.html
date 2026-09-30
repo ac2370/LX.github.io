@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>传讯 · Ta</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 顶栏 */
+    .chat-header {
+      flex-shrink: 0;
+      padding: 14px 16px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #fafbfc;
+      border-bottom: 1px solid #eef1f4;
+    }
+    .chat-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 2px solid #e8eef4;
+      box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+    }
+    .chat-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-top: 8px;
+    }
+    .chat-actions {
+      display: flex;
+      gap: 22px;
+      margin-top: 12px;
+    }
+    .chat-action-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8fb8d8;
+      font-size: 17px;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    .chat-action-icon:active {
+      transform: scale(0.9);
+      color: #6fa3cc;
+    }
+
+    /* 消息展示区 */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 24px 16px;
+      background: #ffffff;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: relative;
+    }
+    .chat-messages::-webkit-scrollbar { display: none; }
+
+    /* 急救按钮 */
+    .sos-btn {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 30;
+      width: 46px;
+      height: 46px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #f5a3a3;
+      color: #e57373;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .sos-btn:active {
+      transform: translateY(-50%) scale(0.94);
+      background: rgba(255, 245, 245, 1);
+    }
+    .sos-btn i {
+      font-size: 14px;
+      margin-bottom: 1px;
+    }
+
+    /* 消息气泡 */
+    .message-row {
+      display: flex;
+      margin-bottom: 14px;
+    }
+    .message-row.self {
+      justify-content: flex-end;
+    }
+    .message-row.other {
+      justify-content: flex-start;
+    }
+    .message-bubble {
+      max-width: 72%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.45;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    .message-row.self .message-bubble {
+      background: #d8ecfb;
+      color: #1a3a52;
+      border-bottom-right-radius: 4px;
+    }
+    .message-row.other .message-bubble {
+      background: #f3f5f7;
+      color: #333;
+      border-bottom-left-radius: 4px;
+    }
+
+    /* 底部输入栏 */
+    .chat-input-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border-top: 1px solid #eef1f4;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    .input-left-icons {
+      display: flex;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .input-left-icons i {
+      color: #8fa8bd;
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    .input-left-icons i:active {
+      color: #6a8ca8;
+      transform: scale(0.92);
+    }
+    .chat-input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      border-radius: 22px;
+      border: 1px solid #e2e8ee;
+      background: #ffffff;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .chat-input::placeholder {
+      color: #b6c2cd;
+    }
+    .chat-input:focus {
+      border-color: #b8d4ec;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
+    }
+    .send-btn {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background: #6fb1e8;
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+      box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
+    }
+    .send-btn:active {
+      transform: scale(0.92);
+      background: #5a9ed6;
+    }
+    .send-btn:disabled {
+      background: #c6d9ea;
+      box-shadow: none;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶栏 -->
+  <div class="chat-header">
+    <img class="chat-avatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
+    <div class="chat-name">Ta</div>
+    <div class="chat-actions">
+      <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
+      <div class="chat-action-icon" title="电话"><i class="fa-solid fa-phone"></i></div>
+      <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
+      <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
+      <div class="chat-action-icon" title="更多"><i class="fa-solid fa-ellipsis"></i></div>
+    </div>
+  </div>
+
+  <!-- 消息展示区 -->
+  <div class="chat-messages" id="chatMessages">
+    <!-- 初始欢迎消息 -->
+    <div class="message-row other">
+      <div class="message-bubble">你好呀，我是 Ta 👋</div>
+    </div>
+  </div>
+
+  <!-- 急救按钮 -->
+  <div class="sos-btn" id="sosBtn" title="急救">
+    <i class="fa-solid fa-kit-medical"></i>
+    <span>急救</span>
+  </div>
+
+  <!-- 底部输入栏 -->
+  <div class="chat-input-bar">
+    <div class="input-left-icons">
+      <i class="fa-regular fa-images" title="相册"></i>
+      <i class="fa-regular fa-image" title="图片"></i>
+      <i class="fa-regular fa-face-smile" title="表情"></i>
+    </div>
+    <input type="text" class="chat-input" id="chatInput" placeholder="输入消息...">
+    <button class="send-btn" id="sendBtn" disabled>
+      <i class="fa-solid fa-arrow-up"></i>
+    </button>
+  </div>
+
+  <script src="./js/chat.js"></script>
+</body>
+</html>
