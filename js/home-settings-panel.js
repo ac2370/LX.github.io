@@ -1,8 +1,7 @@
 /**
- * 主页图片自定义设置面板（独立模块）
- * - 动态注入设置按钮和面板
- * - 不修改任何现有 HTML 结构
- * - 只挂在主页 #pageHome 上
+ * 主页图片自定义设置面板（独立模块 - 修正版）
+ * - 新增"头像下的底图"设置项
+ * - 上传文件使用 Blob/DataURL，保持原图清晰
  */
 
 (function () {
@@ -10,7 +9,6 @@
 
   // ==================== 创建设置按钮 ====================
   function createSettingsButton() {
-    // 防止重复创建
     if (document.getElementById('homeSettingsBtn')) return;
 
     var btn = document.createElement('button');
@@ -19,15 +17,10 @@
     btn.title = '自定义主页图片';
     btn.innerHTML = '<i class="fa-solid fa-palette"></i>';
 
-    // 挂在主页容器内（只出现在主页）
     var pageHome = document.getElementById('pageHome');
-    if (pageHome) {
-      pageHome.appendChild(btn);
-    }
+    if (pageHome) pageHome.appendChild(btn);
 
-    btn.addEventListener('click', function () {
-      openPanel();
-    });
+    btn.addEventListener('click', openPanel);
   }
 
   // ==================== 创建设置面板 ====================
@@ -48,7 +41,9 @@
       '    <button class="home-settings-tab" data-tab="chat">传讯背景</button>',
       '  </div>',
       '  <div class="home-settings-body">',
+      // ============ 主页 Tab ============
       '    <div class="home-settings-tab-panel active" data-panel="home">',
+      // 背景图
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-mountain-sun"></i>主页背景图</div>',
       '        <input type="text" class="hs-input" id="hsBgUrl" placeholder="粘贴图片 URL">',
@@ -58,6 +53,7 @@
       '          <span class="hs-file-name" id="hsBgName">未选择文件</span>',
       '        </div>',
       '      </div>',
+      // 头像
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-user"></i>头像</div>',
       '        <input type="text" class="hs-input" id="hsAvatarUrl" placeholder="粘贴图片 URL">',
@@ -67,6 +63,17 @@
       '          <span class="hs-file-name" id="hsAvatarName">未选择文件</span>',
       '        </div>',
       '      </div>',
+      // 头像下的底图（新增）
+      '      <div class="hs-row">',
+      '        <div class="hs-label"><i class="fa-solid fa-id-card"></i>头像下的底图</div>',
+      '        <input type="text" class="hs-input" id="hsHeaderBgUrl" placeholder="粘贴图片 URL">',
+      '        <div class="hs-file-row">',
+      '          <label class="hs-file-btn" for="hsHeaderBgFile"><i class="fa-solid fa-upload"></i>上传文件</label>',
+      '          <input type="file" id="hsHeaderBgFile" accept="image/*" style="display:none;">',
+      '          <span class="hs-file-name" id="hsHeaderBgName">未选择文件</span>',
+      '        </div>',
+      '      </div>',
+      // 展示图1
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-image"></i>展示图 1</div>',
       '        <input type="text" class="hs-input" id="hsPhoto1Url" placeholder="粘贴图片 URL">',
@@ -76,6 +83,7 @@
       '          <span class="hs-file-name" id="hsPhoto1Name">未选择文件</span>',
       '        </div>',
       '      </div>',
+      // 展示图2
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-image"></i>展示图 2</div>',
       '        <input type="text" class="hs-input" id="hsPhoto2Url" placeholder="粘贴图片 URL">',
@@ -85,6 +93,7 @@
       '          <span class="hs-file-name" id="hsPhoto2Name">未选择文件</span>',
       '        </div>',
       '      </div>',
+      // 展示图3
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-image"></i>展示图 3</div>',
       '        <input type="text" class="hs-input" id="hsPhoto3Url" placeholder="粘贴图片 URL">',
@@ -94,6 +103,7 @@
       '          <span class="hs-file-name" id="hsPhoto3Name">未选择文件</span>',
       '        </div>',
       '      </div>',
+      // 音乐黑胶
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-music"></i>音乐黑胶封面</div>',
       '        <input type="text" class="hs-input" id="hsAlbumUrl" placeholder="粘贴图片 URL">',
@@ -104,6 +114,7 @@
       '        </div>',
       '      </div>',
       '    </div>',
+      // ============ 传讯背景 Tab ============
       '    <div class="home-settings-tab-panel" data-panel="chat">',
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-comment-dots"></i>传讯背景图</div>',
@@ -126,7 +137,6 @@
     ].join('');
 
     document.body.appendChild(panel);
-
     bindPanelEvents();
   }
 
@@ -135,7 +145,6 @@
     var panel = document.getElementById('homeSettingsPanel');
     if (!panel) return;
 
-    // 关闭
     var closeBtn = document.getElementById('homeSettingsClose');
     if (closeBtn) closeBtn.addEventListener('click', closePanel);
 
@@ -159,30 +168,33 @@
       });
     });
 
-    // 文件选择预览（不立即应用，等保存）
-    var pendingFiles = {};
+    // 上传文件：立即应用（保持清晰）
+    var pending = {};
+
     function bindFile(inputId, nameId, key) {
       var input = document.getElementById(inputId);
       var nameEl = document.getElementById(nameId);
       if (!input) return;
       input.addEventListener('change', function () {
         var file = input.files && input.files[0];
-        if (file) {
-          nameEl.textContent = file.name;
-          var reader = new FileReader();
-          reader.onload = function (e) {
-            pendingFiles[key] = e.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
+        if (!file) {
           nameEl.textContent = '未选择文件';
-          delete pendingFiles[key];
+          delete pending[key];
+          return;
+        }
+        nameEl.textContent = file.name;
+        // 立即处理文件（保持清晰度，不做压缩）
+        if (window.homeSettings && window.homeSettings.setFile) {
+          window.homeSettings.setFile(key, file, function () {
+            console.log('[home-settings] 已应用 ' + key);
+          });
         }
       });
     }
 
     bindFile('hsBgFile', 'hsBgName', 'bg');
     bindFile('hsAvatarFile', 'hsAvatarName', 'avatar');
+    bindFile('hsHeaderBgFile', 'hsHeaderBgName', 'headerBg');
     bindFile('hsPhoto1File', 'hsPhoto1Name', 'photo1');
     bindFile('hsPhoto2File', 'hsPhoto2Name', 'photo2');
     bindFile('hsPhoto3File', 'hsPhoto3Name', 'photo3');
@@ -193,52 +205,47 @@
     var resetChatBg = document.getElementById('hsChatBgReset');
     if (resetChatBg) {
       resetChatBg.addEventListener('click', function () {
-        pendingFiles.chatBg = null;
+        if (window.homeSettings) {
+          window.homeSettings.reset('chatBg');
+        }
         var urlInput = document.getElementById('hsChatBgUrl');
         if (urlInput) urlInput.value = '';
         var nameEl = document.getElementById('hsChatBgName');
         if (nameEl) nameEl.textContent = '未选择文件';
-        window.homeSettings.set('chatBg', null);
       });
     }
 
-    // 保存
+    // 保存（主要处理 URL 输入）
     var saveBtn = document.getElementById('homeSettingsSave');
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
         var updates = {};
 
-        // 优先使用本地文件（pendingFiles），否则用 URL 输入
-        function pick(fileKey, urlId) {
-          if (pendingFiles[fileKey]) return pendingFiles[fileKey];
-          var urlEl = document.getElementById(urlId);
-          if (urlEl && urlEl.value.trim()) return urlEl.value.trim();
+        function pickUrl(id) {
+          var el = document.getElementById(id);
+          if (el && el.value.trim()) return el.value.trim();
           return undefined;
         }
 
-        var bg = pick('bg', 'hsBgUrl');
-        if (bg !== undefined) updates.bg = bg;
+        var urlMap = {
+          bg: 'hsBgUrl',
+          avatar: 'hsAvatarUrl',
+          headerBg: 'hsHeaderBgUrl',
+          photo1: 'hsPhoto1Url',
+          photo2: 'hsPhoto2Url',
+          photo3: 'hsPhoto3Url',
+          album: 'hsAlbumUrl',
+          chatBg: 'hsChatBgUrl'
+        };
 
-        var avatar = pick('avatar', 'hsAvatarUrl');
-        if (avatar !== undefined) updates.avatar = avatar;
+        Object.keys(urlMap).forEach(function (key) {
+          var v = pickUrl(urlMap[key]);
+          if (v !== undefined) {
+            updates[key] = v;
+          }
+        });
 
-        var p1 = pick('photo1', 'hsPhoto1Url');
-        if (p1 !== undefined) updates.photo1 = p1;
-
-        var p2 = pick('photo2', 'hsPhoto2Url');
-        if (p2 !== undefined) updates.photo2 = p2;
-
-        var p3 = pick('photo3', 'hsPhoto3Url');
-        if (p3 !== undefined) updates.photo3 = p3;
-
-        var album = pick('album', 'hsAlbumUrl');
-        if (album !== undefined) updates.album = album;
-
-        var chatBg = pick('chatBg', 'hsChatBgUrl');
-        if (chatBg !== undefined) updates.chatBg = chatBg;
-        else if (pendingFiles.chatBg === null) updates.chatBg = null;
-
-        if (window.homeSettings) {
+        if (window.homeSettings && Object.keys(updates).length > 0) {
           window.homeSettings.setMany(updates);
         }
 
@@ -253,7 +260,6 @@
     var panel = document.getElementById('homeSettingsPanel');
     if (!panel) return;
 
-    // 用当前值填充输入框
     var cur = window.homeSettings ? window.homeSettings.current : {};
 
     function setVal(id, val) {
@@ -263,14 +269,14 @@
 
     setVal('hsBgUrl', cur.bg);
     setVal('hsAvatarUrl', cur.avatar);
+    setVal('hsHeaderBgUrl', cur.headerBg);
     setVal('hsPhoto1Url', cur.photo1);
     setVal('hsPhoto2Url', cur.photo2);
     setVal('hsPhoto3Url', cur.photo3);
     setVal('hsAlbumUrl', cur.album);
     setVal('hsChatBgUrl', cur.chatBg);
 
-    // 重置文件名
-    ['hsBgName', 'hsAvatarName', 'hsPhoto1Name', 'hsPhoto2Name', 'hsPhoto3Name', 'hsAlbumName', 'hsChatBgName'].forEach(function (id) {
+    ['hsBgName', 'hsAvatarName', 'hsHeaderBgName', 'hsPhoto1Name', 'hsPhoto2Name', 'hsPhoto3Name', 'hsAlbumName', 'hsChatBgName'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.textContent = '未选择文件';
     });
@@ -286,7 +292,6 @@
   // ==================== 初始化 ====================
   function init() {
     createSettingsButton();
-    // 预创建面板（隐藏状态），确保事件绑定
     createSettingsPanel();
   }
 
