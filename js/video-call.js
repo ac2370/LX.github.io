@@ -1,9 +1,9 @@
 /**
  * 模拟视频通话（独立模块）
- * - 呼叫/接听/挂断
- * - 概率：接通 30%，未接通 70%
- * - 对方主动来电：每 30 秒随机判断一次，30% 概率
- * - 通话记录自动写入聊天界面
+ * - 呼叫概率：接通 30%，挂断 70%
+ * - 主动来电：每 30 秒判断一次，30% 概率触发
+ * - 聊天记录生成
+ * - 完全独立，不影响任何现有逻辑
  */
 
 (function () {
@@ -13,53 +13,32 @@
   if (!chatMessages) return;
 
   // ==================== 状态 ====================
-  var callState = 'idle'; // 'idle' | 'calling' | 'connected' | 'ringing'
-  var callTimer = null;
-  var callSeconds = 0;
-  var bannerTimer = null;
-  var incomingTimer = null;
+  var callState = {
+    active: false,       // 是否在通话/等待中
+    timer: null,         // 计时器
+    seconds: 0,
+    callType: 'outgoing', // 'outgoing' | 'incoming'
+    modal: null,
+    banner: null,
+    incomingTimer: null  // 主动来电定时器
+  };
 
   // ==================== 工具 ====================
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function (m) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-    });
-  }
-
   function formatTime(sec) {
-    var m = Math.floor(sec / 60).toString().padStart(2, '0');
-    var s = (sec % 60).toString().padStart(2, '0');
-    return m + ':' + s;
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
   }
 
   function getMyAvatar() {
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
-    if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
-      return window.homeSettings.current.avatar;
-    }
-    try {
-      var raw = localStorage.getItem('home_custom_images');
-      if (raw) {
-        var data = JSON.parse(raw);
-        if (data && data.avatar) return data.avatar;
-      }
-    } catch (e) {}
     return 'https://picsum.photos/100/100?random=1';
   }
 
   function getContactAvatar() {
     var chatAvatar = document.getElementById('chatAvatar');
     if (chatAvatar && chatAvatar.src) return chatAvatar.src;
-    try {
-      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var currentId = localStorage.getItem('my_current_contact');
-      if (Array.isArray(contacts)) {
-        var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
-        if (cur && cur.avatar) return cur.avatar;
-      }
-    } catch (e) {}
     return 'https://picsum.photos/200/200?random=99';
   }
 
@@ -69,282 +48,288 @@
     return 'Ta';
   }
 
-  // ==================== 滚动到底部 ====================
-  function scrollToBottom() {
+  // ==================== 添加聊天记录 ====================
+  function addCallRecord(text) {
+    var row = document.createElement('div');
+    row.className = 'message-row call-record';
+
+    var record = document.createElement('div');
+    record.className = 'call-record-bubble';
+    record.innerHTML = '<i class="fa-solid fa-video"></i> ' + text;
+
+    row.appendChild(record);
+    chatMessages.appendChild(row);
+
+    // 滚动到底部
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
 
-  // ==================== 写入通话记录 ====================
-  function addCallRecord(text) {
-    var row = document.createElement('div');
-    row.className = 'message-row other';
-
-    var bubble = document.createElement('div');
-    bubble.className = 'message-bubble call-record-bubble';
-    bubble.innerHTML = '<i class="fa-solid fa-video"></i> ' + escapeHtml(text);
-
-    row.appendChild(bubble);
-
-    // 加对方头像
-    var avatar = document.createElement('img');
-    avatar.className = 'chat-msg-avatar';
-    avatar.src = getContactAvatar();
-    avatar.alt = '对方';
-    avatar.onerror = function () {
-      avatar.src = 'https://picsum.photos/200/200?random=99';
-    };
-    row.insertBefore(avatar, row.firstChild);
-
-    chatMessages.appendChild(row);
-    scrollToBottom();
-  }
-
-  // ==================== 呼叫弹窗 ====================
+  // ==================== 创建呼叫弹窗 ====================
   function createCallModal() {
-    if (document.getElementById('callModal')) return;
+    if (callState.modal) return callState.modal;
 
     var modal = document.createElement('div');
-    modal.id = 'callModal';
-    modal.className = 'call-modal';
+    modal.id = 'videoCallModal';
+    modal.className = 'video-call-modal';
     modal.innerHTML =
-      '<div class="call-modal-inner">' +
-      '  <div class="call-avatar-wrap">' +
-      '    <img class="call-avatar" id="callAvatar" src="" alt="对方">' +
-      '    <div class="call-avatar-pulse"></div>' +
+      '<div class="video-call-panel">' +
+      '  <div class="video-call-avatar-wrap">' +
+      '    <img class="video-call-avatar" id="callAvatar" src="" alt="对方">' +
       '  </div>' +
-      '  <div class="call-name" id="callName">Ta</div>' +
-      '  <div class="call-status" id="callStatus">正在等待对方接听...</div>' +
-      '  <div class="call-timer" id="callTimer">00:00</div>' +
-      '  <div class="call-actions">' +
-      '    <button class="call-btn call-btn-cancel" id="callCancelBtn" title="取消">' +
-      '      <i class="fa-solid fa-xmark"></i>' +
+      '  <div class="video-call-name" id="callName">Ta</div>' +
+      '  <div class="video-call-status" id="callStatus">正在等待对方接听...</div>' +
+      '  <div class="video-call-timer" id="callTimer">00:00</div>' +
+      '  <div class="video-call-actions" id="callActions">' +
+      '    <button class="video-call-btn video-call-cancel" id="callCancelBtn">' +
+      '      <i class="fa-solid fa-xmark"></i><span>取消</span>' +
       '    </button>' +
-      '    <button class="call-btn call-btn-hangup" id="callHangupBtn" title="挂断">' +
-      '      <i class="fa-solid fa-phone-slash"></i>' +
+      '    <button class="video-call-btn video-call-hangup" id="callHangupBtn">' +
+      '      <i class="fa-solid fa-phone-slash"></i><span>挂断</span>' +
       '    </button>' +
       '  </div>' +
       '</div>';
 
     document.body.appendChild(modal);
+    callState.modal = modal;
 
-    document.getElementById('callCancelBtn').addEventListener('click', onCancelCall);
-    document.getElementById('callHangupBtn').addEventListener('click', onHangupCall);
+    document.getElementById('callCancelBtn').addEventListener('click', function () {
+      onCancel();
+    });
+    document.getElementById('callHangupBtn').addEventListener('click', function () {
+      onHangup();
+    });
 
-    // 点击遮罩不关闭（防止误触）
+    return modal;
   }
 
   // ==================== 打开呼叫弹窗 ====================
-  function openCallModal() {
-    createCallModal();
-    var modal = document.getElementById('callModal');
-    modal.classList.add('active');
-
-    // 设置头像和名字
+  function openCallModal(callType) {
+    var modal = createCallModal();
     var avatarEl = document.getElementById('callAvatar');
-    avatarEl.src = getContactAvatar();
-    avatarEl.onerror = function () {
-      avatarEl.src = 'https://picsum.photos/200/200?random=99';
-    };
-    document.getElementById('callName').textContent = getContactName();
+    var nameEl = document.getElementById('callName');
+    var statusEl = document.getElementById('callStatus');
+    var timerEl = document.getElementById('callTimer');
 
-    // 重置状态
-    document.getElementById('callStatus').textContent = '正在等待对方接听...';
-    document.getElementById('callTimer').textContent = '00:00';
-    callSeconds = 0;
+    avatarEl.src = getContactAvatar();
+    nameEl.textContent = getContactName();
+    statusEl.textContent = callType === 'incoming' ? '来电中...' : '正在等待对方接听...';
+    timerEl.textContent = '00:00';
+
+    // 重置按钮显示
+    document.getElementById('callCancelBtn').style.display = callType === 'incoming' ? 'none' : 'flex';
+    document.getElementById('callHangupBtn').querySelector('span').textContent = callType === 'incoming' ? '接听' : '挂断';
+
+    modal.classList.add('active');
+    callState.callType = callType;
   }
 
   function closeCallModal() {
-    var modal = document.getElementById('callModal');
-    if (modal) modal.classList.remove('active');
-    if (callTimer) {
-      clearInterval(callTimer);
-      callTimer = null;
+    if (callState.modal) {
+      callState.modal.classList.remove('active');
     }
   }
 
-  // ==================== 开始呼叫 ====================
-  function startCall() {
-    if (callState !== 'idle') return;
-    callState = 'calling';
-    openCallModal();
-
-    // 开始计时（等待接听时的计时）
-    callTimer = setInterval(function () {
-      callSeconds++;
-      var timerEl = document.getElementById('callTimer');
-      if (timerEl) timerEl.textContent = formatTime(callSeconds);
+  // ==================== 开始计时 ====================
+  function startTimer() {
+    callState.seconds = 0;
+    var timerEl = document.getElementById('callTimer');
+    if (callState.timer) clearInterval(callState.timer);
+    callState.timer = setInterval(function () {
+      callState.seconds++;
+      if (timerEl) timerEl.textContent = formatTime(callState.seconds);
     }, 1000);
-
-    // 3 秒后随机判断是否接通
-    setTimeout(function () {
-      if (callState !== 'calling') return;
-
-      var isConnected = Math.random() < 0.3; // 30% 接通
-
-      if (isConnected) {
-        callState = 'connected';
-        var statusEl = document.getElementById('callStatus');
-        if (statusEl) statusEl.textContent = '正在通话中...';
-        // 计时器继续
-      } else {
-        // 未接通：保持等待，用户可手动挂断
-        var statusEl2 = document.getElementById('callStatus');
-        if (statusEl2) statusEl2.textContent = '对方暂时没有接听...';
-      }
-    }, 3000);
   }
 
-  // ==================== 用户取消 ====================
-  function onCancelCall() {
-    if (callState === 'idle') {
+  function stopTimer() {
+    if (callState.timer) {
+      clearInterval(callState.timer);
+      callState.timer = null;
+    }
+  }
+
+  // ==================== 处理取消 ====================
+  function onCancel() {
+    stopTimer();
+    closeCallModal();
+    callState.active = false;
+    addCallRecord('视频通话 · 已取消');
+  }
+
+  // ==================== 处理挂断 ====================
+  function onHangup() {
+    // 如果当前是来电状态，点击挂断 = 拒绝
+    if (callState.callType === 'incoming' && document.getElementById('callHangupBtn').querySelector('span').textContent === '接听') {
+      // 来电界面：点击挂断 = 拒接
+      stopTimer();
       closeCallModal();
+      callState.active = false;
+      addCallRecord('视频通话 · 未接来电');
       return;
     }
-    closeCallModal();
-    addCallRecord('视频通话 · 已取消');
-    callState = 'idle';
-  }
 
-  // ==================== 用户挂断 ====================
-  function onHangupCall() {
-    if (callState === 'calling') {
-      // 未接通状态挂断
-      closeCallModal();
-      addCallRecord('视频通话 · 对方暂时没有接听');
-      callState = 'idle';
-    } else if (callState === 'connected') {
-      // 已接通挂断
-      var duration = formatTime(callSeconds);
-      closeCallModal();
-      addCallRecord('视频通话 · 已结束 · ' + duration);
-      callState = 'idle';
+    stopTimer();
+    var wasConnected = document.getElementById('callStatus').textContent === '正在通话中';
+    var duration = callState.seconds;
+    closeCallModal();
+    callState.active = false;
+
+    if (wasConnected) {
+      addCallRecord('视频通话 · 已结束 · ' + formatTime(duration));
     } else {
-      closeCallModal();
-      callState = 'idle';
+      addCallRecord('视频通话 · 对方暂时没有接听');
     }
   }
 
-  // ==================== 对方来电横幅 ====================
+  // ==================== 发起呼叫 ====================
+  function startCall() {
+    if (callState.active) return;
+    callState.active = true;
+    callState.callType = 'outgoing';
+
+    openCallModal('outgoing');
+    startTimer();
+
+    // 随机 1.5-3 秒后判断是否接通
+    var waitTime = 1500 + Math.random() * 1500;
+    setTimeout(function () {
+      if (!callState.active) return; // 用户已取消
+
+      // 30% 概率接通
+      if (Math.random() < 0.30) {
+        // 接通
+        var statusEl = document.getElementById('callStatus');
+        if (statusEl) statusEl.textContent = '正在通话中';
+      }
+      // 70% 概率不接通，保持原样"正在等待对方接听..."
+    }, waitTime);
+  }
+
+  // ==================== 主动来电横幅 ====================
   function createIncomingBanner() {
-    if (document.getElementById('incomingBanner')) return;
+    if (callState.banner) return callState.banner;
 
     var banner = document.createElement('div');
     banner.id = 'incomingBanner';
     banner.className = 'incoming-banner';
     banner.innerHTML =
-      '<img class="incoming-avatar" id="incomingAvatar" src="" alt="对方">' +
-      '<div class="incoming-info">' +
-      '  <div class="incoming-name" id="incomingName">Ta</div>' +
-      '  <div class="incoming-sub">邀请你视频通话...</div>' +
+      '<div class="incoming-banner-avatar-wrap">' +
+      '  <img class="incoming-banner-avatar" id="bannerAvatar" src="" alt="对方">' +
       '</div>' +
-      '<div class="incoming-actions">' +
-      '  <button class="incoming-btn incoming-accept" id="incomingAccept" title="接听">' +
-      '    <i class="fa-solid fa-video"></i>' +
+      '<div class="incoming-banner-info">' +
+      '  <div class="incoming-banner-name" id="bannerName">Ta</div>' +
+      '  <div class="incoming-banner-text"><i class="fa-solid fa-video"></i> 来电</div>' +
+      '</div>' +
+      '<div class="incoming-banner-actions">' +
+      '  <button class="incoming-banner-btn incoming-banner-accept" id="bannerAcceptBtn">' +
+      '    <i class="fa-solid fa-phone"></i>' +
       '  </button>' +
-      '  <button class="incoming-btn incoming-reject" id="incomingReject" title="挂断">' +
+      '  <button class="incoming-banner-btn incoming-banner-decline" id="bannerDeclineBtn">' +
       '    <i class="fa-solid fa-phone-slash"></i>' +
       '  </button>' +
       '</div>';
 
     document.body.appendChild(banner);
+    callState.banner = banner;
 
-    document.getElementById('incomingAccept').addEventListener('click', onAcceptIncoming);
-    document.getElementById('incomingReject').addEventListener('click', onRejectIncoming);
+    document.getElementById('bannerAcceptBtn').addEventListener('click', function () {
+      hideIncomingBanner();
+      // 进入通话
+      callState.active = true;
+      callState.callType = 'incoming';
+      openCallModal('incoming');
+      // 更新状态为通话中
+      var statusEl = document.getElementById('callStatus');
+      if (statusEl) statusEl.textContent = '正在通话中';
+      startTimer();
+      // 修改挂断按钮文案为"挂断"
+      var hangupBtn = document.getElementById('callHangupBtn');
+      if (hangupBtn) {
+        hangupBtn.querySelector('span').textContent = '挂断';
+      }
+    });
+
+    document.getElementById('bannerDeclineBtn').addEventListener('click', function () {
+      hideIncomingBanner();
+      addCallRecord('视频通话 · 未接来电');
+    });
+
+    return banner;
   }
 
   function showIncomingBanner() {
-    if (callState !== 'idle') return; // 正在通话中不弹
-    createIncomingBanner();
-    var banner = document.getElementById('incomingBanner');
-    var avatarEl = document.getElementById('incomingAvatar');
+    var banner = createIncomingBanner();
+    var avatarEl = document.getElementById('bannerAvatar');
+    var nameEl = document.getElementById('bannerName');
     avatarEl.src = getContactAvatar();
-    avatarEl.onerror = function () {
-      avatarEl.src = 'https://picsum.photos/200/200?random=99';
-    };
-    document.getElementById('incomingName').textContent = getContactName();
+    nameEl.textContent = getContactName();
     banner.classList.add('active');
-    callState = 'ringing';
 
-    // 10 秒自动挂断
-    bannerTimer = setTimeout(function () {
-      if (callState === 'ringing') {
+    // 8 秒后自动消失（模拟对方挂断）
+    var autoTimeout = setTimeout(function () {
+      if (banner.classList.contains('active')) {
         hideIncomingBanner();
         addCallRecord('视频通话 · 未接来电');
-        callState = 'idle';
       }
-    }, 10000);
+    }, 8000);
+
+    // 保存 timeout id，hide 时清除
+    banner.dataset.autoTimeout = autoTimeout;
   }
 
   function hideIncomingBanner() {
-    var banner = document.getElementById('incomingBanner');
-    if (banner) banner.classList.remove('active');
-    if (bannerTimer) {
-      clearTimeout(bannerTimer);
-      bannerTimer = null;
+    var banner = callState.banner;
+    if (!banner) return;
+    banner.classList.remove('active');
+    if (banner.dataset.autoTimeout) {
+      clearTimeout(parseInt(banner.dataset.autoTimeout, 10));
+      delete banner.dataset.autoTimeout;
     }
   }
 
-  function onAcceptIncoming() {
-    hideIncomingBanner();
-    callState = 'idle';
-    // 进入通话界面
-    startCallAsReceiver();
+  // ==================== 绑定视频通话图标 ====================
+  function bindVideoCallIcon() {
+    var icons = document.querySelectorAll('.chat-action-icon[title="视频通话"]');
+    icons.forEach(function (icon) {
+      if (icon.dataset.videoBound) return;
+      icon.dataset.videoBound = '1';
+      icon.addEventListener('click', function (e) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        startCall();
+      }, true);
+    });
   }
 
-  function onRejectIncoming() {
-    hideIncomingBanner();
-    addCallRecord('视频通话 · 未接来电');
-    callState = 'idle';
-  }
+  // ==================== 主动来电定时器 ====================
+  function startIncomingTimer() {
+    if (callState.incomingTimer) clearInterval(callState.incomingTimer);
+    callState.incomingTimer = setInterval(function () {
+      // 如果当前正在通话中或已有横幅，不触发
+      if (callState.active) return;
+      if (callState.banner && callState.banner.classList.contains('active')) return;
 
-  // ==================== 作为接收方进入通话 ====================
-  function startCallAsReceiver() {
-    callState = 'connected';
-    openCallModal();
-    document.getElementById('callStatus').textContent = '正在通话中...';
-    callSeconds = 0;
-    document.getElementById('callTimer').textContent = '00:00';
-    if (callTimer) clearInterval(callTimer);
-    callTimer = setInterval(function () {
-      callSeconds++;
-      var timerEl = document.getElementById('callTimer');
-      if (timerEl) timerEl.textContent = formatTime(callSeconds);
-    }, 1000);
-  }
-
-  // ==================== 后台随机来电判断 ====================
-  function startIncomingChecker() {
-    if (incomingTimer) clearInterval(incomingTimer);
-    incomingTimer = setInterval(function () {
-      if (callState !== 'idle') return;
-      // 30% 概率来电
-      if (Math.random() < 0.3) {
+      // 30% 概率触发来电
+      if (Math.random() < 0.30) {
         showIncomingBanner();
       }
     }, 30000); // 每 30 秒判断一次
-  }
 
-  // ==================== 绑定视频通话图标 ====================
-  function bindVideoIcon() {
-    // 找到传讯页面的视频通话图标
-    var videoIcon = document.querySelector('#pageChat .chat-action-icon[title="视频通话"]');
-    if (!videoIcon) return;
-    if (videoIcon.dataset.videoBound) return;
-    videoIcon.dataset.videoBound = '1';
-
-    videoIcon.addEventListener('click', function (e) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      startCall();
-    }, true);
+    // 首次延迟 15 秒后开始判断（避免一进入页面就弹）
+    setTimeout(function () {
+      if (!callState.active) {
+        if (Math.random() < 0.30) {
+          showIncomingBanner();
+        }
+      }
+    }, 15000);
   }
 
   // ==================== 初始化 ====================
   function init() {
-    bindVideoIcon();
-    startIncomingChecker();
+    bindVideoCallIcon();
+    startIncomingTimer();
   }
 
   if (document.readyState === 'loading') {
@@ -353,14 +338,13 @@
     init();
   }
 
-  setTimeout(init, 500);
-  setTimeout(init, 1500);
+  setTimeout(bindVideoCallIcon, 500);
+  setTimeout(bindVideoCallIcon, 1500);
 
   // 暴露给外部
   window.videoCall = {
     start: startCall,
-    end: onHangupCall,
-    cancel: onCancelCall
+    showIncoming: showIncomingBanner
   };
 
 })();
