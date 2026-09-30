@@ -2338,6 +2338,284 @@
     transform: scale(0.97);
   }
 </style>
+     <!-- ============================================================
+     传讯扩展功能：连发模式 + 图片选项 + 表情包面板
+     ============================================================ -->
+<style>
+  /* ============ 连发模式按钮 ============ */
+  #burstModeBtn {
+    color: #8fa8bd;
+    font-size: 18px;
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+    padding: 2px 4px;
+  }
+  #burstModeBtn:active {
+    transform: scale(0.9);
+    color: #6a8ca8;
+  }
+  #burstModeBtn.active {
+    color: #f8b4b4;
+    transform: scale(1.1);
+  }
+
+  /* ============ 连发模式提示框 ============ */
+  .burst-hint {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    margin: 0 14px 4px 14px;
+    background: #fff9f0;
+    border: 1px dashed #f8c98a;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #c68a3a;
+    font-weight: 600;
+    animation: fadeIn 0.2s ease;
+  }
+  .burst-hint i {
+    color: #f8b4b4;
+  }
+
+  /* ============ 连发暂存列表 ============ */
+  .burst-queue {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 6px 14px 4px 14px;
+    scrollbar-width: none;
+  }
+  .burst-queue::-webkit-scrollbar { display: none; }
+
+  .burst-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #fafbfc;
+    border: 1px dashed #cbd4dc;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #55606b;
+    animation: fadeIn 0.15s ease;
+  }
+  .burst-chip-num {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #f8b4b4;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .burst-chip-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .burst-chip-img {
+    width: 28px;
+    height: 28px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .burst-chip-time {
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #a8b4c0;
+    font-weight: 500;
+  }
+  .burst-chip-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    color: #c68a3a;
+    font-weight: 600;
+    background: #fff5e6;
+    padding: 1px 5px;
+    border-radius: 6px;
+  }
+  .burst-chip-del {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #fdf0f0;
+    color: #e58b8b;
+    font-size: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .burst-chip-del:active { background: #f8d8d8; }
+
+  /* ============ 连发 √ / ✕ 按钮组 ============ */
+  .burst-action-group {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+  .burst-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 9999px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.15s ease;
+  }
+  .burst-btn:active { transform: scale(0.9); }
+  .burst-confirm {
+    background: #6fb1e8;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
+  }
+  .burst-confirm:active { background: #5a9ed6; }
+  .burst-cancel {
+    background: #f5f6f8;
+    color: #8899a6;
+    border: 1px solid #eef1f4;
+  }
+  .burst-cancel:active { background: #e8ecf0; }
+
+  /* ============ 图片/表情包底部面板 ============ */
+  .chat-option-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 470;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .chat-option-panel.active { display: flex; }
+
+  .chat-option-inner {
+    width: 100%;
+    max-width: 430px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+    padding: 20px 20px 24px 20px;
+    animation: slideUp 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    max-height: 75vh;
+  }
+
+  .chat-option-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .chat-option-btn {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fafbfc;
+    border: 1px solid #eef1f4;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .chat-option-btn:active {
+    background: #f2f6fa;
+    transform: scale(0.98);
+  }
+  .chat-option-btn i {
+    color: #f8b4b4;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+  }
+
+  .chat-option-cancel {
+    width: 100%;
+    padding: 12px 0;
+    text-align: center;
+    color: #8899a6;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    background: none;
+    border: none;
+    margin-top: 6px;
+  }
+  .chat-option-cancel:active { color: #55606b; }
+
+  /* 表情包面板 */
+  .chat-sticker-inner {
+    padding-bottom: 18px;
+  }
+  .sticker-grid {
+    flex: 1;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 120px;
+    max-height: 50vh;
+    scrollbar-width: none;
+  }
+  .sticker-grid::-webkit-scrollbar { display: none; }
+
+  .sticker-item {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f5f6f8;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    border: 1px solid #eef1f4;
+  }
+  .sticker-item:active {
+    transform: scale(0.94);
+  }
+  .sticker-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sticker-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #c0ccd6;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+</style>
 </head>
 <body>
 
