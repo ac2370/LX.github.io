@@ -1,12 +1,14 @@
 /**
- * 传讯页面交互逻辑
- * 从 localStorage 的 my_word_cards 中随机读取字卡作为回复
+ * 传讯页面聊天逻辑
+ * - 从 window.replyCards 中随机抽取字卡作为回复
+ * - 遵循 window.replySettings 中的等待时间、回复条数、引用、颜文字等设置
+ * - 支持“三点输入气泡”动画
  */
 
 (function () {
   'use strict';
 
-  // 获取 DOM 元素
+  // ==================== DOM ====================
   const chatMessages = document.getElementById('chatMessages');
   const chatInput = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -14,165 +16,239 @@
 
   if (!chatMessages || !chatInput || !sendBtn) return;
 
-  // ==================== 输入框监听 ====================
-  function updateSendBtnState() {
-    const hasText = chatInput.value.trim().length > 0;
-    sendBtn.disabled = !hasText;
-  }
+  // 防止重复初始化
+  if (window._chatInitialized) return;
+  window._chatInitialized = true;
 
-  chatInput.addEventListener('input', updateSendBtnState);
-
-  // ==================== 从字卡库随机获取回复 ====================
-  function getRandomWordCardReply() {
-    try {
-      const raw = localStorage.getItem('my_word_cards');
-      if (!raw) return '字卡库还没有内容哦，先去添加字卡吧~';
-      const cards = JSON.parse(raw);
-      if (!Array.isArray(cards) || cards.length === 0) {
-        return '字卡库还没有内容哦，先去添加字卡吧~';
-      }
-      // 随机抽取一条
-      const randomIndex = Math.floor(Math.random() * cards.length);
-      const card = cards[randomIndex];
-      // 兼容字符串和对象两种存储格式
-      if (typeof card === 'string') return card;
-      if (card && typeof card === 'object' && card.text) return card.text;
-      return '字卡库还没有内容哦，先去添加字卡吧~';
-    } catch (e) {
-      return '字卡库还没有内容哦，先去添加字卡吧~';
-    }
-  }
-
-  // ==================== 发送消息 ====================
-  function sendMessage() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-
-    // 1. 创建自己的消息气泡
-    const row = document.createElement('div');
-    row.className = 'message-row self';
-
-    const bubble = document.createElement('div');
-    bubble.className = 'message-bubble';
-    bubble.textContent = text;
-
-    row.appendChild(bubble);
-    chatMessages.appendChild(row);
-
-    // 2. 清空输入框
-    chatInput.value = '';
-    updateSendBtnState();
-
-    // 3. 滚动到底部
-    scrollToBottom();
-
-    // 4. 从字卡库随机回复
-    simulateReply();
-  }
-
-  sendBtn.addEventListener('click', sendMessage);
-
-  chatInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  });
-
-  // ==================== 滚动到底部 ====================
+  // ==================== 工具 ====================
   function scrollToBottom() {
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
 
-  // ==================== 模拟对方回复 ====================
-  function simulateReply() {
-    // 延迟 600ms ~ 1200ms 后回复，模拟真实感
-    const delay = 600 + Math.random() * 600;
-    setTimeout(function () {
-      const replyText = getRandomWordCardReply();
-
-      const row = document.createElement('div');
-      row.className = 'message-row other';
-
-      const bubble = document.createElement('div');
-      bubble.className = 'message-bubble';
-      bubble.textContent = replyText;
-
-      row.appendChild(bubble);
-      chatMessages.appendChild(row);
-
-      scrollToBottom();
-    }, delay);
+  function getSettings() {
+    return window.replySettings || {
+      normalReply: true,
+      minWait: 3,
+      maxWait: 12,
+      minCount: 0,
+      maxCount: 3,
+      kaomoji: false,
+      typingBubble: true,
+      quote: false
+    };
   }
 
-  // ==================== 急救按钮 ====================
+  function getCards() {
+    return (window.replyCards && window.replyCards.length > 0)
+      ? window.replyCards
+      : ['今天天气很好', '在想你'];
+  }
+
+  // 随机整数
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  // 随机抽取不重复的 N 条
+  function pickRandom(arr, n) {
+    const copy = arr.slice();
+    const result = [];
+    n = Math.min(n, copy.length);
+    for (let i = 0; i < n; i++) {
+      const idx = Math.floor(Math.random() * copy.length);
+      result.push(copy.splice(idx, 1)[0]);
+    }
+    return result;
+  }
+
+  // 颜文字库
+  const KAOMOJI = ['(｡･ω･｡)', '(◍•ᴗ•◍)', '(￣▽￣)', '(´▽`ʃ♡ƪ)', '(๑•̀ㅂ•́)و✧', '(=^･ω･^=)'];
+
+  // ==================== 消息渲染 ====================
+  function addSelfMessage(text) {
+    const row = document.createElement('div');
+    row.className = 'message-row self';
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    scrollToBottom();
+  }
+
+  function addOtherMessage(text, quoteText) {
+    const row = document.createElement('div');
+    row.className = 'message-row other';
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+
+    if (quoteText) {
+      const quoteEl = document.createElement('span');
+      quoteEl.className = 'message-quote';
+      quoteEl.textContent = '> ' + quoteText;
+      bubble.appendChild(quoteEl);
+    }
+
+    const textNode = document.createElement('span');
+    textNode.textContent = text;
+    bubble.appendChild(textNode);
+
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    scrollToBottom();
+  }
+
+  function showTypingBubble() {
+    const row = document.createElement('div');
+    row.className = 'message-row other';
+    row.id = 'typingBubbleRow';
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble typing-bubble';
+    bubble.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    scrollToBottom();
+  }
+
+  function removeTypingBubble() {
+    const el = document.getElementById('typingBubbleRow');
+    if (el) el.remove();
+  }
+
+  // ==================== 回复逻辑 ====================
+  let replyTimer = null;
+  let lastUserMessage = '';
+
+  function handleUserSend(text) {
+    lastUserMessage = text;
+    addSelfMessage(text);
+
+    // 清空输入
+    chatInput.value = '';
+    updateSendBtnState();
+
+    // 取消上一次未完成的回复
+    if (replyTimer) {
+      clearTimeout(replyTimer);
+      replyTimer = null;
+    }
+    removeTypingBubble();
+
+    const settings = getSettings();
+
+    // 若关闭正常字卡回复，则不回复
+    if (!settings.normalReply) {
+      console.log('[传讯] 正常字卡回复已关闭，不回复');
+      return;
+    }
+
+    // 计算等待时间
+    let minWait = Number(settings.minWait) || 3;
+    let maxWait = Number(settings.maxWait) || 12;
+    if (minWait > maxWait) { const t = minWait; minWait = maxWait; maxWait = t; }
+    const waitMs = randInt(minWait * 1000, maxWait * 1000);
+
+    // 回复条数
+    let minCount = Number(settings.minCount) || 0;
+    let maxCount = Number(settings.maxCount) || 3;
+    if (minCount > maxCount) { const t = minCount; minCount = maxCount; maxCount = t; }
+    let count = randInt(minCount, maxCount);
+    if (count < 1 && maxCount >= 1) count = 1; // 至少回复一条，避免无反馈
+
+    // 第一步：等待后显示输入气泡
+    replyTimer = setTimeout(function () {
+      // 是否显示输入气泡
+      if (settings.typingBubble) {
+        showTypingBubble();
+      }
+
+      // 三点气泡显示 1-2 秒后，再输出实际内容
+      const typingDelay = randInt(1000, 2000);
+      replyTimer = setTimeout(function () {
+        removeTypingBubble();
+
+        // 抽取字卡
+        const cards = getCards();
+        const picked = pickRandom(cards, count);
+
+        // 逐条输出（每条间隔 300-600ms）
+        let i = 0;
+        function outputNext() {
+          if (i >= picked.length) {
+            replyTimer = null;
+            return;
+          }
+          let text = picked[i];
+
+          // 随机附加颜文字
+          if (settings.kaomoji && Math.random() < 0.5) {
+            const km = KAOMOJI[Math.floor(Math.random() * KAOMOJI.length)];
+            text += ' ' + km;
+          }
+
+          // 随机引用
+          let quoteText = null;
+          if (settings.quote && lastUserMessage && Math.random() < 0.4) {
+            // 截取前 20 字
+            quoteText = lastUserMessage.length > 20
+              ? lastUserMessage.slice(0, 20) + '...'
+              : lastUserMessage;
+          }
+
+          addOtherMessage(text, quoteText);
+
+          i++;
+          if (i < picked.length) {
+            replyTimer = setTimeout(outputNext, randInt(300, 600));
+          } else {
+            replyTimer = null;
+          }
+        }
+        outputNext();
+      }, typingDelay);
+    }, waitMs);
+  }
+
+  // ==================== 输入框 ====================
+  function updateSendBtnState() {
+    sendBtn.disabled = chatInput.value.trim().length === 0;
+  }
+  chatInput.addEventListener('input', updateSendBtnState);
+  chatInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const text = chatInput.value.trim();
+      if (text) handleUserSend(text);
+    }
+  });
+  sendBtn.addEventListener('click', function () {
+    const text = chatInput.value.trim();
+    if (text) handleUserSend(text);
+  });
+
+  // ==================== 急救 ====================
   if (sosBtn) {
     sosBtn.addEventListener('click', function () {
       alert('急救功能已触发。\n请联系紧急联系人：110 / 120');
     });
   }
 
-  // ==================== 顶栏图标点击（简单反馈） ====================
-  const actionIcons = document.querySelectorAll('.chat-action-icon');
-  actionIcons.forEach(function (icon) {
+  // ==================== 顶栏图标 ====================
+  document.querySelectorAll('.chat-action-icon').forEach(function (icon) {
     icon.addEventListener('click', function () {
-      const title = icon.getAttribute('title') || '功能';
-      console.log('点击了：' + title);
+      console.log('点击了：' + (icon.getAttribute('title') || '功能'));
     });
   });
-
-  // ==================== 左侧图标点击（简单反馈） ====================
-  const leftIcons = document.querySelectorAll('.input-left-icons i');
-  leftIcons.forEach(function (icon) {
+  document.querySelectorAll('.input-left-icons i').forEach(function (icon) {
     icon.addEventListener('click', function () {
-      const title = icon.getAttribute('title') || '功能';
-      console.log('点击了：' + title);
+      console.log('点击了：' + (icon.getAttribute('title') || '功能'));
     });
   });
 
   // ==================== 初始化 ====================
   updateSendBtnState();
   scrollToBottom();
-
-  // 暴露给外部调用（切换到传讯页时刷新）
-  window.initChatPage = function () {
-    scrollToBottom();
-    // 更新底部导航角标
-    updateNavBadge();
-  };
-
-  // ==================== 更新导航角标 ====================
-  function updateNavBadge() {
-    try {
-      const raw = localStorage.getItem('my_word_cards');
-      const cards = raw ? JSON.parse(raw) : [];
-      const count = Array.isArray(cards) ? cards.length : 0;
-      const badge = document.getElementById('navMsgBadge');
-      if (badge) {
-        badge.textContent = count > 99 ? '99+' : count;
-        badge.style.display = count > 0 ? 'flex' : 'none';
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // 监听 localStorage 变化（来自字卡页面的修改）
-  window.addEventListener('storage', function (e) {
-    if (e.key === 'my_word_cards') {
-      updateNavBadge();
-    }
-  });
-
-  // 页面显示时更新角标
-  document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) {
-      updateNavBadge();
-    }
-  });
-
-  updateNavBadge();
 
 })();
