@@ -6,17 +6,702 @@
   <title>阿晏 · 地球online</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #e3f0fa;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .bg-dream {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background-image: url('https://picsum.photos/1200/1800?random=10');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(230, 245, 255, 0.6) 100%);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 20px rgba(0, 20, 30, 0.05);
+    }
+
+    .glass-avatar {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 9999px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    }
+
+    .search-glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: all 0.2s ease;
+    }
+    .search-glass:focus-within {
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .scroll-x {
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+    .scroll-x::-webkit-scrollbar { display: none; }
+
+    .bottom-tab {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 10px 25px rgba(0, 20, 30, 0.1);
+    }
+
+    .tab-btn {
+      color: #8899a6;
+      transition: color 0.2s ease, transform 0.15s ease;
+    }
+    .tab-btn.active {
+      color: #1a2a3a;
+      font-weight: 700;
+      transform: translateY(-1px);
+    }
+    .tab-btn.active i { color: #1a2a3a; }
+    .tab-btn.active span { color: #1a2a3a; }
+
+    .play-btn {
+      background: #222;
+      color: #fff;
+      transition: all 0.1s;
+    }
+    .play-btn:active { transform: scale(0.94); }
+
+    .header-card {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      background-image: url('https://picsum.photos/600/200?random=12');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: 0 6px 16px rgba(0, 20, 30, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      padding: 8px 10px;
+      min-height: 68px;
+    }
+    .header-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 0;
+    }
+    .header-card > * { position: relative; z-index: 1; }
+
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+    img { max-width: 100%; display: block; }
+
+    .photo-scroll-item {
+      flex: 0 0 auto;
+      width: 92px;
+      height: 92px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+    @media (min-width: 400px) { .photo-scroll-item { width: 102px; height: 102px; } }
+    @media (min-width: 430px) { .photo-scroll-item { width: 110px; height: 110px; } }
+
+    .function-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px 6px;
+    }
+    .function-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s ease;
+    }
+    .function-item:active { opacity: 0.6; }
+    .function-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 10px rgba(0, 20, 30, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @media (min-width: 400px) { .function-icon { width: 54px; height: 54px; } }
+    .function-label {
+      font-size: 10px;
+      color: #333;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    @media (min-width: 400px) { .function-label { font-size: 11px; } }
+
+    .app-container {
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 16px 12px 16px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .main-content::-webkit-scrollbar { display: none; }
+
+    .floating-settings {
+      position: fixed;
+      right: 20px;
+      bottom: 100px;
+      z-index: 60;
+      width: 48px;
+      height: 48px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 6px 18px rgba(0, 20, 30, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .floating-settings:active { transform: scale(0.92); }
+
+    .settings-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(20, 30, 40, 0.25);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .settings-modal.active { display: flex; }
+    .settings-panel {
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.18);
+      padding: 20px 18px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .settings-panel::-webkit-scrollbar { display: none; }
+
+    .settings-row { margin-bottom: 14px; }
+    .settings-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .settings-input {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(140, 160, 180, 0.35);
+      background: rgba(255, 255, 255, 0.75);
+      font-size: 13px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      box-sizing: border-box;
+    }
+    .settings-input:focus {
+      border-color: rgba(100, 150, 200, 0.7);
+      box-shadow: 0 0 0 3px rgba(140, 180, 230, 0.18);
+    }
+    .settings-file-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: center;
+    }
+    .settings-file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(140, 160, 180, 0.35);
+      color: #333;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+    }
+    .settings-file-btn:active { background: rgba(230, 240, 250, 0.9); }
+    .settings-file-name {
+      font-size: 11px;
+      color: #8899a6;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .settings-btn {
+      flex: 1;
+      padding: 11px 0;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .settings-btn:active { transform: scale(0.97); }
+    .btn-cancel {
+      background: rgba(240, 244, 248, 0.9);
+      color: #55606b;
+      border: 1px solid rgba(160, 180, 200, 0.3);
+    }
+    .btn-confirm {
+      background: #333;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+    .settings-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .settings-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 9999px;
+      background: rgba(240, 244, 248, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #55606b;
+      cursor: pointer;
+      border: none;
+      font-size: 14px;
+    }
+    .settings-close:active { background: rgba(220, 230, 240, 1); }
+
+    @keyframes spin-vinyl {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .vinyl-cover {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #2a2a2a;
+      flex-shrink: 0;
+    }
+    .vinyl-cover.spinning .vinyl-img {
+      animation: spin-vinyl 4s linear infinite;
+    }
+    .vinyl-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      animation-play-state: paused;
+    }
+    .vinyl-cover.spinning .vinyl-img {
+      animation-play-state: running;
+    }
+
+    .playlist-sheet {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(20, 30, 40, 0.25);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .playlist-sheet.active { display: flex; }
+
+    .playlist-sheet-panel {
+      width: 100%;
+      max-width: 430px;
+      max-height: 72vh;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.15);
+      padding: 16px 18px 24px 18px;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .playlist-sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .playlist-sheet-deco {
+      font-size: 13px;
+      color: #8899a6;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    .playlist-sheet-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .playlist-sheet-icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 9999px;
+      background: rgba(245, 245, 248, 0.9);
+      border: 1px solid rgba(200, 210, 220, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #55606b;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .playlist-sheet-icon-btn:active {
+      background: rgba(235, 240, 248, 1);
+      transform: scale(0.94);
+    }
+
+    .playlist-scroll {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
+      padding-right: 4px;
+    }
+    .playlist-scroll::-webkit-scrollbar { width: 4px; }
+    .playlist-scroll::-webkit-scrollbar-thumb {
+      background: rgba(180, 190, 200, 0.5);
+      border-radius: 4px;
+    }
+    .playlist-scroll::-webkit-scrollbar-track { background: transparent; }
+
+    .song-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 8px;
+      border-radius: 16px;
+      transition: background 0.15s ease;
+      cursor: pointer;
+    }
+    .song-row:active { background: rgba(245, 248, 252, 0.9); }
+    .song-row.current { background: rgba(248, 240, 245, 0.7); }
+
+    .song-row-radio {
+      width: 20px;
+      height: 20px;
+      border-radius: 9999px;
+      border: 1.5px solid #cbd4dc;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      order: 3;
+    }
+    .song-row.current .song-row-radio {
+      border-color: #f8b4b4;
+      background: #f8b4b4;
+    }
+    .song-row.current .song-row-radio::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      background: #fff;
+    }
+
+    .song-row-info {
+      flex: 1;
+      min-width: 0;
+      order: 1;
+    }
+    .song-row-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-row-artist {
+      font-size: 11px;
+      color: #8899a6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 3px;
+    }
+
+    .add-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.3);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .add-modal.active { display: flex; }
+
+    .add-panel {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 22px 20px;
+      animation: popIn 0.22s ease;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.94); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .add-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .add-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(200, 210, 220, 0.7);
+      background: rgba(250, 251, 253, 0.9);
+      font-size: 13px;
+      color: #333;
+      outline: none;
+      margin-bottom: 12px;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .add-input:focus {
+      border-color: #f8b4b4;
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.2);
+    }
+    .add-input::placeholder { color: #a8b4c0; }
+    .add-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .add-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 18px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .add-btn:active { transform: scale(0.97); }
+    .add-btn-cancel {
+      background: rgba(240, 244, 248, 0.95);
+      color: #55606b;
+      border: 1px solid rgba(200, 210, 220, 0.5);
+    }
+    .add-btn-confirm {
+      background: #f8b4b4;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
+    }
+
+    .manage-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 130;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.3);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .manage-modal.active { display: flex; }
+
+    .manage-panel {
+      width: 100%;
+      max-width: 360px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 22px 20px;
+      animation: popIn 0.22s ease;
+    }
+    .manage-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .manage-btn {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(248, 250, 252, 0.95);
+      border: 1px solid rgba(210, 220, 230, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #333;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .manage-btn:active {
+      background: rgba(240, 245, 250, 1);
+      transform: scale(0.98);
+    }
+    .manage-btn i {
+      color: #f8b4b4;
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+    .manage-cancel {
+      width: 100%;
+      padding: 12px 0;
+      text-align: center;
+      color: #8899a6;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      background: none;
+      border: none;
+      margin-top: 4px;
+    }
+    .manage-cancel:active { color: #55606b; }
+  </style>
 </head>
 <body>
-  <!-- 背景图与遮罩 -->
   <div class="bg-dream" id="bgDream"></div>
   <div class="bg-overlay"></div>
 
-  <!-- 整体 App 容器 -->
   <div class="app-container w-full max-w-[430px] mx-auto relative">
 
-    <!-- 顶部头部区域 -->
     <div class="px-5 pt-4 pb-1 flex-shrink-0">
       <div class="header-card flex flex-col items-center justify-center text-center" id="headerCard">
         <div class="glass-avatar p-0.5 w-12 h-12 flex items-center justify-center flex-shrink-0">
@@ -29,15 +714,12 @@
       </div>
     </div>
 
-    <!-- 中间滚动内容区 -->
     <div class="main-content px-5">
-      <!-- 搜索框 -->
       <div class="search-glass flex items-center px-4 py-2.5 gap-3 mt-1">
         <i class="fa-solid fa-magnifying-glass text-[#8899a6] text-sm"></i>
         <input type="text" placeholder="Search" class="flex-1 bg-transparent border-none outline-none text-[#333] text-sm placeholder-[#8899a6] font-normal tracking-wide">
       </div>
 
-      <!-- 图片展示区 -->
       <div class="mt-3 flex justify-center">
         <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
           <div class="photo-scroll-item">
@@ -52,7 +734,6 @@
         </div>
       </div>
 
-      <!-- 音乐播放器 -->
       <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
         <div class="vinyl-cover w-12 h-12" id="vinylCover">
           <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
@@ -80,7 +761,6 @@
 
       <audio id="audioPlayer" preload="metadata"></audio>
 
-      <!-- 功能图标导航区 -->
       <div class="function-grid mt-4 mb-2">
         <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
           <div class="function-icon"><i class="fa-solid fa-house text-[#222] text-lg"></i></div>
@@ -119,9 +799,9 @@
       <div class="h-8"></div>
     </div>
 
-    <!-- 底部 Tab 导航栏 -->
     <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
       <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto" id="bottomTabBar">
+        <!-- 传讯按钮：点击跳转到 chat.html -->
         <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message" id="tabMessage">
           <i class="fa-regular fa-comment-dots text-xl"></i>
           <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
@@ -140,12 +820,10 @@
     <div class="h-0 w-full safe-bottom"></div>
   </div>
 
-  <!-- 悬浮设置按钮 -->
   <button class="floating-settings" id="openSettings" title="自定义图片">
     <i class="fa-solid fa-palette text-lg"></i>
   </button>
 
-  <!-- ============ 设置面板（图片自定义） ============ -->
   <div class="settings-modal" id="settingsModal">
     <div class="settings-panel">
       <div class="settings-title">
@@ -230,7 +908,6 @@
     </div>
   </div>
 
-  <!-- ============ 歌曲列表底部弹窗 ============ -->
   <div class="playlist-sheet" id="playlistSheet">
     <div class="playlist-sheet-panel">
       <div class="playlist-sheet-header">
@@ -251,7 +928,6 @@
     </div>
   </div>
 
-  <!-- ============ 添加自定义歌曲模态框 ============ -->
   <div class="add-modal" id="addModal">
     <div class="add-panel">
       <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
@@ -265,7 +941,6 @@
     </div>
   </div>
 
-  <!-- ============ 歌单管理模态框 ============ -->
   <div class="manage-modal" id="manageModal">
     <div class="manage-panel">
       <div class="manage-title">歌单管理</div>
@@ -282,46 +957,586 @@
     </div>
   </div>
 
-  <!-- ============ 传讯页面（全屏覆盖，默认隐藏） ============ -->
-  <div class="message-app" id="messageApp">
-    <!-- 顶栏 -->
-    <div class="message-header">
-      <button class="message-back-btn" id="messageBackBtn" title="返回">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <div class="message-header-center">
-        <img class="message-avatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
-        <div class="message-name">Ta</div>
-        <div class="message-header-actions">
-          <i class="fa-solid fa-phone" title="通话"></i>
-          <i class="fa-solid fa-video" title="视频通话"></i>
-        </div>
-      </div>
-      <div class="message-header-right"></div>
-    </div>
+  <script>
+    (function() {
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+      }, { passive: false });
 
-    <!-- 消息展示区 -->
-    <div class="message-body" id="messageBody">
-      <div class="message-row other">
-        <div class="message-bubble">你好呀，我是 Ta 👋</div>
-      </div>
-    </div>
+      // ==================== 图片自定义逻辑 ====================
+      const openBtn = document.getElementById('openSettings');
+      const modal = document.getElementById('settingsModal');
+      const closeBtn = document.getElementById('closeSettings');
+      const cancelBtn = document.getElementById('cancelSettings');
+      const confirmBtn = document.getElementById('confirmSettings');
 
-    <!-- 底部输入栏 -->
-    <div class="message-input-bar">
-      <div class="message-input-icons">
-        <i class="fa-regular fa-image" title="图片"></i>
-        <i class="fa-regular fa-face-smile" title="表情"></i>
-      </div>
-      <input type="text" class="message-input" id="messageInput" placeholder="输入消息...">
-      <button class="message-send-btn" id="messageSendBtn" disabled>
-        <i class="fa-solid fa-arrow-up"></i>
-      </button>
-    </div>
-  </div>
+      const objectUrls = { bg: null, avatar: null, photo1: null, photo2: null, photo3: null, album: null, music: null };
 
-  <!-- 引入 JS -->
-  <script src="js/main.js"></script>
-  <script src="js/message.js"></script>
+      const inputBg = document.getElementById('inputBg');
+      const inputAvatar = document.getElementById('inputAvatar');
+      const inputPhoto1 = document.getElementById('inputPhoto1');
+      const inputPhoto2 = document.getElementById('inputPhoto2');
+      const inputPhoto3 = document.getElementById('inputPhoto3');
+      const inputAlbum = document.getElementById('inputAlbum');
+      const inputMusicUrl = document.getElementById('inputMusicUrl');
+
+      const fileBg = document.getElementById('fileBg');
+      const fileAvatar = document.getElementById('fileAvatar');
+      const filePhoto1 = document.getElementById('filePhoto1');
+      const filePhoto2 = document.getElementById('filePhoto2');
+      const filePhoto3 = document.getElementById('filePhoto3');
+      const fileAlbum = document.getElementById('fileAlbum');
+      const fileMusic = document.getElementById('fileMusic');
+
+      const nameBg = document.getElementById('nameBg');
+      const nameAvatar = document.getElementById('nameAvatar');
+      const namePhoto1 = document.getElementById('namePhoto1');
+      const namePhoto2 = document.getElementById('namePhoto2');
+      const namePhoto3 = document.getElementById('namePhoto3');
+      const nameAlbum = document.getElementById('nameAlbum');
+      const nameMusic = document.getElementById('nameMusic');
+
+      const bgDream = document.getElementById('bgDream');
+      const avatarImg = document.getElementById('avatarImg');
+      const photo1 = document.getElementById('photo1');
+      const photo2 = document.getElementById('photo2');
+      const photo3 = document.getElementById('photo3');
+      const albumCover = document.getElementById('albumCover');
+      const albumIcon = document.getElementById('albumIcon');
+
+      const currentImages = {
+        bg: 'https://picsum.photos/1200/1800?random=10',
+        avatar: 'https://picsum.photos/100/100?random=1',
+        photo1: 'https://picsum.photos/200/200?random=2',
+        photo2: 'https://picsum.photos/200/200?random=3',
+        photo3: 'https://picsum.photos/200/200?random=4',
+        album: null,
+        music: null
+      };
+
+      function openModal() {
+        inputBg.value = currentImages.bg || '';
+        inputAvatar.value = currentImages.avatar || '';
+        inputPhoto1.value = currentImages.photo1 || '';
+        inputPhoto2.value = currentImages.photo2 || '';
+        inputPhoto3.value = currentImages.photo3 || '';
+        inputAlbum.value = currentImages.album || '';
+        inputMusicUrl.value = currentImages.music || '';
+        nameBg.textContent = '未选择文件';
+        nameAvatar.textContent = '未选择文件';
+        namePhoto1.textContent = '未选择文件';
+        namePhoto2.textContent = '未选择文件';
+        namePhoto3.textContent = '未选择文件';
+        nameAlbum.textContent = '未选择文件';
+        nameMusic.textContent = '未选择文件';
+        modal.classList.add('active');
+      }
+
+      function closeModal() { modal.classList.remove('active'); }
+
+      openBtn.addEventListener('click', openModal);
+      closeBtn.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+      function handleFile(input, nameSpan) {
+        input.addEventListener('change', () => {
+          const file = input.files && input.files[0];
+          nameSpan.textContent = file ? file.name : '未选择文件';
+        });
+      }
+      handleFile(fileBg, nameBg);
+      handleFile(fileAvatar, nameAvatar);
+      handleFile(filePhoto1, namePhoto1);
+      handleFile(filePhoto2, namePhoto2);
+      handleFile(filePhoto3, namePhoto3);
+      handleFile(fileAlbum, nameAlbum);
+      handleFile(fileMusic, nameMusic);
+
+      function clearFileSelections() {
+        fileBg.value = ''; fileAvatar.value = ''; filePhoto1.value = ''; filePhoto2.value = '';
+        filePhoto3.value = ''; fileAlbum.value = ''; fileMusic.value = '';
+        nameBg.textContent = '未选择文件'; nameAvatar.textContent = '未选择文件';
+        namePhoto1.textContent = '未选择文件'; namePhoto2.textContent = '未选择文件';
+        namePhoto3.textContent = '未选择文件'; nameAlbum.textContent = '未选择文件';
+        nameMusic.textContent = '未选择文件';
+      }
+
+      cancelBtn.addEventListener('click', clearFileSelections);
+      closeBtn.addEventListener('click', clearFileSelections);
+
+      confirmBtn.addEventListener('click', () => {
+        function processItem(fileInput, urlInput, key, applyFn) {
+          const file = fileInput.files && fileInput.files[0];
+          if (file) {
+            if (objectUrls[key]) URL.revokeObjectURL(objectUrls[key]);
+            const newUrl = URL.createObjectURL(file);
+            objectUrls[key] = newUrl;
+            applyFn(newUrl);
+            currentImages[key] = newUrl;
+          } else {
+            const url = urlInput.value.trim();
+            if (url) {
+              if (objectUrls[key]) { URL.revokeObjectURL(objectUrls[key]); objectUrls[key] = null; }
+              applyFn(url);
+              currentImages[key] = url;
+            }
+          }
+        }
+
+        processItem(fileBg, inputBg, 'bg', (url) => { bgDream.style.backgroundImage = `url('${url}')`; });
+        processItem(fileAvatar, inputAvatar, 'avatar', (url) => { avatarImg.src = url; });
+        processItem(filePhoto1, inputPhoto1, 'photo1', (url) => { photo1.src = url; });
+        processItem(filePhoto2, inputPhoto2, 'photo2', (url) => { photo2.src = url; });
+        processItem(filePhoto3, inputPhoto3, 'photo3', (url) => { photo3.src = url; });
+        processItem(fileAlbum, inputAlbum, 'album', (url) => {
+          albumCover.src = url;
+          albumCover.style.display = 'block';
+          albumIcon.style.display = 'none';
+          currentImages.album = url;
+        });
+
+        const musicFile = fileMusic.files && fileMusic.files[0];
+        if (musicFile) {
+          if (objectUrls.music) URL.revokeObjectURL(objectUrls.music);
+          const newUrl = URL.createObjectURL(musicFile);
+          objectUrls.music = newUrl;
+          currentImages.music = newUrl;
+        } else {
+          const url = inputMusicUrl.value.trim();
+          if (url) {
+            if (objectUrls.music) { URL.revokeObjectURL(objectUrls.music); objectUrls.music = null; }
+            currentImages.music = url;
+          }
+        }
+
+        closeModal();
+        clearFileSelections();
+      });
+
+      // ==================== 音乐播放器核心 ====================
+      const audio = document.getElementById('audioPlayer');
+      const songTitle = document.getElementById('songTitle');
+      const songArtist = document.getElementById('songArtist');
+      const playBtn = document.getElementById('playBtn');
+      const playIcon = document.getElementById('playIcon');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const vinylCover = document.getElementById('vinylCover');
+
+      let playlist = [
+        {
+          title: 'My love',
+          artist: '颜人中',
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+          cover: 'https://picsum.photos/100/100?random=20',
+          lyric: '我的爱 像风一样 来了又走'
+        },
+        {
+          title: '夜曲',
+          artist: '周杰伦',
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+          cover: 'https://picsum.photos/100/100?random=21',
+          lyric: '一群嗜血的蚂蚁 被腐肉所吸引'
+        },
+        {
+          title: '晴天',
+          artist: '周杰伦',
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+          cover: 'https://picsum.photos/100/100?random=22',
+          lyric: '故事的小黄花 从出生那年就飘着'
+        },
+        {
+          title: '起风了',
+          artist: '买辣椒也用券',
+          url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+          cover: 'https://picsum.photos/100/100?random=23',
+          lyric: '这一路上走走停停 顺着少年漂流的痕迹'
+        }
+      ];
+
+      let currentSongIndex = 0;
+      let isPlaying = false;
+      let currentCustomMusicMode = false;
+
+      function updateCurrentSongCover(url) {
+        if (url) {
+          albumCover.src = url;
+          albumCover.style.display = 'block';
+          albumIcon.style.display = 'none';
+        }
+      }
+
+      function playSong(index) {
+        if (currentCustomMusicMode && currentImages.music) {
+          audio.src = currentImages.music;
+          songTitle.textContent = '自定义音乐';
+          songArtist.textContent = '来自设置面板';
+          if (currentImages.album) {
+            albumCover.src = currentImages.album;
+            albumCover.style.display = 'block';
+            albumIcon.style.display = 'none';
+          } else {
+            albumCover.style.display = 'none';
+            albumIcon.style.display = 'block';
+          }
+        } else {
+          if (index < 0 || index >= playlist.length) return;
+          const song = playlist[index];
+          audio.src = song.url;
+          songTitle.textContent = song.title;
+          songArtist.textContent = song.artist;
+          if (currentImages.album) {
+            albumCover.src = currentImages.album;
+            albumCover.style.display = 'block';
+            albumIcon.style.display = 'none';
+          } else {
+            albumCover.src = song.cover || '';
+            albumCover.style.display = 'block';
+            albumIcon.style.display = 'none';
+          }
+        }
+        audio.play().then(() => {
+          isPlaying = true;
+          playIcon.classList.remove('fa-play');
+          playIcon.classList.add('fa-pause');
+          vinylCover.classList.add('spinning');
+        }).catch(() => {
+          isPlaying = false;
+          playIcon.classList.remove('fa-pause');
+          playIcon.classList.add('fa-play');
+          vinylCover.classList.remove('spinning');
+        });
+        renderPlaylistSheet();
+      }
+
+      playBtn.addEventListener('click', () => {
+        if (!audio.src) { playSong(currentSongIndex); return; }
+        if (isPlaying) {
+          audio.pause();
+          isPlaying = false;
+          playIcon.classList.remove('fa-pause');
+          playIcon.classList.add('fa-play');
+          vinylCover.classList.remove('spinning');
+        } else {
+          audio.play().then(() => {
+            isPlaying = true;
+            playIcon.classList.remove('fa-play');
+            playIcon.classList.add('fa-pause');
+            vinylCover.classList.add('spinning');
+          }).catch(() => {});
+        }
+      });
+
+      prevBtn.addEventListener('click', () => {
+        if (currentCustomMusicMode) {
+          currentCustomMusicMode = false;
+          currentSongIndex = 0;
+        } else {
+          currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+        }
+        playSong(currentSongIndex);
+      });
+
+      nextBtn.addEventListener('click', () => {
+        if (currentCustomMusicMode) {
+          currentCustomMusicMode = false;
+          currentSongIndex = 0;
+        } else {
+          currentSongIndex = (currentSongIndex + 1) % playlist.length;
+        }
+        playSong(currentSongIndex);
+      });
+
+      audio.addEventListener('ended', () => {
+        if (currentCustomMusicMode) {
+          isPlaying = false;
+          playIcon.classList.remove('fa-pause');
+          playIcon.classList.add('fa-play');
+          vinylCover.classList.remove('spinning');
+        } else {
+          nextBtn.click();
+        }
+      });
+
+      function initPlayer() {
+        if (playlist.length === 0) return;
+        const song = playlist[0];
+        songTitle.textContent = song.title;
+        songArtist.textContent = song.artist;
+        audio.src = song.url;
+        albumCover.src = song.cover || '';
+        albumCover.style.display = 'block';
+        albumIcon.style.display = 'none';
+        isPlaying = false;
+        playIcon.classList.add('fa-play');
+        playIcon.classList.remove('fa-pause');
+        vinylCover.classList.remove('spinning');
+      }
+      initPlayer();
+
+      // ==================== 歌曲列表底部弹窗 ====================
+      const playlistSheet = document.getElementById('playlistSheet');
+      const playlistScroll = document.getElementById('playlistScroll');
+      const openManageBtn = document.getElementById('openManageBtn');
+      const searchSongBtn = document.getElementById('searchSongBtn');
+      const openAddBtn = document.getElementById('openAddBtn');
+
+      function renderPlaylistSheet() {
+        playlistScroll.innerHTML = '';
+
+        playlist.forEach((song, index) => {
+          const row = document.createElement('div');
+          row.className = 'song-row' + (index === currentSongIndex && !currentCustomMusicMode ? ' current' : '');
+          row.innerHTML = `
+            <div class="song-row-info">
+              <div class="song-row-title">${escapeHtml(song.title)}</div>
+              <div class="song-row-artist">${escapeHtml(song.lyric || song.artist)}</div>
+            </div>
+            <div class="song-row-radio"></div>
+          `;
+          row.addEventListener('click', () => {
+            currentCustomMusicMode = false;
+            currentSongIndex = index;
+            playSong(index);
+            closePlaylistSheet();
+          });
+          playlistScroll.appendChild(row);
+        });
+
+        if (currentImages.music) {
+          const customRow = document.createElement('div');
+          customRow.className = 'song-row' + (currentCustomMusicMode ? ' current' : '');
+          customRow.innerHTML = `
+            <div class="song-row-info">
+              <div class="song-row-title">自定义音乐</div>
+              <div class="song-row-artist">来自设置面板</div>
+            </div>
+            <div class="song-row-radio"></div>
+          `;
+          customRow.addEventListener('click', () => {
+            currentCustomMusicMode = true;
+            playSong(currentSongIndex);
+            closePlaylistSheet();
+          });
+          playlistScroll.appendChild(customRow);
+        }
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, (m) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[m]);
+      }
+
+      function openPlaylistSheet() {
+        renderPlaylistSheet();
+        playlistSheet.classList.add('active');
+      }
+      function closePlaylistSheet() {
+        playlistSheet.classList.remove('active');
+      }
+
+      vinylCover.addEventListener('click', openPlaylistSheet);
+
+      playlistSheet.addEventListener('click', (e) => {
+        if (e.target === playlistSheet) closePlaylistSheet();
+      });
+
+      // ==================== 添加自定义歌曲模态框 ====================
+      const addModal = document.getElementById('addModal');
+      const addTitle = document.getElementById('addTitle');
+      const addArtist = document.getElementById('addArtist');
+      const addUrl = document.getElementById('addUrl');
+      const addCancel = document.getElementById('addCancel');
+      const addConfirm = document.getElementById('addConfirm');
+
+      function openAddModal() {
+        addTitle.value = '';
+        addArtist.value = '';
+        addUrl.value = '';
+        addModal.classList.add('active');
+      }
+      function closeAddModal() {
+        addModal.classList.remove('active');
+      }
+
+      openAddBtn.addEventListener('click', () => {
+        openAddModal();
+      });
+
+      addCancel.addEventListener('click', closeAddModal);
+      addModal.addEventListener('click', (e) => {
+        if (e.target === addModal) closeAddModal();
+      });
+
+      addConfirm.addEventListener('click', () => {
+        const title = addTitle.value.trim() || '未命名歌曲';
+        const artist = addArtist.value.trim() || '未知歌手';
+        const url = addUrl.value.trim();
+
+        if (!url) {
+          alert('请填写音频链接');
+          return;
+        }
+
+        const newSong = {
+          title: title,
+          artist: artist,
+          url: url,
+          cover: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
+          lyric: artist
+        };
+        playlist.push(newSong);
+
+        currentCustomMusicMode = false;
+        currentSongIndex = playlist.length - 1;
+        playSong(currentSongIndex);
+
+        closeAddModal();
+        closePlaylistSheet();
+      });
+
+      // ==================== 歌单管理模态框 ====================
+      const manageModal = document.getElementById('manageModal');
+      const importPlaylistBtn = document.getElementById('importPlaylistBtn');
+      const exportPlaylistBtn = document.getElementById('exportPlaylistBtn');
+      const importFileInput = document.getElementById('importFileInput');
+      const manageCancel = document.getElementById('manageCancel');
+
+      function openManageModal() {
+        manageModal.classList.add('active');
+      }
+      function closeManageModal() {
+        manageModal.classList.remove('active');
+      }
+
+      openManageBtn.addEventListener('click', () => {
+        openManageModal();
+      });
+      manageCancel.addEventListener('click', closeManageModal);
+      manageModal.addEventListener('click', (e) => {
+        if (e.target === manageModal) closeManageModal();
+      });
+
+      importPlaylistBtn.addEventListener('click', () => {
+        importFileInput.click();
+      });
+
+      importFileInput.addEventListener('change', () => {
+        const file = importFileInput.files && importFileInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target.result;
+            let importedSongs = [];
+
+            try {
+              const parsed = JSON.parse(content);
+              if (Array.isArray(parsed)) {
+                importedSongs = parsed;
+              } else if (parsed && Array.isArray(parsed.songs)) {
+                importedSongs = parsed.songs;
+              }
+            } catch (jsonErr) {
+              const lines = content.split('\n').filter(l => l.trim());
+              importedSongs = lines.map(line => {
+                const parts = line.split('|').map(p => p.trim());
+                return {
+                  title: parts[0] || '未命名歌曲',
+                  artist: parts[1] || '未知歌手',
+                  url: parts[2] || '',
+                  cover: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
+                  lyric: parts[1] || ''
+                };
+              }).filter(s => s.url);
+            }
+
+            const validSongs = importedSongs.filter(s => s && s.url).map(s => ({
+              title: s.title || '未命名歌曲',
+              artist: s.artist || '未知歌手',
+              url: s.url,
+              cover: s.cover || 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
+              lyric: s.lyric || s.artist || ''
+            }));
+
+            if (validSongs.length === 0) {
+              alert('未找到有效的歌曲数据');
+              return;
+            }
+
+            playlist = playlist.concat(validSongs);
+            alert('成功导入 ' + validSongs.length + ' 首歌曲');
+            renderPlaylistSheet();
+            closeManageModal();
+
+          } catch (err) {
+            alert('导入失败：文件解析错误');
+          }
+          importFileInput.value = '';
+        };
+        reader.readAsText(file);
+      });
+
+      exportPlaylistBtn.addEventListener('click', () => {
+        const data = {
+          songs: playlist.map(s => ({
+            title: s.title,
+            artist: s.artist,
+            url: s.url,
+            cover: s.cover || '',
+            lyric: s.lyric || ''
+          }))
+        };
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'playlist.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        closeManageModal();
+      });
+
+      searchSongBtn.addEventListener('click', () => {
+        const keyword = prompt('搜索歌曲名称：');
+        if (keyword) {
+          const found = playlist.findIndex(s => s.title.includes(keyword));
+          if (found >= 0) {
+            currentCustomMusicMode = false;
+            currentSongIndex = found;
+            playSong(found);
+            closePlaylistSheet();
+          } else {
+            alert('未找到匹配的歌曲');
+          }
+        }
+      });
+
+      // ==================== 底部 Tab 选中状态切换 ====================
+      const tabButtons = document.querySelectorAll('#bottomTabBar .tab-btn');
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          tabButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+
+      // ==================== 传讯按钮跳转 ====================
+      const tabMessage = document.getElementById('tabMessage');
+      tabMessage.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'chat.html';
+      });
+
+    })();
+  </script>
 </body>
 </html>
