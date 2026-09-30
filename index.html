@@ -3184,5 +3184,200 @@
       }
     })();
   </script>
+  <!-- ============================================================
+     第 2 步新增样式：字卡库分类切换 + 整理模式 + 分组弹窗
+     ============================================================ -->
+<style>
+  /* ============ 整理模式批量操作栏 ============ */
+  .organize-bar {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    background: #fff5f5;
+    border: 1px solid #f8d8d8;
+    border-radius: 14px;
+    animation: fadeIn 0.2s ease;
+  }
+  .organize-bar.active { display: flex; }
+  .organize-count {
+    flex: 1 0 100%;
+    font-size: 12px;
+    color: #e58b8b;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .organize-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #f0d8d8;
+    font-size: 11px;
+    color: #e58b8b;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+  }
+  .organize-btn:active {
+    background: #fdf0f0;
+    transform: scale(0.97);
+  }
+  .organize-btn.danger {
+    background: #f8b4b4;
+    color: #fff;
+    border-color: #f8b4b4;
+  }
+  .organize-btn.danger:active {
+    background: #e58b8b;
+  }
+
+  /* ============ 卡片勾选圆圈 ============ */
+  .word-card-item .select-circle {
+    display: none;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    border: 1.5px solid #cbd4dc;
+    background: #fff;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    order: 0;
+  }
+  .word-card-item.organizing .select-circle {
+    display: flex;
+  }
+  .word-card-item.selected .select-circle {
+    background: #f8b4b4;
+    border-color: #f8b4b4;
+  }
+  .word-card-item.selected .select-circle::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #fff;
+    font-size: 10px;
+  }
+  .word-card-item.selected {
+    background: #fdf5f5;
+    border: 1px solid #f8d8d8;
+  }
+
+  /* ============ 表情包批量选择 ============ */
+  .emoji-grid-item .emoji-select-circle {
+    display: none;
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    border: 1.5px solid rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.6);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    z-index: 2;
+  }
+  .emoji-grid-item.organizing .emoji-select-circle {
+    display: flex;
+  }
+  .emoji-grid-item.selected .emoji-select-circle {
+    background: #f8b4b4;
+    border-color: #f8b4b4;
+  }
+  .emoji-grid-item.selected .emoji-select-circle::after {
+    content: '\f00c';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: #fff;
+    font-size: 10px;
+  }
+  .emoji-grid-item.selected {
+    outline: 2px solid #f8b4b4;
+    outline-offset: -2px;
+  }
+
+  /* ============ 分组弹窗 ============ */
+  .group-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 420;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .group-modal.active { display: flex; }
+  .group-modal-panel {
+    width: 100%;
+    max-width: 340px;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+    padding: 22px 20px;
+    animation: popIn 0.22s ease;
+  }
+  .group-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .group-modal-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+  }
+  .group-modal-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+  }
+  .group-modal-input::placeholder { color: #b6c2cd; }
+  .group-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .group-modal-btn {
+    flex: 1;
+    padding: 11px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .group-modal-btn:active { transform: scale(0.97); }
+  .group-modal-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  .group-modal-confirm {
+    background: #f8b4b4;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+  }
+</style>
 </body>
 </html>
