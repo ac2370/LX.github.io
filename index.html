@@ -6,6 +6,7 @@
   <title>阿晏 · 地球online</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
   <style>
     * { box-sizing: border-box; }
 
@@ -2566,7 +2567,8 @@
     .fishing-panel-overlay.active { display: block; }
   </style>
 
-  <!-- 原有脚本 -->
+   <!-- ⬇️ 新增 reply.js，必须放在 card.js 之前 -->
+  <script src="./js/reply.js"></script>
   <script src="./js/card.js"></script>
   <script src="./js/chat.js"></script>
 
