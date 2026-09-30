@@ -3015,6 +3015,62 @@
     color: #8fb8d8;
   }
 </style>
+     <!-- ============================================================
+     布局修复：防止传讯顶栏图标溢出到底部
+     ============================================================ -->
+<style>
+  /* 1. 强制 #pageChat 使用 flex 列布局，顶栏不溢出 */
+  #pageChat {
+    display: none; /* 默认隐藏（原有 .page 逻辑） */
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    position: relative;
+  }
+  #pageChat.active {
+    display: flex;
+  }
+
+  /* 2. 顶栏固定不溢出 */
+  #pageChat .chat-header {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    overflow: visible;
+  }
+
+  /* 3. 聊天消息区正确滚动 */
+  #pageChat .chat-messages {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* 4. 输入栏固定底部，不溢出 */
+  #pageChat .chat-input-bar {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* 5. 关键修复：确保 .chat-actions 只在顶栏内显示 */
+  /* 如果因为某些原因 .chat-actions 出现在 .chat-header 之外，隐藏它 */
+  #pageChat > .chat-actions {
+    display: none !important;
+  }
+
+  /* 6. 保险：任何出现在 .chat-input-bar 之后的 .chat-actions 都隐藏 */
+  #pageChat .chat-input-bar ~ .chat-actions {
+    display: none !important;
+  }
+
+  /* 7. 保险：如果 .chat-actions 出现在 .chat-messages 内部（错误位置），隐藏它 */
+  #pageChat .chat-messages .chat-actions {
+    display: none !important;
+  }
+</style>
 </head>
 <body>
 
