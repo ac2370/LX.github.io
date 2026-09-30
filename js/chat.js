@@ -264,10 +264,18 @@
     });
   });
 
-  // ==================== 暴露给外部 ====================
+    // ==================== 暴露给外部 ====================
   window.initChatPage = function () {
     scrollToBottom();
   };
+
+  // 暴露自动回复接口，供 chat-extras.js 调用
+  window.triggerChatAutoReply = triggerAutoReply;
+
+  // 监听自定义事件（兜底）
+  window.addEventListener('chatAutoReply', function () {
+    triggerAutoReply();
+  });
 
   updateSendBtnState();
   scrollToBottom();
