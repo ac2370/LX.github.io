@@ -209,7 +209,28 @@
     }
     .main-content::-webkit-scrollbar { display: none; }
 
-    /* ============ 页面切换 ============ */
+    .floating-settings {
+      position: fixed;
+      right: 20px;
+      bottom: 100px;
+      z-index: 60;
+      width: 48px;
+      height: 48px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 6px 18px rgba(0, 20, 30, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .floating-settings:active { transform: scale(0.92); }
+
     .page {
       display: none;
       width: 100%;
@@ -301,12 +322,18 @@
       border: 1px solid #f0f3f6;
       cursor: pointer;
       position: relative;
-      transition: background 0.15s ease, transform 0.1s ease;
+      transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
     }
     .cat-grid-item:active {
       background: #f2f6fa;
       transform: scale(0.97);
     }
+    .cat-grid-item.active {
+      background: #fdf0f0;
+      border-color: #f8b4b4;
+    }
+    .cat-grid-item.active i { color: #e58b8b; }
+    .cat-grid-item.active .cat-label { color: #e58b8b; font-weight: 700; }
     .cat-grid-item i {
       font-size: 17px;
       color: #7a8a99;
@@ -333,14 +360,29 @@
       font-weight: 700;
     }
 
+    /* 分类内容容器 */
+    .cat-panel {
+      display: none;
+    }
+    .cat-panel.active {
+      display: block;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .card-action-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 12px;
+      flex-wrap: wrap;
     }
     .card-action-btn {
       flex: 1;
-      padding: 11px 0;
+      min-width: 0;
+      padding: 11px 6px;
       border-radius: 14px;
       background: #ffffff;
       border: 1px solid #eef1f4;
@@ -353,8 +395,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
       box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
+      white-space: nowrap;
     }
     .card-action-btn:active {
       background: #f2f6fa;
@@ -483,16 +526,15 @@
       box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.15);
     }
 
-    /* 字卡列表 */
     .card-list {
-      margin-top: 4px;
+      margin-bottom: 12px;
     }
     .word-card-item {
-      background: #fff;
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 10px rgba(150, 170, 190, 0.08);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -505,15 +547,15 @@
     }
     .word-card-text {
       flex: 1;
-      font-size: 13px;
+      font-size: 14px;
       color: #333;
       line-height: 1.5;
       word-break: break-word;
     }
     .word-card-delete {
       flex-shrink: 0;
-      width: 26px;
-      height: 26px;
+      width: 28px;
+      height: 28px;
       border-radius: 9999px;
       background: #fdf0f0;
       color: #e58b8b;
@@ -521,7 +563,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
+      font-size: 11px;
       cursor: pointer;
       transition: background 0.15s ease;
     }
@@ -539,6 +581,65 @@
       color: #dde6ee;
       margin-bottom: 12px;
       display: block;
+    }
+
+    /* 表情包网格 */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .emoji-grid-item {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      background: #f5f6f8;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.08);
+    }
+    .emoji-grid-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .emoji-grid-item .emoji-delete {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #e58b8b;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .emoji-footer-hint {
+      font-size: 11px;
+      color: #8899a6;
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding-left: 2px;
+      cursor: pointer;
+    }
+    .emoji-footer-sub {
+      font-size: 11px;
+      color: #b6c2cd;
+      line-height: 1.6;
+      padding-left: 2px;
+      margin-bottom: 8px;
+    }
+    .emoji-footer-count {
+      font-size: 10px;
+      color: #c0ccd6;
+      text-align: center;
+      letter-spacing: 0.5px;
     }
 
     .card-status-bar {
@@ -586,13 +687,22 @@
       object-fit: cover;
       border: 2px solid #e8eef4;
       box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+      cursor: pointer;
+      transition: transform 0.15s ease;
     }
+    #pageChat .chat-avatar:active { transform: scale(0.95); }
     #pageChat .chat-name {
       font-size: 15px;
       font-weight: 700;
       color: #333;
       margin-top: 8px;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 10px;
+      transition: background 0.15s ease;
+      user-select: none;
     }
+    #pageChat .chat-name:active { background: #f0f4f8; }
     #pageChat .chat-actions {
       display: flex;
       gap: 22px;
@@ -623,7 +733,8 @@
       position: relative;
     }
     #pageChat .chat-messages::-webkit-scrollbar { display: none; }
-    #pageChat .sos-btn {
+
+    #pageChat .home-return-btn {
       position: fixed;
       right: 16px;
       top: 50%;
@@ -633,26 +744,22 @@
       height: 46px;
       border-radius: 9999px;
       background: rgba(255, 255, 255, 0.95);
-      border: 1.5px solid #f5a3a3;
-      color: #e57373;
+      border: 1px solid #e8eef4;
+      color: #7a8a99;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 10px;
-      font-weight: 700;
-      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
+      font-size: 17px;
+      box-shadow: 0 4px 14px rgba(150, 180, 210, 0.2);
       cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease;
+      transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
     }
-    #pageChat .sos-btn:active {
+    #pageChat .home-return-btn:active {
       transform: translateY(-50%) scale(0.94);
-      background: rgba(255, 245, 245, 1);
+      background: rgba(245, 248, 252, 1);
+      color: #55606b;
     }
-    #pageChat .sos-btn i {
-      font-size: 14px;
-      margin-bottom: 1px;
-    }
+
     #pageChat .message-row {
       display: flex;
       margin-bottom: 14px;
@@ -667,6 +774,7 @@
       line-height: 1.45;
       word-wrap: break-word;
       word-break: break-word;
+      white-space: pre-wrap;
     }
     #pageChat .message-row.self .message-bubble {
       background: #d8ecfb;
@@ -678,36 +786,43 @@
       color: #333;
       border-bottom-left-radius: 4px;
     }
-    /* 引用样式 */
-    #pageChat .message-quote {
+
+    .quote-block {
       display: block;
-      font-size: 12px;
-      color: #8fa8bd;
-      border-left: 3px solid #d8ecfb;
-      padding-left: 8px;
+      padding: 6px 10px;
       margin-bottom: 6px;
+      background: rgba(255, 255, 255, 0.6);
+      border-left: 3px solid #b8d4ec;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #6a8ca8;
       line-height: 1.4;
+      word-break: break-word;
     }
-    /* 输入中气泡 */
-    #pageChat .typing-bubble {
+
+    .typing-bubble {
       display: inline-flex;
       align-items: center;
       gap: 4px;
       padding: 12px 16px;
+      background: #f3f5f7;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
     }
-    #pageChat .typing-dot {
-      width: 7px;
-      height: 7px;
+    .typing-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 9999px;
       background: #b6c2cd;
-      animation: typingBounce 1.2s infinite;
+      animation: typingBounce 1.2s infinite ease-in-out;
     }
-    #pageChat .typing-dot:nth-child(2) { animation-delay: 0.15s; }
-    #pageChat .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
     @keyframes typingBounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
       30% { transform: translateY(-4px); opacity: 1; }
     }
+
     #pageChat .chat-input-bar {
       flex-shrink: 0;
       display: flex;
@@ -776,7 +891,365 @@
       cursor: default;
     }
 
-    /* ============ 回复设定模态框 ============ */
+    /* 摸鱼面板 */
+    .fishing-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 200;
+      width: 240px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 12px 40px rgba(0, 20, 30, 0.18);
+      padding: 20px 18px 16px 18px;
+      display: none;
+      animation: popIn 0.22s ease;
+      text-align: center;
+    }
+    .fishing-panel.active { display: block; }
+    .fishing-panel-title {
+      font-size: 13px;
+      color: #8899a6;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+    .fishing-panel-status {
+      font-size: 16px;
+      color: #333;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .fishing-panel-close {
+      width: 100%;
+      padding: 9px 0;
+      border-radius: 12px;
+      background: #f5f6f8;
+      border: 1px solid #eef1f4;
+      color: #55606b;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .fishing-panel-close:active {
+      background: #e8ecf0;
+      transform: scale(0.97);
+    }
+    .fishing-panel-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 199;
+      background: rgba(20, 30, 40, 0.15);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      display: none;
+    }
+    .fishing-panel-overlay.active { display: block; }
+
+    /* 编辑资料 */
+    .edit-profile-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 350;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(20, 30, 40, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .edit-profile-modal.active { display: flex; }
+    .edit-profile-panel {
+      width: 100%;
+      max-width: 360px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 24px 20px;
+      animation: popIn 0.22s ease;
+    }
+    .edit-profile-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .edit-avatar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .edit-avatar-preview {
+      width: 84px;
+      height: 84px;
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 3px solid #e8eef4;
+      box-shadow: 0 6px 18px rgba(150, 180, 210, 0.2);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .edit-avatar-preview:active { transform: scale(0.95); }
+    .edit-avatar-hint {
+      font-size: 11px;
+      color: #a8b4c0;
+      margin-top: 8px;
+      letter-spacing: 0.5px;
+    }
+    .edit-field-label {
+      font-size: 12px;
+      color: #8899a6;
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding-left: 2px;
+    }
+    .edit-input {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid #e2e8ee;
+      background: #fafbfc;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      margin-bottom: 14px;
+    }
+    .edit-input:focus {
+      border-color: #b8d4ec;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
+    }
+    .edit-input::placeholder { color: #b6c2cd; }
+    .edit-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .edit-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .edit-btn:active { transform: scale(0.97); }
+    .edit-btn-cancel {
+      background: #f5f6f8;
+      color: #55606b;
+      border: 1px solid #eef1f4;
+    }
+    .edit-btn-save {
+      background: #1a2a3a;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(26, 42, 58, 0.2);
+    }
+
+    /* 角色面板 */
+    .role-panel-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 360;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(20, 30, 40, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .role-panel-modal.active { display: flex; }
+    .role-panel {
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+      padding: 20px 18px 22px 18px;
+      animation: popIn 0.22s ease;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .role-panel::-webkit-scrollbar { display: none; }
+    .role-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .role-panel-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+    .role-panel-close {
+      padding: 6px 16px;
+      border-radius: 9999px;
+      background: #f0f3f6;
+      border: none;
+      color: #8899a6;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .role-panel-close:active { background: #e2e8ee; }
+    .role-new-box {
+      border: 1.5px dashed #cbd4dc;
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .role-new-avatar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .role-new-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 2px solid #e8eef4;
+      background: #f5f6f8;
+    }
+    .role-new-avatar-label {
+      font-size: 9px;
+      color: #a8b4c0;
+      margin-top: 3px;
+      letter-spacing: 0.5px;
+    }
+    .role-new-input {
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #e2e8ee;
+      background: #fafbfc;
+      font-size: 13px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .role-new-input:focus {
+      border-color: #b8d4ec;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
+    }
+    .role-new-input::placeholder { color: #b6c2cd; }
+    .role-new-save {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: #1a2a3a;
+      color: #fff;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+    }
+    .role-new-save:active {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+    .role-list-divider {
+      height: 1px;
+      background: #f0f3f6;
+      margin: 6px 0 14px 0;
+    }
+    .role-list-title {
+      font-size: 12px;
+      color: #8899a6;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+    .role-list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s ease, border 0.15s ease;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .role-list-item:active { background: #f5f8fb; }
+    .role-list-item.current {
+      border-color: #1a2a3a;
+      background: #f8fafc;
+    }
+    .role-list-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 2px solid #e8eef4;
+      flex-shrink: 0;
+    }
+    .role-list-name {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .role-list-name .current-tag {
+      font-size: 11px;
+      color: #8899a6;
+      font-weight: 500;
+      margin-left: 4px;
+    }
+    .role-list-delete {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 9999px;
+      background: #fdf0f0;
+      color: #e58b8b;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .role-list-delete:active { background: #f8d8d8; }
+    .role-list-empty {
+      text-align: center;
+      padding: 20px;
+      color: #c0ccd6;
+      font-size: 12px;
+    }
+
+    /* 回复设定 */
     .reply-settings-modal {
       position: fixed;
       inset: 0;
@@ -789,7 +1262,6 @@
       -webkit-backdrop-filter: blur(6px);
     }
     .reply-settings-modal.active { display: flex; }
-
     .reply-settings-panel {
       width: 100%;
       max-width: 430px;
@@ -806,7 +1278,6 @@
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
     }
-
     .reply-settings-header {
       flex-shrink: 0;
       display: flex;
@@ -836,7 +1307,6 @@
       transition: background 0.15s ease;
     }
     .reply-settings-close:active { background: #e8ecf0; }
-
     .reply-settings-tabs {
       flex-shrink: 0;
       display: flex;
@@ -860,8 +1330,9 @@
       background: #fdf0f0;
       color: #e58b8b;
     }
-    .reply-tab-btn:active { transform: scale(0.97); }
-
+    .reply-tab-btn:active {
+      transform: scale(0.97);
+    }
     .reply-settings-body {
       flex: 1;
       overflow-y: auto;
@@ -870,10 +1341,8 @@
       -ms-overflow-style: none;
     }
     .reply-settings-body::-webkit-scrollbar { display: none; }
-
     .reply-tab-panel { display: none; }
     .reply-tab-panel.active { display: block; }
-
     .setting-row {
       display: flex;
       align-items: flex-start;
@@ -894,7 +1363,6 @@
       line-height: 1.5;
       margin-top: 4px;
     }
-
     .toggle-switch {
       position: relative;
       width: 44px;
@@ -928,10 +1396,17 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
       transition: transform 0.2s ease;
     }
-    .toggle-switch input:checked + .toggle-slider { background: #f8b4b4; }
-    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
-
-    .input-row { display: flex; gap: 12px; margin-top: 8px; }
+    .toggle-switch input:checked + .toggle-slider {
+      background: #f8b4b4;
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+    }
+    .input-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
     .input-item { flex: 1; min-width: 0; }
     .input-item-label {
       font-size: 11px;
@@ -1019,7 +1494,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* ============ 通用输入弹窗 ============ */
+    /* 通用弹窗 */
     .simple-modal {
       position: fixed;
       inset: 0;
@@ -1046,41 +1521,31 @@
       font-size: 16px;
       font-weight: 700;
       color: #333;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .simple-textarea {
       width: 100%;
       padding: 12px 14px;
       border-radius: 14px;
-      border: 1px solid #eef1f4;
+      border: 1px solid #e2e8ee;
       background: #fafbfc;
       font-size: 14px;
       color: #333;
       outline: none;
-      resize: none;
+      resize: vertical;
       min-height: 90px;
       font-family: inherit;
+      line-height: 1.5;
       transition: border 0.2s ease, box-shadow 0.2s ease;
     }
     .simple-textarea:focus {
       border-color: #f8b4b4;
       box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
     }
-    .simple-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #eef1f4;
-      background: #fafbfc;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .simple-input:focus {
-      border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-    }
+    .simple-textarea::placeholder { color: #b6c2cd; }
     .simple-actions {
       display: flex;
       gap: 12px;
@@ -1089,7 +1554,7 @@
     .simple-btn {
       flex: 1;
       padding: 11px 0;
-      border-radius: 16px;
+      border-radius: 14px;
       font-size: 14px;
       font-weight: 600;
       text-align: center;
@@ -1106,8 +1571,9 @@
     .simple-btn-confirm {
       background: #f8b4b4;
       color: #fff;
-      box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
+      box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
     }
+    .hidden-file-input { display: none; }
   </style>
 </head>
 <body>
@@ -1248,6 +1714,7 @@
     </div>
 
     <div class="card-body">
+      <!-- 分类网格：回复、颜文字、地点、心情、表情包、状态 -->
       <div class="cat-grid-card" id="catGrid">
         <div class="cat-grid-item active" data-cat="reply" id="catReply">
           <i class="fa-regular fa-comment-dots"></i>
@@ -1274,51 +1741,179 @@
           <span class="cat-label">表情包</span>
           <span class="cat-grid-badge" id="badgeEmoji">0</span>
         </div>
-        <div class="cat-grid-item" data-cat="album" id="catAlbum">
-          <i class="fa-regular fa-images"></i>
-          <span class="cat-label">相册</span>
-          <span class="cat-grid-badge" id="badgeAlbum">0</span>
+        <div class="cat-grid-item" data-cat="status" id="catStatus">
+          <i class="fa-regular fa-circle-check"></i>
+          <span class="cat-label">状态</span>
+          <span class="cat-grid-badge" id="badgeStatus">0</span>
         </div>
       </div>
 
-      <div class="card-action-row">
-        <button class="card-action-btn" id="btnImport">
-          <i class="fa-solid fa-plus"></i>导入
-        </button>
-        <button class="card-action-btn" id="btnExport">
-          <i class="fa-solid fa-arrow-right"></i>导出
-        </button>
-        <button class="card-action-btn" id="btnAddCard">
-          <i class="fa-solid fa-plus"></i>添加
-        </button>
-      </div>
-
-      <div class="card-dedup-row">
-        <div class="card-dedup-left" id="dedupToggle">
-          <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
-          <span>自动去重</span>
+      <!-- ============ 面板：回复 ============ -->
+      <div class="cat-panel active" id="panel-reply">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="btnImport">
+            <i class="fa-solid fa-plus"></i>导入
+          </button>
+          <button class="card-action-btn" id="btnExport">
+            <i class="fa-solid fa-arrow-right"></i>导出
+          </button>
+          <button class="card-action-btn" id="btnAddCard">
+            <i class="fa-solid fa-plus"></i>添加
+          </button>
         </div>
-        <span class="card-dedup-now" id="dedupNowBtn">立即去重</span>
+
+        <div class="card-dedup-row">
+          <div class="card-dedup-left" id="dedupToggle">
+            <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
+            <span>自动去重</span>
+          </div>
+          <span class="card-dedup-now" id="dedupNowBtn">立即去重</span>
+        </div>
+
+        <div class="card-group-section">
+          <div class="card-group-label">回复分组</div>
+          <select class="card-group-select" id="groupSelect">
+            <option>亲爱的的回复 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="btnNewGroup">新建分组</button>
+            <button class="card-group-btn" id="btnRenameGroup">重命名</button>
+            <button class="card-group-btn" id="btnOrganizeGroup">整理</button>
+          </div>
+          <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
+        </div>
+
+        <div class="card-list" id="cardList"></div>
+        <div class="card-list-placeholder" id="cardListPlaceholder">
+          <i class="fa-regular fa-note-sticky"></i>
+          把想听到的话，放进这里。
+        </div>
       </div>
 
-      <div class="card-group-section">
-        <div class="card-group-label">回复分组</div>
-        <select class="card-group-select" id="groupSelect">
-          <option>亲爱的的回复 · 0 条</option>
-        </select>
+      <!-- ============ 面板：颜文字 ============ -->
+      <div class="cat-panel" id="panel-kaomoji">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="kaomojiOrganizeBtn">
+            <i class="fa-solid fa-broom"></i>整理
+          </button>
+        </div>
+        <div class="card-group-section">
+          <input type="text" class="card-search-input" id="kaomojiSearchInput" placeholder="找一个表情...">
+        </div>
+        <div class="card-list" id="kaomojiList"></div>
+        <div class="card-list-placeholder" id="kaomojiPlaceholder">
+          <i class="fa-regular fa-face-smile"></i>
+          添加几个表情，给回复一点小情绪。
+        </div>
+      </div>
+
+      <!-- ============ 面板：地点 ============ -->
+      <div class="cat-panel" id="panel-place">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="placeOrganizeBtn">
+            <i class="fa-solid fa-broom"></i>整理
+          </button>
+        </div>
+        <div class="card-group-section">
+          <input type="text" class="card-search-input" id="placeSearchInput" placeholder="找一个熟悉的地方...">
+        </div>
+        <div class="card-list" id="placeList"></div>
+        <div class="card-list-placeholder" id="placePlaceholder">
+          <i class="fa-solid fa-location-dot"></i>
+          先放进一个地点吧。
+        </div>
+      </div>
+
+      <!-- ============ 面板：心情 ============ -->
+      <div class="cat-panel" id="panel-mood">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="moodOrganizeBtn">
+            <i class="fa-solid fa-broom"></i>整理
+          </button>
+        </div>
+        <div class="card-group-section">
+          <input type="text" class="card-search-input" id="moodSearchInput" placeholder="找一句话、一种心情...">
+        </div>
+        <div class="card-list" id="moodList"></div>
+        <div class="card-list-placeholder" id="moodPlaceholder">
+          <i class="fa-regular fa-heart"></i>
+          把他的心情，写成一张张小字卡。
+        </div>
+      </div>
+
+      <!-- ============ 面板：表情包 ============ -->
+      <div class="cat-panel" id="panel-emoji">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="emojiImportLinkBtn">
+            <i class="fa-solid fa-link"></i>导入链接
+          </button>
+          <button class="card-action-btn" id="emojiExportBtn">
+            <i class="fa-solid fa-arrow-right"></i>导出
+          </button>
+          <button class="card-action-btn" id="emojiAddLinkBtn">
+            <i class="fa-solid fa-plus"></i>添加链接
+          </button>
+          <button class="card-action-btn" id="emojiUploadBtn">
+            <i class="fa-solid fa-upload"></i>上传图片
+          </button>
+          <input type="file" id="emojiFileInput" class="hidden-file-input" accept="image/*" multiple>
+        </div>
+
+        <div class="card-group-section">
+          <input type="text" class="card-search-input" id="emojiSearchInput" placeholder="搜索图片名称">
+        </div>
+
         <div class="card-group-buttons">
-          <button class="card-group-btn" id="btnNewGroup">新建分组</button>
-          <button class="card-group-btn" id="btnRenameGroup">重命名</button>
-          <button class="card-group-btn" id="btnOrganizeGroup">整理</button>
+          <button class="card-group-btn" id="emojiNewGroupBtn">新建分组</button>
+          <button class="card-group-btn" id="emojiAllGroupBtn">
+            全部分组 <i class="fa-solid fa-chevron-down" style="font-size:9px;margin-left:2px;"></i>
+          </button>
         </div>
-        <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
+
+        <button class="card-action-btn" id="emojiOrganizeBtn" style="width:100%;margin-bottom:12px;">
+          <i class="fa-solid fa-broom"></i>整理图片
+        </button>
+
+        <div class="emoji-grid" id="emojiGrid"></div>
+
+        <div class="emoji-footer-hint" id="emojiFooterHint">他的表情包 · 随机主动发送已开启 &gt;</div>
+        <div class="emoji-footer-sub" id="emojiFooterSub">这里还没有图片，试试上传图片、添加链接或换一个搜索词。</div>
+        <div class="emoji-footer-count" id="emojiFooterCount">0 张 · 自动去重 · 轻点查看 / 管理</div>
       </div>
 
-      <div class="card-list" id="cardList"></div>
-      <div class="card-list-placeholder" id="cardListPlaceholder">
-        <i class="fa-regular fa-note-sticky"></i>
-        把想听到的话，放进这里。
+      <!-- ============ 面板：状态 ============ -->
+      <div class="cat-panel" id="panel-status">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="statusImportBtn">
+            <i class="fa-solid fa-plus"></i>导入
+          </button>
+          <button class="card-action-btn" id="statusExportBtn">
+            <i class="fa-solid fa-arrow-right"></i>导出
+          </button>
+          <button class="card-action-btn" id="statusAddBtn">
+            <i class="fa-solid fa-plus"></i>添加
+          </button>
+        </div>
+
+        <div class="card-group-section">
+          <div class="card-group-label">状态分组</div>
+          <select class="card-group-select" id="statusGroupSelect">
+            <option>默认状态 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="statusNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="statusOrganizeBtn">整理</button>
+          </div>
+          <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
+        </div>
+
+        <div class="card-list" id="statusList"></div>
+        <div class="card-list-placeholder" id="statusPlaceholder">
+          <i class="fa-regular fa-circle-check"></i>
+          添加一些状态，让 Ta 更生动。
+        </div>
       </div>
+
     </div>
 
     <div class="card-status-bar">
@@ -1330,11 +1925,13 @@
   <!-- ==================== 传讯页面 ==================== -->
   <div class="page" id="pageChat">
     <div class="chat-header">
-      <img class="chat-avatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
-      <div class="chat-name">Ta</div>
+      <div id="chatContactArea" style="display:flex;flex-direction:column;align-items:center;">
+        <img class="chat-avatar" id="chatAvatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
+        <div class="chat-name" id="chatName">Ta</div>
+      </div>
       <div class="chat-actions">
         <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
-        <div class="chat-action-icon" title="电话"><i class="fa-solid fa-phone"></i></div>
+        <div class="chat-action-icon" title="摸鱼" id="fishingIcon"><i class="fa-solid fa-mug-hot"></i></div>
         <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
         <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
         <div class="chat-action-icon" title="更多"><i class="fa-solid fa-ellipsis"></i></div>
@@ -1347,9 +1944,8 @@
       </div>
     </div>
 
-    <div class="sos-btn" id="sosBtn" title="急救">
-      <i class="fa-solid fa-kit-medical"></i>
-      <span>急救</span>
+    <div class="home-return-btn" id="homeReturnBtn" title="返回主页">
+      <i class="fa-solid fa-house"></i>
     </div>
 
     <div class="chat-input-bar">
@@ -1365,7 +1961,59 @@
     </div>
   </div>
 
-  <!-- ==================== 回复设定模态框 ==================== -->
+  <!-- 摸鱼面板 -->
+  <div class="fishing-panel-overlay" id="fishingOverlay"></div>
+  <div class="fishing-panel" id="fishingPanel">
+    <div class="fishing-panel-title">当前状态</div>
+    <div class="fishing-panel-status" id="fishingStatusText">☕ 正在摸鱼，勿扰</div>
+    <button class="fishing-panel-close" id="fishingCloseBtn">关闭</button>
+  </div>
+
+  <!-- 编辑资料 -->
+  <div class="edit-profile-modal" id="editProfileModal">
+    <div class="edit-profile-panel">
+      <div class="edit-profile-title">编辑资料</div>
+      <div class="edit-avatar-wrap">
+        <img class="edit-avatar-preview" id="editAvatarPreview" src="https://picsum.photos/200/200?random=99" alt="头像预览">
+        <div class="edit-avatar-hint">点击头像上传图片</div>
+        <input type="file" id="editAvatarFileInput" class="hidden-file-input" accept="image/*">
+      </div>
+      <div class="edit-field-label">昵称</div>
+      <input type="text" class="edit-input" id="editNameInput" placeholder="输入昵称...">
+      <div class="edit-field-label">或粘贴图片 URL</div>
+      <input type="text" class="edit-input" id="editAvatarUrlInput" placeholder="https://...">
+      <div class="edit-actions">
+        <button class="edit-btn edit-btn-cancel" id="editCancelBtn">取消</button>
+        <button class="edit-btn edit-btn-save" id="editSaveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 角色面板 -->
+  <div class="role-panel-modal" id="rolePanelModal">
+    <div class="role-panel">
+      <div class="role-panel-header">
+        <span class="role-panel-title">角色面板</span>
+        <button class="role-panel-close" id="rolePanelCloseBtn">关闭</button>
+      </div>
+
+      <div class="role-new-box">
+        <div class="role-new-avatar-wrap" id="roleNewAvatarWrap">
+          <img class="role-new-avatar" id="roleNewAvatarPreview" src="https://picsum.photos/100/100?random=1" alt="新角色头像">
+          <div class="role-new-avatar-label">头像</div>
+          <input type="file" id="roleNewAvatarFileInput" class="hidden-file-input" accept="image/*">
+        </div>
+        <input type="text" class="role-new-input" id="roleNewNameInput" placeholder="输入角色姓名...">
+        <button class="role-new-save" id="roleNewSaveBtn">保存</button>
+      </div>
+
+      <div class="role-list-divider"></div>
+      <div class="role-list-title">已有角色档案</div>
+      <div id="roleListContainer"></div>
+    </div>
+  </div>
+
+  <!-- 回复设定 -->
   <div class="reply-settings-modal" id="replySettingsModal">
     <div class="reply-settings-panel">
       <div class="reply-settings-header">
@@ -1470,7 +2118,7 @@
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">开启自动回复（状态字卡）</div>
-              <div class="setting-row-desc">开启后，当角色不在线时，将自动从状态字卡中抽取内容进行回复。</div>
+              <div class="setting-row-desc">开启后，当角色不在线时，将自动从状态字卡中抽取内容进行回复。状态字卡可在下方管理。</div>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggleAutoReply">
@@ -1535,6 +2183,7 @@
           <div class="input-hint">主动消息间隔可设为 10-10800 秒，角色将在该区间内随机选择时间发送</div>
 
           <a class="blue-link" id="linkBackgroundKeep">后台保活与消息提醒</a>
+
           <div class="auto-save-hint">修改后自动保存</div>
         </div>
 
@@ -1571,12 +2220,14 @@
     </div>
   </div>
 
-  <!-- ==================== 通用输入弹窗 ==================== -->
+  <!-- 通用输入弹窗 -->
   <div class="simple-modal" id="simpleModal">
     <div class="simple-panel">
-      <div class="simple-title" id="simpleModalTitle">添加</div>
-      <textarea class="simple-textarea" id="simpleModalTextarea" placeholder="输入内容..."></textarea>
-      <input type="text" class="simple-input" id="simpleModalInput" placeholder="输入内容..." style="display:none;">
+      <div class="simple-title" id="simpleModalTitle">
+        <i class="fa-solid fa-pen-nib text-[#f8b4b4]"></i>
+        <span id="simpleModalTitleText">添加字卡</span>
+      </div>
+      <textarea class="simple-textarea" id="simpleModalInput" placeholder="输入内容..."></textarea>
       <div class="simple-actions">
         <button class="simple-btn simple-btn-cancel" id="simpleModalCancel">取消</button>
         <button class="simple-btn simple-btn-confirm" id="simpleModalConfirm">确定</button>
@@ -1614,11 +2265,19 @@
       document.getElementById('tabMessage').addEventListener('click', function (e) {
         e.preventDefault();
         showPage(pageChat);
+        if (window.initChatPage) window.initChatPage();
       });
 
       document.getElementById('cardBackBtn').addEventListener('click', function () {
         showPage(pageHome);
       });
+
+      const homeReturnBtn = document.getElementById('homeReturnBtn');
+      if (homeReturnBtn) {
+        homeReturnBtn.addEventListener('click', function () {
+          showPage(pageHome);
+        });
+      }
 
       window.showPage = showPage;
       window.pageHome = pageHome;
@@ -1626,18 +2285,302 @@
       window.pageChat = pageChat;
     })();
 
-    // ==================== 底部导航（主页） ====================
+    // ==================== 静态占位交互 ====================
     (function () {
-      document.querySelectorAll('#bottomTabBar .tab-btn').forEach(function (btn) {
+      document.querySelectorAll('.tab-btn').forEach(function (btn) {
         btn.addEventListener('click', function (e) {
           if (btn.id === 'tabCard' || btn.id === 'tabMessage') return;
           e.preventDefault();
-          document.querySelectorAll('#bottomTabBar .tab-btn').forEach(function (b) {
+          document.querySelectorAll('.tab-btn').forEach(function (b) {
             b.classList.remove('active');
           });
           btn.classList.add('active');
         });
       });
+    })();
+
+    // ==================== 摸鱼面板 ====================
+    (function () {
+      const fishingIcon = document.getElementById('fishingIcon');
+      const fishingPanel = document.getElementById('fishingPanel');
+      const fishingOverlay = document.getElementById('fishingOverlay');
+      const fishingCloseBtn = document.getElementById('fishingCloseBtn');
+
+      function openFishingPanel() {
+        fishingPanel.classList.add('active');
+        fishingOverlay.classList.add('active');
+      }
+      function closeFishingPanel() {
+        fishingPanel.classList.remove('active');
+        fishingOverlay.classList.remove('active');
+      }
+
+      if (fishingIcon) fishingIcon.addEventListener('click', openFishingPanel);
+      if (fishingCloseBtn) fishingCloseBtn.addEventListener('click', closeFishingPanel);
+      if (fishingOverlay) fishingOverlay.addEventListener('click', closeFishingPanel);
+    })();
+
+    // ==================== 回复设定 ====================
+    (function () {
+      const modal = document.getElementById('replySettingsModal');
+      const openBtn = document.getElementById('cardEditBtn');
+      const closeBtn = document.getElementById('replySettingsClose');
+
+      function openModal() { modal.classList.add('active'); }
+      function closeModal() { modal.classList.remove('active'); }
+
+      if (openBtn) openBtn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (modal) {
+        modal.addEventListener('click', function (e) {
+          if (e.target === modal) closeModal();
+        });
+      }
+
+      const tabBtns = document.querySelectorAll('.reply-tab-btn');
+      const panels = {
+        rhythm: document.getElementById('panel-rhythm'),
+        proactive: document.getElementById('panel-proactive'),
+        quote: document.getElementById('panel-quote')
+      };
+
+      tabBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          const tab = btn.getAttribute('data-tab');
+          tabBtns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          Object.keys(panels).forEach(function (key) {
+            panels[key].classList.toggle('active', key === tab);
+          });
+        });
+      });
+    })();
+
+    // ==================== 编辑资料 & 角色面板 ====================
+    (function () {
+      const CONTACTS_KEY = 'my_contacts';
+      const CURRENT_CONTACT_KEY = 'my_current_contact';
+
+      const contactArea = document.getElementById('chatContactArea');
+      const chatAvatar = document.getElementById('chatAvatar');
+      const chatName = document.getElementById('chatName');
+
+      const editModal = document.getElementById('editProfileModal');
+      const editAvatarPreview = document.getElementById('editAvatarPreview');
+      const editNameInput = document.getElementById('editNameInput');
+      const editAvatarUrlInput = document.getElementById('editAvatarUrlInput');
+      const editAvatarFileInput = document.getElementById('editAvatarFileInput');
+      const editCancelBtn = document.getElementById('editCancelBtn');
+      const editSaveBtn = document.getElementById('editSaveBtn');
+
+      const roleModal = document.getElementById('rolePanelModal');
+      const rolePanelCloseBtn = document.getElementById('rolePanelCloseBtn');
+      const roleNewAvatarWrap = document.getElementById('roleNewAvatarWrap');
+      const roleNewAvatarPreview = document.getElementById('roleNewAvatarPreview');
+      const roleNewAvatarFileInput = document.getElementById('roleNewAvatarFileInput');
+      const roleNewNameInput = document.getElementById('roleNewNameInput');
+      const roleNewSaveBtn = document.getElementById('roleNewSaveBtn');
+      const roleListContainer = document.getElementById('roleListContainer');
+
+      let contacts = [];
+      let currentContactId = null;
+      let pendingAvatarData = null;
+
+      function loadContacts() {
+        try {
+          const raw = localStorage.getItem(CONTACTS_KEY);
+          if (raw) contacts = JSON.parse(raw);
+          if (!Array.isArray(contacts)) contacts = [];
+        } catch (e) { contacts = []; }
+
+        if (contacts.length === 0) {
+          contacts = [{
+            id: 'default_ta',
+            name: 'Ta',
+            avatar: 'https://picsum.photos/200/200?random=99'
+          }];
+          saveContacts();
+        }
+
+        const cid = localStorage.getItem(CURRENT_CONTACT_KEY);
+        if (cid && contacts.some(function (c) { return c.id === cid; })) {
+          currentContactId = cid;
+        } else {
+          currentContactId = contacts[0].id;
+        }
+        applyCurrentContact();
+      }
+
+      function saveContacts() {
+        try { localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts)); } catch (e) {}
+      }
+      function saveCurrentId() {
+        try { localStorage.setItem(CURRENT_CONTACT_KEY, currentContactId); } catch (e) {}
+      }
+
+      function getCurrentContact() {
+        return contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
+      }
+
+      function applyCurrentContact() {
+        const c = getCurrentContact();
+        if (!c) return;
+        chatAvatar.src = c.avatar;
+        chatName.textContent = c.name;
+      }
+
+      let clickTimer = null;
+      contactArea.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (clickTimer) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
+          openRolePanel();
+          return;
+        }
+        clickTimer = setTimeout(function () {
+          clickTimer = null;
+          openEditModal();
+        }, 260);
+      });
+
+      function openEditModal() {
+        const c = getCurrentContact();
+        if (!c) return;
+        editAvatarPreview.src = c.avatar;
+        editNameInput.value = c.name;
+        editAvatarUrlInput.value = '';
+        editAvatarFileInput.value = '';
+        pendingAvatarData = null;
+        editModal.classList.add('active');
+      }
+      function closeEditModal() { editModal.classList.remove('active'); }
+
+      editAvatarPreview.addEventListener('click', function () {
+        editAvatarFileInput.click();
+      });
+      editAvatarFileInput.addEventListener('change', function () {
+        const file = editAvatarFileInput.files && editAvatarFileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          pendingAvatarData = ev.target.result;
+          editAvatarPreview.src = pendingAvatarData;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      editCancelBtn.addEventListener('click', closeEditModal);
+      editModal.addEventListener('click', function (e) {
+        if (e.target === editModal) closeEditModal();
+      });
+
+      editSaveBtn.addEventListener('click', function () {
+        const c = getCurrentContact();
+        if (!c) return;
+        const newName = editNameInput.value.trim() || c.name;
+        const urlInput = editAvatarUrlInput.value.trim();
+        let newAvatar = pendingAvatarData;
+        if (!newAvatar && urlInput) newAvatar = urlInput;
+        if (!newAvatar) newAvatar = c.avatar;
+        c.name = newName;
+        c.avatar = newAvatar;
+        saveContacts();
+        applyCurrentContact();
+        closeEditModal();
+      });
+
+      function openRolePanel() {
+        renderRoleList();
+        roleNewNameInput.value = '';
+        roleNewAvatarPreview.src = 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000);
+        roleNewAvatarFileInput.value = '';
+        roleModal.classList.add('active');
+      }
+      function closeRolePanel() { roleModal.classList.remove('active'); }
+
+      rolePanelCloseBtn.addEventListener('click', closeRolePanel);
+      roleModal.addEventListener('click', function (e) {
+        if (e.target === roleModal) closeRolePanel();
+      });
+
+      roleNewAvatarWrap.addEventListener('click', function (e) {
+        if (e.target.tagName !== 'INPUT') roleNewAvatarFileInput.click();
+      });
+      roleNewAvatarFileInput.addEventListener('change', function () {
+        const file = roleNewAvatarFileInput.files && roleNewAvatarFileInput.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) { roleNewAvatarPreview.src = ev.target.result; };
+        reader.readAsDataURL(file);
+      });
+
+      roleNewSaveBtn.addEventListener('click', function () {
+        const name = roleNewNameInput.value.trim();
+        if (!name) { alert('请输入角色姓名'); return; }
+        const newContact = {
+          id: 'contact_' + Date.now(),
+          name: name,
+          avatar: roleNewAvatarPreview.src
+        };
+        contacts.push(newContact);
+        saveContacts();
+        currentContactId = newContact.id;
+        saveCurrentId();
+        applyCurrentContact();
+        renderRoleList();
+        roleNewNameInput.value = '';
+        roleNewAvatarPreview.src = 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000);
+        roleNewAvatarFileInput.value = '';
+      });
+
+      function renderRoleList() {
+        roleListContainer.innerHTML = '';
+        if (contacts.length === 0) {
+          roleListContainer.innerHTML = '<div class="role-list-empty">暂无角色档案</div>';
+          return;
+        }
+        contacts.forEach(function (c) {
+          const item = document.createElement('div');
+          item.className = 'role-list-item' + (c.id === currentContactId ? ' current' : '');
+          item.innerHTML = `
+            <img class="role-list-avatar" src="${c.avatar}" alt="${escapeHtml(c.name)}">
+            <div class="role-list-name">${escapeHtml(c.name)}${c.id === currentContactId ? '<span class="current-tag">(当前)</span>' : ''}</div>
+            <button class="role-list-delete" title="删除"><i class="fa-solid fa-trash-can"></i></button>
+          `;
+          item.addEventListener('click', function (e) {
+            if (e.target.closest('.role-list-delete')) return;
+            currentContactId = c.id;
+            saveCurrentId();
+            applyCurrentContact();
+            renderRoleList();
+          });
+          const delBtn = item.querySelector('.role-list-delete');
+          delBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (contacts.length <= 1) { alert('至少保留一个角色'); return; }
+            if (!confirm('确定删除角色「' + c.name + '」吗？')) return;
+            contacts = contacts.filter(function (x) { return x.id !== c.id; });
+            if (currentContactId === c.id) {
+              currentContactId = contacts[0].id;
+              saveCurrentId();
+              applyCurrentContact();
+            }
+            saveContacts();
+            renderRoleList();
+          });
+          roleListContainer.appendChild(item);
+        });
+      }
+
+      function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, function (m) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+        });
+      }
+
+      loadContacts();
     })();
   </script>
 </body>
