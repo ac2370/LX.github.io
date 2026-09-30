@@ -1,3796 +1,587 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>阿晏 · 地球online</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
-  <style>
-    * { box-sizing: border-box; }
+/**
+ * 主页图片自定义逻辑（独立模块）
+ * - 支持设置：主页背景图、我的头像、对方(梦角)头像、主页底图、音乐黑胶唱片封面
+ * - 新增：传讯页面背景图
+ * - 每一项支持：粘贴 URL / 上传本地文件
+ * - 使用 localforage 持久化（Base64 或 URL 字符串）
+ * - 浮动入口按钮只在主页显示
+ * - 严格不修改主页结构，只通过 id 定位
+ */
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #e3f0fa;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .bg-dream {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -2;
-      background-image: url('https://picsum.photos/1200/1800?random=10');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-    .bg-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      background: linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(230, 245, 255, 0.6) 100%);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-    }
-
-    .glass {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 8px 20px rgba(0, 20, 30, 0.05);
-    }
-
-    .glass-avatar {
-      background: rgba(255, 255, 255, 0.6);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 9999px;
-      border: 2px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-    }
-
-    .search-glass {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 40px;
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      transition: all 0.2s ease;
-    }
-    .search-glass:focus-within {
-      background: rgba(255, 255, 255, 0.85);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-    }
-
-    .scroll-x {
-      overflow-x: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      white-space: nowrap;
-      -webkit-overflow-scrolling: touch;
-      padding-bottom: 2px;
-    }
-    .scroll-x::-webkit-scrollbar { display: none; }
-
-    .bottom-tab {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 10px 25px rgba(0, 20, 30, 0.1);
-    }
-
-    .tab-btn {
-      color: #8899a6;
-      transition: color 0.2s ease, transform 0.15s ease;
-    }
-    .tab-btn.active {
-      color: #1a2a3a;
-      font-weight: 700;
-      transform: translateY(-1px);
-    }
-    .tab-btn.active i { color: #1a2a3a; }
-    .tab-btn.active span { color: #1a2a3a; }
-
-    .play-btn {
-      background: #222;
-      color: #fff;
-      transition: all 0.1s;
-    }
-    .play-btn:active { transform: scale(0.94); }
-
-    .header-card {
-      position: relative;
-      border-radius: 24px;
-      overflow: hidden;
-      background-image: url('https://picsum.photos/600/200?random=12');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      box-shadow: 0 6px 16px rgba(0, 20, 30, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      padding: 8px 10px;
-      min-height: 68px;
-    }
-    .header-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(255, 255, 255, 0.35);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 0;
-    }
-    .header-card > * { position: relative; z-index: 1; }
-
-    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
-
-    img { max-width: 100%; display: block; }
-
-    .photo-scroll-item {
-      flex: 0 0 auto;
-      width: 92px;
-      height: 92px;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-    }
-    @media (min-width: 400px) { .photo-scroll-item { width: 102px; height: 102px; } }
-    @media (min-width: 430px) { .photo-scroll-item { width: 110px; height: 110px; } }
-
-    .function-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px 6px;
-    }
-    .function-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      text-decoration: none;
-      color: inherit;
-      -webkit-tap-highlight-color: transparent;
-      transition: opacity 0.15s ease;
-      cursor: pointer;
-    }
-    .function-item:active { opacity: 0.6; }
-    .function-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: 0 4px 10px rgba(0, 20, 30, 0.04);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    @media (min-width: 400px) { .function-icon { width: 54px; height: 54px; } }
-    .function-label {
-      font-size: 10px;
-      color: #333;
-      font-weight: 500;
-      text-align: center;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-    @media (min-width: 400px) { .function-label { font-size: 11px; } }
-
-    .app-container {
-      height: 100vh;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-    .main-content {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 0 16px 12px 16px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .main-content::-webkit-scrollbar { display: none; }
-
-    .floating-settings {
-      position: fixed;
-      right: 20px;
-      bottom: 100px;
-      z-index: 60;
-      width: 48px;
-      height: 48px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 6px 18px rgba(0, 20, 30, 0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-      cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    .floating-settings:active { transform: scale(0.92); }
-
-    .page {
-      display: none;
-      width: 100%;
-      max-width: 430px;
-      margin: 0 auto;
-      min-height: 100vh;
-      min-height: 100dvh;
-      flex-direction: column;
-    }
-    .page.active { display: flex; }
-
-    /* ============ 字卡收纳盒页面 ============ */
-    .card-page {
-      background: #f5f6f8;
-      position: relative;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-    }
-
-    .card-topbar {
-      flex-shrink: 0;
-      padding: 16px 18px 8px 18px;
-      background: #f5f6f8;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
-    .card-topbar-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      margin-bottom: 4px;
-    }
-    .card-topbar-row i {
-      font-size: 17px;
-      color: #55606b;
-      cursor: pointer;
-      padding: 4px;
-      transition: color 0.15s ease;
-    }
-    .card-topbar-row i:active { color: #2a3a4a; }
-    .card-topbar-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      letter-spacing: 1px;
-    }
-    .card-topbar-subtitle {
-      font-size: 9px;
-      color: #a8b4c0;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-
-    .card-body {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding: 4px 16px 12px 16px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .card-body::-webkit-scrollbar { display: none; }
-
-    .cat-grid-card {
-      background: #ffffff;
-      border-radius: 20px;
-      padding: 14px 10px;
-      box-shadow: 0 4px 14px rgba(150, 170, 190, 0.08);
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(2, auto);
-      gap: 10px 6px;
-      margin-bottom: 12px;
-    }
-    .cat-grid-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      padding: 10px 4px;
-      border-radius: 14px;
-      background: #fafbfc;
-      border: 1px solid #f0f3f6;
-      cursor: pointer;
-      position: relative;
-      transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
-    }
-    .cat-grid-item:active {
-      background: #f2f6fa;
-      transform: scale(0.97);
-    }
-    .cat-grid-item.active {
-      background: #fdf0f0;
-      border-color: #f8b4b4;
-    }
-    .cat-grid-item.active i { color: #e58b8b; }
-    .cat-grid-item.active .cat-label { color: #e58b8b; font-weight: 700; }
-    .cat-grid-item i {
-      font-size: 17px;
-      color: #7a8a99;
-    }
-    .cat-grid-item span.cat-label {
-      font-size: 11px;
-      color: #55606b;
-      font-weight: 500;
-    }
-    .cat-grid-badge {
-      position: absolute;
-      top: 4px;
-      right: 6px;
-      background: #f8b4b4;
-      color: #fff;
-      font-size: 9px;
-      min-width: 16px;
-      height: 16px;
-      border-radius: 9999px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 3px;
-      font-weight: 700;
-    }
-
-    .cat-panel { display: none; }
-    .cat-panel.active {
-      display: block;
-      animation: fadeIn 0.2s ease;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .card-action-row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-    .card-action-btn {
-      flex: 1;
-      min-width: 0;
-      padding: 11px 6px;
-      border-radius: 14px;
-      background: #ffffff;
-      border: 1px solid #eef1f4;
-      font-size: 12px;
-      color: #55606b;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
-      white-space: nowrap;
-    }
-    .card-action-btn:active {
-      background: #f2f6fa;
-      transform: scale(0.97);
-    }
-    .card-action-btn i { font-size: 11px; }
-
-    .card-dedup-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 10px 14px;
-      margin-bottom: 12px;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
-    }
-    .card-dedup-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #55606b;
-      cursor: pointer;
-    }
-    .card-dedup-checkbox {
-      width: 16px;
-      height: 16px;
-      border-radius: 5px;
-      border: 1.5px solid #cbd4dc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.15s ease;
-      background: #fff;
-      flex-shrink: 0;
-    }
-    .card-dedup-checkbox.checked {
-      background: #f8b4b4;
-      border-color: #f8b4b4;
-    }
-    .card-dedup-checkbox.checked::after {
-      content: '\f00c';
-      font-family: 'Font Awesome 6 Free';
-      font-weight: 900;
-      color: #fff;
-      font-size: 9px;
-    }
-    .card-dedup-now {
-      font-size: 12px;
-      color: #8fa8bd;
-      cursor: pointer;
-      font-weight: 600;
-      transition: color 0.15s ease;
-    }
-    .card-dedup-now:active { color: #6a8ca8; }
-
-    .card-group-section { margin-bottom: 12px; }
-    .card-group-label {
-      font-size: 11px;
-      color: #8899a6;
-      font-weight: 600;
-      margin-bottom: 6px;
-      padding-left: 4px;
-      letter-spacing: 0.5px;
-    }
-    .card-group-select {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #eef1f4;
-      background: #fff;
-      font-size: 13px;
-      color: #55606b;
-      outline: none;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238899a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      background-size: 14px;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
-      margin-bottom: 8px;
-    }
-    .card-group-buttons {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .card-group-btn {
-      flex: 1;
-      padding: 9px 0;
-      border-radius: 12px;
-      background: #fff;
-      border: 1px solid #eef1f4;
-      font-size: 11px;
-      color: #55606b;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: background 0.15s ease, transform 0.1s ease;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
-    }
-    .card-group-btn:active {
-      background: #f2f6fa;
-      transform: scale(0.97);
-    }
-    .card-search-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #eef1f4;
-      background: #fff;
-      font-size: 13px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
-    }
-    .card-search-input::placeholder { color: #b6c2cd; }
-    .card-search-input:focus {
-      border-color: #b8d4ec;
-      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.15);
-    }
-
-    .card-list { margin-bottom: 12px; }
-    .word-card-item {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      box-shadow: 0 3px 10px rgba(150, 170, 190, 0.08);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      animation: popIn 0.2s ease;
-    }
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.96); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .word-card-text {
-      flex: 1;
-      font-size: 14px;
-      color: #333;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-    .word-card-delete {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 9999px;
-      background: #fdf0f0;
-      color: #e58b8b;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .word-card-delete:active { background: #f8d8d8; }
-
-    .card-list-placeholder {
-      text-align: center;
-      padding: 40px 20px 20px 20px;
-      color: #c0ccd6;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-    }
-    .card-list-placeholder i {
-      font-size: 30px;
-      color: #dde6ee;
-      margin-bottom: 12px;
-      display: block;
-    }
-
-    .emoji-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .emoji-grid-item {
-      position: relative;
-      border-radius: 14px;
-      overflow: hidden;
-      aspect-ratio: 1;
-      background: #f5f6f8;
-      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.08);
-    }
-    .emoji-grid-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .emoji-grid-item .emoji-delete {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 22px;
-      height: 22px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.9);
-      color: #e58b8b;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      cursor: pointer;
-    }
-
-    .emoji-footer-hint {
-      font-size: 11px;
-      color: #8899a6;
-      font-weight: 600;
-      margin-bottom: 6px;
-      padding-left: 2px;
-      cursor: pointer;
-    }
-    .emoji-footer-sub {
-      font-size: 11px;
-      color: #b6c2cd;
-      line-height: 1.6;
-      padding-left: 2px;
-      margin-bottom: 8px;
-    }
-    .emoji-footer-count {
-      font-size: 10px;
-      color: #c0ccd6;
-      text-align: center;
-      letter-spacing: 0.5px;
-    }
-
-    .card-status-bar {
-      flex-shrink: 0;
-      padding: 12px 16px;
-      text-align: center;
-      background: #f5f6f8;
-      border-top: 1px solid #eef1f4;
-    }
-    .card-status-counts {
-      font-size: 11px;
-      color: #8899a6;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .card-status-slogan {
-      font-size: 8px;
-      color: #c0ccd6;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 500;
-    }
-
-    /* ============ 传讯页面样式 ============ */
-    #pageChat {
-      background: #ffffff;
-      height: 100vh;
-      height: 100dvh;
-      max-width: 430px;
-      margin: 0 auto;
-    }
-    #pageChat .chat-header {
-      flex-shrink: 0;
-      padding: 14px 16px 10px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #fafbfc;
-      border-bottom: 1px solid #eef1f4;
-    }
-    #pageChat .chat-avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 9999px;
-      object-fit: cover;
-      border: 2px solid #e8eef4;
-      box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
-      cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    #pageChat .chat-avatar:active { transform: scale(0.95); }
-    #pageChat .chat-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: #333;
-      margin-top: 8px;
-      cursor: pointer;
-      padding: 4px 10px;
-      border-radius: 10px;
-      transition: background 0.15s ease;
-      user-select: none;
-    }
-    #pageChat .chat-name:active { background: #f0f4f8; }
-
-    /* 顶栏图标：水平居中，等距排列 */
-    #pageChat .chat-actions {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 22px;
-      margin-top: 12px;
-      width: 100%;
-    }
-    #pageChat .chat-action-icon {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #8fb8d8;
-      font-size: 17px;
-      cursor: pointer;
-      transition: color 0.15s ease, transform 0.15s ease;
-    }
-    #pageChat .chat-action-icon:active {
-      transform: scale(0.9);
-      color: #6fa3cc;
-    }
-    #pageChat .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 16px 24px 16px;
-      background: #ffffff;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      position: relative;
-    }
-    #pageChat .chat-messages::-webkit-scrollbar { display: none; }
-
-    /* 原急救按钮样式（保留，但通过新增类隐藏） */
-    #pageChat .sos-btn {
-      position: fixed;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 30;
-      width: 46px;
-      height: 46px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1.5px solid #f5a3a3;
-      color: #e57373;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 700;
-      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
-      cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    #pageChat .sos-btn:active {
-      transform: translateY(-50%) scale(0.94);
-      background: rgba(255, 245, 245, 1);
-    }
-    #pageChat .sos-btn i {
-      font-size: 14px;
-      margin-bottom: 1px;
-    }
-
-    /* 返回主页按钮（新增，与 sos-btn 位置一致但样式不同） */
-    #pageChat .home-return-btn {
-      position: fixed;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 31;
-      width: 46px;
-      height: 46px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid #e8eef4;
-      color: #7a8a99;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 17px;
-      box-shadow: 0 4px 14px rgba(150, 180, 210, 0.2);
-      cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
-    }
-    #pageChat .home-return-btn:active {
-      transform: translateY(-50%) scale(0.94);
-      background: rgba(245, 248, 252, 1);
-      color: #55606b;
-    }
-
-    #pageChat .message-row {
-      display: flex;
-      margin-bottom: 14px;
-    }
-    #pageChat .message-row.self { justify-content: flex-end; }
-    #pageChat .message-row.other { justify-content: flex-start; }
-    #pageChat .message-bubble {
-      max-width: 72%;
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-size: 14px;
-      line-height: 1.45;
-      word-wrap: break-word;
-      word-break: break-word;
-      white-space: pre-wrap;
-    }
-    #pageChat .message-row.self .message-bubble {
-      background: #d8ecfb;
-      color: #1a3a52;
-      border-bottom-right-radius: 4px;
-    }
-    #pageChat .message-row.other .message-bubble {
-      background: #f3f5f7;
-      color: #333;
-      border-bottom-left-radius: 4px;
-    }
-
-    .quote-block {
-      display: block;
-      padding: 6px 10px;
-      margin-bottom: 6px;
-      background: rgba(255, 255, 255, 0.6);
-      border-left: 3px solid #b8d4ec;
-      border-radius: 6px;
-      font-size: 12px;
-      color: #6a8ca8;
-      line-height: 1.4;
-      word-break: break-word;
-    }
-
-    .typing-bubble {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 12px 16px;
-      background: #f3f5f7;
-      border-radius: 18px;
-      border-bottom-left-radius: 4px;
-    }
-    .typing-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 9999px;
-      background: #b6c2cd;
-      animation: typingBounce 1.2s infinite ease-in-out;
-    }
-    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
-    @keyframes typingBounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-      30% { transform: translateY(-4px); opacity: 1; }
-    }
-
-    #pageChat .chat-input-bar {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: #fafbfc;
-      border-top: 1px solid #eef1f4;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    }
-    #pageChat .input-left-icons {
-      display: flex;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-    #pageChat .input-left-icons i {
-      color: #8fa8bd;
-      font-size: 18px;
-      cursor: pointer;
-      transition: color 0.15s ease, transform 0.15s ease;
-    }
-    #pageChat .input-left-icons i:active {
-      color: #6a8ca8;
-      transform: scale(0.92);
-    }
-    #pageChat .chat-input {
-      flex: 1;
-      min-width: 0;
-      padding: 9px 14px;
-      border-radius: 22px;
-      border: 1px solid #e2e8ee;
-      background: #ffffff;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    #pageChat .chat-input::placeholder { color: #b6c2cd; }
-    #pageChat .chat-input:focus {
-      border-color: #b8d4ec;
-      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
-    }
-    #pageChat .send-btn {
-      flex-shrink: 0;
-      width: 36px;
-      height: 36px;
-      border-radius: 9999px;
-      background: #6fb1e8;
-      color: #fff;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.15s ease;
-      box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
-    }
-    #pageChat .send-btn:active {
-      transform: scale(0.92);
-      background: #5a9ed6;
-    }
-    #pageChat .send-btn:disabled {
-      background: #c6d9ea;
-      box-shadow: none;
-      cursor: default;
-    }
-
-    /* ============ 音乐播放器（黑胶/歌曲列表） ============ */
-    @keyframes spin-vinyl {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .vinyl-cover {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #2a2a2a;
-      flex-shrink: 0;
-    }
-    .vinyl-cover.spinning .vinyl-img {
-      animation: spin-vinyl 4s linear infinite;
-    }
-    .vinyl-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-      animation-play-state: paused;
-    }
-    .vinyl-cover.spinning .vinyl-img {
-      animation-play-state: running;
-    }
-
-    .playlist-sheet {
-      position: fixed;
-      inset: 0;
-      z-index: 120;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      background: rgba(20, 30, 40, 0.25);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .playlist-sheet.active { display: flex; }
-    .playlist-sheet-panel {
-      width: 100%;
-      max-width: 430px;
-      max-height: 72vh;
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px 28px 0 0;
-      box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.15);
-      padding: 16px 18px 24px 18px;
-      display: flex;
-      flex-direction: column;
-      animation: slideUp 0.25s ease;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-    .playlist-sheet-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      flex-shrink: 0;
-    }
-    .playlist-sheet-deco {
-      font-size: 13px;
-      color: #8899a6;
-      letter-spacing: 1px;
-      font-weight: 600;
-    }
-    .playlist-sheet-actions { display: flex; gap: 8px; }
-    .playlist-sheet-icon-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 9999px;
-      background: rgba(245, 245, 248, 0.9);
-      border: 1px solid rgba(200, 210, 220, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #55606b;
-      cursor: pointer;
-      font-size: 13px;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    .playlist-sheet-icon-btn:active {
-      background: rgba(235, 240, 248, 1);
-      transform: scale(0.94);
-    }
-    .playlist-scroll {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
-      padding-right: 4px;
-    }
-    .playlist-scroll::-webkit-scrollbar { width: 4px; }
-    .playlist-scroll::-webkit-scrollbar-thumb {
-      background: rgba(180, 190, 200, 0.5);
-      border-radius: 4px;
-    }
-    .playlist-scroll::-webkit-scrollbar-track { background: transparent; }
-
-    .song-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 8px;
-      border-radius: 16px;
-      transition: background 0.15s ease;
-      cursor: pointer;
-    }
-    .song-row:active { background: rgba(245, 248, 252, 0.9); }
-    .song-row.current { background: rgba(248, 240, 245, 0.7); }
-    .song-row-radio {
-      width: 20px;
-      height: 20px;
-      border-radius: 9999px;
-      border: 1.5px solid #cbd4dc;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      order: 3;
-    }
-    .song-row.current .song-row-radio {
-      border-color: #f8b4b4;
-      background: #f8b4b4;
-    }
-    .song-row.current .song-row-radio::after {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 9999px;
-      background: #fff;
-    }
-    .song-row-info { flex: 1; min-width: 0; order: 1; }
-    .song-row-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #333;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-row-artist {
-      font-size: 11px;
-      color: #8899a6;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 3px;
-    }
-
-    .add-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 130;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.3);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .add-modal.active { display: flex; }
-    .add-panel {
-      width: 100%;
-      max-width: 380px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 22px 20px;
-      animation: popIn 0.22s ease;
-    }
-    .add-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .add-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(200, 210, 220, 0.7);
-      background: rgba(250, 251, 253, 0.9);
-      font-size: 13px;
-      color: #333;
-      outline: none;
-      margin-bottom: 12px;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .add-input:focus {
-      border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.2);
-    }
-    .add-input::placeholder { color: #a8b4c0; }
-    .add-actions { display: flex; gap: 12px; margin-top: 6px; }
-    .add-btn {
-      flex: 1;
-      padding: 12px 0;
-      border-radius: 18px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .add-btn:active { transform: scale(0.97); }
-    .add-btn-cancel {
-      background: rgba(240, 244, 248, 0.95);
-      color: #55606b;
-      border: 1px solid rgba(200, 210, 220, 0.5);
-    }
-    .add-btn-confirm {
-      background: #f8b4b4;
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
-    }
-
-    .manage-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 130;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.3);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .manage-modal.active { display: flex; }
-    .manage-panel {
-      width: 100%;
-      max-width: 360px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 22px 20px;
-      animation: popIn 0.22s ease;
-    }
-    .manage-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 18px;
-      text-align: center;
-    }
-    .manage-btn {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: rgba(248, 250, 252, 0.95);
-      border: 1px solid rgba(210, 220, 230, 0.7);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #333;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-bottom: 12px;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    .manage-btn:active {
-      background: rgba(240, 245, 250, 1);
-      transform: scale(0.98);
-    }
-    .manage-btn i {
-      color: #f8b4b4;
-      font-size: 16px;
-      width: 20px;
-      text-align: center;
-    }
-    .manage-cancel {
-      width: 100%;
-      padding: 12px 0;
-      text-align: center;
-      color: #8899a6;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      background: none;
-      border: none;
-      margin-top: 4px;
-    }
-    .manage-cancel:active { color: #55606b; }
-
-    /* ============ 编辑资料 & 角色面板 ============ */
-    .edit-profile-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 350;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .edit-profile-modal.active { display: flex; }
-    .edit-profile-panel {
-      width: 100%;
-      max-width: 360px;
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 24px 20px;
-      animation: popIn 0.22s ease;
-    }
-    .edit-profile-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 18px;
-      text-align: center;
-    }
-    .edit-avatar-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 18px;
-    }
-    .edit-avatar-preview {
-      width: 84px;
-      height: 84px;
-      border-radius: 9999px;
-      object-fit: cover;
-      border: 3px solid #e8eef4;
-      box-shadow: 0 6px 18px rgba(150, 180, 210, 0.2);
-      cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    .edit-avatar-preview:active { transform: scale(0.95); }
-    .edit-avatar-hint {
-      font-size: 11px;
-      color: #a8b4c0;
-      margin-top: 8px;
-      letter-spacing: 0.5px;
-    }
-    .edit-field-label {
-      font-size: 12px;
-      color: #8899a6;
-      font-weight: 600;
-      margin-bottom: 6px;
-      padding-left: 2px;
-    }
-    .edit-input {
-      width: 100%;
-      padding: 11px 14px;
-      border-radius: 14px;
-      border: 1px solid #e2e8ee;
-      background: #fafbfc;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-      margin-bottom: 14px;
-    }
-    .edit-input:focus {
-      border-color: #b8d4ec;
-      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
-    }
-    .edit-input::placeholder { color: #b6c2cd; }
-    .edit-actions { display: flex; gap: 12px; margin-top: 8px; }
-    .edit-btn {
-      flex: 1;
-      padding: 12px 0;
-      border-radius: 16px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .edit-btn:active { transform: scale(0.97); }
-    .edit-btn-cancel {
-      background: #f5f6f8;
-      color: #55606b;
-      border: 1px solid #eef1f4;
-    }
-    .edit-btn-save {
-      background: #1a2a3a;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(26, 42, 58, 0.2);
-    }
-
-    .role-panel-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 360;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: rgba(20, 30, 40, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .role-panel-modal.active { display: flex; }
-    .role-panel {
-      width: 100%;
-      max-width: 400px;
-      max-height: 85vh;
-      overflow-y: auto;
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 20px 18px 22px 18px;
-      animation: popIn 0.22s ease;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .role-panel::-webkit-scrollbar { display: none; }
-    .role-panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
-    .role-panel-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      letter-spacing: 0.5px;
-    }
-    .role-panel-close {
-      padding: 6px 16px;
-      border-radius: 9999px;
-      background: #f0f3f6;
-      border: none;
-      color: #8899a6;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .role-panel-close:active { background: #e2e8ee; }
-    .role-new-box {
-      border: 1.5px dashed #cbd4dc;
-      border-radius: 16px;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-    .role-new-avatar-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .role-new-avatar {
-      width: 46px;
-      height: 46px;
-      border-radius: 9999px;
-      object-fit: cover;
-      border: 2px solid #e8eef4;
-      background: #f5f6f8;
-    }
-    .role-new-avatar-label {
-      font-size: 9px;
-      color: #a8b4c0;
-      margin-top: 3px;
-      letter-spacing: 0.5px;
-    }
-    .role-new-input {
-      flex: 1;
-      min-width: 0;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid #e2e8ee;
-      background: #fafbfc;
-      font-size: 13px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .role-new-input:focus {
-      border-color: #b8d4ec;
-      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
-    }
-    .role-new-input::placeholder { color: #b6c2cd; }
-    .role-new-save {
-      flex-shrink: 0;
-      padding: 10px 16px;
-      border-radius: 12px;
-      background: #1a2a3a;
-      color: #fff;
-      border: none;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .role-new-save:active {
-      transform: scale(0.96);
-      opacity: 0.9;
-    }
-    .role-list-divider {
-      height: 1px;
-      background: #f0f3f6;
-      margin: 6px 0 14px 0;
-    }
-    .role-list-title {
-      font-size: 12px;
-      color: #8899a6;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
-      padding-left: 2px;
-    }
-    .role-list-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1.5px solid transparent;
-      cursor: pointer;
-      transition: background 0.15s ease, border 0.15s ease;
-      margin-bottom: 8px;
-      position: relative;
-    }
-    .role-list-item:active { background: #f5f8fb; }
-    .role-list-item.current {
-      border-color: #1a2a3a;
-      background: #f8fafc;
-    }
-    .role-list-avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 9999px;
-      object-fit: cover;
-      border: 2px solid #e8eef4;
-      flex-shrink: 0;
-    }
-    .role-list-name {
-      flex: 1;
-      min-width: 0;
-      font-size: 14px;
-      color: #333;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .role-list-name .current-tag {
-      font-size: 11px;
-      color: #8899a6;
-      font-weight: 500;
-      margin-left: 4px;
-    }
-    .role-list-delete {
-      flex-shrink: 0;
-      width: 30px;
-      height: 30px;
-      border-radius: 9999px;
-      background: #fdf0f0;
-      color: #e58b8b;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .role-list-delete:active { background: #f8d8d8; }
-    .role-list-empty {
-      text-align: center;
-      padding: 20px;
-      color: #c0ccd6;
-      font-size: 12px;
-    }
-
-    /* 回复设定 */
-    .reply-settings-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 300;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      background: rgba(20, 30, 40, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .reply-settings-modal.active { display: flex; }
-    .reply-settings-panel {
-      width: 100%;
-      max-width: 430px;
-      max-height: 88vh;
-      background: #ffffff;
-      border-radius: 28px 28px 0 0;
-      box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
-      display: flex;
-      flex-direction: column;
-      animation: slideUp 0.28s ease;
-      overflow: hidden;
-    }
-    .reply-settings-header {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 20px 12px 20px;
-      border-bottom: 1px solid #f0f3f6;
-    }
-    .reply-settings-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      letter-spacing: 0.5px;
-    }
-    .reply-settings-close {
-      width: 30px;
-      height: 30px;
-      border-radius: 9999px;
-      background: #f5f6f8;
-      border: none;
-      color: #55606b;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .reply-settings-close:active { background: #e8ecf0; }
-    .reply-settings-tabs {
-      flex-shrink: 0;
-      display: flex;
-      gap: 6px;
-      padding: 12px 16px 8px 16px;
-      border-bottom: 1px solid #f0f3f6;
-    }
-    .reply-tab-btn {
-      flex: 1;
-      padding: 9px 0;
-      border-radius: 12px;
-      background: transparent;
-      border: none;
-      font-size: 13px;
-      color: #8899a6;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .reply-tab-btn.active {
-      background: #fdf0f0;
-      color: #e58b8b;
-    }
-    .reply-tab-btn:active {
-      transform: scale(0.97);
-    }
-    .reply-settings-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 20px 24px 20px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .reply-settings-body::-webkit-scrollbar { display: none; }
-    .reply-tab-panel { display: none; }
-    .reply-tab-panel.active { display: block; }
-    .setting-row {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 0;
-    }
-    .setting-row-label { flex: 1; min-width: 0; }
-    .setting-row-title {
-      font-size: 14px;
-      color: #333;
-      font-weight: 600;
-      line-height: 1.4;
-    }
-    .setting-row-desc {
-      font-size: 11px;
-      color: #a8b4c0;
-      line-height: 1.5;
-      margin-top: 4px;
-    }
-    .toggle-switch {
-      position: relative;
-      width: 44px;
-      height: 26px;
-      flex-shrink: 0;
-      cursor: pointer;
-      margin-top: 2px;
-    }
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute;
-    }
-    .toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: #d8dfe6;
-      border-radius: 9999px;
-      transition: background 0.2s ease;
-    }
-    .toggle-slider::before {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      left: 3px;
-      top: 3px;
-      background: #fff;
-      border-radius: 9999px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-      transition: transform 0.2s ease;
-    }
-    .toggle-switch input:checked + .toggle-slider {
-      background: #f8b4b4;
-    }
-    .toggle-switch input:checked + .toggle-slider::before {
-      transform: translateX(18px);
-    }
-    .input-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .input-item { flex: 1; min-width: 0; }
-    .input-item-label {
-      font-size: 11px;
-      color: #8899a6;
-      margin-bottom: 5px;
-      font-weight: 500;
-    }
-    .input-with-unit { position: relative; }
-    .input-with-unit input {
-      width: 100%;
-      padding: 10px 40px 10px 12px;
-      border-radius: 12px;
-      border: 1px solid #eef1f4;
-      background: #fafbfc;
-      font-size: 13px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .input-with-unit input:focus {
-      border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-    }
-    .input-unit {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 11px;
-      color: #b6c2cd;
-      pointer-events: none;
-    }
-    .input-hint {
-      font-size: 10px;
-      color: #b6c2cd;
-      margin-top: 5px;
-      line-height: 1.5;
-    }
-    .setting-divider {
-      height: 1px;
-      background: #f0f3f6;
-      margin: 12px 0 4px 0;
-    }
-    .setting-section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #7a8a99;
-      letter-spacing: 0.5px;
-      margin: 8px 0 2px 0;
-    }
-    .wide-btn {
-      width: 100%;
-      padding: 11px 0;
-      border-radius: 14px;
-      background: #fafbfc;
-      border: 1px solid #eef1f4;
-      color: #55606b;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background 0.15s ease, transform 0.1s ease;
-      text-align: center;
-    }
-    .wide-btn:active {
-      background: #f2f6fa;
-      transform: scale(0.98);
-    }
-    .blue-link {
-      color: #6fa3cc;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 6px;
-      transition: color 0.15s ease;
-    }
-    .blue-link:active { color: #4a86b0; }
-    .auto-save-hint {
-      text-align: center;
-      font-size: 11px;
-      color: #c0ccd6;
-      margin-top: 18px;
-      letter-spacing: 0.5px;
-    }
-
-    /* 通用弹窗 */
-    .simple-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 400;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.35);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .simple-modal.active { display: flex; }
-    .simple-panel {
-      width: 100%;
-      max-width: 380px;
-      background: #ffffff;
-      border-radius: 24px;
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 22px 20px;
-      animation: popIn 0.22s ease;
-    }
-    .simple-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .simple-textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid #e2e8ee;
-      background: #fafbfc;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      resize: vertical;
-      min-height: 90px;
-      font-family: inherit;
-      line-height: 1.5;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .simple-textarea:focus {
-      border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-    }
-    .simple-textarea::placeholder { color: #b6c2cd; }
-    .simple-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 16px;
-    }
-    .simple-btn {
-      flex: 1;
-      padding: 11px 0;
-      border-radius: 14px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .simple-btn:active { transform: scale(0.97); }
-    .simple-btn-cancel {
-      background: #f5f6f8;
-      color: #55606b;
-      border: 1px solid #eef1f4;
-    }
-    .simple-btn-confirm {
-      background: #f8b4b4;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
-    }
-    .hidden-file-input { display: none; }
-  </style>
-</head>
-<body>
-
-  <!-- ==================== 主页 ==================== -->
-  <div class="page active" id="pageHome">
-    <div class="bg-dream" id="bgDream"></div>
-    <div class="bg-overlay"></div>
-
-    <div class="app-container w-full max-w-[430px] mx-auto relative">
-      <div class="px-5 pt-4 pb-1 flex-shrink-0">
-        <div class="header-card flex flex-col items-center justify-center text-center" id="headerCard">
-          <div class="glass-avatar p-0.5 w-12 h-12 flex items-center justify-center flex-shrink-0">
-            <img id="avatarImg" src="https://picsum.photos/100/100?random=1" alt="头像" class="w-full h-full object-cover rounded-full border border-white/80">
-          </div>
-          <div class="flex flex-col items-center justify-center mt-1">
-            <h1 class="text-lg font-bold text-[#333] leading-tight tracking-wide">阿晏</h1>
-            <p class="text-[11px] text-[#5a6b7a] font-medium tracking-wide leading-tight">地球online</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="main-content px-5">
-        <div class="search-glass flex items-center px-4 py-2.5 gap-3 mt-1">
-          <i class="fa-solid fa-magnifying-glass text-[#8899a6] text-sm"></i>
-          <input type="text" placeholder="Search" class="flex-1 bg-transparent border-none outline-none text-[#333] text-sm placeholder-[#8899a6] font-normal tracking-wide">
-        </div>
-
-        <div class="mt-3 flex justify-center">
-          <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
-            <div class="photo-scroll-item">
-              <img id="photo1" src="https://picsum.photos/200/200?random=2" alt="展示图1" class="w-full h-full object-cover">
-            </div>
-            <div class="photo-scroll-item">
-              <img id="photo2" src="https://picsum.photos/200/200?random=3" alt="展示图2" class="w-full h-full object-cover">
-            </div>
-            <div class="photo-scroll-item">
-              <img id="photo3" src="https://picsum.photos/200/200?random=4" alt="展示图3" class="w-full h-full object-cover">
-            </div>
-          </div>
-        </div>
-
-        <!-- ============ 音乐播放器 ============ -->
-        <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
-          <div class="vinyl-cover w-12 h-12" id="vinylCover">
-            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
-            <i id="albumIcon" class="fa-solid fa-music text-white/70 text-base"></i>
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="text-[#333] font-semibold text-sm truncate" id="songTitle">My love</h4>
-            <p class="text-[#8899a6] text-[10px] truncate mt-0.5" id="songArtist">颜人中</p>
-          </div>
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button class="w-7 h-7 flex items-center justify-center text-[#555] active:opacity-60 transition" id="uploadBtn">
-              <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
-            </button>
-            <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="prevBtn">
-              <i class="fa-solid fa-backward-step text-sm"></i>
-            </button>
-            <button class="play-btn w-8 h-8 rounded-full flex items-center justify-center shadow-md active:scale-95 transition" id="playBtn">
-              <i class="fa-solid fa-play text-xs pl-0.5" id="playIcon"></i>
-            </button>
-            <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="nextBtn">
-              <i class="fa-solid fa-forward-step text-sm"></i>
-            </button>
-          </div>
-        </div>
-
-        <audio id="audioPlayer" preload="metadata"></audio>
-
-        <div class="function-grid mt-4 mb-2">
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-house text-[#222] text-lg"></i></div>
-            <span class="function-label">主页</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-cloud text-[#222] text-lg"></i></div>
-            <span class="function-label">词云</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-regular fa-calendar-days text-[#222] text-lg"></i></div>
-            <span class="function-label">重要日</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-book-open text-[#222] text-lg"></i></div>
-            <span class="function-label">心晴手账</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-envelope text-[#222] text-lg"></i></div>
-            <span class="function-label">信箱</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
-            <span class="function-label">朋友圈</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-list-check text-[#222] text-lg"></i></div>
-            <span class="function-label">梦向问卷</span>
-          </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-gift text-[#222] text-lg"></i></div>
-            <span class="function-label">心意集市</span>
-          </a>
-        </div>
-
-        <div class="h-8"></div>
-      </div>
-
-      <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
-        <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto" id="bottomTabBar">
-          <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message" id="tabMessage">
-            <i class="fa-regular fa-comment-dots text-xl"></i>
-            <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
-          </button>
-          <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="card" id="tabCard">
-            <i class="fa-regular fa-clone text-xl"></i>
-            <span class="text-[10px] font-medium mt-1 tracking-wide">字卡</span>
-          </button>
-          <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="settings" id="tabSettingsHome">
-            <i class="fa-solid fa-gear text-xl"></i>
-            <span class="text-[10px] font-medium mt-1 tracking-wide">设置</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="h-0 w-full safe-bottom"></div>
-    </div>
-  </div>
-
-  <!-- ==================== 字卡收纳盒页面 ==================== -->
-  <div class="page card-page" id="pageCard">
-    <div class="card-topbar">
-      <div class="card-topbar-row">
-        <i class="fa-solid fa-chevron-left" id="cardBackBtn"></i>
-        <span class="card-topbar-title">字卡收纳盒</span>
-        <i class="fa-solid fa-pen-to-square" id="cardEditBtn"></i>
-      </div>
-      <div class="card-topbar-subtitle">LITTLE WORDS, LOTS OF YOU.</div>
-    </div>
-
-    <div class="card-body">
-      <div class="cat-grid-card" id="catGrid">
-        <div class="cat-grid-item active" data-cat="reply" id="catReply">
-          <i class="fa-regular fa-comment-dots"></i>
-          <span class="cat-label">回复</span>
-          <span class="cat-grid-badge" id="badgeReply">0</span>
-        </div>
-        <div class="cat-grid-item" data-cat="kaomoji" id="catKaomoji">
-          <i class="fa-regular fa-face-smile"></i>
-          <span class="cat-label">颜文字</span>
-          <span class="cat-grid-badge" id="badgeKaomoji">0</span>
-        </div>
-        <div class="cat-grid-item" data-cat="place" id="catPlace">
-          <i class="fa-solid fa-location-dot"></i>
-          <span class="cat-label">地点</span>
-          <span class="cat-grid-badge" id="badgePlace">0</span>
-        </div>
-        <div class="cat-grid-item" data-cat="mood" id="catMood">
-          <i class="fa-regular fa-heart"></i>
-          <span class="cat-label">心情</span>
-          <span class="cat-grid-badge" id="badgeMood">0</span>
-        </div>
-        <div class="cat-grid-item" data-cat="emoji" id="catEmoji">
-          <i class="fa-regular fa-image"></i>
-          <span class="cat-label">表情包</span>
-          <span class="cat-grid-badge" id="badgeEmoji">0</span>
-        </div>
-        <div class="cat-grid-item" data-cat="status" id="catStatus">
-          <i class="fa-regular fa-circle-check"></i>
-          <span class="cat-label">状态</span>
-          <span class="cat-grid-badge" id="badgeStatus">0</span>
-        </div>
-      </div>
-
-      <!-- 回复 -->
-      <div class="cat-panel active" id="panel-reply">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
-          <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
-          <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
-        </div>
-        <div class="card-dedup-row">
-          <div class="card-dedup-left" id="dedupToggle">
-            <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
-            <span>自动去重</span>
-          </div>
-          <span class="card-dedup-now" id="dedupNowBtn">立即去重</span>
-        </div>
-        <div class="card-group-section">
-          <div class="card-group-label">回复分组</div>
-          <select class="card-group-select" id="groupSelect">
-            <option>亲爱的的回复 · 0 条</option>
-          </select>
-          <div class="card-group-buttons">
-            <button class="card-group-btn" id="btnNewGroup">新建分组</button>
-            <button class="card-group-btn" id="btnRenameGroup">重命名</button>
-            <button class="card-group-btn" id="btnOrganizeGroup">整理</button>
-          </div>
-          <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
-        </div>
-        <div class="card-list" id="cardList"></div>
-        <div class="card-list-placeholder" id="cardListPlaceholder">
-          <i class="fa-regular fa-note-sticky"></i>
-          把想听到的话，放进这里。
-        </div>
-      </div>
-
-      <!-- 颜文字 -->
-      <div class="cat-panel" id="panel-kaomoji">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="kaomojiOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
-        </div>
-        <div class="card-group-section">
-          <input type="text" class="card-search-input" id="kaomojiSearchInput" placeholder="找一个表情...">
-        </div>
-        <div class="card-list" id="kaomojiList"></div>
-        <div class="card-list-placeholder" id="kaomojiPlaceholder">
-          <i class="fa-regular fa-face-smile"></i>
-          添加几个表情，给回复一点小情绪。
-        </div>
-      </div>
-
-      <!-- 地点 -->
-      <div class="cat-panel" id="panel-place">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="placeOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
-        </div>
-        <div class="card-group-section">
-          <input type="text" class="card-search-input" id="placeSearchInput" placeholder="找一个熟悉的地方...">
-        </div>
-        <div class="card-list" id="placeList"></div>
-        <div class="card-list-placeholder" id="placePlaceholder">
-          <i class="fa-solid fa-location-dot"></i>
-          先放进一个地点吧。
-        </div>
-      </div>
-
-      <!-- 心情 -->
-      <div class="cat-panel" id="panel-mood">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="moodOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
-        </div>
-        <div class="card-group-section">
-          <input type="text" class="card-search-input" id="moodSearchInput" placeholder="找一句话、一种心情...">
-        </div>
-        <div class="card-list" id="moodList"></div>
-        <div class="card-list-placeholder" id="moodPlaceholder">
-          <i class="fa-regular fa-heart"></i>
-          把他的心情，写成一张张小字卡。
-        </div>
-      </div>
-
-      <!-- 表情包 -->
-      <div class="cat-panel" id="panel-emoji">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="emojiImportLinkBtn"><i class="fa-solid fa-link"></i>导入链接</button>
-          <button class="card-action-btn" id="emojiExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
-          <button class="card-action-btn" id="emojiAddLinkBtn"><i class="fa-solid fa-plus"></i>添加链接</button>
-          <button class="card-action-btn" id="emojiUploadBtn"><i class="fa-solid fa-upload"></i>上传图片</button>
-          <input type="file" id="emojiFileInput" class="hidden-file-input" accept="image/*" multiple>
-        </div>
-        <div class="card-group-section">
-          <input type="text" class="card-search-input" id="emojiSearchInput" placeholder="搜索图片名称">
-        </div>
-        <div class="card-group-buttons">
-          <button class="card-group-btn" id="emojiNewGroupBtn">新建分组</button>
-          <button class="card-group-btn" id="emojiAllGroupBtn">
-            全部分组 <i class="fa-solid fa-chevron-down" style="font-size:9px;margin-left:2px;"></i>
-          </button>
-        </div>
-        <button class="card-action-btn" id="emojiOrganizeBtn" style="width:100%;margin-bottom:12px;">
-          <i class="fa-solid fa-broom"></i>整理图片
-        </button>
-        <div class="emoji-grid" id="emojiGrid"></div>
-        <div class="emoji-footer-hint" id="emojiFooterHint">他的表情包 · 随机主动发送已开启 &gt;</div>
-        <div class="emoji-footer-sub" id="emojiFooterSub">这里还没有图片，试试上传图片、添加链接或换一个搜索词。</div>
-        <div class="emoji-footer-count" id="emojiFooterCount">0 张 · 自动去重 · 轻点查看 / 管理</div>
-      </div>
-
-      <!-- 状态 -->
-      <div class="cat-panel" id="panel-status">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="statusImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
-          <button class="card-action-btn" id="statusExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
-          <button class="card-action-btn" id="statusAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
-        </div>
-        <div class="card-group-section">
-          <div class="card-group-label">状态分组</div>
-          <select class="card-group-select" id="statusGroupSelect">
-            <option>默认状态 · 0 条</option>
-          </select>
-          <div class="card-group-buttons">
-            <button class="card-group-btn" id="statusNewGroupBtn">新建分组</button>
-            <button class="card-group-btn" id="statusOrganizeBtn">整理</button>
-          </div>
-          <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
-        </div>
-        <div class="card-list" id="statusList"></div>
-        <div class="card-list-placeholder" id="statusPlaceholder">
-          <i class="fa-regular fa-circle-check"></i>
-          添加一些状态，让 Ta 更生动。
-        </div>
-      </div>
-    </div>
-
-    <div class="card-status-bar">
-      <div class="card-status-counts" id="cardStatusCounts">0 条回复 · 0 个表情 · 0 个地点 · 0 种心情</div>
-      <div class="card-status-slogan">SIDE BY SIDE · PRIVATE STUDY · NO REPOST</div>
-    </div>
-  </div>
-
-  <!-- ==================== 传讯页面 ==================== -->
-  <div class="page" id="pageChat">
-    <div class="chat-header">
-      <div id="chatContactArea" style="display:flex;flex-direction:column;align-items:center;">
-        <img class="chat-avatar" id="chatAvatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
-        <div class="chat-name" id="chatName">Ta</div>
-      </div>
-      <!-- 顶栏图标：水平居中 -->
-      <div class="chat-actions">
-        <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
-        <!-- 原电话图标位置：改为热茶/摸鱼图标 -->
-        <div class="chat-action-icon" title="摸鱼" id="fishingIcon"><i class="fa-solid fa-mug-hot"></i></div>
-        <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
-        <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
-      </div>
-    </div>
-
-    <div class="chat-messages" id="chatMessages">
-      <div class="message-row other">
-        <div class="message-bubble">你好呀，我是 Ta 👋</div>
-      </div>
-    </div>
-
-    <!-- 原急救按钮：保留 DOM，但通过 CSS 隐藏 -->
-    <div class="sos-btn" id="sosBtn" style="display: none;" title="急救">
-      <i class="fa-solid fa-kit-medical"></i>
-      <span>急救</span>
-    </div>
-
-    <!-- 新增：返回主页按钮 -->
-    <div class="home-return-btn" id="homeReturnBtn" title="返回主页">
-      <i class="fa-solid fa-house"></i>
-    </div>
-
-    <div class="chat-input-bar">
-      <div class="input-left-icons">
-        <i class="fa-regular fa-images" title="相册"></i>
-        <i class="fa-regular fa-image" title="图片"></i>
-        <i class="fa-regular fa-face-smile" title="表情"></i>
-      </div>
-      <input type="text" class="chat-input" id="chatInput" placeholder="输入消息...">
-      <button class="send-btn" id="sendBtn" disabled>
-        <i class="fa-solid fa-arrow-up"></i>
-      </button>
-    </div>
-  </div>
-
-  <!-- ============ 摸鱼状态悬浮面板 ============ -->
-  <div class="fishing-panel-overlay" id="fishingOverlay"></div>
-  <div class="fishing-panel" id="fishingPanel">
-    <div class="fishing-panel-title">当前状态</div>
-    <div class="fishing-panel-status" id="fishingStatusText">☕ 正在摸鱼，勿扰</div>
-    <button class="fishing-panel-close" id="fishingCloseBtn">关闭</button>
-  </div>
-
-  <!-- 编辑资料 -->
-  <div class="edit-profile-modal" id="editProfileModal">
-    <div class="edit-profile-panel">
-      <div class="edit-profile-title">编辑资料</div>
-      <div class="edit-avatar-wrap">
-        <img class="edit-avatar-preview" id="editAvatarPreview" src="https://picsum.photos/200/200?random=99" alt="头像预览">
-        <div class="edit-avatar-hint">点击头像上传图片</div>
-        <input type="file" id="editAvatarFileInput" class="hidden-file-input" accept="image/*">
-      </div>
-      <div class="edit-field-label">昵称</div>
-      <input type="text" class="edit-input" id="editNameInput" placeholder="输入昵称...">
-      <div class="edit-field-label">或粘贴图片 URL</div>
-      <input type="text" class="edit-input" id="editAvatarUrlInput" placeholder="https://...">
-      <div class="edit-actions">
-        <button class="edit-btn edit-btn-cancel" id="editCancelBtn">取消</button>
-        <button class="edit-btn edit-btn-save" id="editSaveBtn">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 角色面板 -->
-  <div class="role-panel-modal" id="rolePanelModal">
-    <div class="role-panel">
-      <div class="role-panel-header">
-        <span class="role-panel-title">角色面板</span>
-        <button class="role-panel-close" id="rolePanelCloseBtn">关闭</button>
-      </div>
-      <div class="role-new-box">
-        <div class="role-new-avatar-wrap" id="roleNewAvatarWrap">
-          <img class="role-new-avatar" id="roleNewAvatarPreview" src="https://picsum.photos/100/100?random=1" alt="新角色头像">
-          <div class="role-new-avatar-label">头像</div>
-          <input type="file" id="roleNewAvatarFileInput" class="hidden-file-input" accept="image/*">
-        </div>
-        <input type="text" class="role-new-input" id="roleNewNameInput" placeholder="输入角色姓名...">
-        <button class="role-new-save" id="roleNewSaveBtn">保存</button>
-      </div>
-      <div class="role-list-divider"></div>
-      <div class="role-list-title">已有角色档案</div>
-      <div id="roleListContainer"></div>
-    </div>
-  </div>
-
-  <!-- 回复设定 -->
-  <div class="reply-settings-modal" id="replySettingsModal">
-    <div class="reply-settings-panel">
-      <div class="reply-settings-header">
-        <span class="reply-settings-title">回复设定</span>
-        <button class="reply-settings-close" id="replySettingsClose">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      <div class="reply-settings-tabs">
-        <button class="reply-tab-btn active" data-tab="rhythm">回复节奏</button>
-        <button class="reply-tab-btn" data-tab="proactive">主动消息</button>
-        <button class="reply-tab-btn" data-tab="quote">引用/反应</button>
-      </div>
-      <div class="reply-settings-body">
-        <div class="reply-tab-panel active" id="panel-rhythm">
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">开启正常字卡回复</div>
-              <div class="setting-row-desc">关闭后随机箭头获取字卡，不生效</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleNormalReply" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="input-row">
-            <div class="input-item">
-              <div class="input-item-label">最短等待 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputMinWait" value="3" min="1" max="600">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
-            <div class="input-item">
-              <div class="input-item-label">最长等待 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputMaxWait" value="12" min="1" max="600">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
-          </div>
-          <div class="input-hint">等待时间可设为 1-600 秒，回复将在该区间内随机延迟</div>
-          <div class="input-row" style="margin-top:14px;">
-            <div class="input-item">
-              <div class="input-item-label">每次最少回复 / 条</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputMinCount" value="0" min="0" max="10">
-                <span class="input-unit">条</span>
-              </div>
-            </div>
-            <div class="input-item">
-              <div class="input-item-label">每次最多回复 / 条</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputMaxCount" value="3" min="0" max="10">
-                <span class="input-unit">条</span>
-              </div>
-            </div>
-          </div>
-          <div class="setting-row" style="margin-top:6px;">
-            <div class="setting-row-label">
-              <div class="setting-row-title">随机附加颜文字</div>
-              <div class="setting-row-desc">随机回复时，有一定概率在句尾附加颜文字</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleKaomoji">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-divider"></div>
-          <div class="setting-section-title">输入状态</div>
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">显示三点输入气泡</div>
-              <div class="setting-row-desc">对方回复前，先显示三点输入动画</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleTypingBubble" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-divider"></div>
-          <div class="setting-section-title">已读与状态自动回复</div>
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">显示角色已读状态</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleReadStatus">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">开启自动回复（状态字卡）</div>
-              <div class="setting-row-desc">开启后，当角色不在线时，将自动从状态字卡中抽取内容进行回复。状态字卡可在下方管理。</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleAutoReply">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <button class="wide-btn" id="btnManageAutoReply">管理自动回复字卡</button>
-          <button class="wide-btn" id="btnViewStatusCards">查看角色状态卡片</button>
-          <div class="setting-divider"></div>
-          <div class="setting-section-title">通讯节奏</div>
-          <div class="input-row">
-            <div class="input-item">
-              <div class="input-item-label">最短等待 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputCommMinWait" value="10" min="1" max="600">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
-            <div class="input-item">
-              <div class="input-item-label">最长等待 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputCommMaxWait" value="60" min="1" max="600">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
-          </div>
-          <div class="auto-save-hint">修改后自动保存</div>
-        </div>
-
-        <div class="reply-tab-panel" id="panel-proactive">
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">允许他主动发消息</div>
-              <div class="setting-row-desc">开启后，角色会按照设定间隔主动给你发送消息</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleProactive">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="input-row">
-            <div class="input-item">
-              <div class="input-item-label">最短间隔 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputProactiveMin" value="120" min="10" max="10800">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
-            <div class="input-item">
-              <div class="input-item-label">最长间隔 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputProactiveMax" value="300" min="10" max="10800">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
-          </div>
-          <div class="input-hint">主动消息间隔可设为 10-10800 秒，角色将在该区间内随机选择时间发送</div>
-          <a class="blue-link" id="linkBackgroundKeep">后台保活与消息提醒</a>
-          <div class="auto-save-hint">修改后自动保存</div>
-        </div>
-
-        <div class="reply-tab-panel" id="panel-quote">
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">允许随机引用</div>
-              <div class="setting-row-desc">开启后，角色回复时有一定概率引用你之前的消息</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleQuote" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">允许随机贴反应</div>
-              <div class="setting-row-desc">开启后，角色回复时有一定概率对你之前的消息贴表情反应</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleReaction" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="input-hint" style="margin-top:12px;">
-            引用和反应均为随机触发，触发概率由系统根据对话上下文自动计算。关闭后角色将不再引用或贴反应。
-          </div>
-          <div class="auto-save-hint">修改后自动保存</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 通用输入弹窗 -->
-  <div class="simple-modal" id="simpleModal">
-    <div class="simple-panel">
-      <div class="simple-title" id="simpleModalTitle">
-        <i class="fa-solid fa-pen-nib text-[#f8b4b4]"></i>
-        <span id="simpleModalTitleText">添加字卡</span>
-      </div>
-      <textarea class="simple-textarea" id="simpleModalInput" placeholder="输入内容..."></textarea>
-      <div class="simple-actions">
-        <button class="simple-btn simple-btn-cancel" id="simpleModalCancel">取消</button>
-        <button class="simple-btn simple-btn-confirm" id="simpleModalConfirm">确定</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 音乐播放器弹窗 -->
-  <div class="playlist-sheet" id="playlistSheet">
-    <div class="playlist-sheet-panel">
-      <div class="playlist-sheet-header">
-        <span class="playlist-sheet-deco">.°♫.°</span>
-        <div class="playlist-sheet-actions">
-          <button class="playlist-sheet-icon-btn" id="openManageBtn" title="歌单管理">
-            <i class="fa-solid fa-folder-open"></i>
-          </button>
-          <button class="playlist-sheet-icon-btn" id="searchSongBtn" title="搜索">
-            <i class="fa-solid fa-magnifying-glass"></i>
-          </button>
-          <button class="playlist-sheet-icon-btn" id="openAddBtn" title="添加歌曲">
-            <i class="fa-solid fa-plus"></i>
-          </button>
-        </div>
-      </div>
-      <div class="playlist-scroll" id="playlistScroll"></div>
-    </div>
-  </div>
-
-  <div class="add-modal" id="addModal">
-    <div class="add-panel">
-      <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
-      <input type="text" class="add-input" id="addTitle" placeholder="歌曲名称（例如：这里的风景）">
-      <input type="text" class="add-input" id="addArtist" placeholder="歌手 / 备注（例如：你的名字）">
-      <input type="text" class="add-input" id="addUrl" placeholder="音频链接 (mp3/m4a 链接)">
-      <div class="add-actions">
-        <button class="add-btn add-btn-cancel" id="addCancel">取消</button>
-        <button class="add-btn add-btn-confirm" id="addConfirm">添加播放</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="manage-modal" id="manageModal">
-    <div class="manage-panel">
-      <div class="manage-title">歌单管理</div>
-      <button class="manage-btn" id="importPlaylistBtn">
-        <i class="fa-solid fa-file-import"></i>
-        <span>导入歌单文件</span>
-      </button>
-      <input type="file" id="importFileInput" accept=".json,.txt,application/json" style="display:none;">
-      <button class="manage-btn" id="exportPlaylistBtn">
-        <i class="fa-solid fa-file-export"></i>
-        <span>导出当前歌单</span>
-      </button>
-      <button class="manage-cancel" id="manageCancel">取消</button>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       新增样式：摸鱼面板
-       ============================================================ -->
-  <style>
-    /* 摸鱼状态悬浮面板 */
-    .fishing-panel {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 500;
-      width: 240px;
-      background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 12px 40px rgba(0, 20, 30, 0.18);
-      padding: 20px 18px 16px 18px;
-      display: none;
-      text-align: center;
-      animation: popIn 0.22s ease;
-    }
-    .fishing-panel.active { display: block; }
-    .fishing-panel-title {
-      font-size: 13px;
-      color: #8899a6;
-      font-weight: 600;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
-    }
-    .fishing-panel-status {
-      font-size: 16px;
-      color: #333;
-      font-weight: 700;
-      margin-bottom: 16px;
-      line-height: 1.5;
-    }
-    .fishing-panel-close {
-      width: 100%;
-      padding: 9px 0;
-      border-radius: 12px;
-      background: #f5f6f8;
-      border: 1px solid #eef1f4;
-      color: #55606b;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    .fishing-panel-close:active {
-      background: #e8ecf0;
-      transform: scale(0.97);
-    }
-    .fishing-panel-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 499;
-      background: rgba(20, 30, 40, 0.15);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      display: none;
-    }
-    .fishing-panel-overlay.active { display: block; }
-  </style>
-
-   <!-- ⬇️ 新增 reply.js，必须放在 card.js 之前 -->
-  <script src="./js/reply.js"></script>
-  <script src="./js/card.js"></script>
-  <script src="./js/chat.js"></script>
-  <script src="./js/main-image-custom.js"></script>
-
-  <!-- ============================================================
-       新增脚本：页面切换、回复设定、编辑资料、角色面板、音乐播放器
-       ============================================================ -->
-  <script>
-    // ==================== 页面切换 ====================
-    (function () {
-      const pageHome = document.getElementById('pageHome');
-      const pageCard = document.getElementById('pageCard');
-      const pageChat = document.getElementById('pageChat');
-
-      function hideAll() {
-        pageHome.classList.remove('active');
-        pageCard.classList.remove('active');
-        pageChat.classList.remove('active');
-      }
-
-      function showPage(page) {
-        hideAll();
-        page.classList.add('active');
-        window.scrollTo(0, 0);
-      }
-
-      document.getElementById('tabCard').addEventListener('click', function (e) {
-        e.preventDefault();
-        showPage(pageCard);
-        if (window.refreshCardUI) window.refreshCardUI();
-      });
-
-      document.getElementById('tabMessage').addEventListener('click', function (e) {
-        e.preventDefault();
-        showPage(pageChat);
-        if (window.initChatPage) window.initChatPage();
-      });
-
-      document.getElementById('cardBackBtn').addEventListener('click', function () {
-        showPage(pageHome);
-      });
-
-      // 返回主页按钮
-      const homeReturnBtn = document.getElementById('homeReturnBtn');
-      if (homeReturnBtn) {
-        homeReturnBtn.addEventListener('click', function () {
-          showPage(pageHome);
-        });
-      }
-
-      window.showPage = showPage;
-      window.pageHome = pageHome;
-      window.pageCard = pageCard;
-      window.pageChat = pageChat;
-    })();
-
-    // ==================== 静态占位交互 ====================
-    (function () {
-      document.querySelectorAll('.tab-btn').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-          if (btn.id === 'tabCard' || btn.id === 'tabMessage') return;
-          e.preventDefault();
-          document.querySelectorAll('.tab-btn').forEach(function (b) {
-            b.classList.remove('active');
-          });
-          btn.classList.add('active');
-        });
-      });
-    })();
-
-    // ==================== 摸鱼状态悬浮面板 ====================
-    (function () {
-      const fishingIcon = document.getElementById('fishingIcon');
-      const fishingPanel = document.getElementById('fishingPanel');
-      const fishingOverlay = document.getElementById('fishingOverlay');
-      const fishingCloseBtn = document.getElementById('fishingCloseBtn');
-
-      function openFishingPanel() {
-        fishingPanel.classList.add('active');
-        fishingOverlay.classList.add('active');
-      }
-      function closeFishingPanel() {
-        fishingPanel.classList.remove('active');
-        fishingOverlay.classList.remove('active');
-      }
-
-      if (fishingIcon) fishingIcon.addEventListener('click', openFishingPanel);
-      if (fishingCloseBtn) fishingCloseBtn.addEventListener('click', closeFishingPanel);
-      if (fishingOverlay) fishingOverlay.addEventListener('click', closeFishingPanel);
-    })();
-
-    // ==================== 回复设定 ====================
-    (function () {
-      const modal = document.getElementById('replySettingsModal');
-      const openBtn = document.getElementById('cardEditBtn');
-      const closeBtn = document.getElementById('replySettingsClose');
-
-      function openModal() { modal.classList.add('active'); }
-      function closeModal() { modal.classList.remove('active'); }
-
-      if (openBtn) openBtn.addEventListener('click', openModal);
-      if (closeBtn) closeBtn.addEventListener('click', closeModal);
-      if (modal) {
-        modal.addEventListener('click', function (e) {
-          if (e.target === modal) closeModal();
-        });
-      }
-
-      const tabBtns = document.querySelectorAll('.reply-tab-btn');
-      const panels = {
-        rhythm: document.getElementById('panel-rhythm'),
-        proactive: document.getElementById('panel-proactive'),
-        quote: document.getElementById('panel-quote')
-      };
-
-      tabBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          const tab = btn.getAttribute('data-tab');
-          tabBtns.forEach(function (b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-          Object.keys(panels).forEach(function (key) {
-            panels[key].classList.toggle('active', key === tab);
-          });
-        });
-      });
-    })();
-
-    // ==================== 编辑资料 & 角色面板 ====================
-    (function () {
-      const CONTACTS_KEY = 'my_contacts';
-      const CURRENT_CONTACT_KEY = 'my_current_contact';
-
-      const contactArea = document.getElementById('chatContactArea');
-      const chatAvatar = document.getElementById('chatAvatar');
-      const chatName = document.getElementById('chatName');
-
-      const editModal = document.getElementById('editProfileModal');
-      const editAvatarPreview = document.getElementById('editAvatarPreview');
-      const editNameInput = document.getElementById('editNameInput');
-      const editAvatarUrlInput = document.getElementById('editAvatarUrlInput');
-      const editAvatarFileInput = document.getElementById('editAvatarFileInput');
-      const editCancelBtn = document.getElementById('editCancelBtn');
-      const editSaveBtn = document.getElementById('editSaveBtn');
-
-      const roleModal = document.getElementById('rolePanelModal');
-      const rolePanelCloseBtn = document.getElementById('rolePanelCloseBtn');
-      const roleNewAvatarWrap = document.getElementById('roleNewAvatarWrap');
-      const roleNewAvatarPreview = document.getElementById('roleNewAvatarPreview');
-      const roleNewAvatarFileInput = document.getElementById('roleNewAvatarFileInput');
-      const roleNewNameInput = document.getElementById('roleNewNameInput');
-      const roleNewSaveBtn = document.getElementById('roleNewSaveBtn');
-      const roleListContainer = document.getElementById('roleListContainer');
-
-      let contacts = [];
-      let currentContactId = null;
-      let pendingAvatarData = null;
-
-      function loadContacts() {
-        try {
-          const raw = localStorage.getItem(CONTACTS_KEY);
-          if (raw) contacts = JSON.parse(raw);
-          if (!Array.isArray(contacts)) contacts = [];
-        } catch (e) { contacts = []; }
-
-        if (contacts.length === 0) {
-          contacts = [{
-            id: 'default_ta',
-            name: 'Ta',
-            avatar: 'https://picsum.photos/200/200?random=99'
-          }];
-          saveContacts();
-        }
-
-        const cid = localStorage.getItem(CURRENT_CONTACT_KEY);
-        if (cid && contacts.some(function (c) { return c.id === cid; })) {
-          currentContactId = cid;
-        } else {
-          currentContactId = contacts[0].id;
-        }
-        applyCurrentContact();
-      }
-
-      function saveContacts() {
-        try { localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts)); } catch (e) {}
-      }
-      function saveCurrentId() {
-        try { localStorage.setItem(CURRENT_CONTACT_KEY, currentContactId); } catch (e) {}
-      }
-
-      function getCurrentContact() {
-        return contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
-      }
-
-      function applyCurrentContact() {
-        const c = getCurrentContact();
-        if (!c) return;
-        chatAvatar.src = c.avatar;
-        chatName.textContent = c.name;
-      }
-
-      let clickTimer = null;
-      contactArea.addEventListener('click', function (e) {
-        e.preventDefault();
-        if (clickTimer) {
-          clearTimeout(clickTimer);
-          clickTimer = null;
-          openRolePanel();
-          return;
-        }
-        clickTimer = setTimeout(function () {
-          clickTimer = null;
-          openEditModal();
-        }, 260);
-      });
-
-      function openEditModal() {
-        const c = getCurrentContact();
-        if (!c) return;
-        editAvatarPreview.src = c.avatar;
-        editNameInput.value = c.name;
-        editAvatarUrlInput.value = '';
-        editAvatarFileInput.value = '';
-        pendingAvatarData = null;
-        editModal.classList.add('active');
-      }
-      function closeEditModal() { editModal.classList.remove('active'); }
-
-      editAvatarPreview.addEventListener('click', function () {
-        editAvatarFileInput.click();
-      });
-      editAvatarFileInput.addEventListener('change', function () {
-        const file = editAvatarFileInput.files && editAvatarFileInput.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-          pendingAvatarData = ev.target.result;
-          editAvatarPreview.src = pendingAvatarData;
-        };
-        reader.readAsDataURL(file);
-      });
-
-      editCancelBtn.addEventListener('click', closeEditModal);
-      editModal.addEventListener('click', function (e) {
-        if (e.target === editModal) closeEditModal();
-      });
-
-      editSaveBtn.addEventListener('click', function () {
-        const c = getCurrentContact();
-        if (!c) return;
-        const newName = editNameInput.value.trim() || c.name;
-        const urlInput = editAvatarUrlInput.value.trim();
-        let newAvatar = pendingAvatarData;
-        if (!newAvatar && urlInput) newAvatar = urlInput;
-        if (!newAvatar) newAvatar = c.avatar;
-        c.name = newName;
-        c.avatar = newAvatar;
-        saveContacts();
-        applyCurrentContact();
-        closeEditModal();
-      });
-
-      function openRolePanel() {
-        renderRoleList();
-        roleNewNameInput.value = '';
-        roleNewAvatarPreview.src = 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000);
-        roleNewAvatarFileInput.value = '';
-        roleModal.classList.add('active');
-      }
-      function closeRolePanel() { roleModal.classList.remove('active'); }
-
-      rolePanelCloseBtn.addEventListener('click', closeRolePanel);
-      roleModal.addEventListener('click', function (e) {
-        if (e.target === roleModal) closeRolePanel();
-      });
-
-      roleNewAvatarWrap.addEventListener('click', function (e) {
-        if (e.target.tagName !== 'INPUT') roleNewAvatarFileInput.click();
-      });
-      roleNewAvatarFileInput.addEventListener('change', function () {
-        const file = roleNewAvatarFileInput.files && roleNewAvatarFileInput.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (ev) { roleNewAvatarPreview.src = ev.target.result; };
-        reader.readAsDataURL(file);
-      });
-
-      roleNewSaveBtn.addEventListener('click', function () {
-        const name = roleNewNameInput.value.trim();
-        if (!name) { alert('请输入角色姓名'); return; }
-        const newContact = {
-          id: 'contact_' + Date.now(),
-          name: name,
-          avatar: roleNewAvatarPreview.src
-        };
-        contacts.push(newContact);
-        saveContacts();
-        currentContactId = newContact.id;
-        saveCurrentId();
-        applyCurrentContact();
-        renderRoleList();
-        roleNewNameInput.value = '';
-        roleNewAvatarPreview.src = 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000);
-        roleNewAvatarFileInput.value = '';
-      });
-
-      function renderRoleList() {
-        roleListContainer.innerHTML = '';
-        if (contacts.length === 0) {
-          roleListContainer.innerHTML = '<div class="role-list-empty">暂无角色档案</div>';
-          return;
-        }
-        contacts.forEach(function (c) {
-          const item = document.createElement('div');
-          item.className = 'role-list-item' + (c.id === currentContactId ? ' current' : '');
-          item.innerHTML = `
-            <img class="role-list-avatar" src="${c.avatar}" alt="${escapeHtml(c.name)}">
-            <div class="role-list-name">${escapeHtml(c.name)}${c.id === currentContactId ? '<span class="current-tag">(当前)</span>' : ''}</div>
-            <button class="role-list-delete" title="删除"><i class="fa-solid fa-trash-can"></i></button>
-          `;
-          item.addEventListener('click', function (e) {
-            if (e.target.closest('.role-list-delete')) return;
-            currentContactId = c.id;
-            saveCurrentId();
-            applyCurrentContact();
-            renderRoleList();
-          });
-          const delBtn = item.querySelector('.role-list-delete');
-          delBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (contacts.length <= 1) { alert('至少保留一个角色'); return; }
-            if (!confirm('确定删除角色「' + c.name + '」吗？')) return;
-            contacts = contacts.filter(function (x) { return x.id !== c.id; });
-            if (currentContactId === c.id) {
-              currentContactId = contacts[0].id;
-              saveCurrentId();
-              applyCurrentContact();
-            }
-            saveContacts();
-            renderRoleList();
-          });
-          roleListContainer.appendChild(item);
-        });
-      }
-
-      function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, function (m) {
-          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-        });
-      }
-
-      loadContacts();
-    })();
-
-    // ==================== 主页音乐播放器 ====================
-    (function () {
-      const audio = document.getElementById('audioPlayer');
-      const songTitle = document.getElementById('songTitle');
-      const songArtist = document.getElementById('songArtist');
-      const playBtn = document.getElementById('playBtn');
-      const playIcon = document.getElementById('playIcon');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const vinylCover = document.getElementById('vinylCover');
-      const uploadBtn = document.getElementById('uploadBtn');
-
-      const playlistSheet = document.getElementById('playlistSheet');
-      const playlistScroll = document.getElementById('playlistScroll');
-      const openManageBtn = document.getElementById('openManageBtn');
-      const searchSongBtn = document.getElementById('searchSongBtn');
-      const openAddBtn = document.getElementById('openAddBtn');
-
-      const addModal = document.getElementById('addModal');
-      const addTitle = document.getElementById('addTitle');
-      const addArtist = document.getElementById('addArtist');
-      const addUrl = document.getElementById('addUrl');
-      const addCancel = document.getElementById('addCancel');
-      const addConfirm = document.getElementById('addConfirm');
-
-      const manageModal = document.getElementById('manageModal');
-      const importPlaylistBtn = document.getElementById('importPlaylistBtn');
-      const exportPlaylistBtn = document.getElementById('exportPlaylistBtn');
-      const importFileInput = document.getElementById('importFileInput');
-      const manageCancel = document.getElementById('manageCancel');
-
-      let playlist = [
-        { title: 'My love', artist: '颜人中', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', cover: 'https://picsum.photos/100/100?random=20', lyric: '我的爱 像风一样 来了又走' },
-        { title: '夜曲', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', cover: 'https://picsum.photos/100/100?random=21', lyric: '一群嗜血的蚂蚁 被腐肉所吸引' },
-        { title: '晴天', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', cover: 'https://picsum.photos/100/100?random=22', lyric: '故事的小黄花 从出生那年就飘着' },
-        { title: '起风了', artist: '买辣椒也用券', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', cover: 'https://picsum.photos/100/100?random=23', lyric: '这一路上走走停停 顺着少年漂流的痕迹' }
-      ];
-
-      let currentSongIndex = 0;
-      let isPlaying = false;
-
-      function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, function (m) {
-          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-        });
-      }
-
-      function renderPlaylistSheet() {
-        playlistScroll.innerHTML = '';
-        playlist.forEach(function (song, index) {
-          const row = document.createElement('div');
-          row.className = 'song-row' + (index === currentSongIndex ? ' current' : '');
-          row.innerHTML = `
-            <div class="song-row-info">
-              <div class="song-row-title">${escapeHtml(song.title)}</div>
-              <div class="song-row-artist">${escapeHtml(song.lyric || song.artist)}</div>
-            </div>
-            <div class="song-row-radio"></div>
-          `;
-          row.addEventListener('click', function () {
-            currentSongIndex = index;
-            playSong(index);
-            closePlaylistSheet();
-          });
-          playlistScroll.appendChild(row);
-        });
-      }
-
-      function openPlaylistSheet() {
-        renderPlaylistSheet();
-        playlistSheet.classList.add('active');
-      }
-      function closePlaylistSheet() { playlistSheet.classList.remove('active'); }
-
-      function playSong(index) {
-        if (index < 0 || index >= playlist.length) return;
-        const song = playlist[index];
-        audio.src = song.url;
-        songTitle.textContent = song.title;
-        songArtist.textContent = song.artist;
-        if (song.cover) {
-          const albumCover = document.getElementById('albumCover');
-          const albumIcon = document.getElementById('albumIcon');
-          albumCover.src = song.cover;
-          albumCover.style.display = 'block';
-          albumIcon.style.display = 'none';
-        }
-        audio.play().then(function () {
-          isPlaying = true;
-          playIcon.classList.remove('fa-play');
-          playIcon.classList.add('fa-pause');
-          vinylCover.classList.add('spinning');
-        }).catch(function () {
-          isPlaying = false;
-          playIcon.classList.remove('fa-pause');
-          playIcon.classList.add('fa-play');
-          vinylCover.classList.remove('spinning');
-        });
-        renderPlaylistSheet();
-      }
-
-      playBtn.addEventListener('click', function () {
-        if (!audio.src) { playSong(currentSongIndex); return; }
-        if (isPlaying) {
-          audio.pause();
-          isPlaying = false;
-          playIcon.classList.remove('fa-pause');
-          playIcon.classList.add('fa-play');
-          vinylCover.classList.remove('spinning');
-        } else {
-          audio.play().then(function () {
-            isPlaying = true;
-            playIcon.classList.remove('fa-play');
-            playIcon.classList.add('fa-pause');
-            vinylCover.classList.add('spinning');
-          }).catch(function () {});
-        }
-      });
-
-      prevBtn.addEventListener('click', function () {
-        currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
-        playSong(currentSongIndex);
-      });
-      nextBtn.addEventListener('click', function () {
-        currentSongIndex = (currentSongIndex + 1) % playlist.length;
-        playSong(currentSongIndex);
-      });
-
-      audio.addEventListener('ended', function () { nextBtn.click(); });
-
-      vinylCover.addEventListener('click', openPlaylistSheet);
-      playlistSheet.addEventListener('click', function (e) {
-        if (e.target === playlistSheet) closePlaylistSheet();
-      });
-
-      uploadBtn.addEventListener('click', function () { openAddModal(); });
-
-      function openAddModal() {
-        addTitle.value = '';
-        addArtist.value = '';
-        addUrl.value = '';
-        addModal.classList.add('active');
-      }
-      function closeAddModal() { addModal.classList.remove('active'); }
-
-      openAddBtn.addEventListener('click', function () {
-        closePlaylistSheet();
-        openAddModal();
-      });
-      addCancel.addEventListener('click', closeAddModal);
-      addModal.addEventListener('click', function (e) {
-        if (e.target === addModal) closeAddModal();
-      });
-
-      addConfirm.addEventListener('click', function () {
-        const title = addTitle.value.trim() || '未命名歌曲';
-        const artist = addArtist.value.trim() || '未知歌手';
-        const url = addUrl.value.trim();
-        if (!url) { alert('请填写音频链接'); return; }
-        playlist.push({
-          title: title,
-          artist: artist,
-          url: url,
-          cover: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
-          lyric: artist
-        });
-        currentSongIndex = playlist.length - 1;
-        playSong(currentSongIndex);
-        closeAddModal();
-        closePlaylistSheet();
-      });
-
-      openManageBtn.addEventListener('click', function () {
-        manageModal.classList.add('active');
-      });
-      manageCancel.addEventListener('click', function () {
-        manageModal.classList.remove('active');
-      });
-      manageModal.addEventListener('click', function (e) {
-        if (e.target === manageModal) manageModal.classList.remove('active');
-      });
-
-      importPlaylistBtn.addEventListener('click', function () { importFileInput.click(); });
-      importFileInput.addEventListener('change', function () {
-        const file = importFileInput.files && importFileInput.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            const content = e.target.result;
-            let imported = [];
-            try {
-              const parsed = JSON.parse(content);
-              if (Array.isArray(parsed)) imported = parsed;
-              else if (parsed && Array.isArray(parsed.songs)) imported = parsed.songs;
-            } catch (err) {
-              imported = content.split('\n').filter(function (l) { return l.trim(); }).map(function (line) {
-                const parts = line.split('|').map(function (p) { return p.trim(); });
-                return { title: parts[0] || '未命名', artist: parts[1] || '未知', url: parts[2] || '' };
-              }).filter(function (s) { return s.url; });
-            }
-            const valid = imported.filter(function (s) { return s && s.url; }).map(function (s) {
-              return {
-                title: s.title || '未命名歌曲',
-                artist: s.artist || '未知歌手',
-                url: s.url,
-                cover: s.cover || 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000),
-                lyric: s.lyric || s.artist || ''
-              };
-            });
-            if (valid.length === 0) { alert('未找到有效歌曲'); return; }
-            playlist = playlist.concat(valid);
-            renderPlaylistSheet();
-            alert('成功导入 ' + valid.length + ' 首歌曲');
-          } catch (err) { alert('导入失败'); }
-          importFileInput.value = '';
-        };
-        reader.readAsText(file);
-      });
-
-      exportPlaylistBtn.addEventListener('click', function () {
-        const data = JSON.stringify({ songs: playlist }, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'playlist.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        manageModal.classList.remove('active');
-      });
-
-      searchSongBtn.addEventListener('click', function () {
-        const keyword = prompt('搜索歌曲名称：');
-        if (keyword) {
-          const found = playlist.findIndex(function (s) { return s.title.indexOf(keyword) >= 0; });
-          if (found >= 0) {
-            currentSongIndex = found;
-            playSong(found);
-            closePlaylistSheet();
-          } else {
-            alert('未找到匹配的歌曲');
-          }
-        }
-      });
-
-      // 初始化
-      if (playlist.length > 0) {
-        songTitle.textContent = playlist[0].title;
-        songArtist.textContent = playlist[0].artist;
-        audio.src = playlist[0].url;
-        const albumCover = document.getElementById('albumCover');
-        const albumIcon = document.getElementById('albumIcon');
-        if (playlist[0].cover) {
-          albumCover.src = playlist[0].cover;
-          albumCover.style.display = 'block';
-          albumIcon.style.display = 'none';
-        }
-      }
-    })();
-  </script>
-  <!-- ============================================================
-     第 2 步新增样式：字卡库分类切换 + 整理模式 + 分组弹窗
-     ============================================================ -->
-<style>
-  /* ============ 整理模式批量操作栏 ============ */
-  .organize-bar {
-    display: none;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    background: #fff5f5;
-    border: 1px solid #f8d8d8;
-    border-radius: 14px;
-    animation: fadeIn 0.2s ease;
-  }
-  .organize-bar.active { display: flex; }
-  .organize-count {
-    flex: 1 0 100%;
-    font-size: 12px;
-    color: #e58b8b;
-    font-weight: 700;
-    margin-bottom: 2px;
-  }
-  .organize-btn {
-    flex: 1;
-    padding: 8px 4px;
-    border-radius: 10px;
-    background: #ffffff;
-    border: 1px solid #f0d8d8;
-    font-size: 11px;
-    color: #e58b8b;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.15s ease, transform 0.1s ease;
-    white-space: nowrap;
-  }
-  .organize-btn:active {
-    background: #fdf0f0;
-    transform: scale(0.97);
-  }
-  .organize-btn.danger {
-    background: #f8b4b4;
-    color: #fff;
-    border-color: #f8b4b4;
-  }
-  .organize-btn.danger:active {
-    background: #e58b8b;
-  }
-
-  /* ============ 卡片勾选圆圈 ============ */
-  .word-card-item .select-circle {
-    display: none;
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    border-radius: 9999px;
-    border: 1.5px solid #cbd4dc;
-    background: #fff;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    order: 0;
-  }
-  .word-card-item.organizing .select-circle {
-    display: flex;
-  }
-  .word-card-item.selected .select-circle {
-    background: #f8b4b4;
-    border-color: #f8b4b4;
-  }
-  .word-card-item.selected .select-circle::after {
-    content: '\f00c';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    color: #fff;
-    font-size: 10px;
-  }
-  .word-card-item.selected {
-    background: #fdf5f5;
-    border: 1px solid #f8d8d8;
-  }
-
-  /* ============ 表情包批量选择 ============ */
-  .emoji-grid-item .emoji-select-circle {
-    display: none;
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    width: 20px;
-    height: 20px;
-    border-radius: 9999px;
-    border: 1.5px solid rgba(255,255,255,0.9);
-    background: rgba(255,255,255,0.6);
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    z-index: 2;
-  }
-  .emoji-grid-item.organizing .emoji-select-circle {
-    display: flex;
-  }
-  .emoji-grid-item.selected .emoji-select-circle {
-    background: #f8b4b4;
-    border-color: #f8b4b4;
-  }
-  .emoji-grid-item.selected .emoji-select-circle::after {
-    content: '\f00c';
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    color: #fff;
-    font-size: 10px;
-  }
-  .emoji-grid-item.selected {
-    outline: 2px solid #f8b4b4;
-    outline-offset: -2px;
-  }
-
-  /* ============ 分组弹窗 ============ */
-  .group-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 420;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(20, 30, 40, 0.35);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
-  .group-modal.active { display: flex; }
-  .group-modal-panel {
-    width: 100%;
-    max-width: 340px;
-    background: #ffffff;
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-    padding: 22px 20px;
-    animation: popIn 0.22s ease;
-  }
-  .group-modal-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .group-modal-input {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid #e2e8ee;
-    background: #fafbfc;
-    font-size: 14px;
-    color: #333;
-    outline: none;
-    transition: border 0.2s ease, box-shadow 0.2s ease;
-  }
-  .group-modal-input:focus {
-    border-color: #f8b4b4;
-    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-  }
-  .group-modal-input::placeholder { color: #b6c2cd; }
-  .group-modal-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 16px;
-  }
-  .group-modal-btn {
-    flex: 1;
-    padding: 11px 0;
-    border-radius: 14px;
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    cursor: pointer;
-    border: none;
-    transition: opacity 0.15s ease, transform 0.1s ease;
-  }
-  .group-modal-btn:active { transform: scale(0.97); }
-  .group-modal-cancel {
-    background: #f5f6f8;
-    color: #55606b;
-    border: 1px solid #eef1f4;
-  }
-  .group-modal-confirm {
-    background: #f8b4b4;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
-  }
-</style>
-  <!-- ============================================================
-     第 2 步新增脚本：分类切换、整理模式、分组弹窗
-     ============================================================ -->
-<script>
 (function () {
   'use strict';
 
   // ==================== 存储 Key ====================
-  var KEY_MAP = {
-    reply: 'my_word_cards',
-    kaomoji: 'my_kaomoji_cards',
-    place: 'my_place_cards',
-    mood: 'my_mood_cards',
-    emoji: 'my_emoji_cards',
-    status: 'my_status_cards'
+  var STORE_KEY = 'main_custom_images_v1';
+
+  // ==================== 图片项配置 ====================
+  // targetId 对应 DOM 中的元素 id
+  // type: 'img' 表示直接替换 src；'bg' 表示替换 backgroundImage
+  // 新增：chatBg 传讯页面背景图（会动态注入到 #pageChat 中）
+  var IMAGE_ITEMS = [
+    { key: 'homeBg',        label: '主页背景图',              targetId: 'bgDream',      type: 'bg'  },
+    { key: 'myAvatar',      label: '我的头像',                targetId: 'avatarImg',    type: 'img' },
+    { key: 'partnerAvatar', label: '对方（梦角）头像',         targetId: 'chatAvatar',   type: 'img' },
+    { key: 'homeHeaderBg',  label: '主页底图（顶部矩形背景图）', targetId: 'headerCard',   type: 'bg'  },
+    { key: 'albumCover',    label: '音乐播放器黑胶唱片封面',     targetId: 'albumCover',   type: 'img' },
+    { key: 'chatBg',        label: '传讯页面背景图',           targetId: 'chatPageBg',   type: 'bg'  }
+  ];
+
+  // ==================== 当前图片数据 ====================
+  var imageData = {
+    homeBg: '',
+    myAvatar: '',
+    partnerAvatar: '',
+    homeHeaderBg: '',
+    albumCover: '',
+    chatBg: ''
   };
 
-  // ==================== 状态 ====================
-  var currentCat = 'reply';
-  var organizeMode = false;
-  var selectedSet = new Set(); // 存放选中的文字或 URL
+  // ==================== 默认图片 ====================
+  var DEFAULT_IMAGES = {
+    homeBg: 'https://picsum.photos/1200/1800?random=10',
+    myAvatar: 'https://picsum.photos/100/100?random=1',
+    partnerAvatar: 'https://picsum.photos/200/200?random=99',
+    homeHeaderBg: 'https://picsum.photos/600/200?random=12',
+    albumCover: '',
+    chatBg: ''
+  };
 
   // ==================== 工具 ====================
-  function getList(cat) {
-    if (window.getReplyCards && cat === 'reply') return window.getReplyCards();
-    try {
-      var raw = localStorage.getItem(KEY_MAP[cat]);
-      if (!raw) return [];
-      var data = JSON.parse(raw);
-      if (!Array.isArray(data)) return [];
-      return data.map(function (item) {
-        if (typeof item === 'string') return item;
-        if (item && typeof item === 'object' && item.text) return item.text;
-        return null;
-      }).filter(function (t) { return t; });
-    } catch (e) { return []; }
+  function hasLocalforage() {
+    return typeof localforage !== 'undefined';
   }
 
-  function saveList(cat, arr) {
-    try { localStorage.setItem(KEY_MAP[cat], JSON.stringify(arr)); } catch (e) {}
-    if (window.refreshCardUI) window.refreshCardUI();
-  }
-
-  // ==================== 分类按钮点击 ====================
-  document.querySelectorAll('.cat-grid-item').forEach(function (item) {
-    item.addEventListener('click', function () {
-      var cat = item.getAttribute('data-cat');
-      currentCat = cat;
-      organizeMode = false;
-      selectedSet.clear();
-      updateOrganizeUI();
-      updateSearchPlaceholder();
-    });
-  });
-
-  // ==================== 搜索框占位符区分 ====================
-  function updateSearchPlaceholder() {
-    var map = {
-      reply: '找一句话、一种心情...',
-      kaomoji: '找一个表情...',
-      place: '找一个熟悉的地方...',
-      mood: '找一句话、一种心情...',
-      emoji: '搜索图片名称',
-      status: '搜索状态...'
-    };
-    var inputs = ['cardSearchInput', 'kaomojiSearchInput', 'placeSearchInput', 'moodSearchInput', 'emojiSearchInput', 'statusSearchInput'];
-    inputs.forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el && map[currentCat]) el.placeholder = map[currentCat];
-    });
-  }
-
-  // ==================== 整理模式切换 ====================
-  function toggleOrganize(cat) {
-    if (organizeMode && currentCat === cat) {
-      organizeMode = false;
-    } else {
-      organizeMode = true;
-      currentCat = cat;
-    }
-    selectedSet.clear();
-    updateOrganizeUI();
-  }
-
-  function updateOrganizeUI() {
-    // 移除所有整理栏的 active
-    document.querySelectorAll('.organize-bar').forEach(function (b) { b.classList.remove('active'); });
-    // 移除所有卡片的 organizing / selected
-    document.querySelectorAll('.word-card-item, .emoji-grid-item').forEach(function (c) {
-      c.classList.remove('organizing', 'selected');
-    });
-
-    if (!organizeMode) return;
-
-    // 显示当前分类的整理栏
-    var bar = document.getElementById('organizeBar-' + currentCat);
-    if (bar) bar.classList.add('active');
-
-    // 给当前分类的卡片加 organizing
-    var listEl = document.getElementById('cardList');
-    var emojiGridEl = document.getElementById('emojiGrid');
-    if (currentCat === 'emoji') {
-      if (emojiGridEl) emojiGridEl.querySelectorAll('.emoji-grid-item').forEach(function (c) { c.classList.add('organizing'); });
-    } else {
-      var listMap = {
-        reply: 'cardList',
-        kaomoji: 'kaomojiList',
-        place: 'placeList',
-        mood: 'moodList',
-        status: 'statusList'
-      };
-      var el = document.getElementById(listMap[currentCat]);
-      if (el) el.querySelectorAll('.word-card-item').forEach(function (c) { c.classList.add('organizing'); });
-    }
-
-    updateOrganizeCount();
-  }
-
-  function updateOrganizeCount() {
-    var countEl = document.getElementById('organizeCount-' + currentCat);
-    if (countEl) countEl.textContent = '已选 ' + selectedSet.size + ' 条';
-  }
-
-  // ==================== 整理栏 DOM 动态注入 ====================
-  // 在初始化时，为每个分类注入整理栏
-  function injectOrganizeBars() {
-    var cats = ['reply', 'kaomoji', 'place', 'mood', 'emoji', 'status'];
-    cats.forEach(function (cat) {
-      if (document.getElementById('organizeBar-' + cat)) return; // 已存在
-
-      var bar = document.createElement('div');
-      bar.className = 'organize-bar';
-      bar.id = 'organizeBar-' + cat;
-      bar.innerHTML =
-        '<div class="organize-count" id="organizeCount-' + cat + '">已选 0 条</div>' +
-        '<button class="organize-btn" data-act="selectAll">全选筛选结果</button>' +
-        '<button class="organize-btn danger" data-act="deleteSelected">删除所选</button>' +
-        '<button class="organize-btn" data-act="deleteGroup">删除此分组</button>' +
-        '<button class="organize-btn" data-act="exit">退出整理</button>';
-
-      // 插入到面板最前面（分类网格之后）
-      var panel = document.getElementById('panel-' + cat);
-      if (panel) {
-        panel.insertBefore(bar, panel.firstChild);
-      }
-    });
-
-    // 绑定整理栏按钮事件
-    document.querySelectorAll('.organize-bar').forEach(function (bar) {
-      bar.addEventListener('click', function (e) {
-        var btn = e.target.closest('.organize-btn');
-        if (!btn) return;
-        var act = btn.getAttribute('data-act');
-        var cat = bar.id.replace('organizeBar-', '');
-
-        if (act === 'selectAll') {
-          var list = getList(cat);
-          if (selectedSet.size === list.length) {
-            selectedSet.clear();
-          } else {
-            selectedSet.clear();
-            list.forEach(function (item) { selectedSet.add(item); });
-          }
-          updateOrganizeUI();
-          // 重新给卡片加 selected
-          applySelectedState();
-        } else if (act === 'deleteSelected') {
-          if (selectedSet.size === 0) { alert('请先选择要删除的内容'); return; }
-          if (!confirm('确定删除选中的 ' + selectedSet.size + ' 条内容吗？')) return;
-          var list2 = getList(cat);
-          var filtered = list2.filter(function (item) { return !selectedSet.has(item); });
-          saveList(cat, filtered);
-          selectedSet.clear();
-          organizeMode = false;
-          updateOrganizeUI();
-          if (window.refreshCardUI) window.refreshCardUI();
-          setTimeout(function () { rebindCardEvents(); }, 100);
-        } else if (act === 'deleteGroup') {
-          if (!confirm('确定删除当前分组的所有内容吗？')) return;
-          saveList(cat, []);
-          selectedSet.clear();
-          organizeMode = false;
-          updateOrganizeUI();
-          if (window.refreshCardUI) window.refreshCardUI();
-          setTimeout(function () { rebindCardEvents(); }, 100);
-        } else if (act === 'exit') {
-          organizeMode = false;
-          selectedSet.clear();
-          updateOrganizeUI();
-        }
+  function saveData() {
+    if (hasLocalforage()) {
+      localforage.setItem(STORE_KEY, imageData).catch(function (e) {
+        console.warn('[main-image] 保存失败', e);
       });
-    });
+    } else {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(imageData)); } catch (e) {}
+    }
   }
 
-  function applySelectedState() {
-    if (!organizeMode) return;
-
-    // 文字类
-    var listMap = {
-      reply: 'cardList',
-      kaomoji: 'kaomojiList',
-      place: 'placeList',
-      mood: 'moodList',
-      status: 'statusList'
-    };
-    var listEl = document.getElementById(listMap[currentCat]);
-    if (listEl) {
-      listEl.querySelectorAll('.word-card-item').forEach(function (card) {
-        var textEl = card.querySelector('.word-card-text');
-        if (!textEl) return;
-        var text = textEl.textContent;
-        card.classList.toggle('selected', selectedSet.has(text));
-      });
-    }
-
-    // 表情包
-    if (currentCat === 'emoji') {
-      var grid = document.getElementById('emojiGrid');
-      if (grid) {
-        grid.querySelectorAll('.emoji-grid-item').forEach(function (item) {
-          var img = item.querySelector('img');
-          if (!img) return;
-          item.classList.toggle('selected', selectedSet.has(img.src));
+  function loadData(callback) {
+    function apply(data) {
+      if (data && typeof data === 'object') {
+        Object.keys(imageData).forEach(function (k) {
+          if (data[k]) imageData[k] = data[k];
         });
       }
+      if (callback) callback();
+    }
+    if (hasLocalforage()) {
+      localforage.getItem(STORE_KEY).then(apply).catch(function () { apply(null); });
+    } else {
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        apply(raw ? JSON.parse(raw) : null);
+      } catch (e) { apply(null); }
     }
   }
 
-  // ==================== 给卡片注入勾选圆圈 + 点击事件 ====================
-  function rebindCardEvents() {
-    // 给所有文字卡片注入勾选圆圈
-    document.querySelectorAll('.word-card-item').forEach(function (card) {
-      if (card.querySelector('.select-circle')) return;
-      var circle = document.createElement('div');
-      circle.className = 'select-circle';
-      card.insertBefore(circle, card.firstChild);
+  // ==================== 传讯页背景容器动态注入 ====================
+  function ensureChatPageBg() {
+    var pageChat = document.getElementById('pageChat');
+    if (!pageChat) return null;
 
-      // 点击圆圈或卡片本身（在整理模式下）切换选中
-      card.addEventListener('click', function (e) {
-        if (!organizeMode) return;
-        // 避免点到删除按钮
-        if (e.target.closest('.word-card-delete')) return;
-        var textEl = card.querySelector('.word-card-text');
-        if (!textEl) return;
-        var text = textEl.textContent;
-        if (selectedSet.has(text)) {
-          selectedSet.delete(text);
-          card.classList.remove('selected');
-        } else {
-          selectedSet.add(text);
-          card.classList.add('selected');
-        }
-        updateOrganizeCount();
-      });
-    });
+    var bgEl = document.getElementById('chatPageBg');
+    if (!bgEl) {
+      bgEl = document.createElement('div');
+      bgEl.id = 'chatPageBg';
+      // 绝对定位覆盖整个传讯页，z-index 为 -1 保持在内容下方
+      bgEl.style.position = 'absolute';
+      bgEl.style.top = '0';
+      bgEl.style.left = '0';
+      bgEl.style.width = '100%';
+      bgEl.style.height = '100%';
+      bgEl.style.zIndex = '-1';
+      bgEl.style.backgroundSize = 'cover';
+      bgEl.style.backgroundPosition = 'center';
+      bgEl.style.backgroundRepeat = 'no-repeat';
+      bgEl.style.pointerEvents = 'none';
+      // 插入到 pageChat 的最前面
+      pageChat.insertBefore(bgEl, pageChat.firstChild);
+    }
+    return bgEl;
+  }
 
-    // 给表情包卡片注入勾选圆圈
-    document.querySelectorAll('.emoji-grid-item').forEach(function (item) {
-      if (item.querySelector('.emoji-select-circle')) return;
-      var circle = document.createElement('div');
-      circle.className = 'emoji-select-circle';
-      item.appendChild(circle);
+  // ==================== 应用图片到页面 ====================
+  function applyImage(item, value) {
+    if (!value) return;
+    var el = document.getElementById(item.targetId);
 
-      item.addEventListener('click', function (e) {
-        if (!organizeMode) return;
-        if (e.target.closest('.emoji-delete')) return;
-        var img = item.querySelector('img');
-        if (!img) return;
-        var src = img.src;
-        if (selectedSet.has(src)) {
-          selectedSet.delete(src);
-          item.classList.remove('selected');
-        } else {
-          selectedSet.add(src);
-          item.classList.add('selected');
-        }
-        updateOrganizeCount();
-      });
+    // 传讯页背景需要动态注入
+    if (item.key === 'chatBg') {
+      el = ensureChatPageBg();
+    }
+
+    if (!el) return;
+
+    if (item.type === 'bg') {
+      el.style.backgroundImage = "url('" + value + "')";
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+    } else if (item.type === 'img') {
+      el.src = value;
+      if (item.key === 'albumCover') {
+        el.style.display = 'block';
+        var albumIcon = document.getElementById('albumIcon');
+        if (albumIcon) albumIcon.style.display = 'none';
+      }
+    }
+  }
+
+  function applyAll() {
+    // 先确保传讯页背景容器存在（即使还没有设置背景图，也保证 DOM 结构就绪）
+    ensureChatPageBg();
+
+    IMAGE_ITEMS.forEach(function (item) {
+      var value = imageData[item.key];
+      if (value) applyImage(item, value);
     });
   }
 
-  // ==================== 分组弹窗 ====================
-  function createGroupModal() {
-    if (document.getElementById('groupModal')) return;
+  // ==================== 动态创建设置面板 ====================
+  function createSettingsPanel() {
+    if (document.getElementById('mainImageSettingsModal')) return;
+
     var modal = document.createElement('div');
-    modal.className = 'group-modal';
-    modal.id = 'groupModal';
+    modal.id = 'mainImageSettingsModal';
+    modal.className = 'main-image-modal';
+
+    var itemsHtml = '';
+    IMAGE_ITEMS.forEach(function (item) {
+      itemsHtml +=
+        '<div class="main-image-item" data-key="' + item.key + '">' +
+          '<div class="main-image-item-label">' + item.label + '</div>' +
+          '<div class="main-image-item-preview">' +
+            '<div class="main-image-preview-box" id="preview-' + item.key + '">' +
+              '<i class="fa-regular fa-image"></i>' +
+            '</div>' +
+          '</div>' +
+          '<div class="main-image-url-row">' +
+            '<input type="text" class="main-image-url-input" id="url-' + item.key + '" placeholder="粘贴图片 URL...">' +
+            '<button class="main-image-url-btn" data-key="' + item.key + '" data-act="applyUrl">应用</button>' +
+          '</div>' +
+          '<div class="main-image-file-row">' +
+            '<label class="main-image-file-btn" for="file-' + item.key + '">' +
+              '<i class="fa-solid fa-upload"></i>上传图片' +
+            '</label>' +
+            '<input type="file" class="main-image-file-input" id="file-' + item.key + '" accept="image/*" data-key="' + item.key + '">' +
+            '<button class="main-image-reset-btn" data-key="' + item.key + '" data-act="reset">' +
+              '<i class="fa-solid fa-rotate-left"></i>恢复默认' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+    });
+
     modal.innerHTML =
-      '<div class="group-modal-panel">' +
-        '<div class="group-modal-title" id="groupModalTitle">新建分组</div>' +
-        '<input type="text" class="group-modal-input" id="groupModalInput" placeholder="输入分组名称...">' +
-        '<div class="group-modal-actions">' +
-          '<button class="group-modal-btn group-modal-cancel" id="groupModalCancel">取消</button>' +
-          '<button class="group-modal-btn group-modal-confirm" id="groupModalConfirm">保存</button>' +
+      '<div class="main-image-panel">' +
+        '<div class="main-image-header">' +
+          '<span class="main-image-title"><i class="fa-solid fa-image"></i> 图片设置</span>' +
+          '<button class="main-image-close" id="mainImageCloseBtn"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
+        '<div class="main-image-body">' + itemsHtml + '</div>' +
       '</div>';
+
     document.body.appendChild(modal);
 
+    document.getElementById('mainImageCloseBtn').addEventListener('click', closePanel);
     modal.addEventListener('click', function (e) {
-      if (e.target === modal) closeGroupModal();
+      if (e.target === modal) closePanel();
     });
-    document.getElementById('groupModalCancel').addEventListener('click', closeGroupModal);
-    document.getElementById('groupModalConfirm').addEventListener('click', function () {
-      var name = document.getElementById('groupModalInput').value.trim();
-      if (!name) { alert('请输入分组名称'); return; }
-      alert('分组「' + name + '」已保存（演示功能）');
-      closeGroupModal();
+
+    // URL 应用
+    modal.querySelectorAll('[data-act="applyUrl"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-key');
+        var input = document.getElementById('url-' + key);
+        var url = input.value.trim();
+        if (!url) { alert('请粘贴图片链接'); return; }
+        imageData[key] = url;
+        saveData();
+        var item = IMAGE_ITEMS.filter(function (x) { return x.key === key; })[0];
+        if (item) applyImage(item, url);
+        updatePreview(key, url);
+        input.value = '';
+      });
+    });
+
+    // 上传文件
+    modal.querySelectorAll('.main-image-file-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var key = input.getAttribute('data-key');
+        var file = input.files && input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return; }
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var dataUrl = e.target.result;
+          imageData[key] = dataUrl;
+          saveData();
+          var item = IMAGE_ITEMS.filter(function (x) { return x.key === key; })[0];
+          if (item) applyImage(item, dataUrl);
+          updatePreview(key, dataUrl);
+        };
+        reader.readAsDataURL(file);
+        input.value = '';
+      });
+    });
+
+    // 恢复默认
+    modal.querySelectorAll('[data-act="reset"]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-key');
+        if (!confirm('确定恢复默认图片吗？')) return;
+        imageData[key] = '';
+        saveData();
+
+        var item = IMAGE_ITEMS.filter(function (x) { return x.key === key; })[0];
+        if (!item) return;
+        var el = document.getElementById(item.targetId);
+        if (item.key === 'chatBg') el = ensureChatPageBg();
+        if (!el) return;
+
+        var def = DEFAULT_IMAGES[key];
+
+        if (item.type === 'bg') {
+          if (def) {
+            el.style.backgroundImage = "url('" + def + "')";
+          } else {
+            el.style.backgroundImage = 'none';
+          }
+        } else {
+          if (item.key === 'albumCover') {
+            el.src = '';
+            el.style.display = 'none';
+            var albumIcon = document.getElementById('albumIcon');
+            if (albumIcon) albumIcon.style.display = 'block';
+          } else {
+            if (def) el.src = def;
+          }
+        }
+        updatePreview(key, def || '');
+      });
+    });
+
+    // 初始化预览
+    IMAGE_ITEMS.forEach(function (item) {
+      updatePreview(item.key, imageData[item.key] || DEFAULT_IMAGES[item.key] || '');
     });
   }
 
-  function openGroupModal(title) {
-    createGroupModal();
-    document.getElementById('groupModalTitle').textContent = title;
-    document.getElementById('groupModalInput').value = '';
-    document.getElementById('groupModal').classList.add('active');
-    setTimeout(function () {
-      document.getElementById('groupModalInput').focus();
-    }, 100);
+  function updatePreview(key, value) {
+    var box = document.getElementById('preview-' + key);
+    if (!box) return;
+    if (value) {
+      box.innerHTML = '<img src="' + value + '" alt="预览">';
+    } else {
+      box.innerHTML = '<i class="fa-regular fa-image"></i>';
+    }
   }
 
-  function closeGroupModal() {
-    var modal = document.getElementById('groupModal');
+  // ==================== 打开 / 关闭面板 ====================
+  function openPanel() {
+    var modal = document.getElementById('mainImageSettingsModal');
+    if (!modal) { createSettingsPanel(); modal = document.getElementById('mainImageSettingsModal'); }
+    IMAGE_ITEMS.forEach(function (item) {
+      updatePreview(item.key, imageData[item.key] || DEFAULT_IMAGES[item.key] || '');
+    });
+    modal.classList.add('active');
+  }
+  function closePanel() {
+    var modal = document.getElementById('mainImageSettingsModal');
     if (modal) modal.classList.remove('active');
   }
 
-  // ==================== 绑定按钮 ====================
-  function bindButtons() {
-    // 回复面板的导入/导出/添加（保留原逻辑，由 card.js 处理，这里只处理"添加"的多行提示）
-    var btnAddCard = document.getElementById('btnAddCard');
-    if (btnAddCard && !btnAddCard.dataset.bound) {
-      btnAddCard.dataset.bound = '1';
-      // 不覆盖原有逻辑，只修改 placeholder
-      var origClick = btnAddCard.onclick;
-      // 原 card.js 中已处理，这里不重复绑定
-    }
+  // ==================== 浮动入口按钮 ====================
+  function bindTrigger() {
+    if (document.getElementById('mainImageEntryBtn')) return;
 
-    // 新建分组
-    var btnNewGroup = document.getElementById('btnNewGroup');
-    if (btnNewGroup && !btnNewGroup.dataset.bound) {
-      btnNewGroup.dataset.bound = '1';
-      btnNewGroup.addEventListener('click', function (e) {
-        e.stopImmediatePropagation();
-        openGroupModal('新建分组');
-      }, true);
-    }
-
-    // 重命名
-    var btnRenameGroup = document.getElementById('btnRenameGroup');
-    if (btnRenameGroup && !btnRenameGroup.dataset.bound) {
-      btnRenameGroup.dataset.bound = '1';
-      btnRenameGroup.addEventListener('click', function (e) {
-        e.stopImmediatePropagation();
-        openGroupModal('重命名分组');
-      }, true);
-    }
-
-    // 各分类的"整理"按钮
-    var organizeMap = {
-      btnOrganizeGroup: 'reply',
-      kaomojiOrganizeBtn: 'kaomoji',
-      placeOrganizeBtn: 'place',
-      moodOrganizeBtn: 'mood',
-      emojiOrganizeBtn: 'emoji',
-      statusOrganizeBtn: 'status'
-    };
-    Object.keys(organizeMap).forEach(function (id) {
-      var btn = document.getElementById(id);
-      if (btn && !btn.dataset.organized) {
-        btn.dataset.organized = '1';
-        btn.addEventListener('click', function (e) {
-          e.stopImmediatePropagation();
-          toggleOrganize(organizeMap[id]);
-          rebindCardEvents();
-        }, true);
-      }
-    });
+    var btn = document.createElement('button');
+    btn.id = 'mainImageEntryBtn';
+    btn.className = 'main-image-entry-btn';
+    btn.innerHTML = '<i class="fa-solid fa-image"></i>';
+    btn.title = '图片设置';
+    btn.addEventListener('click', openPanel);
+    document.body.appendChild(btn);
   }
 
-  // ==================== 监听分类切换后重新绑定 ====================
-  var observer = new MutationObserver(function () {
-    rebindCardEvents();
-    // 如果处于整理模式，重新应用选中状态
-    if (organizeMode) {
-      updateOrganizeUI();
-      applySelectedState();
+  // ==================== 控制浮动按钮只在主页显示 ====================
+  function updateEntryVisibility() {
+    var btn = document.getElementById('mainImageEntryBtn');
+    if (!btn) return;
+    var pageHome = document.getElementById('pageHome');
+    if (!pageHome) return;
+    if (pageHome.classList.contains('active')) {
+      btn.style.display = 'flex';
+    } else {
+      btn.style.display = 'none';
     }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // 监听主页/字卡/传讯页面的切换
+  function watchPageSwitch() {
+    var pages = ['pageHome', 'pageCard', 'pageChat'];
+    pages.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var observer = new MutationObserver(function () {
+        updateEntryVisibility();
+      });
+      observer.observe(el, { attributes: true, attributeFilter: ['class'] });
+    });
+    // 初始状态
+    updateEntryVisibility();
+  }
+
+  // ==================== 动态注入样式 ====================
+  function injectStyles() {
+    if (document.getElementById('mainImageStyles')) return;
+    var style = document.createElement('style');
+    style.id = 'mainImageStyles';
+    style.textContent = `
+      .main-image-entry-btn {
+        position: fixed;
+        right: 20px;
+        bottom: 160px;
+        z-index: 60;
+        width: 48px;
+        height: 48px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 6px 18px rgba(0, 20, 30, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+        font-size: 18px;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+      }
+      .main-image-entry-btn:active {
+        transform: scale(0.92);
+      }
+
+      .main-image-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        background: rgba(20, 30, 40, 0.35);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+      .main-image-modal.active { display: flex; }
+
+      .main-image-panel {
+        width: 100%;
+        max-width: 430px;
+        max-height: 85vh;
+        background: #ffffff;
+        border-radius: 28px 28px 0 0;
+        box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+        display: flex;
+        flex-direction: column;
+        animation: mainImageSlideUp 0.28s ease;
+        overflow: hidden;
+      }
+      @keyframes mainImageSlideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+
+      .main-image-header {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px 12px 20px;
+        border-bottom: 1px solid #f0f3f6;
+      }
+      .main-image-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #333;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .main-image-title i { color: #f8b4b4; }
+      .main-image-close {
+        width: 30px;
+        height: 30px;
+        border-radius: 9999px;
+        background: #f5f6f8;
+        border: none;
+        color: #55606b;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .main-image-close:active { background: #e8ecf0; }
+
+      .main-image-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px 24px 20px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .main-image-body::-webkit-scrollbar { display: none; }
+
+      .main-image-item {
+        padding: 14px 0;
+        border-bottom: 1px solid #f5f7fa;
+      }
+      .main-image-item:last-child { border-bottom: none; }
+
+      .main-image-item-label {
+        font-size: 14px;
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .main-image-item-preview { margin-bottom: 10px; }
+      .main-image-preview-box {
+        width: 100%;
+        height: 100px;
+        border-radius: 14px;
+        background: #f5f6f8;
+        border: 1px dashed #d8dfe6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        color: #c0ccd6;
+        font-size: 24px;
+      }
+      .main-image-preview-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .main-image-url-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .main-image-url-input {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #e2e8ee;
+        background: #fafbfc;
+        font-size: 13px;
+        color: #333;
+        outline: none;
+        transition: border 0.2s ease, box-shadow 0.2s ease;
+      }
+      .main-image-url-input:focus {
+        border-color: #f8b4b4;
+        box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+      }
+      .main-image-url-input::placeholder { color: #b6c2cd; }
+
+      .main-image-url-btn {
+        flex-shrink: 0;
+        padding: 0 16px;
+        border-radius: 12px;
+        background: #f8b4b4;
+        color: #fff;
+        border: none;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.15s ease, transform 0.1s ease;
+      }
+      .main-image-url-btn:active {
+        transform: scale(0.96);
+        opacity: 0.9;
+      }
+
+      .main-image-file-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .main-image-file-btn {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #fafbfc;
+        border: 1px solid #eef1f4;
+        color: #55606b;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+      }
+      .main-image-file-btn:active { background: #f2f6fa; }
+      .main-image-file-input { display: none; }
+
+      .main-image-reset-btn {
+        flex-shrink: 0;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #fafbfc;
+        border: 1px solid #eef1f4;
+        color: #8899a6;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .main-image-reset-btn:active { background: #f2f6fa; }
+
+      /* 传讯页背景层，保证内容在其上方 */
+      #pageChat { position: relative; }
+      #pageChat > * { position: relative; z-index: 1; }
+      #chatPageBg { z-index: 0 !important; }
+    `;
+    document.head.appendChild(style);
+  }
 
   // ==================== 初始化 ====================
   function init() {
-    injectOrganizeBars();
-    bindButtons();
-    updateSearchPlaceholder();
-    rebindCardEvents();
+    injectStyles();
+    ensureChatPageBg();
+    bindTrigger();
+    loadData(function () {
+      applyAll();
+      watchPageSwitch();
+    });
   }
 
-  // DOM 就绪后执行
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  // 暴露给外部
-  window.rebindCardEvents = rebindCardEvents;
+  window.openMainImageSettings = openPanel;
 
 })();
-</script>
-</body>
-</html>
