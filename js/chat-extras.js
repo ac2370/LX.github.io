@@ -1,6 +1,6 @@
 /**
  * 传讯页面扩展功能（独立模块）
- * 1. 连发模式：暂存多条消息，一次性发送
+ * 1. 连发模式：替换输入栏最左侧的现有图标，暂存消息一次性发送
  * 2. 图片发送：上传本地文件或粘贴 URL
  * 3. 表情包联动：从 cardDatabase.sticker 抽取
  *
@@ -27,6 +27,13 @@
     return String(str).replace(/[&<>"']/g, function (m) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
     });
+  }
+
+  function getTimeStr() {
+    var d = new Date();
+    var h = d.getHours().toString().padStart(2, '0');
+    var m = d.getMinutes().toString().padStart(2, '0');
+    return h + ':' + m;
   }
 
   // ==================== 获取我的头像 ====================
@@ -92,7 +99,7 @@
 
     row.appendChild(bubble);
 
-    // 添加头像（与 chat-avatars.js 一致）
+    // 添加头像
     var avatar = document.createElement('img');
     avatar.className = 'chat-msg-avatar';
     avatar.src = type === 'self' ? getMyAvatar() : getContactAvatar();
@@ -124,16 +131,14 @@
     scrollToBottom();
   }
 
-  // ==================== 触发自动回复 ====================
+  // ==================== 触发自动回复（复用 chat.js） ====================
   function triggerAutoReply() {
-    // 复用 chat.js 的自动回复逻辑：通过模拟输入框发送
-    // 由于 chat.js 的 sendMessage 是内部函数，我们无法直接调用
-    // 但可以派发一个自定义事件，或直接复用其公开 API
     if (typeof window.triggerChatAutoReply === 'function') {
       window.triggerChatAutoReply();
     } else {
-      // 兜底：直接调用 chat.js 中暴露的接口（若存在）
-      // 若无，则不做任何事（不会报错）
+      // chat.js 暴露的自动回复函数（通过自定义事件触发）
+      var event = new CustomEvent('chatAutoReply');
+      window.dispatchEvent(event);
     }
   }
 
@@ -154,7 +159,7 @@
     queueBox.id = 'burstQueue';
     chatInputBar.parentNode.insertBefore(queueBox, chatInputBar);
 
-    // 左侧按钮组（√ 和 X）
+    // 左侧按钮组（√ 和 X）—— 插到 input-left-icons 之前
     var actionGroup = document.createElement('div');
     actionGroup.className = 'burst-action-group';
     actionGroup.id = 'burstActionGroup';
@@ -163,33 +168,35 @@
       '<button class="burst-btn burst-confirm" id="burstConfirm" title="发送全部">' +
       '  <i class="fa-solid fa-check"></i>' +
       '</button>' +
-      '<button class="burst-btn burst-cancel" id="burstCancel" title="清空暂存">' +
+      '<button class="burst-btn burst-cancel" id="burstCancel" title="清空并退出">' +
       '  <i class="fa-solid fa-xmark"></i>' +
       '</button>';
     chatInputBar.insertBefore(actionGroup, chatInputBar.firstChild);
 
-    // 绑定
+    // 绑定 √ 发送
     document.getElementById('burstConfirm').addEventListener('click', function () {
       if (burstQueue.length === 0) {
         alert('暂存列表为空');
         return;
       }
-      // 一次性发送所有暂存
       burstQueue.forEach(function (item) {
         sendOneMessage(item);
       });
       burstQueue = [];
       renderBurstQueue();
-      // 触发一次自动回复
+      exitBurstMode();
       triggerAutoReply();
     });
 
+    // 绑定 X 取消（清空并退出）
     document.getElementById('burstCancel').addEventListener('click', function () {
       burstQueue = [];
       renderBurstQueue();
+      exitBurstMode();
     });
   }
 
+  // ==================== 渲染暂存列表 ====================
   function renderBurstQueue() {
     var queueBox = document.getElementById('burstQueue');
     if (!queueBox) return;
@@ -203,19 +210,28 @@
     burstQueue.forEach(function (item, index) {
       var chip = document.createElement('div');
       chip.className = 'burst-chip';
-      if (typeof item === 'string') {
-        chip.innerHTML = '<span class="burst-chip-num">' + (index + 1) + '</span>' +
-          '<span class="burst-chip-text">' + escapeHtml(item) + '</span>' +
+
+      var timeStr = item._time || getTimeStr();
+      var numHtml = '<span class="burst-chip-num">' + (index + 1) + '</span>';
+      var timeHtml = '<span class="burst-chip-time">' + timeStr + '</span>';
+      var tagHtml = '<span class="burst-chip-tag">[未发送]</span>';
+
+      if (typeof item === 'string' || (item && item.type === 'text')) {
+        var text = typeof item === 'string' ? item : item.text;
+        chip.innerHTML = numHtml +
+          '<span class="burst-chip-text">' + escapeHtml(text) + '</span>' +
+          timeHtml + tagHtml +
           '<span class="burst-chip-del" data-idx="' + index + '"><i class="fa-solid fa-xmark"></i></span>';
       } else if (item && item.type === 'image') {
-        chip.innerHTML = '<span class="burst-chip-num">' + (index + 1) + '</span>' +
+        chip.innerHTML = numHtml +
           '<img src="' + item.url + '" class="burst-chip-img">' +
+          timeHtml + tagHtml +
           '<span class="burst-chip-del" data-idx="' + index + '"><i class="fa-solid fa-xmark"></i></span>';
       }
       queueBox.appendChild(chip);
     });
 
-    // 绑定删除
+    // 绑定单条删除
     queueBox.querySelectorAll('.burst-chip-del').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var idx = parseInt(btn.getAttribute('data-idx'), 10);
@@ -225,6 +241,7 @@
     });
   }
 
+  // ==================== 进入/退出连发模式 ====================
   function enterBurstMode() {
     burstMode = true;
     createBurstUI();
@@ -232,9 +249,7 @@
     if (hint) hint.style.display = 'flex';
     var group = document.getElementById('burstActionGroup');
     if (group) group.style.display = 'flex';
-    // 修改输入框 placeholder
     chatInput.placeholder = '连发模式：输入后按回车暂存...';
-    // 修改连发按钮图标状态
     var burstBtn = document.getElementById('burstModeBtn');
     if (burstBtn) burstBtn.classList.add('active');
   }
@@ -253,16 +268,14 @@
   }
 
   // ==================== 拦截发送按钮 ====================
-  // 使用捕获阶段，优先于原有逻辑
   sendBtn.addEventListener('click', function (e) {
-    if (!burstMode) return; // 非连发模式，交给原有逻辑
+    if (!burstMode) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     var text = chatInput.value.trim();
     if (!text) return;
-    burstQueue.push(text);
+    burstQueue.push({ type: 'text', text: text, _time: getTimeStr() });
     chatInput.value = '';
-    // 更新发送按钮状态
     sendBtn.disabled = true;
     renderBurstQueue();
   }, true);
@@ -275,16 +288,29 @@
       e.preventDefault();
       var text = chatInput.value.trim();
       if (!text) return;
-      burstQueue.push(text);
+      burstQueue.push({ type: 'text', text: text, _time: getTimeStr() });
       chatInput.value = '';
       sendBtn.disabled = true;
       renderBurstQueue();
     }
   }, true);
 
-  // ==================== 连发按钮 ====================
-  function createBurstButton() {
-    if (document.getElementById('burstModeBtn')) return;
+  // ==================== 替换输入栏最左侧现有图标 ====================
+  function replaceLeftmostIcon() {
+    var leftIcons = chatInputBar.querySelector('.input-left-icons');
+    if (!leftIcons) return;
+
+    // 找到第一个图标（原来可能是"相册"）
+    var firstIcon = leftIcons.querySelector('i');
+    if (!firstIcon) return;
+
+    // 如果已经替换过，跳过
+    if (firstIcon.id === 'burstModeBtn') return;
+
+    // 保留原 DOM（不删除），改为隐藏
+    firstIcon.style.display = 'none';
+
+    // 新建连发按钮（插到原图标前面）
     var btn = document.createElement('i');
     btn.id = 'burstModeBtn';
     btn.className = 'fa-solid fa-bolt';
@@ -297,17 +323,11 @@
         enterBurstMode();
       }
     });
-
-    // 插入到输入框左侧图标栏第一个位置
-    var leftIcons = chatInputBar.querySelector('.input-left-icons');
-    if (leftIcons) {
-      leftIcons.insertBefore(btn, leftIcons.firstChild);
-    }
+    leftIcons.insertBefore(btn, firstIcon);
   }
 
   // ==================== 图片发送 ====================
   function openImageOptions() {
-    // 弹出选项面板
     var panel = document.getElementById('imageOptionPanel');
     if (!panel) {
       panel = document.createElement('div');
@@ -333,7 +353,6 @@
         if (e.target === panel) panel.classList.remove('active');
       });
 
-      // 上传本地文件
       document.getElementById('optUploadImage').addEventListener('click', function () {
         panel.classList.remove('active');
         var input = document.createElement('input');
@@ -354,7 +373,6 @@
         input.click();
       });
 
-      // 粘贴 URL
       document.getElementById('optPasteImageUrl').addEventListener('click', function () {
         panel.classList.remove('active');
         var url = prompt('请输入图片 URL：');
@@ -368,8 +386,7 @@
 
   function sendImage(url) {
     if (burstMode) {
-      // 连发模式：暂存图片
-      burstQueue.push({ type: 'image', url: url });
+      burstQueue.push({ type: 'image', url: url, _time: getTimeStr() });
       renderBurstQueue();
       return;
     }
@@ -400,7 +417,6 @@
       });
     }
 
-    // 渲染表情包
     var grid = document.getElementById('stickerGrid');
     var stickers = (window.cardDatabase && window.cardDatabase.sticker) || [];
     if (stickers.length === 0) {
@@ -425,16 +441,17 @@
     panel.classList.add('active');
   }
 
-  // ==================== 替换左侧图标的事件 ====================
+  // ==================== 绑定"图片"和"表情"图标 ====================
   function rebindLeftIcons() {
     var leftIcons = chatInputBar.querySelector('.input-left-icons');
     if (!leftIcons) return;
     var icons = leftIcons.querySelectorAll('i');
-    // 原有 3 个图标：相册、图片、表情
     icons.forEach(function (icon) {
       var title = icon.getAttribute('title') || '';
+      // 已经隐藏的原"相册"图标不处理
+      if (icon.id === 'burstModeBtn') return;
+
       if (title === '图片') {
-        // 替换点击事件（用捕获阶段优先）
         icon.addEventListener('click', function (e) {
           e.stopImmediatePropagation();
           e.preventDefault();
@@ -447,13 +464,12 @@
           openStickerPanel();
         }, true);
       }
-      // "相册" 保持原有行为（只打印日志）
     });
   }
 
   // ==================== 初始化 ====================
   function init() {
-    createBurstButton();
+    replaceLeftmostIcon();
     rebindLeftIcons();
   }
 
