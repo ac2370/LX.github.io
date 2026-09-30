@@ -1,6 +1,6 @@
 /**
  * 传讯页面交互逻辑
- * 依赖：无（纯 JavaScript）
+ * 从 localStorage 的 my_word_cards 中随机读取字卡作为回复
  */
 
 (function () {
@@ -12,13 +12,36 @@
   const sendBtn = document.getElementById('sendBtn');
   const sosBtn = document.getElementById('sosBtn');
 
-  // ==================== 输入框监听：控制发送按钮可用状态 ====================
+  if (!chatMessages || !chatInput || !sendBtn) return;
+
+  // ==================== 输入框监听 ====================
   function updateSendBtnState() {
     const hasText = chatInput.value.trim().length > 0;
     sendBtn.disabled = !hasText;
   }
 
   chatInput.addEventListener('input', updateSendBtnState);
+
+  // ==================== 从字卡库随机获取回复 ====================
+  function getRandomWordCardReply() {
+    try {
+      const raw = localStorage.getItem('my_word_cards');
+      if (!raw) return '字卡库还没有内容哦，先去添加字卡吧~';
+      const cards = JSON.parse(raw);
+      if (!Array.isArray(cards) || cards.length === 0) {
+        return '字卡库还没有内容哦，先去添加字卡吧~';
+      }
+      // 随机抽取一条
+      const randomIndex = Math.floor(Math.random() * cards.length);
+      const card = cards[randomIndex];
+      // 兼容字符串和对象两种存储格式
+      if (typeof card === 'string') return card;
+      if (card && typeof card === 'object' && card.text) return card.text;
+      return '字卡库还没有内容哦，先去添加字卡吧~';
+    } catch (e) {
+      return '字卡库还没有内容哦，先去添加字卡吧~';
+    }
+  }
 
   // ==================== 发送消息 ====================
   function sendMessage() {
@@ -43,14 +66,12 @@
     // 3. 滚动到底部
     scrollToBottom();
 
-    // 4. 模拟对方自动回复（可选，让对话更生动）
-    simulateReply(text);
+    // 4. 从字卡库随机回复
+    simulateReply();
   }
 
-  // 点击发送按钮
   sendBtn.addEventListener('click', sendMessage);
 
-  // 回车发送（桌面端体验）
   chatInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -60,42 +81,17 @@
 
   // ==================== 滚动到底部 ====================
   function scrollToBottom() {
-    // 使用 requestAnimationFrame 保证在 DOM 更新后滚动
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
 
-  // ==================== 模拟对方自动回复 ====================
-  const autoReplies = [
-    '嗯嗯，我在听～',
-    '然后呢？',
-    '哈哈，这个有意思',
-    '我也这么觉得',
-    '好呀，都听你的',
-    '嗯…让我想想',
-    '你说得对',
-    '抱抱你 🤗',
-    '今天也要开心哦',
-    '我一直在的'
-  ];
-
-  function simulateReply(userText) {
-    // 延迟 800ms ~ 1600ms 后回复
-    const delay = 800 + Math.random() * 800;
+  // ==================== 模拟对方回复 ====================
+  function simulateReply() {
+    // 延迟 600ms ~ 1200ms 后回复，模拟真实感
+    const delay = 600 + Math.random() * 600;
     setTimeout(function () {
-      // 根据用户消息内容，简单匹配一些回复
-      let replyText = autoReplies[Math.floor(Math.random() * autoReplies.length)];
-
-      if (userText.includes('你好') || userText.includes('hi') || userText.includes('嗨')) {
-        replyText = '你好呀～很高兴见到你 😊';
-      } else if (userText.includes('晚安')) {
-        replyText = '晚安，做个好梦 🌙';
-      } else if (userText.includes('喜欢') || userText.includes('爱')) {
-        replyText = '我也喜欢你呀 ❤️';
-      } else if (userText.includes('?' ) || userText.includes('？')) {
-        replyText = '这个问题嘛…让我想想 🤔';
-      }
+      const replyText = getRandomWordCardReply();
 
       const row = document.createElement('div');
       row.className = 'message-row other';
@@ -111,17 +107,18 @@
     }, delay);
   }
 
-  // ==================== 急救按钮点击 ====================
-  sosBtn.addEventListener('click', function () {
-    alert('急救功能已触发。\n请联系紧急联系人：110 / 120');
-  });
+  // ==================== 急救按钮 ====================
+  if (sosBtn) {
+    sosBtn.addEventListener('click', function () {
+      alert('急救功能已触发。\n请联系紧急联系人：110 / 120');
+    });
+  }
 
   // ==================== 顶栏图标点击（简单反馈） ====================
   const actionIcons = document.querySelectorAll('.chat-action-icon');
   actionIcons.forEach(function (icon) {
     icon.addEventListener('click', function () {
       const title = icon.getAttribute('title') || '功能';
-      // 这里可以扩展为打开对应功能页面
       console.log('点击了：' + title);
     });
   });
@@ -138,5 +135,44 @@
   // ==================== 初始化 ====================
   updateSendBtnState();
   scrollToBottom();
+
+  // 暴露给外部调用（切换到传讯页时刷新）
+  window.initChatPage = function () {
+    scrollToBottom();
+    // 更新底部导航角标
+    updateNavBadge();
+  };
+
+  // ==================== 更新导航角标 ====================
+  function updateNavBadge() {
+    try {
+      const raw = localStorage.getItem('my_word_cards');
+      const cards = raw ? JSON.parse(raw) : [];
+      const count = Array.isArray(cards) ? cards.length : 0;
+      const badge = document.getElementById('navMsgBadge');
+      if (badge) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // 监听 localStorage 变化（来自字卡页面的修改）
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'my_word_cards') {
+      updateNavBadge();
+    }
+  });
+
+  // 页面显示时更新角标
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      updateNavBadge();
+    }
+  });
+
+  updateNavBadge();
 
 })();
