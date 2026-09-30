@@ -397,7 +397,6 @@
       animation-play-state: running;
     }
 
-    /* ============ 歌曲列表底部弹窗 ============ */
     .playlist-sheet {
       position: fixed;
       inset: 0;
@@ -539,7 +538,6 @@
       margin-top: 3px;
     }
 
-    /* ============ 添加自定义歌曲模态框 ============ */
     .add-modal {
       position: fixed;
       inset: 0;
@@ -624,7 +622,6 @@
       box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
     }
 
-    /* ============ 歌单管理模态框 ============ */
     .manage-modal {
       position: fixed;
       inset: 0;
@@ -804,7 +801,8 @@
 
     <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
       <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto" id="bottomTabBar">
-        <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message">
+        <!-- 传讯按钮：点击跳转到 chat.html -->
+        <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message" id="tabMessage">
           <i class="fa-regular fa-comment-dots text-xl"></i>
           <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
         </button>
@@ -826,7 +824,6 @@
     <i class="fa-solid fa-palette text-lg"></i>
   </button>
 
-  <!-- ============ 设置面板（图片自定义） ============ -->
   <div class="settings-modal" id="settingsModal">
     <div class="settings-panel">
       <div class="settings-title">
@@ -911,7 +908,6 @@
     </div>
   </div>
 
-  <!-- ============ 歌曲列表底部弹窗 ============ -->
   <div class="playlist-sheet" id="playlistSheet">
     <div class="playlist-sheet-panel">
       <div class="playlist-sheet-header">
@@ -932,7 +928,6 @@
     </div>
   </div>
 
-  <!-- ============ 添加自定义歌曲模态框 ============ -->
   <div class="add-modal" id="addModal">
     <div class="add-panel">
       <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
@@ -946,7 +941,6 @@
     </div>
   </div>
 
-  <!-- ============ 歌单管理模态框 ============ -->
   <div class="manage-modal" id="manageModal">
     <div class="manage-panel">
       <div class="manage-title">歌单管理</div>
@@ -1130,7 +1124,6 @@
       const nextBtn = document.getElementById('nextBtn');
       const vinylCover = document.getElementById('vinylCover');
 
-      // 默认歌单（含副歌/歌词字段用于列表展示）
       let playlist = [
         {
           title: 'My love',
@@ -1166,7 +1159,6 @@
       let isPlaying = false;
       let currentCustomMusicMode = false;
 
-      // 更新当前歌曲封面（供设置面板调用）
       function updateCurrentSongCover(url) {
         if (url) {
           albumCover.src = url;
@@ -1175,7 +1167,6 @@
         }
       }
 
-      // 播放指定索引的歌曲
       function playSong(index) {
         if (currentCustomMusicMode && currentImages.music) {
           audio.src = currentImages.music;
@@ -1294,7 +1285,6 @@
       function renderPlaylistSheet() {
         playlistScroll.innerHTML = '';
 
-        // 渲染预设歌曲
         playlist.forEach((song, index) => {
           const row = document.createElement('div');
           row.className = 'song-row' + (index === currentSongIndex && !currentCustomMusicMode ? ' current' : '');
@@ -1314,7 +1304,6 @@
           playlistScroll.appendChild(row);
         });
 
-        // 如果有自定义音乐，追加一项
         if (currentImages.music) {
           const customRow = document.createElement('div');
           customRow.className = 'song-row' + (currentCustomMusicMode ? ' current' : '');
@@ -1349,10 +1338,8 @@
         playlistSheet.classList.remove('active');
       }
 
-      // 点击黑胶唱片弹出歌曲列表
       vinylCover.addEventListener('click', openPlaylistSheet);
 
-      // 点击遮罩关闭
       playlistSheet.addEventListener('click', (e) => {
         if (e.target === playlistSheet) closePlaylistSheet();
       });
@@ -1394,7 +1381,6 @@
           return;
         }
 
-        // 添加到歌单
         const newSong = {
           title: title,
           artist: artist,
@@ -1404,7 +1390,6 @@
         };
         playlist.push(newSong);
 
-        // 自动播放这首新歌
         currentCustomMusicMode = false;
         currentSongIndex = playlist.length - 1;
         playSong(currentSongIndex);
@@ -1435,7 +1420,6 @@
         if (e.target === manageModal) closeManageModal();
       });
 
-      // 导入歌单文件
       importPlaylistBtn.addEventListener('click', () => {
         importFileInput.click();
       });
@@ -1450,7 +1434,6 @@
             const content = e.target.result;
             let importedSongs = [];
 
-            // 尝试 JSON 解析
             try {
               const parsed = JSON.parse(content);
               if (Array.isArray(parsed)) {
@@ -1459,7 +1442,6 @@
                 importedSongs = parsed.songs;
               }
             } catch (jsonErr) {
-              // 如果不是 JSON，尝试按行解析（每行：标题|歌手|链接）
               const lines = content.split('\n').filter(l => l.trim());
               importedSongs = lines.map(line => {
                 const parts = line.split('|').map(p => p.trim());
@@ -1473,7 +1455,6 @@
               }).filter(s => s.url);
             }
 
-            // 校验并合并
             const validSongs = importedSongs.filter(s => s && s.url).map(s => ({
               title: s.title || '未命名歌曲',
               artist: s.artist || '未知歌手',
@@ -1495,13 +1476,11 @@
           } catch (err) {
             alert('导入失败：文件解析错误');
           }
-          // 清空文件输入以便再次选择同一文件
           importFileInput.value = '';
         };
         reader.readAsText(file);
       });
 
-      // 导出歌单
       exportPlaylistBtn.addEventListener('click', () => {
         const data = {
           songs: playlist.map(s => ({
@@ -1525,7 +1504,6 @@
         closeManageModal();
       });
 
-      // 搜索按钮（简单实现：弹出搜索提示）
       searchSongBtn.addEventListener('click', () => {
         const keyword = prompt('搜索歌曲名称：');
         if (keyword) {
@@ -1549,6 +1527,13 @@
           tabButtons.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
         });
+      });
+
+      // ==================== 传讯按钮跳转 ====================
+      const tabMessage = document.getElementById('tabMessage');
+      tabMessage.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = 'chat.html';
       });
 
     })();
