@@ -1,58 +1,79 @@
 /**
- * 字卡收纳盒逻辑
- * 负责 localStorage 读写、字卡增删、去重、搜索等
+ * 字卡管理 + 回复设定面板
+ * - 管理 replyCards 数组（localStorage 持久化）
+ * - 处理添加、导入、删除、去重
+ * - 处理回复设定面板的所有输入/开关，持久化到 localStorage
  */
 
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'my_word_cards';
-
-  // ==================== 数据读写 ====================
-  function loadCards() {
+  // ==================== 全局字卡数据 ====================
+  // 从 localStorage 读取，若无则预置测试数据
+  function loadReplyCards() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      const data = JSON.parse(raw);
-      if (!Array.isArray(data)) return [];
-      // 兼容字符串和对象格式，统一转成对象 { text, category, createdAt }
-      return data.map(function (item) {
-        if (typeof item === 'string') {
-          return { text: item, category: 'reply', createdAt: Date.now() };
-        }
-        if (item && typeof item === 'object') {
-          return {
-            text: item.text || item.content || '',
-            category: item.category || 'reply',
-            createdAt: item.createdAt || Date.now()
-          };
-        }
-        return null;
-      }).filter(function (item) { return item && item.text; });
-    } catch (e) {
-      return [];
-    }
+      const raw = localStorage.getItem('replyCards');
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch (e) {}
+    // 预置测试数据
+    return ['今天天气很好', '在想你', '刚刚看到一只小猫', '记得按时吃饭', '晚安，好梦'];
   }
 
-  function saveCards(cards) {
+  function saveReplyCards() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
-    } catch (e) {
-      console.warn('保存字卡失败', e);
-    }
-    // 触发 storage 事件（同页面手动触发）
-    updateUI();
+      localStorage.setItem('replyCards', JSON.stringify(window.replyCards));
+    } catch (e) {}
   }
 
-  // ==================== 全局状态 ====================
-  let cards = loadCards();
-  let autoDedup = true;
-  let currentCategory = 'reply';
-  let searchKeyword = '';
+  // 暴露到全局，供 chat.js 读取
+  window.replyCards = loadReplyCards();
+
+  // ==================== 回复设定默认值 ====================
+  const DEFAULT_SETTINGS = {
+    normalReply: true,
+    minWait: 3,
+    maxWait: 12,
+    minCount: 0,
+    maxCount: 3,
+    kaomoji: false,
+    typingBubble: true,
+    readStatus: false,
+    autoReply: false,
+    commMinWait: 10,
+    commMaxWait: 60,
+    proactive: false,
+    proactiveMin: 120,
+    proactiveMax: 300,
+    quote: true,
+    reaction: true
+  };
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem('replySettings');
+      if (raw) {
+        const obj = JSON.parse(raw);
+        return Object.assign({}, DEFAULT_SETTINGS, obj);
+      }
+    } catch (e) {}
+    return Object.assign({}, DEFAULT_SETTINGS);
+  }
+
+  function saveSettings() {
+    try {
+      localStorage.setItem('replySettings', JSON.stringify(window.replySettings));
+    } catch (e) {}
+  }
+
+  window.replySettings = loadSettings();
 
   // ==================== DOM 引用 ====================
   const cardList = document.getElementById('cardList');
-  const cardStatusBar = document.getElementById('cardStatusBar');
+  const cardListPlaceholder = document.getElementById('cardListPlaceholder');
+  const cardStatusCounts = document.getElementById('cardStatusCounts');
   const cardSearchInput = document.getElementById('cardSearchInput');
   const groupSelect = document.getElementById('groupSelect');
   const badgeReply = document.getElementById('badgeReply');
@@ -61,58 +82,188 @@
   const badgeMood = document.getElementById('badgeMood');
   const badgeEmoji = document.getElementById('badgeEmoji');
   const badgeAlbum = document.getElementById('badgeAlbum');
-  const dedupCheckbox = document.getElementById('dedupCheckbox');
   const dedupToggle = document.getElementById('dedupToggle');
-  const dedupNow = document.getElementById('dedupNow');
-  const navMsgBadge = document.getElementById('navMsgBadge');
+  const dedupCheckbox = document.getElementById('dedupCheckbox');
+  const dedupNowBtn = document.getElementById('dedupNowBtn');
+  const btnAddCard = document.getElementById('btnAddCard');
+  const btnImport = document.getElementById('btnImport');
+  const btnExport = document.getElementById('btnExport');
 
-  // ==================== 添加字卡弹窗 ====================
-  const wordAddModal = document.getElementById('wordAddModal');
-  const wordAddInput = document.getElementById('wordAddInput');
-  const wordAddCancel = document.getElementById('wordAddCancel');
-  const wordAddConfirm = document.getElementById('wordAddConfirm');
-  const cardAddBtn = document.getElementById('cardAddBtn');
+  // 通用弹窗
+  const simpleModal = document.getElementById('simpleModal');
+  const simpleModalTitle = document.getElementById('simpleModalTitle');
+  const simpleModalTextarea = document.getElementById('simpleModalTextarea');
+  const simpleModalInput = document.getElementById('simpleModalInput');
+  const simpleModalCancel = document.getElementById('simpleModalCancel');
+  const simpleModalConfirm = document.getElementById('simpleModalConfirm');
 
-  function openAddModal() {
-    wordAddInput.value = '';
-    wordAddModal.classList.add('active');
-    setTimeout(function () { wordAddInput.focus(); }, 100);
+  // ==================== 通用弹窗控制 ====================
+  let modalMode = 'add'; // 'add' | 'import'
+  let modalCallback = null;
+
+  function openSimpleModal(mode, title, callback) {
+    modalMode = mode;
+    modalCallback = callback;
+    simpleModalTitle.textContent = title;
+    simpleModalTextarea.value = '';
+    simpleModalInput.value = '';
+    if (mode === 'add') {
+      simpleModalTextarea.style.display = 'none';
+      simpleModalInput.style.display = 'block';
+      simpleModalInput.focus();
+    } else {
+      simpleModalTextarea.style.display = 'block';
+      simpleModalInput.style.display = 'none';
+      simpleModalTextarea.focus();
+    }
+    simpleModal.classList.add('active');
   }
 
-  function closeAddModal() {
-    wordAddModal.classList.remove('active');
+  function closeSimpleModal() {
+    simpleModal.classList.remove('active');
+    modalCallback = null;
   }
 
-  if (cardAddBtn) {
-    cardAddBtn.addEventListener('click', openAddModal);
+  if (simpleModalCancel) {
+    simpleModalCancel.addEventListener('click', closeSimpleModal);
   }
-  if (wordAddCancel) {
-    wordAddCancel.addEventListener('click', closeAddModal);
+  if (simpleModal) {
+    simpleModal.addEventListener('click', function (e) {
+      if (e.target === simpleModal) closeSimpleModal();
+    });
   }
-  if (wordAddModal) {
-    wordAddModal.addEventListener('click', function (e) {
-      if (e.target === wordAddModal) closeAddModal();
+  if (simpleModalConfirm) {
+    simpleModalConfirm.addEventListener('click', function () {
+      if (modalMode === 'add') {
+        const text = simpleModalInput.value.trim();
+        if (!text) { alert('请输入内容'); return; }
+        if (modalCallback) modalCallback([text]);
+      } else {
+        const text = simpleModalTextarea.value.trim();
+        if (!text) { alert('请输入内容'); return; }
+        const lines = text.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
+        if (lines.length === 0) { alert('请输入有效内容'); return; }
+        if (modalCallback) modalCallback(lines);
+      }
+      closeSimpleModal();
     });
   }
 
-  if (wordAddConfirm) {
-    wordAddConfirm.addEventListener('click', function () {
-      const text = wordAddInput.value.trim();
-      if (!text) {
-        alert('请输入内容');
-        return;
-      }
-      cards.push({
-        text: text,
-        category: currentCategory,
-        createdAt: Date.now()
+  // ==================== 渲染字卡列表 ====================
+  let searchKeyword = '';
+
+  function renderCardList() {
+    if (!cardList) return;
+    const allCards = window.replyCards || [];
+    let filtered = allCards;
+    if (searchKeyword) {
+      const kw = searchKeyword.toLowerCase();
+      filtered = filtered.filter(function (c) {
+        return String(c).toLowerCase().indexOf(kw) >= 0;
       });
-      // 自动去重
-      if (autoDedup) {
-        cards = deduplicate(cards);
-      }
-      saveCards(cards);
-      closeAddModal();
+    }
+
+    // 渲染列表
+    cardList.innerHTML = '';
+    if (filtered.length === 0) {
+      if (cardListPlaceholder) cardListPlaceholder.style.display = 'block';
+    } else {
+      if (cardListPlaceholder) cardListPlaceholder.style.display = 'none';
+      filtered.forEach(function (text) {
+        const item = document.createElement('div');
+        item.className = 'word-card-item';
+
+        const textEl = document.createElement('div');
+        textEl.className = 'word-card-text';
+        textEl.textContent = text;
+
+        const del = document.createElement('button');
+        del.className = 'word-card-delete';
+        del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        del.addEventListener('click', function () {
+          if (confirm('确定删除这条字卡吗？')) {
+            const idx = window.replyCards.indexOf(text);
+            if (idx >= 0) {
+              window.replyCards.splice(idx, 1);
+              saveReplyCards();
+              renderCardList();
+              updateBadges();
+            }
+          }
+        });
+
+        item.appendChild(textEl);
+        item.appendChild(del);
+        cardList.appendChild(item);
+      });
+    }
+  }
+
+  // ==================== 更新角标和统计 ====================
+  function updateBadges() {
+    const total = (window.replyCards || []).length;
+    if (badgeReply) badgeReply.textContent = total;
+    if (badgeKaomoji) badgeKaomoji.textContent = 0;
+    if (badgePlace) badgePlace.textContent = 0;
+    if (badgeMood) badgeMood.textContent = 0;
+    if (badgeEmoji) badgeEmoji.textContent = 0;
+    if (badgeAlbum) badgeAlbum.textContent = 0;
+
+    if (cardStatusCounts) {
+      cardStatusCounts.textContent = total + ' 条回复 · 0 个表情 · 0 个地点 · 0 种心情';
+    }
+    if (groupSelect) {
+      groupSelect.innerHTML = '<option>亲爱的的回复 · ' + total + ' 条</option>';
+    }
+  }
+
+  // ==================== 添加字卡 ====================
+  if (btnAddCard) {
+    btnAddCard.addEventListener('click', function () {
+      openSimpleModal('add', '添加字卡', function (lines) {
+        lines.forEach(function (line) {
+          window.replyCards.push(line);
+        });
+        if (dedupCheckbox && dedupCheckbox.classList.contains('checked')) {
+          window.replyCards = deduplicate(window.replyCards);
+        }
+        saveReplyCards();
+        renderCardList();
+        updateBadges();
+      });
+    });
+  }
+
+  // ==================== 导入字卡（多行） ====================
+  if (btnImport) {
+    btnImport.addEventListener('click', function () {
+      openSimpleModal('import', '导入字卡（每行一条）', function (lines) {
+        lines.forEach(function (line) {
+          window.replyCards.push(line);
+        });
+        if (dedupCheckbox && dedupCheckbox.classList.contains('checked')) {
+          window.replyCards = deduplicate(window.replyCards);
+        }
+        saveReplyCards();
+        renderCardList();
+        updateBadges();
+      });
+    });
+  }
+
+  // ==================== 导出字卡 ====================
+  if (btnExport) {
+    btnExport.addEventListener('click', function () {
+      const data = JSON.stringify(window.replyCards, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'reply_cards.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   }
 
@@ -120,19 +271,21 @@
   function deduplicate(arr) {
     const seen = new Set();
     return arr.filter(function (item) {
-      const key = item.text;
+      const key = String(item);
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
   }
 
-  if (dedupNow) {
-    dedupNow.addEventListener('click', function () {
-      const before = cards.length;
-      cards = deduplicate(cards);
-      const removed = before - cards.length;
-      saveCards(cards);
+  if (dedupNowBtn) {
+    dedupNowBtn.addEventListener('click', function () {
+      const before = window.replyCards.length;
+      window.replyCards = deduplicate(window.replyCards);
+      const removed = before - window.replyCards.length;
+      saveReplyCards();
+      renderCardList();
+      updateBadges();
       if (removed > 0) {
         alert('已去除 ' + removed + ' 条重复内容');
       } else {
@@ -143,267 +296,193 @@
 
   if (dedupToggle) {
     dedupToggle.addEventListener('click', function () {
-      autoDedup = !autoDedup;
-      dedupCheckbox.classList.toggle('checked', autoDedup);
+      if (dedupCheckbox) dedupCheckbox.classList.toggle('checked');
     });
-    // 初始化
-    dedupCheckbox.classList.toggle('checked', autoDedup);
   }
-
-  // ==================== 分类切换 ====================
-  document.querySelectorAll('#cardCategories .cat-item').forEach(function (item) {
-    item.addEventListener('click', function () {
-      document.querySelectorAll('#cardCategories .cat-item').forEach(function (i) {
-        i.classList.remove('active');
-      });
-      item.classList.add('active');
-      currentCategory = item.getAttribute('data-cat');
-      updateUI();
-    });
-  });
 
   // ==================== 搜索 ====================
   if (cardSearchInput) {
     cardSearchInput.addEventListener('input', function () {
-      searchKeyword = cardSearchInput.value.trim().toLowerCase();
-      updateUI();
+      searchKeyword = cardSearchInput.value.trim();
+      renderCardList();
     });
   }
 
-  // ==================== 渲染列表 ====================
-  function renderList() {
-    if (!cardList) return;
-
-    let filtered = cards;
-    // 分类过滤
-    if (currentCategory) {
-      filtered = filtered.filter(function (c) {
-        return c.category === currentCategory;
-      });
-    }
-    // 搜索过滤
-    if (searchKeyword) {
-      filtered = filtered.filter(function (c) {
-        return c.text.toLowerCase().indexOf(searchKeyword) >= 0;
-      });
-    }
-
-    // 按时间倒序
-    filtered.sort(function (a, b) {
-      return (b.createdAt || 0) - (a.createdAt || 0);
-    });
-
-    if (filtered.length === 0) {
-      cardList.innerHTML = '<div class="empty-state"><i class="fa-regular fa-note-sticky"></i>把想听到的话，放进这里。</div>';
-      return;
-    }
-
-    cardList.innerHTML = '';
-    filtered.forEach(function (card) {
-      const item = document.createElement('div');
-      item.className = 'word-card-item';
-
-      const text = document.createElement('div');
-      text.className = 'word-card-text';
-      text.textContent = card.text;
-
-      const del = document.createElement('button');
-      del.className = 'word-card-delete';
-      del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-      del.addEventListener('click', function () {
-        if (confirm('确定删除这条字卡吗？')) {
-          const idx = cards.findIndex(function (c) {
-            return c.text === card.text && c.createdAt === card.createdAt;
-          });
-          if (idx >= 0) {
-            cards.splice(idx, 1);
-            saveCards(cards);
-          }
-        }
-      });
-
-      item.appendChild(text);
-      item.appendChild(del);
-      cardList.appendChild(item);
-    });
-  }
-
-  // ==================== 更新角标 ====================
-  function updateBadges() {
-    const counts = { reply: 0, kaomoji: 0, place: 0, mood: 0, emoji: 0, album: 0 };
-    cards.forEach(function (c) {
-      if (counts[c.category] !== undefined) counts[c.category]++;
-      else counts.reply++;
-    });
-
-    if (badgeReply) badgeReply.textContent = counts.reply;
-    if (badgeKaomoji) badgeKaomoji.textContent = counts.kaomoji;
-    if (badgePlace) badgePlace.textContent = counts.place;
-    if (badgeMood) badgeMood.textContent = counts.mood;
-    if (badgeEmoji) badgeEmoji.textContent = counts.emoji;
-    if (badgeAlbum) badgeAlbum.textContent = counts.album;
-
-    // 底部状态栏
-    if (cardStatusBar) {
-      cardStatusBar.textContent = counts.reply + '条回复 · ' + counts.emoji + '个表情 · ' + counts.place + '个地点 · ' + counts.mood + '种心情';
-    }
-
-    // 导航角标
-    if (navMsgBadge) {
-      const total = cards.length;
-      navMsgBadge.textContent = total > 99 ? '99+' : total;
-      navMsgBadge.style.display = total > 0 ? 'flex' : 'none';
-    }
-
-    // 分组下拉更新
-    if (groupSelect) {
-      const currentVal = groupSelect.value;
-      groupSelect.innerHTML = '';
-      const opt = document.createElement('option');
-      opt.textContent = '亲爱的的回复 · ' + counts.reply + ' 条';
-      opt.value = 'reply';
-      groupSelect.appendChild(opt);
-      // 恢复选中
-      if (currentVal) groupSelect.value = currentVal;
-    }
-  }
-
-  // ==================== 统一更新 ====================
-  function updateUI() {
-    renderList();
-    updateBadges();
-    // 同步到 window 供 chat.js 读取
-    window.dispatchEvent(new Event('wordCardsUpdated'));
-  }
-
-  // 暴露给外部调用
+  // ==================== 刷新接口 ====================
   window.refreshCardUI = function () {
-    cards = loadCards();
-    updateUI();
+    // 重新从 localStorage 读取
+    try {
+      const raw = localStorage.getItem('replyCards');
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) window.replyCards = arr;
+      }
+    } catch (e) {}
+    renderCardList();
+    updateBadges();
   };
 
-  // ==================== 导入 / 导出 ====================
-  const cardImportBtn = document.getElementById('cardImportBtn');
-  const cardExportBtn = document.getElementById('cardExportBtn');
+  // ==================== 回复设定面板逻辑 ====================
+  (function () {
+    const modal = document.getElementById('replySettingsModal');
+    const openBtn = document.getElementById('cardEditBtn');
+    const closeBtn = document.getElementById('replySettingsClose');
 
-  if (cardImportBtn) {
-    cardImportBtn.addEventListener('click', function () {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json,.txt,application/json';
-      input.addEventListener('change', function () {
-        const file = input.files && input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          try {
-            const content = e.target.result;
-            let imported = [];
-            try {
-              const parsed = JSON.parse(content);
-              if (Array.isArray(parsed)) imported = parsed;
-              else if (parsed && Array.isArray(parsed.cards)) imported = parsed.cards;
-            } catch (err) {
-              // 按行解析
-              imported = content.split('\n').filter(function (l) { return l.trim(); }).map(function (line) {
-                return { text: line.trim(), category: 'reply', createdAt: Date.now() };
-              });
-            }
-            const valid = imported.map(function (item) {
-              if (typeof item === 'string') return { text: item, category: 'reply', createdAt: Date.now() };
-              if (item && typeof item === 'object') return {
-                text: item.text || item.content || '',
-                category: item.category || 'reply',
-                createdAt: item.createdAt || Date.now()
-              };
-              return null;
-            }).filter(function (item) { return item && item.text; });
+    function openModal() {
+      modal.classList.add('active');
+      syncSettingsToUI();
+    }
+    function closeModal() {
+      modal.classList.remove('active');
+    }
 
-            if (valid.length === 0) {
-              alert('未找到有效字卡');
-              return;
-            }
-            cards = cards.concat(valid);
-            if (autoDedup) cards = deduplicate(cards);
-            saveCards(cards);
-            alert('成功导入 ' + valid.length + ' 条字卡');
-          } catch (err) {
-            alert('导入失败：文件解析错误');
-          }
-        };
-        reader.readAsText(file);
+    if (openBtn) openBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (modal) {
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
       });
-      input.click();
+    }
+
+    // 选项卡切换
+    const tabBtns = document.querySelectorAll('.reply-tab-btn');
+    const panels = {
+      rhythm: document.getElementById('panel-rhythm'),
+      proactive: document.getElementById('panel-proactive'),
+      quote: document.getElementById('panel-quote')
+    };
+
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const tab = btn.getAttribute('data-tab');
+        tabBtns.forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        Object.keys(panels).forEach(function (key) {
+          panels[key].classList.toggle('active', key === tab);
+        });
+      });
     });
-  }
 
-  if (cardExportBtn) {
-    cardExportBtn.addEventListener('click', function () {
-      const data = JSON.stringify(cards, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'word_cards.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-  }
+    // 将设置同步到 UI
+    function syncSettingsToUI() {
+      const s = window.replySettings;
+      setToggle('toggleNormalReply', s.normalReply);
+      setInput('inputMinWait', s.minWait);
+      setInput('inputMaxWait', s.maxWait);
+      setInput('inputMinCount', s.minCount);
+      setInput('inputMaxCount', s.maxCount);
+      setToggle('toggleKaomoji', s.kaomoji);
+      setToggle('toggleTypingBubble', s.typingBubble);
+      setToggle('toggleReadStatus', s.readStatus);
+      setToggle('toggleAutoReply', s.autoReply);
+      setInput('inputCommMinWait', s.commMinWait);
+      setInput('inputCommMaxWait', s.commMaxWait);
+      setToggle('toggleProactive', s.proactive);
+      setInput('inputProactiveMin', s.proactiveMin);
+      setInput('inputProactiveMax', s.proactiveMax);
+      setToggle('toggleQuote', s.quote);
+      setToggle('toggleReaction', s.reaction);
+    }
 
-  // ==================== 顶栏编辑按钮 ====================
-  const cardEditBtn = document.getElementById('cardEditBtn');
-  if (cardEditBtn) {
-    cardEditBtn.addEventListener('click', function () {
-      alert('编辑模式：点击每条字卡右侧的 × 即可删除');
-    });
-  }
+    function setToggle(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.checked = !!val;
+    }
+    function setInput(id, val) {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    }
 
-  // ==================== 分组按钮 ====================
-  const groupNewBtn = document.getElementById('groupNewBtn');
-  const groupRenameBtn = document.getElementById('groupRenameBtn');
-  const groupOrganizeBtn = document.getElementById('groupOrganizeBtn');
-
-  if (groupNewBtn) {
-    groupNewBtn.addEventListener('click', function () {
-      const name = prompt('请输入新分组名称：');
-      if (name) {
-        const opt = document.createElement('option');
-        opt.textContent = name + ' · 0 条';
-        opt.value = 'custom_' + Date.now();
-        groupSelect.appendChild(opt);
-        groupSelect.value = opt.value;
+    // 绑定输入变化
+    const toggleMap = {
+      toggleNormalReply: 'normalReply',
+      toggleKaomoji: 'kaomoji',
+      toggleTypingBubble: 'typingBubble',
+      toggleReadStatus: 'readStatus',
+      toggleAutoReply: 'autoReply',
+      toggleProactive: 'proactive',
+      toggleQuote: 'quote',
+      toggleReaction: 'reaction'
+    };
+    Object.keys(toggleMap).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', function () {
+          window.replySettings[toggleMap[id]] = el.checked;
+          saveSettings();
+          console.log('[回复设定] ' + id + ' =', el.checked);
+        });
       }
     });
-  }
-  if (groupRenameBtn) {
-    groupRenameBtn.addEventListener('click', function () {
-      const current = groupSelect.options[groupSelect.selectedIndex];
-      if (!current) return;
-      const name = prompt('重命名分组：', current.textContent);
-      if (name) current.textContent = name;
-    });
-  }
-  if (groupOrganizeBtn) {
-    groupOrganizeBtn.addEventListener('click', function () {
-      alert('整理功能：按时间排序，稍后完善');
-    });
-  }
 
-  // ==================== 监听其他页面的字卡更新 ====================
-  window.addEventListener('storage', function (e) {
-    if (e.key === STORAGE_KEY) {
-      cards = loadCards();
-      updateUI();
+    const inputMap = {
+      inputMinWait: 'minWait',
+      inputMaxWait: 'maxWait',
+      inputMinCount: 'minCount',
+      inputMaxCount: 'maxCount',
+      inputCommMinWait: 'commMinWait',
+      inputCommMaxWait: 'commMaxWait',
+      inputProactiveMin: 'proactiveMin',
+      inputProactiveMax: 'proactiveMax'
+    };
+    Object.keys(inputMap).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', function () {
+          const v = parseFloat(el.value);
+          if (!isNaN(v)) {
+            window.replySettings[inputMap[id]] = v;
+            saveSettings();
+            console.log('[回复设定] ' + id + ' =', v);
+          }
+        });
+      }
+    });
+
+    // 按钮
+    const btnManageAutoReply = document.getElementById('btnManageAutoReply');
+    if (btnManageAutoReply) {
+      btnManageAutoReply.addEventListener('click', function () {
+        console.log('[回复设定] 点击：管理自动回复字卡');
+        alert('管理自动回复字卡功能开发中');
+      });
     }
-  });
+    const btnViewStatusCards = document.getElementById('btnViewStatusCards');
+    if (btnViewStatusCards) {
+      btnViewStatusCards.addEventListener('click', function () {
+        console.log('[回复设定] 点击：查看角色状态卡片');
+        alert('查看角色状态卡片功能开发中');
+      });
+    }
+    const linkBackgroundKeep = document.getElementById('linkBackgroundKeep');
+    if (linkBackgroundKeep) {
+      linkBackgroundKeep.addEventListener('click', function (e) {
+        e.preventDefault();
+        console.log('[回复设定] 点击：后台保活与消息提醒');
+        alert('后台保活与消息提醒功能开发中');
+      });
+    }
 
-  window.addEventListener('wordCardsUpdated', function () {
-    // 防止循环调用
-  });
+    // 初始化同步一次
+    syncSettingsToUI();
+  })();
 
   // ==================== 初始化 ====================
-  updateUI();
+  renderCardList();
+  updateBadges();
+
+  // 监听 localStorage 外部变化
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'replyCards') {
+      try {
+        const arr = JSON.parse(e.newValue || '[]');
+        if (Array.isArray(arr)) {
+          window.replyCards = arr;
+          renderCardList();
+          updateBadges();
+        }
+      } catch (err) {}
+    }
+  });
 
 })();
