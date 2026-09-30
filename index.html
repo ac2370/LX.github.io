@@ -2616,6 +2616,405 @@
     line-height: 1.6;
   }
 </style>
+     <!-- ============================================================
+     群聊模式
+     ============================================================ -->
+<style>
+  /* ============ 群聊设置模态框 ============ */
+  .group-chat-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 480;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .group-chat-modal.active { display: flex; }
+
+  .group-chat-panel {
+    width: 100%;
+    max-width: 400px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+    overflow: hidden;
+    animation: popIn 0.22s ease;
+  }
+  body.theme-dark .group-chat-panel {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border);
+  }
+
+  .group-chat-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 12px 20px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  body.theme-dark .group-chat-header {
+    border-bottom-color: var(--theme-card-border);
+  }
+  .group-chat-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  body.theme-dark .group-chat-title { color: var(--theme-text); }
+  .group-chat-title i { color: #f8b4b4; }
+  .group-chat-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 9999px;
+    background: #f5f6f8;
+    border: none;
+    color: #55606b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .group-chat-close:active { background: #e8ecf0; }
+
+  .group-chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 20px 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .group-chat-body::-webkit-scrollbar { display: none; }
+
+  .group-new-box {
+    background: #fafbfc;
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 18px;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .group-new-box {
+    background: rgba(42, 48, 56, 0.6);
+    border-color: var(--theme-card-border);
+  }
+  .group-new-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #55606b;
+    margin-bottom: 10px;
+  }
+  body.theme-dark .group-new-title { color: var(--theme-text-soft); }
+
+  .group-new-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8ee;
+    background: #ffffff;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+    transition: border 0.2s ease;
+  }
+  body.theme-dark .group-new-input {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+  .group-new-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+  }
+  .group-new-input::placeholder { color: #b6c2cd; }
+
+  .group-members-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .group-member-row {
+    display: grid;
+    grid-template-columns: 44px 1fr 1fr 28px;
+    gap: 6px;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 6px 8px;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .group-member-row {
+    background: rgba(42, 48, 56, 0.8);
+    border-color: var(--theme-card-border);
+  }
+
+  .group-member-avatar-wrap {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+    background: #f5f6f8;
+  }
+  .group-member-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .group-member-name,
+  .group-member-url {
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid #e2e8ee;
+    background: #ffffff;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    min-width: 0;
+    transition: border 0.2s ease;
+  }
+  body.theme-dark .group-member-name,
+  body.theme-dark .group-member-url {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+  .group-member-name:focus,
+  .group-member-url:focus {
+    border-color: #f8b4b4;
+  }
+  .group-member-name::placeholder,
+  .group-member-url::placeholder { color: #b6c2cd; }
+
+  .group-member-del {
+    width: 26px;
+    height: 26px;
+    border-radius: 9999px;
+    background: #fdf0f0;
+    color: #e58b8b;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .group-member-del:active { background: #f8d8d8; }
+
+  .group-add-member-btn,
+  .group-save-btn {
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 12px;
+    border: none;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .group-add-member-btn {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+    margin-bottom: 8px;
+  }
+  body.theme-dark .group-add-member-btn {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+  }
+  .group-add-member-btn:active {
+    background: #e8ecf0;
+    transform: scale(0.98);
+  }
+  .group-save-btn {
+    background: #f8b4b4;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+  }
+  .group-save-btn:active {
+    background: #e58b8b;
+    transform: scale(0.98);
+  }
+
+  .group-list-title {
+    font-size: 12px;
+    color: #8899a6;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+  body.theme-dark .group-list-title { color: var(--theme-text-muted); }
+
+  .group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .group-empty {
+    text-align: center;
+    padding: 20px;
+    color: #c0ccd6;
+    font-size: 12px;
+  }
+
+  .group-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1.5px solid transparent;
+    background: #fafbfc;
+    cursor: pointer;
+    transition: background 0.15s ease, border 0.15s ease;
+  }
+  body.theme-dark .group-list-item {
+    background: rgba(42, 48, 56, 0.6);
+  }
+  .group-list-item:active { background: #f2f6fa; }
+  .group-list-item.active {
+    border-color: #f8b4b4;
+    background: #fdf5f5;
+  }
+
+  .group-list-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+  }
+  .group-list-info { flex: 1; min-width: 0; }
+  .group-list-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.theme-dark .group-list-name { color: var(--theme-text); }
+  .group-list-count {
+    font-size: 11px;
+    color: #8899a6;
+    margin-top: 2px;
+  }
+  body.theme-dark .group-list-count { color: var(--theme-text-muted); }
+
+  .group-list-del {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    background: #fdf0f0;
+    color: #e58b8b;
+    border: none;
+    font-size: 11px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .group-list-del:active { background: #f8d8d8; }
+
+  /* ============ 群聊模式 - 页面样式区分 ============ */
+  #pageChat.group-mode {
+    background: linear-gradient(160deg, #e8f0f8 0%, #f5e8f0 100%);
+  }
+  body.theme-dark #pageChat.group-mode {
+    background: linear-gradient(160deg, #1e242b 0%, #2a2028 100%);
+  }
+  #pageChat.group-mode .chat-header {
+    background: linear-gradient(90deg, #eaf3fb 0%, #fceef5 100%);
+  }
+  body.theme-dark #pageChat.group-mode .chat-header {
+    background: linear-gradient(90deg, #1e242b 0%, #2a2028 100%);
+  }
+  #pageChat.group-mode .chat-messages {
+    background: transparent;
+  }
+  #pageChat.group-mode .message-row.other .message-bubble {
+    background: #fff;
+    border: 1px solid #f0e8f4;
+  }
+  body.theme-dark #pageChat.group-mode .message-row.other .message-bubble {
+    background: #2a3038;
+    border-color: #3a424a;
+  }
+  #pageChat.group-mode .message-row.self .message-bubble {
+    background: #d8ecfb;
+  }
+
+  /* 群聊消息行：成员名字 */
+  .group-msg-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 62%;
+  }
+  .group-msg-name {
+    font-size: 11px;
+    color: #8899a6;
+    font-weight: 600;
+    padding-left: 4px;
+    margin-bottom: 2px;
+  }
+  body.theme-dark .group-msg-name { color: var(--theme-text-muted); }
+
+  /* 退出群聊按钮 */
+  .exit-group-btn {
+    margin-top: 10px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 1px solid #eef1f4;
+    color: #8899a6;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.15s ease;
+  }
+  .exit-group-btn:active { background: #f2f6fa; }
+  body.theme-dark .exit-group-btn {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+    border-color: var(--theme-card-border);
+  }
+
+  /* 群聊图标（自动插入到传讯顶栏） */
+  #groupChatIcon {
+    color: #8fb8d8;
+  }
+</style>
 </head>
 <body>
 
@@ -3359,6 +3758,7 @@
   <script src="./js/chat-extras.js"></script>
   <script src="./js/theme-mode.js"></script>
   <script src="./js/video-call.js"></script>
+  <script src="./js/group-chat.js"></script>
 
   <!-- ============================================================
        新增脚本：页面切换、回复设定、编辑资料、角色面板、音乐播放器
