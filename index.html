@@ -1,6 +1,238 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <!-- 主页图片自定义 - 新增样式 -->
+<style>
+  .home-settings-btn {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    z-index: 70;
+    width: 42px;
+    height: 42px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 6px 18px rgba(0, 20, 30, 0.12);
+    color: #55606b;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease;
+  }
+  .home-settings-btn:active { transform: scale(0.92); }
+
+  .home-settings-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 450;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .home-settings-panel.active { display: flex; }
+
+  .home-settings-panel-inner {
+    width: 100%;
+    max-width: 400px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+    overflow: hidden;
+    animation: popIn 0.22s ease;
+  }
+
+  .home-settings-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 12px 20px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  .home-settings-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .home-settings-title i { color: #f8b4b4; }
+  .home-settings-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 9999px;
+    background: #f5f6f8;
+    border: none;
+    color: #55606b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .home-settings-close:active { background: #e8ecf0; }
+
+  .home-settings-tabs {
+    flex-shrink: 0;
+    display: flex;
+    gap: 6px;
+    padding: 12px 16px 8px 16px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  .home-settings-tab {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    color: #8899a6;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .home-settings-tab.active { background: #fdf0f0; color: #e58b8b; }
+  .home-settings-tab:active { transform: scale(0.97); }
+
+  .home-settings-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 8px 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .home-settings-body::-webkit-scrollbar { display: none; }
+
+  .home-settings-tab-panel { display: none; }
+  .home-settings-tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+  .hs-row { margin-bottom: 16px; }
+  .hs-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .hs-label i { color: #8899a6; font-size: 12px; }
+  .hs-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+  }
+  .hs-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+  }
+  .hs-input::placeholder { color: #b6c2cd; }
+
+  .hs-file-row { display: flex; gap: 8px; margin-top: 6px; align-items: center; }
+  .hs-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(140, 160, 180, 0.35);
+    color: #333;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+  }
+  .hs-file-btn:active { background: rgba(230, 240, 250, 0.9); }
+  .hs-file-name {
+    font-size: 11px;
+    color: #8899a6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .hs-hint {
+    font-size: 11px;
+    color: #a8b4c0;
+    line-height: 1.6;
+    padding: 8px 4px 4px 4px;
+  }
+  .hs-reset-btn {
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 12px;
+    background: #fafbfc;
+    border: 1px solid #eef1f4;
+    color: #8899a6;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .hs-reset-btn:active { background: #f2f6fa; transform: scale(0.98); }
+
+  .home-settings-footer {
+    flex-shrink: 0;
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px 18px 20px;
+    border-top: 1px solid #f0f3f6;
+  }
+  .hs-btn {
+    flex: 1;
+    padding: 11px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .hs-btn:active { transform: scale(0.97); }
+  .hs-btn-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  .hs-btn-save {
+    background: #f8b4b4;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+  }
+</style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>阿晏 · 地球online</title>
@@ -2572,7 +2804,8 @@
   <script src="./js/reply.js"></script>
   <script src="./js/card.js"></script>
   <script src="./js/chat.js"></script>
-  <script src="./js/main-image-custom.js"></script>
+  <script src="./js/home-settings.js"></script>
+  <script src="./js/home-settings-panel.js"></script>
 
   <!-- ============================================================
        新增脚本：页面切换、回复设定、编辑资料、角色面板、音乐播放器
