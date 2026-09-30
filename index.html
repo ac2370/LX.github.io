@@ -209,494 +209,7 @@
     }
     .main-content::-webkit-scrollbar { display: none; }
 
-    .floating-settings {
-      position: fixed;
-      right: 20px;
-      bottom: 100px;
-      z-index: 60;
-      width: 48px;
-      height: 48px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 6px 18px rgba(0, 20, 30, 0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
-      cursor: pointer;
-      transition: transform 0.15s ease;
-    }
-    .floating-settings:active { transform: scale(0.92); }
-
-    .settings-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: rgba(20, 30, 40, 0.25);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .settings-modal.active { display: flex; }
-    .settings-panel {
-      width: 100%;
-      max-width: 400px;
-      max-height: 85vh;
-      overflow-y: auto;
-      background: rgba(255, 255, 255, 0.82);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.18);
-      padding: 20px 18px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-    .settings-panel::-webkit-scrollbar { display: none; }
-
-    .settings-row { margin-bottom: 14px; }
-    .settings-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #333;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .settings-input {
-      width: 100%;
-      padding: 9px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(140, 160, 180, 0.35);
-      background: rgba(255, 255, 255, 0.75);
-      font-size: 13px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-      box-sizing: border-box;
-    }
-    .settings-input:focus {
-      border-color: rgba(100, 150, 200, 0.7);
-      box-shadow: 0 0 0 3px rgba(140, 180, 230, 0.18);
-    }
-    .settings-file-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 6px;
-      align-items: center;
-    }
-    .settings-file-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 6px 12px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.8);
-      border: 1px solid rgba(140, 160, 180, 0.35);
-      color: #333;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s ease;
-      white-space: nowrap;
-    }
-    .settings-file-btn:active { background: rgba(230, 240, 250, 0.9); }
-    .settings-file-name {
-      font-size: 11px;
-      color: #8899a6;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-      min-width: 0;
-    }
-    .settings-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-    }
-    .settings-btn {
-      flex: 1;
-      padding: 11px 0;
-      border-radius: 16px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .settings-btn:active { transform: scale(0.97); }
-    .btn-cancel {
-      background: rgba(240, 244, 248, 0.9);
-      color: #55606b;
-      border: 1px solid rgba(160, 180, 200, 0.3);
-    }
-    .btn-confirm {
-      background: #333;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-    .settings-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .settings-close {
-      width: 30px;
-      height: 30px;
-      border-radius: 9999px;
-      background: rgba(240, 244, 248, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #55606b;
-      cursor: pointer;
-      border: none;
-      font-size: 14px;
-    }
-    .settings-close:active { background: rgba(220, 230, 240, 1); }
-
-    @keyframes spin-vinyl {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .vinyl-cover {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #2a2a2a;
-      flex-shrink: 0;
-    }
-    .vinyl-cover.spinning .vinyl-img {
-      animation: spin-vinyl 4s linear infinite;
-    }
-    .vinyl-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-      animation-play-state: paused;
-    }
-    .vinyl-cover.spinning .vinyl-img {
-      animation-play-state: running;
-    }
-
-    .playlist-sheet {
-      position: fixed;
-      inset: 0;
-      z-index: 120;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      background: rgba(20, 30, 40, 0.25);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .playlist-sheet.active { display: flex; }
-
-    .playlist-sheet-panel {
-      width: 100%;
-      max-width: 430px;
-      max-height: 72vh;
-      background: rgba(255, 255, 255, 0.94);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px 28px 0 0;
-      box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.15);
-      padding: 16px 18px 24px 18px;
-      display: flex;
-      flex-direction: column;
-      animation: slideUp 0.25s ease;
-    }
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to { transform: translateY(0); }
-    }
-
-    .playlist-sheet-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      flex-shrink: 0;
-    }
-    .playlist-sheet-deco {
-      font-size: 13px;
-      color: #8899a6;
-      letter-spacing: 1px;
-      font-weight: 600;
-    }
-    .playlist-sheet-actions {
-      display: flex;
-      gap: 8px;
-    }
-    .playlist-sheet-icon-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 9999px;
-      background: rgba(245, 245, 248, 0.9);
-      border: 1px solid rgba(200, 210, 220, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #55606b;
-      cursor: pointer;
-      font-size: 13px;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    .playlist-sheet-icon-btn:active {
-      background: rgba(235, 240, 248, 1);
-      transform: scale(0.94);
-    }
-
-    .playlist-scroll {
-      flex: 1;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
-      padding-right: 4px;
-    }
-    .playlist-scroll::-webkit-scrollbar { width: 4px; }
-    .playlist-scroll::-webkit-scrollbar-thumb {
-      background: rgba(180, 190, 200, 0.5);
-      border-radius: 4px;
-    }
-    .playlist-scroll::-webkit-scrollbar-track { background: transparent; }
-
-    .song-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 8px;
-      border-radius: 16px;
-      transition: background 0.15s ease;
-      cursor: pointer;
-    }
-    .song-row:active { background: rgba(245, 248, 252, 0.9); }
-    .song-row.current { background: rgba(248, 240, 245, 0.7); }
-
-    .song-row-radio {
-      width: 20px;
-      height: 20px;
-      border-radius: 9999px;
-      border: 1.5px solid #cbd4dc;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      order: 3;
-    }
-    .song-row.current .song-row-radio {
-      border-color: #f8b4b4;
-      background: #f8b4b4;
-    }
-    .song-row.current .song-row-radio::after {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 9999px;
-      background: #fff;
-    }
-
-    .song-row-info {
-      flex: 1;
-      min-width: 0;
-      order: 1;
-    }
-    .song-row-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #333;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .song-row-artist {
-      font-size: 11px;
-      color: #8899a6;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-top: 3px;
-    }
-
-    .add-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 130;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.3);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .add-modal.active { display: flex; }
-
-    .add-panel {
-      width: 100%;
-      max-width: 380px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 22px 20px;
-      animation: popIn 0.22s ease;
-    }
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.94); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    .add-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .add-input {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(200, 210, 220, 0.7);
-      background: rgba(250, 251, 253, 0.9);
-      font-size: 13px;
-      color: #333;
-      outline: none;
-      margin-bottom: 12px;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .add-input:focus {
-      border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.2);
-    }
-    .add-input::placeholder { color: #a8b4c0; }
-    .add-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 6px;
-    }
-    .add-btn {
-      flex: 1;
-      padding: 12px 0;
-      border-radius: 18px;
-      font-size: 14px;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-    .add-btn:active { transform: scale(0.97); }
-    .add-btn-cancel {
-      background: rgba(240, 244, 248, 0.95);
-      color: #55606b;
-      border: 1px solid rgba(200, 210, 220, 0.5);
-    }
-    .add-btn-confirm {
-      background: #f8b4b4;
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
-    }
-
-    .manage-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 130;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(20, 30, 40, 0.3);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-    .manage-modal.active { display: flex; }
-
-    .manage-panel {
-      width: 100%;
-      max-width: 360px;
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
-      box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-      padding: 22px 20px;
-      animation: popIn 0.22s ease;
-    }
-    .manage-title {
-      font-size: 17px;
-      font-weight: 700;
-      color: #333;
-      margin-bottom: 18px;
-      text-align: center;
-    }
-    .manage-btn {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 18px;
-      background: rgba(248, 250, 252, 0.95);
-      border: 1px solid rgba(210, 220, 230, 0.7);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #333;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-bottom: 12px;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    .manage-btn:active {
-      background: rgba(240, 245, 250, 1);
-      transform: scale(0.98);
-    }
-    .manage-btn i {
-      color: #f8b4b4;
-      font-size: 16px;
-      width: 20px;
-      text-align: center;
-    }
-    .manage-cancel {
-      width: 100%;
-      padding: 12px 0;
-      text-align: center;
-      color: #8899a6;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      background: none;
-      border: none;
-      margin-top: 4px;
-    }
-    .manage-cancel:active { color: #55606b; }
-
-    /* ============ 字卡收纳盒页面 ============ */
+    /* ============ 页面切换 ============ */
     .page {
       display: none;
       width: 100%;
@@ -708,73 +221,105 @@
     }
     .page.active { display: flex; }
 
+    /* ============ 字卡收纳盒页面 ============ */
     .card-page {
-      background: #f7f8fa;
+      background: #f5f6f8;
       position: relative;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
 
-    /* 字卡顶栏 */
-    .card-header {
+    .card-topbar {
       flex-shrink: 0;
-      padding: 16px 18px 10px 18px;
-      background: #f7f8fa;
+      padding: 16px 18px 8px 18px;
+      background: #f5f6f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
     }
-    .card-header-top {
+    .card-topbar-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 6px;
+      width: 100%;
+      margin-bottom: 4px;
     }
-    .card-header-top i {
+    .card-topbar-row i {
       font-size: 17px;
       color: #55606b;
       cursor: pointer;
       padding: 4px;
+      transition: color 0.15s ease;
     }
-    .card-title {
-      font-size: 16px;
+    .card-topbar-row i:active { color: #2a3a4a; }
+    .card-topbar-title {
+      font-size: 17px;
       font-weight: 700;
       color: #333;
       letter-spacing: 1px;
     }
-    .card-subtitle {
-      font-size: 10px;
+    .card-topbar-subtitle {
+      font-size: 9px;
       color: #a8b4c0;
-      letter-spacing: 1.5px;
-      text-align: center;
-      margin-top: 2px;
+      letter-spacing: 2px;
       text-transform: uppercase;
+      font-weight: 500;
     }
 
-    /* 分类标签区 */
-    .card-categories {
-      margin: 4px 16px 12px 16px;
+    .card-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 4px 16px 12px 16px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .card-body::-webkit-scrollbar { display: none; }
+
+    .cat-grid-card {
       background: #ffffff;
       border-radius: 20px;
+      padding: 14px 10px;
       box-shadow: 0 4px 14px rgba(150, 170, 190, 0.08);
-      padding: 12px 8px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, auto);
+      gap: 10px 6px;
+      margin-bottom: 12px;
     }
-    .cat-item {
+    .cat-grid-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      gap: 5px;
+      padding: 10px 4px;
+      border-radius: 14px;
+      background: #fafbfc;
+      border: 1px solid #f0f3f6;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .cat-grid-item:active {
+      background: #f2f6fa;
+      transform: scale(0.97);
+    }
+    .cat-grid-item i {
+      font-size: 17px;
+      color: #7a8a99;
+    }
+    .cat-grid-item span.cat-label {
       font-size: 11px;
       color: #55606b;
-      position: relative;
-      cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 12px;
-      transition: background 0.15s ease;
+      font-weight: 500;
     }
-    .cat-item:active { background: #f2f6fa; }
-    .cat-badge {
+    .cat-grid-badge {
       position: absolute;
-      top: -2px;
-      right: -4px;
+      top: 4px;
+      right: 6px;
       background: #f8b4b4;
       color: #fff;
       font-size: 9px;
@@ -787,21 +332,15 @@
       padding: 0 3px;
       font-weight: 700;
     }
-    .cat-item.active {
-      color: #e58b8b;
-      font-weight: 700;
-    }
-    .cat-item.active i { color: #e58b8b; }
 
-    /* 操作按钮区 */
-    .card-actions {
+    .card-action-row {
       display: flex;
       gap: 10px;
-      margin: 0 16px 12px 16px;
+      margin-bottom: 12px;
     }
     .card-action-btn {
       flex: 1;
-      padding: 10px 0;
+      padding: 11px 0;
       border-radius: 14px;
       background: #ffffff;
       border: 1px solid #eef1f4;
@@ -815,22 +354,25 @@
       align-items: center;
       justify-content: center;
       gap: 5px;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
     }
     .card-action-btn:active {
       background: #f2f6fa;
       transform: scale(0.97);
     }
-    .card-action-btn i { font-size: 12px; }
+    .card-action-btn i { font-size: 11px; }
 
-    /* 去重行 */
-    .dedup-row {
+    .card-dedup-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: 0 16px 12px 16px;
-      padding: 0 4px;
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
     }
-    .dedup-left {
+    .card-dedup-left {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -838,7 +380,7 @@
       color: #55606b;
       cursor: pointer;
     }
-    .dedup-checkbox {
+    .card-dedup-checkbox {
       width: 16px;
       height: 16px;
       border-radius: 5px;
@@ -848,115 +390,130 @@
       justify-content: center;
       transition: all 0.15s ease;
       background: #fff;
+      flex-shrink: 0;
     }
-    .dedup-checkbox.checked {
+    .card-dedup-checkbox.checked {
       background: #f8b4b4;
       border-color: #f8b4b4;
     }
-    .dedup-checkbox.checked::after {
+    .card-dedup-checkbox.checked::after {
       content: '\f00c';
       font-family: 'Font Awesome 6 Free';
       font-weight: 900;
       color: #fff;
       font-size: 9px;
     }
-    .dedup-now {
+    .card-dedup-now {
       font-size: 12px;
       color: #8fa8bd;
       cursor: pointer;
       font-weight: 600;
+      transition: color 0.15s ease;
     }
-    .dedup-now:active { color: #6a8ca8; }
+    .card-dedup-now:active { color: #6a8ca8; }
 
-    /* 分组区 */
-    .group-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin: 0 16px 10px 16px;
+    .card-group-section {
+      margin-bottom: 12px;
     }
-    .group-select {
-      flex: 1;
-      padding: 9px 12px;
-      border-radius: 12px;
+    .card-group-label {
+      font-size: 11px;
+      color: #8899a6;
+      font-weight: 600;
+      margin-bottom: 6px;
+      padding-left: 4px;
+      letter-spacing: 0.5px;
+    }
+    .card-group-select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
       border: 1px solid #eef1f4;
       background: #fff;
-      font-size: 12px;
+      font-size: 13px;
       color: #55606b;
       outline: none;
       cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238899a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 14px;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
+      margin-bottom: 8px;
     }
-    .group-buttons {
+    .card-group-buttons {
       display: flex;
-      gap: 6px;
-      margin-left: 8px;
+      gap: 8px;
+      margin-bottom: 10px;
     }
-    .group-btn {
-      padding: 8px 10px;
-      border-radius: 10px;
+    .card-group-btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 12px;
       background: #fff;
       border: 1px solid #eef1f4;
       font-size: 11px;
       color: #55606b;
+      font-weight: 600;
       cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s ease;
+      text-align: center;
+      transition: background 0.15s ease, transform 0.1s ease;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
     }
-    .group-btn:active { background: #f2f6fa; }
-
-    /* 搜索框 */
-    .card-search-wrap {
-      margin: 0 16px 14px 16px;
+    .card-group-btn:active {
+      background: #f2f6fa;
+      transform: scale(0.97);
     }
-    .card-search {
+    .card-search-input {
       width: 100%;
-      padding: 10px 14px;
+      padding: 12px 14px;
       border-radius: 14px;
       border: 1px solid #eef1f4;
       background: #fff;
       font-size: 13px;
       color: #333;
       outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
     }
-    .card-search::placeholder { color: #b6c2cd; }
-    .card-search:focus {
+    .card-search-input::placeholder { color: #b6c2cd; }
+    .card-search-input:focus {
       border-color: #b8d4ec;
       box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.15);
     }
 
     /* 字卡列表 */
     .card-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 16px 20px 16px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+      margin-top: 4px;
     }
-    .card-list::-webkit-scrollbar { display: none; }
-
     .word-card-item {
       background: #fff;
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      box-shadow: 0 3px 10px rgba(150, 170, 190, 0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(150, 170, 190, 0.06);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
       animation: popIn 0.2s ease;
     }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
     .word-card-text {
       flex: 1;
-      font-size: 14px;
+      font-size: 13px;
       color: #333;
       line-height: 1.5;
       word-break: break-word;
     }
     .word-card-delete {
       flex-shrink: 0;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 9999px;
       background: #fdf0f0;
       color: #e58b8b;
@@ -964,144 +521,575 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 10px;
       cursor: pointer;
       transition: background 0.15s ease;
     }
     .word-card-delete:active { background: #f8d8d8; }
 
-    .empty-state {
+    .card-list-placeholder {
       text-align: center;
-      padding: 60px 20px;
-      color: #b6c2cd;
-      font-size: 14px;
-      letter-spacing: 1px;
+      padding: 40px 20px 20px 20px;
+      color: #c0ccd6;
+      font-size: 13px;
+      letter-spacing: 0.5px;
     }
-    .empty-state i {
-      font-size: 36px;
+    .card-list-placeholder i {
+      font-size: 30px;
       color: #dde6ee;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: block;
     }
 
-    /* 底部状态栏 */
     .card-status-bar {
       flex-shrink: 0;
-      padding: 10px 16px;
+      padding: 12px 16px;
       text-align: center;
-      font-size: 11px;
-      color: #a8b4c0;
-      letter-spacing: 0.5px;
+      background: #f5f6f8;
       border-top: 1px solid #eef1f4;
-      background: #f7f8fa;
+    }
+    .card-status-counts {
+      font-size: 11px;
+      color: #8899a6;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .card-status-slogan {
+      font-size: 8px;
+      color: #c0ccd6;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
     }
 
-    /* 字卡底部导航 */
-    .card-bottom-nav {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 10px 16px;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      background: #fff;
-      border-top: 1px solid #eef1f4;
+    /* ============ 传讯页面样式 ============ */
+    #pageChat {
+      background: #ffffff;
+      height: 100vh;
+      height: 100dvh;
+      max-width: 430px;
+      margin: 0 auto;
     }
-    .card-nav-item {
+    #pageChat .chat-header {
+      flex-shrink: 0;
+      padding: 14px 16px 10px 16px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
-      font-size: 10px;
-      color: #a8b4c0;
-      cursor: pointer;
-      position: relative;
-      padding: 4px 8px;
-      transition: color 0.2s ease;
+      background: #fafbfc;
+      border-bottom: 1px solid #eef1f4;
     }
-    .card-nav-item i { font-size: 18px; }
-    .card-nav-item.active {
-      color: #6fa3cc;
-      font-weight: 700;
-    }
-    .card-nav-badge {
-      position: absolute;
-      top: -2px;
-      right: 2px;
-      background: #f8b4b4;
-      color: #fff;
-      font-size: 9px;
-      min-width: 15px;
-      height: 15px;
+    #pageChat .chat-avatar {
+      width: 64px;
+      height: 64px;
       border-radius: 9999px;
+      object-fit: cover;
+      border: 2px solid #e8eef4;
+      box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+    }
+    #pageChat .chat-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-top: 8px;
+    }
+    #pageChat .chat-actions {
+      display: flex;
+      gap: 22px;
+      margin-top: 12px;
+    }
+    #pageChat .chat-action-icon {
+      width: 24px;
+      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 3px;
+      color: #8fb8d8;
+      font-size: 17px;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    #pageChat .chat-action-icon:active {
+      transform: scale(0.9);
+      color: #6fa3cc;
+    }
+    #pageChat .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 24px 16px;
+      background: #ffffff;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      position: relative;
+    }
+    #pageChat .chat-messages::-webkit-scrollbar { display: none; }
+    #pageChat .sos-btn {
+      position: fixed;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 30;
+      width: 46px;
+      height: 46px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #f5a3a3;
+      color: #e57373;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
       font-weight: 700;
+      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    #pageChat .sos-btn:active {
+      transform: translateY(-50%) scale(0.94);
+      background: rgba(255, 245, 245, 1);
+    }
+    #pageChat .sos-btn i {
+      font-size: 14px;
+      margin-bottom: 1px;
+    }
+    #pageChat .message-row {
+      display: flex;
+      margin-bottom: 14px;
+    }
+    #pageChat .message-row.self { justify-content: flex-end; }
+    #pageChat .message-row.other { justify-content: flex-start; }
+    #pageChat .message-bubble {
+      max-width: 72%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.45;
+      word-wrap: break-word;
+      word-break: break-word;
+    }
+    #pageChat .message-row.self .message-bubble {
+      background: #d8ecfb;
+      color: #1a3a52;
+      border-bottom-right-radius: 4px;
+    }
+    #pageChat .message-row.other .message-bubble {
+      background: #f3f5f7;
+      color: #333;
+      border-bottom-left-radius: 4px;
+    }
+    /* 引用样式 */
+    #pageChat .message-quote {
+      display: block;
+      font-size: 12px;
+      color: #8fa8bd;
+      border-left: 3px solid #d8ecfb;
+      padding-left: 8px;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    /* 输入中气泡 */
+    #pageChat .typing-bubble {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+    #pageChat .typing-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 9999px;
+      background: #b6c2cd;
+      animation: typingBounce 1.2s infinite;
+    }
+    #pageChat .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    #pageChat .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+    #pageChat .chat-input-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border-top: 1px solid #eef1f4;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+    #pageChat .input-left-icons {
+      display: flex;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    #pageChat .input-left-icons i {
+      color: #8fa8bd;
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    #pageChat .input-left-icons i:active {
+      color: #6a8ca8;
+      transform: scale(0.92);
+    }
+    #pageChat .chat-input {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      border-radius: 22px;
+      border: 1px solid #e2e8ee;
+      background: #ffffff;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    #pageChat .chat-input::placeholder { color: #b6c2cd; }
+    #pageChat .chat-input:focus {
+      border-color: #b8d4ec;
+      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
+    }
+    #pageChat .send-btn {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 9999px;
+      background: #6fb1e8;
+      color: #fff;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.15s ease;
+      box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
+    }
+    #pageChat .send-btn:active {
+      transform: scale(0.92);
+      background: #5a9ed6;
+    }
+    #pageChat .send-btn:disabled {
+      background: #c6d9ea;
+      box-shadow: none;
+      cursor: default;
     }
 
-    /* 添加字卡弹窗 */
-    .word-add-modal {
+    /* ============ 回复设定模态框 ============ */
+    .reply-settings-modal {
       position: fixed;
       inset: 0;
-      z-index: 200;
+      z-index: 300;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(20, 30, 40, 0.35);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .reply-settings-modal.active { display: flex; }
+
+    .reply-settings-panel {
+      width: 100%;
+      max-width: 430px;
+      max-height: 88vh;
+      background: #ffffff;
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+      display: flex;
+      flex-direction: column;
+      animation: slideUp 0.28s ease;
+      overflow: hidden;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .reply-settings-header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 12px 20px;
+      border-bottom: 1px solid #f0f3f6;
+    }
+    .reply-settings-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+    .reply-settings-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 9999px;
+      background: #f5f6f8;
+      border: none;
+      color: #55606b;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .reply-settings-close:active { background: #e8ecf0; }
+
+    .reply-settings-tabs {
+      flex-shrink: 0;
+      display: flex;
+      gap: 6px;
+      padding: 12px 16px 8px 16px;
+      border-bottom: 1px solid #f0f3f6;
+    }
+    .reply-tab-btn {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 12px;
+      background: transparent;
+      border: none;
+      font-size: 13px;
+      color: #8899a6;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .reply-tab-btn.active {
+      background: #fdf0f0;
+      color: #e58b8b;
+    }
+    .reply-tab-btn:active { transform: scale(0.97); }
+
+    .reply-settings-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px 24px 20px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .reply-settings-body::-webkit-scrollbar { display: none; }
+
+    .reply-tab-panel { display: none; }
+    .reply-tab-panel.active { display: block; }
+
+    .setting-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    .setting-row-label { flex: 1; min-width: 0; }
+    .setting-row-title {
+      font-size: 14px;
+      color: #333;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .setting-row-desc {
+      font-size: 11px;
+      color: #a8b4c0;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 26px;
+      flex-shrink: 0;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #d8dfe6;
+      border-radius: 9999px;
+      transition: background 0.2s ease;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 9999px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      transition: transform 0.2s ease;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #f8b4b4; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    .input-row { display: flex; gap: 12px; margin-top: 8px; }
+    .input-item { flex: 1; min-width: 0; }
+    .input-item-label {
+      font-size: 11px;
+      color: #8899a6;
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+    .input-with-unit { position: relative; }
+    .input-with-unit input {
+      width: 100%;
+      padding: 10px 40px 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #eef1f4;
+      background: #fafbfc;
+      font-size: 13px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .input-with-unit input:focus {
+      border-color: #f8b4b4;
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+    }
+    .input-unit {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: #b6c2cd;
+      pointer-events: none;
+    }
+    .input-hint {
+      font-size: 10px;
+      color: #b6c2cd;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .setting-divider {
+      height: 1px;
+      background: #f0f3f6;
+      margin: 12px 0 4px 0;
+    }
+    .setting-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #7a8a99;
+      letter-spacing: 0.5px;
+      margin: 8px 0 2px 0;
+    }
+    .wide-btn {
+      width: 100%;
+      padding: 11px 0;
+      border-radius: 14px;
+      background: #fafbfc;
+      border: 1px solid #eef1f4;
+      color: #55606b;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s ease, transform 0.1s ease;
+      text-align: center;
+    }
+    .wide-btn:active {
+      background: #f2f6fa;
+      transform: scale(0.98);
+    }
+    .blue-link {
+      color: #6fa3cc;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 6px;
+      transition: color 0.15s ease;
+    }
+    .blue-link:active { color: #4a86b0; }
+    .auto-save-hint {
+      text-align: center;
+      font-size: 11px;
+      color: #c0ccd6;
+      margin-top: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    /* ============ 通用输入弹窗 ============ */
+    .simple-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
       display: none;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      background: rgba(20, 30, 40, 0.3);
+      background: rgba(20, 30, 40, 0.35);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
-    .word-add-modal.active { display: flex; }
-    .word-add-panel {
+    .simple-modal.active { display: flex; }
+    .simple-panel {
       width: 100%;
       max-width: 380px;
-      background: rgba(255, 255, 255, 0.97);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.9);
+      background: #ffffff;
+      border-radius: 24px;
       box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
       padding: 22px 20px;
       animation: popIn 0.22s ease;
     }
-    .word-add-title {
-      font-size: 17px;
+    .simple-title {
+      font-size: 16px;
       font-weight: 700;
       color: #333;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      margin-bottom: 14px;
     }
-    .word-add-input {
+    .simple-textarea {
       width: 100%;
       padding: 12px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(200, 210, 220, 0.7);
-      background: rgba(250, 251, 253, 0.9);
+      border-radius: 14px;
+      border: 1px solid #eef1f4;
+      background: #fafbfc;
       font-size: 14px;
       color: #333;
       outline: none;
-      margin-bottom: 16px;
       resize: none;
-      min-height: 80px;
+      min-height: 90px;
       font-family: inherit;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
     }
-    .word-add-input:focus {
+    .simple-textarea:focus {
       border-color: #f8b4b4;
-      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.2);
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
     }
-    .word-add-actions {
+    .simple-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #eef1f4;
+      background: #fafbfc;
+      font-size: 14px;
+      color: #333;
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .simple-input:focus {
+      border-color: #f8b4b4;
+      box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+    }
+    .simple-actions {
       display: flex;
       gap: 12px;
+      margin-top: 16px;
     }
-    .word-add-btn {
+    .simple-btn {
       flex: 1;
-      padding: 12px 0;
-      border-radius: 18px;
+      padding: 11px 0;
+      border-radius: 16px;
       font-size: 14px;
       font-weight: 600;
       text-align: center;
@@ -1109,13 +1097,13 @@
       border: none;
       transition: opacity 0.15s ease, transform 0.1s ease;
     }
-    .word-add-btn:active { transform: scale(0.97); }
-    .word-add-cancel {
-      background: rgba(240, 244, 248, 0.95);
+    .simple-btn:active { transform: scale(0.97); }
+    .simple-btn-cancel {
+      background: #f5f6f8;
       color: #55606b;
-      border: 1px solid rgba(200, 210, 220, 0.5);
+      border: 1px solid #eef1f4;
     }
-    .word-add-confirm {
+    .simple-btn-confirm {
       background: #f8b4b4;
       color: #fff;
       box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
@@ -1246,253 +1234,96 @@
 
       <div class="h-0 w-full safe-bottom"></div>
     </div>
-
-    <button class="floating-settings" id="openSettings" title="自定义图片">
-      <i class="fa-solid fa-palette text-lg"></i>
-    </button>
-
-    <div class="settings-modal" id="settingsModal">
-      <div class="settings-panel">
-        <div class="settings-title">
-          <span><i class="fa-solid fa-image mr-2 text-[#55606b]"></i>自定义图片 / 音乐</span>
-          <button class="settings-close" id="closeSettings">&times;</button>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-mountain-sun"></i>背景图</div>
-          <input type="text" class="settings-input" id="inputBg" placeholder="粘贴图片 URL">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="fileBg"><i class="fa-solid fa-upload"></i>上传文件</label>
-            <input type="file" id="fileBg" accept="image/*" style="display:none;">
-            <span class="settings-file-name" id="nameBg">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-user"></i>头像</div>
-          <input type="text" class="settings-input" id="inputAvatar" placeholder="粘贴图片 URL">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="fileAvatar"><i class="fa-solid fa-upload"></i>上传文件</label>
-            <input type="file" id="fileAvatar" accept="image/*" style="display:none;">
-            <span class="settings-file-name" id="nameAvatar">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 1</div>
-          <input type="text" class="settings-input" id="inputPhoto1" placeholder="粘贴图片 URL">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="filePhoto1"><i class="fa-solid fa-upload"></i>上传文件</label>
-            <input type="file" id="filePhoto1" accept="image/*" style="display:none;">
-            <span class="settings-file-name" id="namePhoto1">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 2</div>
-          <input type="text" class="settings-input" id="inputPhoto2" placeholder="粘贴图片 URL">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="filePhoto2"><i class="fa-solid fa-upload"></i>上传文件</label>
-            <input type="file" id="filePhoto2" accept="image/*" style="display:none;">
-            <span class="settings-file-name" id="namePhoto2">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-image"></i>展示图 3</div>
-          <input type="text" class="settings-input" id="inputPhoto3" placeholder="粘贴图片 URL">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="filePhoto3"><i class="fa-solid fa-upload"></i>上传文件</label>
-            <input type="file" id="filePhoto3" accept="image/*" style="display:none;">
-            <span class="settings-file-name" id="namePhoto3">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-music"></i>专辑封面</div>
-          <input type="text" class="settings-input" id="inputAlbum" placeholder="粘贴图片 URL">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="fileAlbum"><i class="fa-solid fa-upload"></i>上传文件</label>
-            <input type="file" id="fileAlbum" accept="image/*" style="display:none;">
-            <span class="settings-file-name" id="nameAlbum">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-label"><i class="fa-solid fa-link"></i>自定义音乐 URL</div>
-          <input type="text" class="settings-input" id="inputMusicUrl" placeholder="粘贴音频文件 URL（mp3 等）">
-          <div class="settings-file-row">
-            <label class="settings-file-btn" for="fileMusic"><i class="fa-solid fa-upload"></i>上传音乐</label>
-            <input type="file" id="fileMusic" accept="audio/*" style="display:none;">
-            <span class="settings-file-name" id="nameMusic">未选择文件</span>
-          </div>
-        </div>
-
-        <div class="settings-actions">
-          <button class="settings-btn btn-cancel" id="cancelSettings">取消</button>
-          <button class="settings-btn btn-confirm" id="confirmSettings">应用</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="playlist-sheet" id="playlistSheet">
-      <div class="playlist-sheet-panel">
-        <div class="playlist-sheet-header">
-          <span class="playlist-sheet-deco">.°♫.°</span>
-          <div class="playlist-sheet-actions">
-            <button class="playlist-sheet-icon-btn" id="openManageBtn" title="歌单管理">
-              <i class="fa-solid fa-folder-open"></i>
-            </button>
-            <button class="playlist-sheet-icon-btn" id="searchSongBtn" title="搜索">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </button>
-            <button class="playlist-sheet-icon-btn" id="openAddBtn" title="添加歌曲">
-              <i class="fa-solid fa-plus"></i>
-            </button>
-          </div>
-        </div>
-        <div class="playlist-scroll" id="playlistScroll"></div>
-      </div>
-    </div>
-
-    <div class="add-modal" id="addModal">
-      <div class="add-panel">
-        <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
-        <input type="text" class="add-input" id="addTitle" placeholder="歌曲名称（例如：这里的风景）">
-        <input type="text" class="add-input" id="addArtist" placeholder="歌手 / 备注（例如：你的名字）">
-        <input type="text" class="add-input" id="addUrl" placeholder="音频链接 (mp3/m4a 链接)">
-        <div class="add-actions">
-          <button class="add-btn add-btn-cancel" id="addCancel">取消</button>
-          <button class="add-btn add-btn-confirm" id="addConfirm">添加播放</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="manage-modal" id="manageModal">
-      <div class="manage-panel">
-        <div class="manage-title">歌单管理</div>
-        <button class="manage-btn" id="importPlaylistBtn">
-          <i class="fa-solid fa-file-import"></i>
-          <span>导入歌单文件</span>
-        </button>
-        <input type="file" id="importFileInput" accept=".json,.txt,application/json" style="display:none;">
-        <button class="manage-btn" id="exportPlaylistBtn">
-          <i class="fa-solid fa-file-export"></i>
-          <span>导出当前歌单</span>
-        </button>
-        <button class="manage-cancel" id="manageCancel">取消</button>
-      </div>
-    </div>
   </div>
 
   <!-- ==================== 字卡收纳盒页面 ==================== -->
   <div class="page card-page" id="pageCard">
-    <!-- 顶栏 -->
-    <div class="card-header">
-      <div class="card-header-top">
-        <i class="fa-solid fa-arrow-left" id="cardBackBtn"></i>
-        <span class="card-title">字卡收纳盒</span>
-        <i class="fa-solid fa-pencil" id="cardEditBtn"></i>
+    <div class="card-topbar">
+      <div class="card-topbar-row">
+        <i class="fa-solid fa-chevron-left" id="cardBackBtn"></i>
+        <span class="card-topbar-title">字卡收纳盒</span>
+        <i class="fa-solid fa-pen-to-square" id="cardEditBtn"></i>
       </div>
-      <div class="card-subtitle">LITTLE WORDS, LOTS OF YOU.</div>
+      <div class="card-topbar-subtitle">LITTLE WORDS, LOTS OF YOU.</div>
     </div>
 
-    <!-- 分类标签区 -->
-    <div class="card-categories" id="cardCategories">
-      <div class="cat-item active" data-cat="reply">
-        <i class="fa-regular fa-comment-dots text-base"></i>
-        <span>回复</span>
-        <span class="cat-badge" id="badgeReply">0</span>
+    <div class="card-body">
+      <div class="cat-grid-card" id="catGrid">
+        <div class="cat-grid-item active" data-cat="reply" id="catReply">
+          <i class="fa-regular fa-comment-dots"></i>
+          <span class="cat-label">回复</span>
+          <span class="cat-grid-badge" id="badgeReply">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="kaomoji" id="catKaomoji">
+          <i class="fa-regular fa-face-smile"></i>
+          <span class="cat-label">颜文字</span>
+          <span class="cat-grid-badge" id="badgeKaomoji">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="place" id="catPlace">
+          <i class="fa-solid fa-location-dot"></i>
+          <span class="cat-label">地点</span>
+          <span class="cat-grid-badge" id="badgePlace">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="mood" id="catMood">
+          <i class="fa-regular fa-heart"></i>
+          <span class="cat-label">心情</span>
+          <span class="cat-grid-badge" id="badgeMood">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="emoji" id="catEmoji">
+          <i class="fa-regular fa-image"></i>
+          <span class="cat-label">表情包</span>
+          <span class="cat-grid-badge" id="badgeEmoji">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="album" id="catAlbum">
+          <i class="fa-regular fa-images"></i>
+          <span class="cat-label">相册</span>
+          <span class="cat-grid-badge" id="badgeAlbum">0</span>
+        </div>
       </div>
-      <div class="cat-item" data-cat="kaomoji">
-        <i class="fa-regular fa-face-smile text-base"></i>
-        <span>颜文字</span>
-        <span class="cat-badge" id="badgeKaomoji">0</span>
+
+      <div class="card-action-row">
+        <button class="card-action-btn" id="btnImport">
+          <i class="fa-solid fa-plus"></i>导入
+        </button>
+        <button class="card-action-btn" id="btnExport">
+          <i class="fa-solid fa-arrow-right"></i>导出
+        </button>
+        <button class="card-action-btn" id="btnAddCard">
+          <i class="fa-solid fa-plus"></i>添加
+        </button>
       </div>
-      <div class="cat-item" data-cat="place">
-        <i class="fa-solid fa-location-dot text-base"></i>
-        <span>地点</span>
-        <span class="cat-badge" id="badgePlace">0</span>
+
+      <div class="card-dedup-row">
+        <div class="card-dedup-left" id="dedupToggle">
+          <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
+          <span>自动去重</span>
+        </div>
+        <span class="card-dedup-now" id="dedupNowBtn">立即去重</span>
       </div>
-      <div class="cat-item" data-cat="mood">
-        <i class="fa-regular fa-heart text-base"></i>
-        <span>心情</span>
-        <span class="cat-badge" id="badgeMood">0</span>
+
+      <div class="card-group-section">
+        <div class="card-group-label">回复分组</div>
+        <select class="card-group-select" id="groupSelect">
+          <option>亲爱的的回复 · 0 条</option>
+        </select>
+        <div class="card-group-buttons">
+          <button class="card-group-btn" id="btnNewGroup">新建分组</button>
+          <button class="card-group-btn" id="btnRenameGroup">重命名</button>
+          <button class="card-group-btn" id="btnOrganizeGroup">整理</button>
+        </div>
+        <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
       </div>
-      <div class="cat-item" data-cat="emoji">
-        <i class="fa-regular fa-image text-base"></i>
-        <span>表情包</span>
-        <span class="cat-badge" id="badgeEmoji">0</span>
-      </div>
-      <div class="cat-item" data-cat="album">
-        <i class="fa-regular fa-images text-base"></i>
-        <span>相册</span>
-        <span class="cat-badge" id="badgeAlbum">0</span>
+
+      <div class="card-list" id="cardList"></div>
+      <div class="card-list-placeholder" id="cardListPlaceholder">
+        <i class="fa-regular fa-note-sticky"></i>
+        把想听到的话，放进这里。
       </div>
     </div>
 
-    <!-- 操作按钮区 -->
-    <div class="card-actions">
-      <button class="card-action-btn" id="cardImportBtn"><i class="fa-solid fa-file-import"></i>导入</button>
-      <button class="card-action-btn" id="cardExportBtn"><i class="fa-solid fa-file-export"></i>导出</button>
-      <button class="card-action-btn" id="cardAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
-    </div>
-
-    <!-- 去重行 -->
-    <div class="dedup-row">
-      <div class="dedup-left" id="dedupToggle">
-        <div class="dedup-checkbox" id="dedupCheckbox"></div>
-        <span>自动去重</span>
-      </div>
-      <span class="dedup-now" id="dedupNow">立即去重</span>
-    </div>
-
-    <!-- 分组区 -->
-    <div class="group-row">
-      <select class="group-select" id="groupSelect">
-        <option>亲爱的的回复 · 0 条</option>
-      </select>
-      <div class="group-buttons">
-        <button class="group-btn" id="groupNewBtn">新建分组</button>
-        <button class="group-btn" id="groupRenameBtn">重命名</button>
-        <button class="group-btn" id="groupOrganizeBtn">整理</button>
-      </div>
-    </div>
-
-    <!-- 搜索框 -->
-    <div class="card-search-wrap">
-      <input type="text" class="card-search" id="cardSearchInput" placeholder="找一句话、一种心情...">
-    </div>
-
-    <!-- 字卡列表 -->
-    <div class="card-list" id="cardList"></div>
-
-    <!-- 底部状态栏 -->
-    <div class="card-status-bar" id="cardStatusBar">0条回复 · 0个表情 · 0个地点 · 0种心情</div>
-
-    <!-- 底部导航 -->
-    <div class="card-bottom-nav" id="cardBottomNav">
-      <div class="card-nav-item" data-nav="home">
-        <i class="fa-solid fa-house"></i>
-        <span>主页</span>
-      </div>
-      <div class="card-nav-item" data-nav="message">
-        <i class="fa-regular fa-comment-dots"></i>
-        <span>传讯</span>
-        <span class="card-nav-badge" id="navMsgBadge">0</span>
-      </div>
-      <div class="card-nav-item" data-nav="headphone">
-        <i class="fa-solid fa-headphones"></i>
-        <span>耳机</span>
-      </div>
-      <div class="card-nav-item" data-nav="place">
-        <i class="fa-solid fa-location-dot"></i>
-        <span>地点</span>
-      </div>
-      <div class="card-nav-item" data-nav="apps">
-        <i class="fa-solid fa-grip"></i>
-        <span>应用</span>
-      </div>
+    <div class="card-status-bar">
+      <div class="card-status-counts" id="cardStatusCounts">0 条回复 · 0 个表情 · 0 个地点 · 0 种心情</div>
+      <div class="card-status-slogan">SIDE BY SIDE · PRIVATE STUDY · NO REPOST</div>
     </div>
   </div>
 
@@ -1534,200 +1365,221 @@
     </div>
   </div>
 
-  <!-- 传讯页面样式 -->
-  <style>
-    #pageChat {
-      background: #ffffff;
-      height: 100vh;
-      height: 100dvh;
-      max-width: 430px;
-      margin: 0 auto;
-    }
-    #pageChat .chat-header {
-      flex-shrink: 0;
-      padding: 14px 16px 10px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: #fafbfc;
-      border-bottom: 1px solid #eef1f4;
-    }
-    #pageChat .chat-avatar {
-      width: 64px;
-      height: 64px;
-      border-radius: 9999px;
-      object-fit: cover;
-      border: 2px solid #e8eef4;
-      box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
-    }
-    #pageChat .chat-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: #333;
-      margin-top: 8px;
-    }
-    #pageChat .chat-actions {
-      display: flex;
-      gap: 22px;
-      margin-top: 12px;
-    }
-    #pageChat .chat-action-icon {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #8fb8d8;
-      font-size: 17px;
-      cursor: pointer;
-      transition: color 0.15s ease, transform 0.15s ease;
-    }
-    #pageChat .chat-action-icon:active {
-      transform: scale(0.9);
-      color: #6fa3cc;
-    }
-    #pageChat .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 16px 24px 16px;
-      background: #ffffff;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      position: relative;
-    }
-    #pageChat .chat-messages::-webkit-scrollbar { display: none; }
-    #pageChat .sos-btn {
-      position: fixed;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 30;
-      width: 46px;
-      height: 46px;
-      border-radius: 9999px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1.5px solid #f5a3a3;
-      color: #e57373;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 700;
-      box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
-      cursor: pointer;
-      transition: transform 0.15s ease, background 0.15s ease;
-    }
-    #pageChat .sos-btn:active {
-      transform: translateY(-50%) scale(0.94);
-      background: rgba(255, 245, 245, 1);
-    }
-    #pageChat .sos-btn i {
-      font-size: 14px;
-      margin-bottom: 1px;
-    }
-    #pageChat .message-row {
-      display: flex;
-      margin-bottom: 14px;
-    }
-    #pageChat .message-row.self { justify-content: flex-end; }
-    #pageChat .message-row.other { justify-content: flex-start; }
-    #pageChat .message-bubble {
-      max-width: 72%;
-      padding: 10px 14px;
-      border-radius: 18px;
-      font-size: 14px;
-      line-height: 1.45;
-      word-wrap: break-word;
-      word-break: break-word;
-    }
-    #pageChat .message-row.self .message-bubble {
-      background: #d8ecfb;
-      color: #1a3a52;
-      border-bottom-right-radius: 4px;
-    }
-    #pageChat .message-row.other .message-bubble {
-      background: #f3f5f7;
-      color: #333;
-      border-bottom-left-radius: 4px;
-    }
-    #pageChat .chat-input-bar {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      background: #fafbfc;
-      border-top: 1px solid #eef1f4;
-      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    }
-    #pageChat .input-left-icons {
-      display: flex;
-      gap: 12px;
-      flex-shrink: 0;
-    }
-    #pageChat .input-left-icons i {
-      color: #8fa8bd;
-      font-size: 18px;
-      cursor: pointer;
-      transition: color 0.15s ease, transform 0.15s ease;
-    }
-    #pageChat .input-left-icons i:active {
-      color: #6a8ca8;
-      transform: scale(0.92);
-    }
-    #pageChat .chat-input {
-      flex: 1;
-      min-width: 0;
-      padding: 9px 14px;
-      border-radius: 22px;
-      border: 1px solid #e2e8ee;
-      background: #ffffff;
-      font-size: 14px;
-      color: #333;
-      outline: none;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
-    }
-    #pageChat .chat-input::placeholder { color: #b6c2cd; }
-    #pageChat .chat-input:focus {
-      border-color: #b8d4ec;
-      box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
-    }
-    #pageChat .send-btn {
-      flex-shrink: 0;
-      width: 36px;
-      height: 36px;
-      border-radius: 9999px;
-      background: #6fb1e8;
-      color: #fff;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.15s ease;
-      box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
-    }
-    #pageChat .send-btn:active {
-      transform: scale(0.92);
-      background: #5a9ed6;
-    }
-    #pageChat .send-btn:disabled {
-      background: #c6d9ea;
-      box-shadow: none;
-      cursor: default;
-    }
-  </style>
+  <!-- ==================== 回复设定模态框 ==================== -->
+  <div class="reply-settings-modal" id="replySettingsModal">
+    <div class="reply-settings-panel">
+      <div class="reply-settings-header">
+        <span class="reply-settings-title">回复设定</span>
+        <button class="reply-settings-close" id="replySettingsClose">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
 
-  <!-- 添加字卡弹窗 -->
-  <div class="word-add-modal" id="wordAddModal">
-    <div class="word-add-panel">
-      <div class="word-add-title"><i class="fa-solid fa-pen-nib text-[#f8b4b4]"></i>添加字卡</div>
-      <textarea class="word-add-input" id="wordAddInput" placeholder="输入你想说的话..."></textarea>
-      <div class="word-add-actions">
-        <button class="word-add-btn word-add-cancel" id="wordAddCancel">取消</button>
-        <button class="word-add-btn word-add-confirm" id="wordAddConfirm">添加</button>
+      <div class="reply-settings-tabs">
+        <button class="reply-tab-btn active" data-tab="rhythm">回复节奏</button>
+        <button class="reply-tab-btn" data-tab="proactive">主动消息</button>
+        <button class="reply-tab-btn" data-tab="quote">引用/反应</button>
+      </div>
+
+      <div class="reply-settings-body">
+        <div class="reply-tab-panel active" id="panel-rhythm">
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">开启正常字卡回复</div>
+              <div class="setting-row-desc">关闭后随机箭头获取字卡，不生效</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleNormalReply" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="input-row">
+            <div class="input-item">
+              <div class="input-item-label">最短等待 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMinWait" value="3" min="1" max="600">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">最长等待 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMaxWait" value="12" min="1" max="600">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+          </div>
+          <div class="input-hint">等待时间可设为 1-600 秒，回复将在该区间内随机延迟</div>
+
+          <div class="input-row" style="margin-top:14px;">
+            <div class="input-item">
+              <div class="input-item-label">每次最少回复 / 条</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMinCount" value="0" min="0" max="10">
+                <span class="input-unit">条</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">每次最多回复 / 条</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMaxCount" value="3" min="0" max="10">
+                <span class="input-unit">条</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-row" style="margin-top:6px;">
+            <div class="setting-row-label">
+              <div class="setting-row-title">随机附加颜文字</div>
+              <div class="setting-row-desc">随机回复时，有一定概率在句尾附加颜文字</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleKaomoji">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-divider"></div>
+          <div class="setting-section-title">输入状态</div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">显示三点输入气泡</div>
+              <div class="setting-row-desc">对方回复前，先显示三点输入动画</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleTypingBubble" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-divider"></div>
+          <div class="setting-section-title">已读与状态自动回复</div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">显示角色已读状态</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleReadStatus">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">开启自动回复（状态字卡）</div>
+              <div class="setting-row-desc">开启后，当角色不在线时，将自动从状态字卡中抽取内容进行回复。</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleAutoReply">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <button class="wide-btn" id="btnManageAutoReply">管理自动回复字卡</button>
+          <button class="wide-btn" id="btnViewStatusCards">查看角色状态卡片</button>
+
+          <div class="setting-divider"></div>
+          <div class="setting-section-title">通讯节奏</div>
+
+          <div class="input-row">
+            <div class="input-item">
+              <div class="input-item-label">最短等待 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputCommMinWait" value="10" min="1" max="600">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">最长等待 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputCommMaxWait" value="60" min="1" max="600">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="auto-save-hint">修改后自动保存</div>
+        </div>
+
+        <div class="reply-tab-panel" id="panel-proactive">
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">允许他主动发消息</div>
+              <div class="setting-row-desc">开启后，角色会按照设定间隔主动给你发送消息</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleProactive">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="input-row">
+            <div class="input-item">
+              <div class="input-item-label">最短间隔 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputProactiveMin" value="120" min="10" max="10800">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">最长间隔 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputProactiveMax" value="300" min="10" max="10800">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+          </div>
+          <div class="input-hint">主动消息间隔可设为 10-10800 秒，角色将在该区间内随机选择时间发送</div>
+
+          <a class="blue-link" id="linkBackgroundKeep">后台保活与消息提醒</a>
+          <div class="auto-save-hint">修改后自动保存</div>
+        </div>
+
+        <div class="reply-tab-panel" id="panel-quote">
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">允许随机引用</div>
+              <div class="setting-row-desc">开启后，角色回复时有一定概率引用你之前的消息</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleQuote" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">允许随机贴反应</div>
+              <div class="setting-row-desc">开启后，角色回复时有一定概率对你之前的消息贴表情反应</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleReaction" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="input-hint" style="margin-top:12px;">
+            引用和反应均为随机触发，触发概率由系统根据对话上下文自动计算。关闭后角色将不再引用或贴反应。
+          </div>
+
+          <div class="auto-save-hint">修改后自动保存</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 通用输入弹窗 ==================== -->
+  <div class="simple-modal" id="simpleModal">
+    <div class="simple-panel">
+      <div class="simple-title" id="simpleModalTitle">添加</div>
+      <textarea class="simple-textarea" id="simpleModalTextarea" placeholder="输入内容..."></textarea>
+      <input type="text" class="simple-input" id="simpleModalInput" placeholder="输入内容..." style="display:none;">
+      <div class="simple-actions">
+        <button class="simple-btn simple-btn-cancel" id="simpleModalCancel">取消</button>
+        <button class="simple-btn simple-btn-confirm" id="simpleModalConfirm">确定</button>
       </div>
     </div>
   </div>
@@ -1735,177 +1587,57 @@
   <script src="./js/card.js"></script>
   <script src="./js/chat.js"></script>
   <script>
-    // ==================== 页面切换逻辑 ====================
-    (function() {
+    // ==================== 页面切换 ====================
+    (function () {
       const pageHome = document.getElementById('pageHome');
       const pageCard = document.getElementById('pageCard');
       const pageChat = document.getElementById('pageChat');
 
-      function hideAllPages() {
+      function hideAll() {
         pageHome.classList.remove('active');
         pageCard.classList.remove('active');
         pageChat.classList.remove('active');
       }
 
       function showPage(page) {
-        hideAllPages();
+        hideAll();
         page.classList.add('active');
-        // 切换页面时滚动到顶部
         window.scrollTo(0, 0);
       }
 
-      // 主页 → 传讯
-      document.getElementById('tabMessage').addEventListener('click', function(e) {
-        e.preventDefault();
-        showPage(pageChat);
-        if (window.initChatPage) window.initChatPage();
-      });
-
-      // 主页 → 字卡
-      document.getElementById('tabCard').addEventListener('click', function(e) {
+      document.getElementById('tabCard').addEventListener('click', function (e) {
         e.preventDefault();
         showPage(pageCard);
         if (window.refreshCardUI) window.refreshCardUI();
       });
 
-      // 字卡返回按钮
-      document.getElementById('cardBackBtn').addEventListener('click', function() {
+      document.getElementById('tabMessage').addEventListener('click', function (e) {
+        e.preventDefault();
+        showPage(pageChat);
+      });
+
+      document.getElementById('cardBackBtn').addEventListener('click', function () {
         showPage(pageHome);
       });
 
-      // 字卡底部导航
-      document.querySelectorAll('#cardBottomNav .card-nav-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-          const nav = item.getAttribute('data-nav');
-          if (nav === 'home') {
-            showPage(pageHome);
-          } else if (nav === 'message') {
-            showPage(pageChat);
-            if (window.initChatPage) window.initChatPage();
-          }
-          // 其他导航暂不处理
-        });
-      });
-
-      // 暴露切换函数供外部使用
       window.showPage = showPage;
       window.pageHome = pageHome;
       window.pageCard = pageCard;
       window.pageChat = pageChat;
     })();
 
-    // ==================== 主页音乐播放器（保持原有逻辑） ====================
-    (function() {
-      const audio = document.getElementById('audioPlayer');
-      const songTitle = document.getElementById('songTitle');
-      const songArtist = document.getElementById('songArtist');
-      const playBtn = document.getElementById('playBtn');
-      const playIcon = document.getElementById('playIcon');
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      const vinylCover = document.getElementById('vinylCover');
-
-      let playlist = [
-        { title: 'My love', artist: '颜人中', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', cover: 'https://picsum.photos/100/100?random=20', lyric: '我的爱 像风一样 来了又走' },
-        { title: '夜曲', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', cover: 'https://picsum.photos/100/100?random=21', lyric: '一群嗜血的蚂蚁 被腐肉所吸引' },
-        { title: '晴天', artist: '周杰伦', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', cover: 'https://picsum.photos/100/100?random=22', lyric: '故事的小黄花 从出生那年就飘着' },
-        { title: '起风了', artist: '买辣椒也用券', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', cover: 'https://picsum.photos/100/100?random=23', lyric: '这一路上走走停停 顺着少年漂流的痕迹' }
-      ];
-
-      let currentSongIndex = 0;
-      let isPlaying = false;
-      let currentCustomMusicMode = false;
-      const currentImages = { album: null, music: null };
-
-      function playSong(index) {
-        if (currentCustomMusicMode && currentImages.music) {
-          audio.src = currentImages.music;
-          songTitle.textContent = '自定义音乐';
-          songArtist.textContent = '来自设置面板';
-          if (currentImages.album) {
-            document.getElementById('albumCover').src = currentImages.album;
-            document.getElementById('albumCover').style.display = 'block';
-            document.getElementById('albumIcon').style.display = 'none';
-          }
-        } else {
-          if (index < 0 || index >= playlist.length) return;
-          const song = playlist[index];
-          audio.src = song.url;
-          songTitle.textContent = song.title;
-          songArtist.textContent = song.artist;
-          if (currentImages.album) {
-            document.getElementById('albumCover').src = currentImages.album;
-            document.getElementById('albumCover').style.display = 'block';
-            document.getElementById('albumIcon').style.display = 'none';
-          } else {
-            document.getElementById('albumCover').src = song.cover;
-            document.getElementById('albumCover').style.display = 'block';
-            document.getElementById('albumIcon').style.display = 'none';
-          }
-        }
-        audio.play().then(() => {
-          isPlaying = true;
-          playIcon.classList.remove('fa-play');
-          playIcon.classList.add('fa-pause');
-          vinylCover.classList.add('spinning');
-        }).catch(() => {
-          isPlaying = false;
-          playIcon.classList.remove('fa-pause');
-          playIcon.classList.add('fa-play');
-          vinylCover.classList.remove('spinning');
+    // ==================== 底部导航（主页） ====================
+    (function () {
+      document.querySelectorAll('#bottomTabBar .tab-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          if (btn.id === 'tabCard' || btn.id === 'tabMessage') return;
+          e.preventDefault();
+          document.querySelectorAll('#bottomTabBar .tab-btn').forEach(function (b) {
+            b.classList.remove('active');
+          });
+          btn.classList.add('active');
         });
-      }
-
-      playBtn.addEventListener('click', function() {
-        if (!audio.src) { playSong(currentSongIndex); return; }
-        if (isPlaying) {
-          audio.pause();
-          isPlaying = false;
-          playIcon.classList.remove('fa-pause');
-          playIcon.classList.add('fa-play');
-          vinylCover.classList.remove('spinning');
-        } else {
-          audio.play().then(() => {
-            isPlaying = true;
-            playIcon.classList.remove('fa-play');
-            playIcon.classList.add('fa-pause');
-            vinylCover.classList.add('spinning');
-          }).catch(() => {});
-        }
       });
-
-      prevBtn.addEventListener('click', function() {
-        if (currentCustomMusicMode) { currentCustomMusicMode = false; currentSongIndex = 0; }
-        else { currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length; }
-        playSong(currentSongIndex);
-      });
-
-      nextBtn.addEventListener('click', function() {
-        if (currentCustomMusicMode) { currentCustomMusicMode = false; currentSongIndex = 0; }
-        else { currentSongIndex = (currentSongIndex + 1) % playlist.length; }
-        playSong(currentSongIndex);
-      });
-
-      audio.addEventListener('ended', function() {
-        if (currentCustomMusicMode) {
-          isPlaying = false;
-          playIcon.classList.remove('fa-pause');
-          playIcon.classList.add('fa-play');
-          vinylCover.classList.remove('spinning');
-        } else {
-          nextBtn.click();
-        }
-      });
-
-      // 初始化
-      if (playlist.length > 0) {
-        songTitle.textContent = playlist[0].title;
-        songArtist.textContent = playlist[0].artist;
-        audio.src = playlist[0].url;
-        document.getElementById('albumCover').src = playlist[0].cover;
-        document.getElementById('albumCover').style.display = 'block';
-        document.getElementById('albumIcon').style.display = 'none';
-      }
     })();
   </script>
 </body>
