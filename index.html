@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>阿晏 · 地球online</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome 6 (免费图标库) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* 自定义毛玻璃效果与细节 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #e3f0fa;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 背景图 + 极淡白色/蓝色遮罩 */
+    .bg-dream {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background-image: url('https://picsum.photos/1200/1800?random=10');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .bg-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(230, 245, 255, 0.6) 100%);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+
+    /* 玻璃拟态核心卡片 */
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 20px rgba(0, 20, 30, 0.05);
+    }
+
+    .glass-avatar {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 9999px;
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+    }
+
+    /* 椭圆搜索框 */
+    .search-glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: all 0.2s ease;
+    }
+    .search-glass:focus-within {
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    /* 图片横向滚动容器 */
+    .scroll-x {
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 2px;
+    }
+    .scroll-x::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* 底部 Tab 固定 */
+    .bottom-tab {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 10px 25px rgba(0, 20, 30, 0.1);
+    }
+
+    /* 播放控制按钮 */
+    .play-btn {
+      background: #222;
+      color: #fff;
+      transition: all 0.1s;
+    }
+    .play-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* 顶部头部卡片 — 确保背景图铺满、圆角 */
+    .header-card {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      background-image: url('https://picsum.photos/600/200?random=12');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: 0 6px 16px rgba(0, 20, 30, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      padding: 8px 10px;
+      min-height: 68px;
+    }
+    .header-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 0;
+    }
+    .header-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 底部安全区 */
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* 照片滚动项 */
+    .photo-scroll-item {
+      flex: 0 0 auto;
+      width: 92px;
+      height: 92px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+    @media (min-width: 400px) {
+      .photo-scroll-item {
+        width: 102px;
+        height: 102px;
+      }
+    }
+    @media (min-width: 430px) {
+      .photo-scroll-item {
+        width: 110px;
+        height: 110px;
+      }
+    }
+
+    /* 两行功能按钮网格 */
+    .function-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px 6px;
+    }
+    .function-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .function-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 10px rgba(0, 20, 30, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @media (min-width: 400px) {
+      .function-icon {
+        width: 54px;
+        height: 54px;
+      }
+    }
+    .function-label {
+      font-size: 10px;
+      color: #333;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    @media (min-width: 400px) {
+      .function-label {
+        font-size: 11px;
+      }
+    }
+
+    /* 整体布局：固定视口高度，内部滚动 */
+    .app-container {
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 16px 12px 16px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .main-content::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- 背景图与遮罩 -->
+  <div class="bg-dream"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- 整体 App 容器 -->
+  <div class="app-container w-full max-w-[430px] mx-auto relative">
+
+    <!-- 顶部头部区域（固定，不随内容滚动） -->
+    <div class="px-5 pt-4 pb-1 flex-shrink-0">
+      <!-- 头部卡片：带背景图 + 半透明遮罩 + 毛玻璃；内容水平垂直居中 -->
+      <div class="header-card flex flex-col items-center justify-center text-center">
+        <!-- 头像 -->
+        <div class="glass-avatar p-0.5 w-12 h-12 flex items-center justify-center flex-shrink-0">
+          <img 
+            src="https://picsum.photos/100/100?random=1" 
+            alt="头像" 
+            class="w-full h-full object-cover rounded-full border border-white/80"
+          >
+        </div>
+        <!-- 名字和 ID，垂直排列，水平居中 -->
+        <div class="flex flex-col items-center justify-center mt-1">
+          <h1 class="text-lg font-bold text-[#333] leading-tight tracking-wide">阿晏</h1>
+          <p class="text-[11px] text-[#5a6b7a] font-medium tracking-wide leading-tight">地球online</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间滚动内容区 -->
+    <div class="main-content px-5">
+      <!-- 搜索框 -->
+      <div class="search-glass flex items-center px-4 py-2.5 gap-3 mt-1">
+        <i class="fa-solid fa-magnifying-glass text-[#8899a6] text-sm"></i>
+        <input 
+          type="text" 
+          placeholder="Search" 
+          class="flex-1 bg-transparent border-none outline-none text-[#333] text-sm placeholder-[#8899a6] font-normal tracking-wide"
+        >
+      </div>
+
+      <!-- 图片展示区：改为水平居中；若三张图总宽小于屏幕，整体居中；若超出则从中间开始滚动 -->
+      <div class="mt-3 flex justify-center">
+        <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
+          <div class="photo-scroll-item">
+            <img src="https://picsum.photos/200/200?random=2" alt="雪景" class="w-full h-full object-cover">
+          </div>
+          <div class="photo-scroll-item">
+            <img src="https://picsum.photos/200/200?random=3" alt="笔记本" class="w-full h-full object-cover">
+          </div>
+          <div class="photo-scroll-item">
+            <img src="https://picsum.photos/200/200?random=4" alt="冰块杯子" class="w-full h-full object-cover">
+          </div>
+        </div>
+      </div>
+
+      <!-- 音乐播放器 -->
+      <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
+        <div class="w-12 h-12 rounded-xl bg-[#2a2a2a] flex items-center justify-center flex-shrink-0 shadow-inner">
+          <i class="fa-solid fa-music text-white/70 text-base"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="text-[#333] font-semibold text-sm truncate">My love</h4>
+          <p class="text-[#8899a6] text-[10px] truncate mt-0.5">颜人中</p>
+        </div>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <button class="w-7 h-7 flex items-center justify-center text-[#555] active:opacity-60 transition">
+            <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
+          </button>
+          <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition">
+            <i class="fa-solid fa-backward-step text-sm"></i>
+          </button>
+          <button class="play-btn w-8 h-8 rounded-full flex items-center justify-center shadow-md active:scale-95 transition">
+            <i class="fa-solid fa-play text-xs pl-0.5"></i>
+          </button>
+          <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition">
+            <i class="fa-solid fa-forward-step text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 功能图标导航区：两行，每行4个，共8个 -->
+      <div class="function-grid mt-4 mb-2">
+        <!-- 第一行 -->
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-house text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">主页</span>
+        </div>
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-cloud text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">词云</span>
+        </div>
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-regular fa-calendar-days text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">重要日</span>
+        </div>
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-book-open text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">心晴手账</span>
+        </div>
+        <!-- 第二行 -->
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-envelope text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">信箱</span>
+        </div>
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-users text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">朋友圈</span>
+        </div>
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-list-check text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">梦向问卷</span>
+        </div>
+        <div class="function-item">
+          <div class="function-icon">
+            <i class="fa-solid fa-gift text-[#222] text-lg"></i>
+          </div>
+          <span class="function-label">心意集市</span>
+        </div>
+      </div>
+
+      <!-- 底部留白 -->
+      <div class="h-8"></div>
+    </div>
+
+    <!-- 底部 Tab 导航栏 -->
+    <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
+      <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto">
+        <button class="flex flex-col items-center justify-center w-full py-1 text-[#333] active:opacity-60 transition">
+          <i class="fa-regular fa-comment-dots text-xl"></i>
+          <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
+        </button>
+        <button class="flex flex-col items-center justify-center w-full py-1 text-[#333] active:opacity-60 transition">
+          <i class="fa-regular fa-clone text-xl"></i>
+          <span class="text-[10px] font-medium mt-1 tracking-wide">字卡</span>
+        </button>
+        <button class="flex flex-col items-center justify-center w-full py-1 text-[#333] active:opacity-60 transition">
+          <i class="fa-solid fa-gear text-xl"></i>
+          <span class="text-[10px] font-medium mt-1 tracking-wide">设置</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 底部安全区占位 -->
+    <div class="h-0 w-full safe-bottom"></div>
+  </div>
+
+  <!-- 简单JS -->
+  <script>
+    (function() {
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+      }, { passive: false });
+
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
