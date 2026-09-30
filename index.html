@@ -964,6 +964,8 @@
       position: relative;
     }
     #pageChat .chat-messages::-webkit-scrollbar { display: none; }
+        <!-- 隐藏的"我的头像"（用于消息气泡左侧/右侧显示） -->
+    <img id="myAvatarForChat" src="" alt="我" style="display:none;">
 
     /* 原急救按钮样式（保留，但通过新增类隐藏） */
     #pageChat .sos-btn {
@@ -2075,6 +2077,247 @@
     }
     .hidden-file-input { display: none; }
   </style>
+  <!-- ============================================================
+     传讯消息头像 + 存钱罐面板（新增样式，不覆盖旧类名）
+     ============================================================ -->
+<style>
+  /* ============ 聊天消息头像 ============ */
+  #pageChat .message-row {
+    align-items: flex-start;
+  }
+  .chat-msg-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+    background: #f3f5f7;
+    margin-top: 2px;
+  }
+  #pageChat .message-row.other .chat-msg-avatar {
+    margin-right: 8px;
+  }
+  #pageChat .message-row.self .chat-msg-avatar {
+    margin-left: 8px;
+  }
+  /* 消息气泡保持原有最大宽度 72%，头像占用空间后自动适应 */
+  #pageChat .message-row .message-bubble {
+    max-width: 62%;
+  }
+
+  /* ============ 存钱罐面板 ============ */
+  .piggy-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 460;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .piggy-panel.active { display: flex; }
+
+  .piggy-panel-inner {
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+    overflow: hidden;
+    animation: popIn 0.22s ease;
+  }
+
+  .piggy-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 12px 20px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  .piggy-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .piggy-title i { color: #f8b4b4; }
+  .piggy-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 9999px;
+    background: #f5f6f8;
+    border: none;
+    color: #55606b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .piggy-close:active { background: #e8ecf0; }
+
+  .piggy-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    gap: 10px;
+    padding: 16px 16px 20px 16px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .piggy-body::-webkit-scrollbar { display: none; }
+
+  .piggy-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fafbfc;
+    border-radius: 16px;
+    padding: 12px 10px;
+    border: 1px solid #eef1f4;
+  }
+  .piggy-col-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #55606b;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 2px;
+  }
+  .piggy-col-title i { color: #f8b4b4; font-size: 12px; }
+
+  .piggy-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 80px;
+    max-height: 200px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
+    margin-bottom: 6px;
+  }
+  .piggy-list::-webkit-scrollbar { width: 3px; }
+  .piggy-list::-webkit-scrollbar-thumb {
+    background: rgba(180, 190, 200, 0.5);
+    border-radius: 3px;
+  }
+
+  .piggy-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background: #ffffff;
+    border-radius: 10px;
+    margin-bottom: 5px;
+    border: 1px solid #f0f3f6;
+  }
+  .piggy-item-info { flex: 1; min-width: 0; }
+  .piggy-item-title {
+    font-size: 12px;
+    color: #333;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .piggy-item-sub {
+    font-size: 11px;
+    color: #e58b8b;
+    font-weight: 700;
+    margin-top: 1px;
+  }
+  .piggy-item-del {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background: #fdf0f0;
+    color: #e58b8b;
+    border: none;
+    font-size: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .piggy-item-del:active { background: #f8d8d8; }
+
+  .piggy-empty {
+    text-align: center;
+    padding: 16px 4px;
+    font-size: 11px;
+    color: #c0ccd6;
+    line-height: 1.5;
+  }
+
+  .piggy-total {
+    font-size: 11px;
+    color: #8899a6;
+    font-weight: 700;
+    text-align: right;
+    padding: 4px 4px 8px 4px;
+    border-bottom: 1px dashed #eef1f4;
+    margin-bottom: 8px;
+  }
+
+  .piggy-add-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .piggy-add-input {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 10px;
+    border: 1px solid #e2e8ee;
+    background: #ffffff;
+    font-size: 11px;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    transition: border 0.2s ease;
+  }
+  .piggy-add-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 2px rgba(248, 180, 180, 0.15);
+  }
+  .piggy-add-input::placeholder { color: #b6c2cd; }
+  .piggy-add-btn {
+    width: 100%;
+    padding: 7px 0;
+    border-radius: 10px;
+    background: #f8b4b4;
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .piggy-add-btn:active {
+    background: #e58b8b;
+    transform: scale(0.97);
+  }
+</style>
 </head>
 <body>
 
@@ -2392,12 +2635,13 @@
         <img class="chat-avatar" id="chatAvatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
         <div class="chat-name" id="chatName">Ta</div>
       </div>
-      <!-- 顶栏图标：水平居中 -->
+           <!-- 顶栏图标：水平居中 -->
       <div class="chat-actions">
         <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
-        <!-- 原电话图标位置：改为热茶/摸鱼图标 -->
-        <div class="chat-action-icon" title="摸鱼" id="fishingIcon"><i class="fa-solid fa-mug-hot"></i></div>
+        <div class="chat-action-icon" title="电话"><i class="fa-solid fa-phone"></i></div>
         <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
+        <!-- 新增：存钱罐图标（在视频和房子之间） -->
+        <div class="chat-action-icon" title="存钱罐" id="piggyIcon"><i class="fa-solid fa-piggy-bank"></i></div>
         <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
       </div>
     </div>
@@ -2432,13 +2676,17 @@
     </div>
   </div>
 
-  <!-- ============ 摸鱼状态悬浮面板 ============ -->
-  <div class="fishing-panel-overlay" id="fishingOverlay"></div>
-  <div class="fishing-panel" id="fishingPanel">
-    <div class="fishing-panel-title">当前状态</div>
-    <div class="fishing-panel-status" id="fishingStatusText">☕ 正在摸鱼，勿扰</div>
-    <button class="fishing-panel-close" id="fishingCloseBtn">关闭</button>
-  </div>
+       <!-- 顶栏图标：水平居中 -->
+      <div class="chat-actions">
+        <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
+        <!-- 原摸鱼图标：保留 DOM 但隐藏 -->
+        <div class="chat-action-icon" title="摸鱼" id="fishingIcon" style="display:none;"><i class="fa-solid fa-mug-hot"></i></div>
+        <div class="chat-action-icon" title="电话"><i class="fa-solid fa-phone"></i></div>
+        <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
+        <!-- 新增：存钱罐图标 -->
+        <div class="chat-action-icon" title="存钱罐" id="piggyIcon"><i class="fa-solid fa-piggy-bank"></i></div>
+        <div class="chat-action-icon" title="主页"><i class="fa-solid fa-house"></i></div>
+      </div>
 
   <!-- 编辑资料 -->
   <div class="edit-profile-modal" id="editProfileModal">
@@ -2806,6 +3054,8 @@
   <script src="./js/chat.js"></script>
   <script src="./js/home-settings.js"></script>
   <script src="./js/home-settings-panel.js"></script>
+  <script src="./js/piggy-bank.js"></script>
+  <script src="./js/chat-avatars.js"></script>
 
   <!-- ============================================================
        新增脚本：页面切换、回复设定、编辑资料、角色面板、音乐播放器
