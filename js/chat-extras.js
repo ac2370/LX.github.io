@@ -1,25 +1,25 @@
 /**
  * 传讯页面扩展功能（独立模块）
- * - 连发模式：暂存多条消息，一次性发送
- * - 发送图片：本地文件 / URL
- * - 表情包：从 cardDatabase.sticker 选择发送
- * 完全独立，不影响任何现有逻辑
+ * 1. 连发模式：暂存多条消息，一次性发送
+ * 2. 图片发送：上传本地文件或粘贴 URL
+ * 3. 表情包联动：从 cardDatabase.sticker 抽取
+ *
+ * 完全独立，不修改任何现有逻辑
  */
 
 (function () {
   'use strict';
 
+  var chatMessages = document.getElementById('chatMessages');
   var chatInput = document.getElementById('chatInput');
   var sendBtn = document.getElementById('sendBtn');
-  var chatMessages = document.getElementById('chatMessages');
   var chatInputBar = document.querySelector('#pageChat .chat-input-bar');
-  var leftIcons = document.querySelector('#pageChat .input-left-icons');
 
-  if (!chatInput || !sendBtn || !chatMessages || !leftIcons) return;
+  if (!chatMessages || !chatInput || !sendBtn || !chatInputBar) return;
 
   // ==================== 状态 ====================
   var burstMode = false;
-  var burstQueue = []; // 暂存的文字或图片对象
+  var burstQueue = [];
 
   // ==================== 工具 ====================
   function escapeHtml(str) {
@@ -29,286 +29,370 @@
     });
   }
 
+  // ==================== 获取我的头像 ====================
+  function getMyAvatar() {
+    var avatarImg = document.getElementById('avatarImg');
+    if (avatarImg && avatarImg.src) return avatarImg.src;
+    if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
+      return window.homeSettings.current.avatar;
+    }
+    try {
+      var raw = localStorage.getItem('home_custom_images');
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data && data.avatar) return data.avatar;
+      }
+    } catch (e) {}
+    return 'https://picsum.photos/100/100?random=1';
+  }
+
+  // ==================== 获取对方头像 ====================
+  function getContactAvatar() {
+    var chatAvatar = document.getElementById('chatAvatar');
+    if (chatAvatar && chatAvatar.src) return chatAvatar.src;
+    try {
+      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+      var currentId = localStorage.getItem('my_current_contact');
+      if (Array.isArray(contacts)) {
+        var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
+        if (cur && cur.avatar) return cur.avatar;
+      }
+    } catch (e) {}
+    return 'https://picsum.photos/200/200?random=99';
+  }
+
+  // ==================== 创建消息行（带头像） ====================
+  function createMessageRow(type, content) {
+    var row = document.createElement('div');
+    row.className = 'message-row ' + type;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+
+    if (typeof content === 'string') {
+      bubble.textContent = content;
+    } else if (content && content.type === 'image') {
+      var img = document.createElement('img');
+      img.src = content.url;
+      img.alt = '图片';
+      img.style.maxWidth = '180px';
+      img.style.maxHeight = '180px';
+      img.style.borderRadius = '12px';
+      img.style.display = 'block';
+      img.style.cursor = 'pointer';
+      img.onclick = function () { window.open(content.url, '_blank'); };
+      bubble.appendChild(img);
+    } else if (content && content.quote) {
+      var quoteEl = document.createElement('span');
+      quoteEl.className = 'quote-block';
+      quoteEl.textContent = '> ' + content.quote;
+      bubble.appendChild(quoteEl);
+      bubble.appendChild(document.createTextNode(content.text));
+    }
+
+    row.appendChild(bubble);
+
+    // 添加头像（与 chat-avatars.js 一致）
+    var avatar = document.createElement('img');
+    avatar.className = 'chat-msg-avatar';
+    avatar.src = type === 'self' ? getMyAvatar() : getContactAvatar();
+    avatar.alt = type === 'self' ? '我' : '对方';
+    avatar.onerror = function () {
+      avatar.src = type === 'self'
+        ? 'https://picsum.photos/100/100?random=1'
+        : 'https://picsum.photos/200/200?random=99';
+    };
+    if (type === 'self') {
+      row.appendChild(avatar);
+    } else {
+      row.insertBefore(avatar, row.firstChild);
+    }
+
+    return row;
+  }
+
+  // ==================== 滚动到底部 ====================
   function scrollToBottom() {
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
 
-  // ==================== 创建消息 DOM（与现有样式一致） ====================
-  function createTextRow(type, text) {
-    var row = document.createElement('div');
-    row.className = 'message-row ' + type;
-    var bubble = document.createElement('div');
-    bubble.className = 'message-bubble';
-    bubble.textContent = text;
-    row.appendChild(bubble);
-    return row;
+  // ==================== 发送一条消息 ====================
+  function sendOneMessage(content) {
+    chatMessages.appendChild(createMessageRow('self', content));
+    scrollToBottom();
   }
 
-  function createImageRow(type, url) {
-    var row = document.createElement('div');
-    row.className = 'message-row ' + type;
-    var bubble = document.createElement('div');
-    bubble.className = 'message-bubble';
-    var img = document.createElement('img');
-    img.src = url;
-    img.alt = '图片';
-    img.style.maxWidth = '160px';
-    img.style.maxHeight = '160px';
-    img.style.borderRadius = '12px';
-    img.style.display = 'block';
-    bubble.appendChild(img);
-    row.appendChild(bubble);
-    return row;
-  }
-
-  // ==================== 创建连发按钮 ====================
-  function createBurstButton() {
-    if (document.getElementById('burstModeBtn')) return;
-
-    var btn = document.createElement('button');
-    btn.id = 'burstModeBtn';
-    btn.className = 'burst-mode-btn';
-    btn.title = '连发模式';
-    btn.innerHTML = '<i class="fa-solid fa-bolt"></i>';
-
-    // 插入到 input-left-icons 最前面
-    leftIcons.insertBefore(btn, leftIcons.firstChild);
-
-    btn.addEventListener('click', function () {
-      toggleBurstMode();
-    });
-  }
-
-  // ==================== 连发模式状态条 ====================
-  function createBurstBar() {
-    if (document.getElementById('burstBar')) return;
-
-    var bar = document.createElement('div');
-    bar.id = 'burstBar';
-    bar.className = 'burst-bar';
-    bar.innerHTML =
-      '<div class="burst-bar-title">' +
-        '<i class="fa-solid fa-bolt"></i>' +
-        '<span>[连发模式] 虚线暂存，发完点左侧☑发送</span>' +
-      '</div>' +
-      '<div class="burst-bar-queue" id="burstQueue"></div>' +
-      '<div class="burst-bar-actions">' +
-        '<button class="burst-action-btn burst-confirm" id="burstConfirm" title="发送全部">' +
-          '<i class="fa-solid fa-check"></i>' +
-        '</button>' +
-        '<button class="burst-action-btn burst-cancel" id="burstCancel" title="清空暂存">' +
-          '<i class="fa-solid fa-xmark"></i>' +
-        '</button>' +
-      '</div>';
-
-    // 插入到 chat-input-bar 之前
-    if (chatInputBar && chatInputBar.parentNode) {
-      chatInputBar.parentNode.insertBefore(bar, chatInputBar);
-    }
-
-    document.getElementById('burstConfirm').addEventListener('click', sendBurstQueue);
-    document.getElementById('burstCancel').addEventListener('click', clearBurstQueue);
-  }
-
-  // ==================== 切换连发模式 ====================
-  function toggleBurstMode() {
-    burstMode = !burstMode;
-
-    var btn = document.getElementById('burstModeBtn');
-    var bar = document.getElementById('burstBar');
-
-    if (burstMode) {
-      createBurstBar();
-      if (btn) btn.classList.add('active');
-      if (bar) bar.classList.add('active');
-      chatInput.placeholder = '输入消息，回车暂存...';
+  // ==================== 触发自动回复 ====================
+  function triggerAutoReply() {
+    // 复用 chat.js 的自动回复逻辑：通过模拟输入框发送
+    // 由于 chat.js 的 sendMessage 是内部函数，我们无法直接调用
+    // 但可以派发一个自定义事件，或直接复用其公开 API
+    if (typeof window.triggerChatAutoReply === 'function') {
+      window.triggerChatAutoReply();
     } else {
-      if (btn) btn.classList.remove('active');
-      if (bar) bar.classList.remove('active');
-      chatInput.placeholder = '输入消息...';
-      // 退出时清空暂存
+      // 兜底：直接调用 chat.js 中暴露的接口（若存在）
+      // 若无，则不做任何事（不会报错）
+    }
+  }
+
+  // ==================== 连发模式 UI ====================
+  function createBurstUI() {
+    if (document.getElementById('burstHint')) return;
+
+    // 提示框（输入框上方）
+    var hint = document.createElement('div');
+    hint.className = 'burst-hint';
+    hint.id = 'burstHint';
+    hint.innerHTML = '<i class="fa-solid fa-bolt"></i> [连发模式] 虚线暂存，发完点左侧 ☑ 发送';
+    chatInputBar.parentNode.insertBefore(hint, chatInputBar);
+
+    // 暂存列表（在提示框和输入栏之间）
+    var queueBox = document.createElement('div');
+    queueBox.className = 'burst-queue';
+    queueBox.id = 'burstQueue';
+    chatInputBar.parentNode.insertBefore(queueBox, chatInputBar);
+
+    // 左侧按钮组（√ 和 X）
+    var actionGroup = document.createElement('div');
+    actionGroup.className = 'burst-action-group';
+    actionGroup.id = 'burstActionGroup';
+    actionGroup.style.display = 'none';
+    actionGroup.innerHTML =
+      '<button class="burst-btn burst-confirm" id="burstConfirm" title="发送全部">' +
+      '  <i class="fa-solid fa-check"></i>' +
+      '</button>' +
+      '<button class="burst-btn burst-cancel" id="burstCancel" title="清空暂存">' +
+      '  <i class="fa-solid fa-xmark"></i>' +
+      '</button>';
+    chatInputBar.insertBefore(actionGroup, chatInputBar.firstChild);
+
+    // 绑定
+    document.getElementById('burstConfirm').addEventListener('click', function () {
+      if (burstQueue.length === 0) {
+        alert('暂存列表为空');
+        return;
+      }
+      // 一次性发送所有暂存
+      burstQueue.forEach(function (item) {
+        sendOneMessage(item);
+      });
       burstQueue = [];
       renderBurstQueue();
-    }
+      // 触发一次自动回复
+      triggerAutoReply();
+    });
+
+    document.getElementById('burstCancel').addEventListener('click', function () {
+      burstQueue = [];
+      renderBurstQueue();
+    });
   }
 
-  // ==================== 渲染暂存队列 ====================
   function renderBurstQueue() {
-    var container = document.getElementById('burstQueue');
-    if (!container) return;
-
+    var queueBox = document.getElementById('burstQueue');
+    if (!queueBox) return;
     if (burstQueue.length === 0) {
-      container.innerHTML = '<div class="burst-queue-empty">暂无暂存消息，输入后回车</div>';
+      queueBox.innerHTML = '';
+      queueBox.style.display = 'none';
       return;
     }
-
-    container.innerHTML = '';
+    queueBox.style.display = 'flex';
+    queueBox.innerHTML = '';
     burstQueue.forEach(function (item, index) {
-      var el = document.createElement('div');
-      el.className = 'burst-queue-item';
-      if (item.type === 'image') {
-        el.innerHTML = '<img src="' + item.value + '" alt="图片">';
-      } else {
-        el.textContent = item.value;
+      var chip = document.createElement('div');
+      chip.className = 'burst-chip';
+      if (typeof item === 'string') {
+        chip.innerHTML = '<span class="burst-chip-num">' + (index + 1) + '</span>' +
+          '<span class="burst-chip-text">' + escapeHtml(item) + '</span>' +
+          '<span class="burst-chip-del" data-idx="' + index + '"><i class="fa-solid fa-xmark"></i></span>';
+      } else if (item && item.type === 'image') {
+        chip.innerHTML = '<span class="burst-chip-num">' + (index + 1) + '</span>' +
+          '<img src="' + item.url + '" class="burst-chip-img">' +
+          '<span class="burst-chip-del" data-idx="' + index + '"><i class="fa-solid fa-xmark"></i></span>';
       }
-      // 点击删除
-      el.title = '点击删除此条';
-      el.addEventListener('click', function () {
-        burstQueue.splice(index, 1);
+      queueBox.appendChild(chip);
+    });
+
+    // 绑定删除
+    queueBox.querySelectorAll('.burst-chip-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-idx'), 10);
+        burstQueue.splice(idx, 1);
         renderBurstQueue();
       });
-      container.appendChild(el);
     });
   }
 
-  // ==================== 暂存消息 ====================
-  function stashMessage() {
+  function enterBurstMode() {
+    burstMode = true;
+    createBurstUI();
+    var hint = document.getElementById('burstHint');
+    if (hint) hint.style.display = 'flex';
+    var group = document.getElementById('burstActionGroup');
+    if (group) group.style.display = 'flex';
+    // 修改输入框 placeholder
+    chatInput.placeholder = '连发模式：输入后按回车暂存...';
+    // 修改连发按钮图标状态
+    var burstBtn = document.getElementById('burstModeBtn');
+    if (burstBtn) burstBtn.classList.add('active');
+  }
+
+  function exitBurstMode() {
+    burstMode = false;
+    burstQueue = [];
+    renderBurstQueue();
+    var hint = document.getElementById('burstHint');
+    if (hint) hint.style.display = 'none';
+    var group = document.getElementById('burstActionGroup');
+    if (group) group.style.display = 'none';
+    chatInput.placeholder = '输入消息...';
+    var burstBtn = document.getElementById('burstModeBtn');
+    if (burstBtn) burstBtn.classList.remove('active');
+  }
+
+  // ==================== 拦截发送按钮 ====================
+  // 使用捕获阶段，优先于原有逻辑
+  sendBtn.addEventListener('click', function (e) {
+    if (!burstMode) return; // 非连发模式，交给原有逻辑
+    e.stopImmediatePropagation();
+    e.preventDefault();
     var text = chatInput.value.trim();
     if (!text) return;
-
-    burstQueue.push({ type: 'text', value: text });
+    burstQueue.push(text);
     chatInput.value = '';
-    updateSendBtnState();
+    // 更新发送按钮状态
+    sendBtn.disabled = true;
     renderBurstQueue();
-  }
+  }, true);
 
-  // ==================== 发送暂存队列 ====================
-  function sendBurstQueue() {
-    if (burstQueue.length === 0) {
-      alert('暂存队列为空');
-      return;
+  // 拦截回车
+  chatInput.addEventListener('keydown', function (e) {
+    if (!burstMode) return;
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.stopImmediatePropagation();
+      e.preventDefault();
+      var text = chatInput.value.trim();
+      if (!text) return;
+      burstQueue.push(text);
+      chatInput.value = '';
+      sendBtn.disabled = true;
+      renderBurstQueue();
     }
+  }, true);
 
-    // 逐条发送，间隔 400ms
-    burstQueue.forEach(function (item, index) {
-      setTimeout(function () {
-        var row;
-        if (item.type === 'image') {
-          row = createImageRow('self', item.value);
-        } else {
-          row = createTextRow('self', item.value);
-        }
-        chatMessages.appendChild(row);
-        scrollToBottom();
-        // 每次发送后刷新头像
-        if (window.refreshChatAvatars) window.refreshChatAvatars();
-      }, index * 400);
+  // ==================== 连发按钮 ====================
+  function createBurstButton() {
+    if (document.getElementById('burstModeBtn')) return;
+    var btn = document.createElement('i');
+    btn.id = 'burstModeBtn';
+    btn.className = 'fa-solid fa-bolt';
+    btn.title = '连发模式';
+    btn.style.cssText = 'color:#8fa8bd;font-size:18px;cursor:pointer;transition:color 0.15s ease,transform 0.15s ease;flex-shrink:0;';
+    btn.addEventListener('click', function () {
+      if (burstMode) {
+        exitBurstMode();
+      } else {
+        enterBurstMode();
+      }
     });
 
-    // 触发自动回复（如果有 window.triggerAutoReply 或从 chat.js 暴露的逻辑）
-    // 由于 chat.js 的 sendMessage 是 IIFE 内部的，这里通过模拟点击来触发
-    // 但更好的方式是：批量发送后手动触发一次自动回复
-    setTimeout(function () {
-      // 尝试通过 window 上的钩子触发（chat.js 未暴露，所以采用兜底：派发一个自定义事件）
-      if (typeof window.triggerAutoReply === 'function') {
-        window.triggerAutoReply();
-      }
-    }, burstQueue.length * 400 + 100);
-
-    // 清空
-    burstQueue = [];
-    renderBurstQueue();
-  }
-
-  // ==================== 清空暂存 ====================
-  function clearBurstQueue() {
-    if (burstQueue.length === 0) return;
-    if (!confirm('确定清空所有暂存消息吗？')) return;
-    burstQueue = [];
-    renderBurstQueue();
-  }
-
-  // ==================== 修改原有事件（拦截回车和发送按钮） ====================
-  function updateSendBtnState() {
-    sendBtn.disabled = chatInput.value.trim().length === 0;
-  }
-
-  // 拦截回车：连发模式下改为暂存
-  chatInput.addEventListener('keydown', function (e) {
-    if (burstMode && e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      stashMessage();
+    // 插入到输入框左侧图标栏第一个位置
+    var leftIcons = chatInputBar.querySelector('.input-left-icons');
+    if (leftIcons) {
+      leftIcons.insertBefore(btn, leftIcons.firstChild);
     }
-  }, true);
-
-  // 拦截发送按钮：连发模式下改为暂存
-  sendBtn.addEventListener('click', function (e) {
-    if (burstMode) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      stashMessage();
-    }
-  }, true);
+  }
 
   // ==================== 图片发送 ====================
-  function showImageOptions() {
-    var choice = confirm('点击"确定"上传本地文件，点击"取消"改为粘贴图片 URL');
-    if (choice) {
-      // 上传本地文件
-      var input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.addEventListener('change', function () {
-        var file = input.files && input.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (ev) {
-          var url = ev.target.result;
-          if (burstMode) {
-            burstQueue.push({ type: 'image', value: url });
-            renderBurstQueue();
-          } else {
-            sendImageMessage(url);
-          }
-        };
-        reader.readAsDataURL(file);
+  function openImageOptions() {
+    // 弹出选项面板
+    var panel = document.getElementById('imageOptionPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'imageOptionPanel';
+      panel.className = 'chat-option-panel';
+      panel.innerHTML =
+        '<div class="chat-option-inner">' +
+        '  <div class="chat-option-title">发送图片</div>' +
+        '  <button class="chat-option-btn" id="optUploadImage">' +
+        '    <i class="fa-solid fa-upload"></i> 上传本地文件' +
+        '  </button>' +
+        '  <button class="chat-option-btn" id="optPasteImageUrl">' +
+        '    <i class="fa-solid fa-link"></i> 粘贴图片 URL' +
+        '  </button>' +
+        '  <button class="chat-option-cancel" id="optCancelImage">取消</button>' +
+        '</div>';
+      document.body.appendChild(panel);
+
+      document.getElementById('optCancelImage').addEventListener('click', function () {
+        panel.classList.remove('active');
       });
-      input.click();
-    } else {
+      panel.addEventListener('click', function (e) {
+        if (e.target === panel) panel.classList.remove('active');
+      });
+
+      // 上传本地文件
+      document.getElementById('optUploadImage').addEventListener('click', function () {
+        panel.classList.remove('active');
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+        input.addEventListener('change', function () {
+          var file = input.files && input.files[0];
+          if (!file) { document.body.removeChild(input); return; }
+          var reader = new FileReader();
+          reader.onload = function (ev) {
+            sendImage(ev.target.result);
+            document.body.removeChild(input);
+          };
+          reader.readAsDataURL(file);
+        });
+        input.click();
+      });
+
       // 粘贴 URL
-      var url = prompt('粘贴图片 URL：');
-      if (url && url.trim()) {
-        if (burstMode) {
-          burstQueue.push({ type: 'image', value: url.trim() });
-          renderBurstQueue();
-        } else {
-          sendImageMessage(url.trim());
+      document.getElementById('optPasteImageUrl').addEventListener('click', function () {
+        panel.classList.remove('active');
+        var url = prompt('请输入图片 URL：');
+        if (url && url.trim()) {
+          sendImage(url.trim());
         }
-      }
+      });
     }
+    panel.classList.add('active');
   }
 
-  function sendImageMessage(url) {
-    var row = createImageRow('self', url);
-    chatMessages.appendChild(row);
-    scrollToBottom();
-    if (window.refreshChatAvatars) window.refreshChatAvatars();
-    // 触发对方自动回复
-    triggerAutoReplyIfPossible();
+  function sendImage(url) {
+    if (burstMode) {
+      // 连发模式：暂存图片
+      burstQueue.push({ type: 'image', url: url });
+      renderBurstQueue();
+      return;
+    }
+    sendOneMessage({ type: 'image', url: url });
+    triggerAutoReply();
   }
 
   // ==================== 表情包面板 ====================
-  function showStickerPanel() {
-    // 创建面板（如果不存在）
+  function openStickerPanel() {
     var panel = document.getElementById('stickerPanel');
     if (!panel) {
       panel = document.createElement('div');
       panel.id = 'stickerPanel';
-      panel.className = 'sticker-panel';
+      panel.className = 'chat-option-panel';
       panel.innerHTML =
-        '<div class="sticker-panel-inner">' +
-          '<div class="sticker-panel-header">' +
-            '<span class="sticker-panel-title"><i class="fa-solid fa-face-smile"></i> 选择表情包</span>' +
-            '<button class="sticker-panel-close" id="stickerPanelClose"><i class="fa-solid fa-xmark"></i></button>' +
-          '</div>' +
-          '<div class="sticker-panel-body" id="stickerPanelBody"></div>' +
+        '<div class="chat-option-inner chat-sticker-inner">' +
+        '  <div class="chat-option-title">表情包</div>' +
+        '  <div class="sticker-grid" id="stickerGrid"></div>' +
+        '  <button class="chat-option-cancel" id="optCancelSticker">关闭</button>' +
         '</div>';
       document.body.appendChild(panel);
 
-      document.getElementById('stickerPanelClose').addEventListener('click', function () {
+      document.getElementById('optCancelSticker').addEventListener('click', function () {
         panel.classList.remove('active');
       });
       panel.addEventListener('click', function (e) {
@@ -317,98 +401,60 @@
     }
 
     // 渲染表情包
-    var body = document.getElementById('stickerPanelBody');
-    var stickers = [];
-    if (window.cardDatabase && window.cardDatabase.sticker) {
-      stickers = window.cardDatabase.sticker;
-    }
-
+    var grid = document.getElementById('stickerGrid');
+    var stickers = (window.cardDatabase && window.cardDatabase.sticker) || [];
     if (stickers.length === 0) {
-      body.innerHTML = '<div class="sticker-panel-empty">字卡库的"表情包"分类里还没有内容<br>去字卡收纳盒添加一些吧~</div>';
+      grid.innerHTML = '<div class="sticker-empty">还没有表情包，去字卡库的「表情包」分类添加吧~</div>';
     } else {
-      body.innerHTML = '';
+      grid.innerHTML = '';
       stickers.forEach(function (url) {
         var item = document.createElement('div');
-        item.className = 'sticker-panel-item';
+        item.className = 'sticker-item';
         var img = document.createElement('img');
         img.src = url;
         img.alt = '表情包';
-        img.onerror = function () {
-          img.src = 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000);
-        };
+        img.onerror = function () { img.src = 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000); };
         item.appendChild(img);
         item.addEventListener('click', function () {
-          if (burstMode) {
-            burstQueue.push({ type: 'image', value: url });
-            renderBurstQueue();
-          } else {
-            sendImageMessage(url);
-          }
           panel.classList.remove('active');
+          sendImage(url);
         });
-        body.appendChild(item);
+        grid.appendChild(item);
       });
     }
-
     panel.classList.add('active');
   }
 
-  // ==================== 触发自动回复（兜底） ====================
-  function triggerAutoReplyIfPossible() {
-    // 优先使用 window 上暴露的钩子
-    if (typeof window.triggerAutoReply === 'function') {
-      window.triggerAutoReply();
-      return;
-    }
-    // 兜底：派发自定义事件，chat.js 里没有监听就算了（用户按发送键时会自动触发）
-    // 为保险，直接尝试模拟按下发送按钮前的最后一条消息逻辑
-    // 但由于 chat.js 是 IIFE，无法直接调用，只能提示
-    console.log('[chat-extras] 已发送图片，等待自动回复需要 chat.js 暴露 triggerAutoReply');
-  }
-
-  // ==================== 绑定图片 / 表情包图标 ====================
-  function bindIcons() {
+  // ==================== 替换左侧图标的事件 ====================
+  function rebindLeftIcons() {
+    var leftIcons = chatInputBar.querySelector('.input-left-icons');
+    if (!leftIcons) return;
     var icons = leftIcons.querySelectorAll('i');
+    // 原有 3 个图标：相册、图片、表情
     icons.forEach(function (icon) {
       var title = icon.getAttribute('title') || '';
-      // 图片图标
-      if (title === '图片' || icon.classList.contains('fa-image')) {
-        // 移除可能存在的旧监听（通过标记）
-        if (!icon.dataset.extrasBound) {
-          icon.dataset.extrasBound = '1';
-          // 使用父元素作为事件目标（因为点击 i 元素本身）
-          icon.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showImageOptions();
-          });
-        }
+      if (title === '图片') {
+        // 替换点击事件（用捕获阶段优先）
+        icon.addEventListener('click', function (e) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          openImageOptions();
+        }, true);
+      } else if (title === '表情') {
+        icon.addEventListener('click', function (e) {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          openStickerPanel();
+        }, true);
       }
-      // 表情包图标（相册、图片、表情）
-      if (title === '相册' || icon.classList.contains('fa-images')) {
-        if (!icon.dataset.extrasBound) {
-          icon.dataset.extrasBound = '1';
-          icon.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showStickerPanel();
-          });
-        }
-      }
-      if (title === '表情' || icon.classList.contains('fa-face-smile')) {
-        if (!icon.dataset.extrasBound) {
-          icon.dataset.extrasBound = '1';
-          icon.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showStickerPanel();
-          });
-        }
-      }
+      // "相册" 保持原有行为（只打印日志）
     });
   }
 
   // ==================== 初始化 ====================
   function init() {
     createBurstButton();
-    bindIcons();
+    rebindLeftIcons();
   }
 
   if (document.readyState === 'loading') {
@@ -417,14 +463,16 @@
     init();
   }
 
-  // 由于 DOM 可能延迟渲染，稍后重试
-  setTimeout(init, 300);
-  setTimeout(bindIcons, 1000);
+  // 稍后再执行一次，确保 chat.js 和 chat-avatars.js 已加载
+  setTimeout(init, 200);
+  setTimeout(init, 800);
 
   // 暴露给外部
   window.chatExtras = {
-    burstMode: function () { return burstMode; },
-    queue: function () { return burstQueue; }
+    enterBurstMode: enterBurstMode,
+    exitBurstMode: exitBurstMode,
+    sendImage: sendImage,
+    openStickerPanel: openStickerPanel
   };
 
 })();
