@@ -251,13 +251,62 @@
 
       '    </div>',
 
-      // Tab 3: 聊天与字卡（占位）
+            // Tab 3: 聊天与字卡（完整内容）
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
-      '      <div class="chat-settings-section-title">聊天与字卡</div>',
-      '      <div class="chat-settings-placeholder">',
-      '        <i class="fa-solid fa-comments"></i>',
-      '        <p>回复节奏、公共 / 专属字卡机制</p>',
+
+      // 区块 1：字卡模式切换
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title">当前字卡模式</div>',
+      '        <div class="cs-mode-switch" id="csModeSwitch">',
+      '          <button class="cs-mode-btn active" data-mode="all">',
+      '            <i class="fa-solid fa-layer-group"></i>',
+      '            <span>全部字卡</span>',
+      '          </button>',
+      '          <button class="cs-mode-btn" data-mode="public-only">',
+      '            <i class="fa-solid fa-globe"></i>',
+      '            <span>仅公共</span>',
+      '          </button>',
+      '          <button class="cs-mode-btn" data-mode="private-only">',
+      '            <i class="fa-solid fa-lock"></i>',
+      '            <span>仅专属</span>',
+      '          </button>',
+      '        </div>',
+      '        <div class="cs-mode-hint" id="csModeHint">自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取</div>',
       '      </div>',
+
+      // 区块 2：公共字卡库
+      '      <div class="chat-settings-section">',
+      '        <div class="cs-words-header">',
+      '          <div class="chat-settings-section-title" style="margin:0;">',
+      '            <i class="fa-solid fa-globe" style="color:#6fb1e8;margin-right:4px;"></i>',
+      '            公共字卡库',
+      '            <span class="cs-words-count" id="csPublicCount">0</span>',
+      '          </div>',
+      '          <div class="cs-words-actions">',
+      '            <button class="cs-words-btn" id="csPublicAddBtn"><i class="fa-solid fa-plus"></i> 添加</button>',
+      '            <button class="cs-words-btn" id="csPublicImportBtn"><i class="fa-solid fa-file-import"></i> 导入</button>',
+      '          </div>',
+      '        </div>',
+      '        <div class="cs-words-list" id="csPublicList"></div>',
+      '      </div>',
+
+      // 区块 3：当前联系人专属字卡
+      '      <div class="chat-settings-section">',
+      '        <div class="cs-words-header">',
+      '          <div class="chat-settings-section-title" style="margin:0;">',
+      '            <i class="fa-solid fa-lock" style="color:#f8b4b4;margin-right:4px;"></i>',
+      '            专属字卡',
+      '            <span class="cs-words-count cs-words-count-private" id="csPrivateCount">0</span>',
+      '          </div>',
+      '          <div class="cs-words-actions">',
+      '            <button class="cs-words-btn" id="csPrivateAddBtn"><i class="fa-solid fa-plus"></i> 添加</button>',
+      '            <button class="cs-words-btn" id="csPrivateImportBtn"><i class="fa-solid fa-file-import"></i> 导入</button>',
+      '          </div>',
+      '        </div>',
+      '        <div class="cs-words-contact" id="csPrivateContact">当前联系人：—</div>',
+      '        <div class="cs-words-list" id="csPrivateList"></div>',
+      '      </div>',
+
       '    </div>',
 
       // Tab 4: 数据与工具（占位）
@@ -375,6 +424,9 @@
         applyAppearance();
       });
     }
+        // ============ 聊天与字卡 Tab 的交互 ============
+    bindChatTabEvents();
+    
   }
 
   // ==================== 更新背景预览 ====================
@@ -434,12 +486,262 @@
       p.classList.toggle('active', p.getAttribute('data-panel') === tabName);
     });
 
-    // 切到外观 Tab 时刷新预览
     if (tabName === 'appearance') {
       fillPanelValues();
     }
+    if (tabName === 'chat') {
+      restoreModeSwitch();
+      renderPublicList();
+      renderPrivateList();
+    }
   }
 
+    // ==================== 字卡模式状态 ====================
+  var CARD_MODE_KEY = 'chat_card_mode';
+  var cardMode = 'all';
+
+  function loadCardMode(callback) {
+    if (typeof localforage !== 'undefined') {
+      localforage.getItem(CARD_MODE_KEY).then(function (val) {
+        if (val) cardMode = val;
+        if (callback) callback();
+      }).catch(function () { if (callback) callback(); });
+    } else {
+      try {
+        var raw = localStorage.getItem(CARD_MODE_KEY);
+        if (raw) cardMode = raw;
+      } catch (e) {}
+      if (callback) callback();
+    }
+  }
+
+  function persistCardMode() {
+    if (typeof localforage !== 'undefined') {
+      localforage.setItem(CARD_MODE_KEY, cardMode).catch(function () {});
+    } else {
+      try { localStorage.setItem(CARD_MODE_KEY, cardMode); } catch (e) {}
+    }
+    window.chatCardMode = cardMode;
+  }
+
+  function getCurrentContactId() {
+    try { return localStorage.getItem('my_current_contact'); } catch (e) { return null; }
+  }
+  function getCurrentContactName() {
+    var chatName = document.getElementById('chatName');
+    if (chatName && chatName.textContent) return chatName.textContent;
+    return '当前联系人';
+  }
+
+  function renderPublicList() {
+    var list = document.getElementById('csPublicList');
+    var countEl = document.getElementById('csPublicCount');
+    if (!list) return;
+
+    var cards = (window.cardDatabase && window.cardDatabase.getPublic)
+      ? window.cardDatabase.getPublic() : [];
+
+    if (countEl) countEl.textContent = cards.length;
+
+    if (cards.length === 0) {
+      list.innerHTML = '<div class="cs-words-empty">还没有公共字卡，点上方"添加"新增吧~</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    cards.forEach(function (text) {
+      var item = document.createElement('div');
+      item.className = 'cs-word-item';
+      item.innerHTML =
+        '<span class="cs-word-text">' + escapeHtml(text) + '</span>' +
+        '<button class="cs-word-del"><i class="fa-solid fa-xmark"></i></button>';
+
+      item.querySelector('.cs-word-del').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!confirm('确定删除这条公共字卡吗？')) return;
+        window.cardDatabase.removePublic(text);
+        renderPublicList();
+        syncToCardLibrary();
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function renderPrivateList() {
+    var list = document.getElementById('csPrivateList');
+    var countEl = document.getElementById('csPrivateCount');
+    var contactEl = document.getElementById('csPrivateContact');
+    if (!list) return;
+
+    var contactId = getCurrentContactId();
+    var contactName = getCurrentContactName();
+
+    if (contactEl) contactEl.textContent = '当前联系人：' + contactName;
+
+    var cards = (window.cardDatabase && window.cardDatabase.getPrivate && contactId)
+      ? window.cardDatabase.getPrivate(contactId) : [];
+
+    if (countEl) countEl.textContent = cards.length;
+
+    if (cards.length === 0) {
+      list.innerHTML = '<div class="cs-words-empty">该联系人还没有专属字卡</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    cards.forEach(function (text) {
+      var item = document.createElement('div');
+      item.className = 'cs-word-item cs-word-item-private';
+      item.innerHTML =
+        '<span class="cs-word-text">' + escapeHtml(text) + '</span>' +
+        '<button class="cs-word-del"><i class="fa-solid fa-xmark"></i></button>';
+
+      item.querySelector('.cs-word-del').addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!confirm('确定删除这条专属字卡吗？')) return;
+        window.cardDatabase.removePrivate(contactId, text);
+        renderPrivateList();
+        syncToCardLibrary();
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function openWordInputModal(mode, targetType) {
+    var existing = document.getElementById('csWordInputModal');
+    if (existing) existing.remove();
+
+    var modal = document.createElement('div');
+    modal.id = 'csWordInputModal';
+    modal.className = 'cs-word-modal';
+    modal.innerHTML =
+      '<div class="cs-word-modal-panel">' +
+      '  <div class="cs-word-modal-title">' +
+      (mode === 'add' ? '添加' : '导入') +
+      (targetType === 'public' ? '公共' : '专属') + '字卡' +
+      '  </div>' +
+      '  <textarea class="cs-word-modal-input" id="csWordModalInput" placeholder="' +
+      (mode === 'add' ? '输入一句话...' : '每行一条，粘贴多行文字...') +
+      '"></textarea>' +
+      '  <div class="cs-word-modal-actions">' +
+      '    <button class="cs-word-modal-cancel" id="csWordModalCancel">取消</button>' +
+      '    <button class="cs-word-modal-confirm" id="csWordModalConfirm">确定</button>' +
+      '  </div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('csWordModalCancel').addEventListener('click', function () {
+      modal.remove();
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.remove();
+    });
+
+    document.getElementById('csWordModalConfirm').addEventListener('click', function () {
+      var text = document.getElementById('csWordModalInput').value.trim();
+      if (!text) { alert('请输入内容'); return; }
+
+      var lines = text.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
+      if (lines.length === 0) { alert('没有有效内容'); return; }
+
+      if (targetType === 'public') {
+        window.cardDatabase.addPublicMany(lines, true);
+        renderPublicList();
+      } else {
+        var contactId = getCurrentContactId();
+        if (!contactId) { alert('未找到当前联系人'); return; }
+        window.cardDatabase.addPrivateMany(contactId, lines, true);
+        renderPrivateList();
+      }
+
+      modal.remove();
+      syncToCardLibrary();
+    });
+
+    setTimeout(function () {
+      var input = document.getElementById('csWordModalInput');
+      if (input) input.focus();
+    }, 100);
+  }
+
+  function bindModeSwitch() {
+    var switchEl = document.getElementById('csModeSwitch');
+    if (!switchEl) return;
+    switchEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('.cs-mode-btn');
+      if (!btn) return;
+      var mode = btn.getAttribute('data-mode');
+      if (!mode) return;
+      cardMode = mode;
+      persistCardMode();
+
+      switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+      });
+
+      var hintEl = document.getElementById('csModeHint');
+      if (hintEl) {
+        if (mode === 'public-only') {
+          hintEl.textContent = '自动回复时只从公共字卡抽取';
+        } else if (mode === 'private-only') {
+          hintEl.textContent = '自动回复时只从当前联系人的专属字卡抽取';
+        } else {
+          hintEl.textContent = '自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取';
+        }
+      }
+    });
+  }
+
+  function restoreModeSwitch() {
+    var switchEl = document.getElementById('csModeSwitch');
+    if (!switchEl) return;
+    switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-mode') === cardMode);
+    });
+    var hintEl = document.getElementById('csModeHint');
+    if (hintEl) {
+      if (cardMode === 'public-only') hintEl.textContent = '自动回复时只从公共字卡抽取';
+      else if (cardMode === 'private-only') hintEl.textContent = '自动回复时只从当前联系人的专属字卡抽取';
+      else hintEl.textContent = '自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取';
+    }
+  }
+
+  function bindChatTabEvents() {
+    bindModeSwitch();
+
+    var pubAdd = document.getElementById('csPublicAddBtn');
+    var pubImp = document.getElementById('csPublicImportBtn');
+    var priAdd = document.getElementById('csPrivateAddBtn');
+    var priImp = document.getElementById('csPrivateImportBtn');
+
+    if (pubAdd) pubAdd.addEventListener('click', function () {
+      openWordInputModal('add', 'public');
+    });
+    if (pubImp) pubImp.addEventListener('click', function () {
+      openWordInputModal('import', 'public');
+    });
+    if (priAdd) priAdd.addEventListener('click', function () {
+      openWordInputModal('add', 'private');
+    });
+    if (priImp) priImp.addEventListener('click', function () {
+      openWordInputModal('import', 'private');
+    });
+  }
+
+  function syncToCardLibrary() {
+    if (window.refreshCardUI) {
+      window.refreshCardUI();
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  
   // ==================== 打开/关闭 ====================
   function openPanel() {
     createPanel();
@@ -455,16 +757,19 @@
     if (panel) panel.classList.remove('active');
   }
 
-  // ==================== 初始化 ====================
+   // ==================== 初始化 ====================
   function init() {
     createPanel();
     bindSettingsTrigger();
 
     loadTab(function () {
-      loadAppearance(function () {
-        applyAppearance();
-        fillPanelValues();
-        switchTab(activeTab);
+      loadCardMode(function () {
+        window.chatCardMode = cardMode;
+        loadAppearance(function () {
+          applyAppearance();
+          fillPanelValues();
+          switchTab(activeTab);
+        });
       });
     });
   }
