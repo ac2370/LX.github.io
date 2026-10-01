@@ -1,5 +1,6 @@
 /**
  * 传讯页面 - 设置面板（独立模块）
+ * - 绑定到底部导航栏现有的"设置"齿轮图标
  * - 4 个选项卡：个人资料、外观与界面、聊天与字卡、数据与工具
  * - 内容先留空，仅框架
  * - 完全独立，不影响任何现有逻辑
@@ -11,15 +12,14 @@
   var STORE_KEY = 'chat_settings_panel_active_tab';
 
   // ==================== DOM 引用 ====================
-  var pageChat = document.getElementById('pageChat');
-  var chatHeader = pageChat ? pageChat.querySelector('.chat-header') : null;
-
-  if (!pageChat || !chatHeader) return;
+  // 找到传讯页面底部导航栏的"设置"齿轮图标
+  // 它位于底部"字卡"图标右侧（传讯页有自己独立的一套底部导航）
+  var settingsTrigger = null;
 
   // ==================== 状态 ====================
-  var activeTab = 'profile'; // 'profile' | 'appearance' | 'chat' | 'data'
+  var activeTab = 'profile';
 
-  // ==================== 持久化（记住上次所在 Tab） ====================
+  // ==================== 持久化 ====================
   function persistTab() {
     if (typeof localforage !== 'undefined') {
       localforage.setItem(STORE_KEY, activeTab).catch(function () {});
@@ -43,24 +43,46 @@
     }
   }
 
-  // ==================== 创建设置按钮（右上角齿轮） ====================
-  function createSettingsButton() {
-    if (document.getElementById('chatSettingsBtn')) return;
+  // ==================== 找到设置齿轮图标 ====================
+  function findSettingsTrigger() {
+    // 优先级 1: 传讯页面内的"设置"图标
+    // 底部导航栏的 id 是 tabSettingsHome，但它在主页底部
+    // 传讯页有自己的图标布局
 
-    var btn = document.createElement('button');
-    btn.id = 'chatSettingsBtn';
-    btn.className = 'chat-settings-btn';
-    btn.title = '设置';
-    btn.innerHTML = '<i class="fa-solid fa-gear"></i>';
+    // 先找传讯页 #pageChat 内所有可能的齿轮图标
+    var pageChat = document.getElementById('pageChat');
+    if (pageChat) {
+      // 搜索页面内所有 fa-gear 图标
+      var gears = pageChat.querySelectorAll('.fa-gear, .fa-cog');
+      if (gears.length > 0) {
+        // 取最后一个（通常在底部导航栏）
+        return gears[gears.length - 1].closest('button, div[role="button"], .tab-btn, .chat-action-icon') || gears[gears.length - 1].parentElement;
+      }
+    }
 
-    // 挂到传讯页面顶栏的右上角
-    chatHeader.appendChild(btn);
+    // 兜底：全局搜索 tabSettingsHome（主页底部的设置）
+    var tabSettings = document.getElementById('tabSettingsHome');
+    if (tabSettings) return tabSettings;
 
-    btn.addEventListener('click', function (e) {
+    return null;
+  }
+
+  // ==================== 绑定设置图标 ====================
+  function bindSettingsTrigger() {
+    if (settingsTrigger && settingsTrigger.dataset.chatSettingsBound) return;
+
+    settingsTrigger = findSettingsTrigger();
+    if (!settingsTrigger) return;
+
+    if (settingsTrigger.dataset.chatSettingsBound) return;
+    settingsTrigger.dataset.chatSettingsBound = '1';
+
+    // 保存原始的点击行为（如果有）不影响它，只额外添加
+    settingsTrigger.addEventListener('click', function (e) {
       e.stopImmediatePropagation();
       e.preventDefault();
       openPanel();
-    });
+    }, true);
   }
 
   // ==================== 创建面板 ====================
@@ -116,7 +138,7 @@
       '      <div class="chat-settings-section-title">外观与界面</div>',
       '      <div class="chat-settings-placeholder">',
       '        <i class="fa-solid fa-palette"></i>',
-      '        <p>背景、字体、气泡颜色</p>',
+      '        <p>背景、字体、气泡颜色、背景蒙层、毛玻璃开关</p>',
       '      </div>',
       '    </div>',
 
@@ -125,7 +147,7 @@
       '      <div class="chat-settings-section-title">聊天与字卡</div>',
       '      <div class="chat-settings-placeholder">',
       '        <i class="fa-solid fa-comments"></i>',
-      '        <p>回复节奏、字卡机制</p>',
+      '        <p>回复节奏、公共 / 专属字卡机制</p>',
       '      </div>',
       '    </div>',
 
@@ -153,16 +175,13 @@
     var panel = document.getElementById('chatSettingsPanel');
     if (!panel) return;
 
-    // 关闭
     var closeBtn = document.getElementById('chatSettingsClose');
     if (closeBtn) closeBtn.addEventListener('click', closePanel);
 
-    // 点击遮罩关闭
     panel.addEventListener('click', function (e) {
       if (e.target === panel) closePanel();
     });
 
-    // Tab 切换
     var tabs = panel.querySelectorAll('.chat-settings-tab');
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
@@ -180,23 +199,20 @@
     var panel = document.getElementById('chatSettingsPanel');
     if (!panel) return;
 
-    // 更新 Tab 按钮
     panel.querySelectorAll('.chat-settings-tab').forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-tab') === tabName);
     });
 
-    // 更新内容面板
     panel.querySelectorAll('.chat-settings-tab-panel').forEach(function (p) {
       p.classList.toggle('active', p.getAttribute('data-panel') === tabName);
     });
   }
 
-  // ==================== 打开/关闭面板 ====================
+  // ==================== 打开/关闭 ====================
   function openPanel() {
     createPanel();
     var panel = document.getElementById('chatSettingsPanel');
     if (!panel) return;
-
     switchTab(activeTab);
     panel.classList.add('active');
   }
@@ -208,8 +224,8 @@
 
   // ==================== 初始化 ====================
   function init() {
-    createSettingsButton();
     createPanel();
+    bindSettingsTrigger();
     loadTab(function () {
       switchTab(activeTab);
     });
@@ -221,8 +237,11 @@
     init();
   }
 
-  setTimeout(init, 500);
-  setTimeout(init, 1500);
+  // 多次尝试绑定（因为某些图标是动态生成的）
+  setTimeout(bindSettingsTrigger, 300);
+  setTimeout(bindSettingsTrigger, 800);
+  setTimeout(bindSettingsTrigger, 1500);
+  setTimeout(bindSettingsTrigger, 3000);
 
   // 暴露给外部
   window.chatSettingsPanel = {
