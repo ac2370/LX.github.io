@@ -3071,6 +3071,212 @@
     display: none !important;
   }
 </style>
+     <!-- ============================================================
+     传讯页面 - 设置面板（绑定现有齿轮图标）
+     ============================================================ -->
+<style>
+  /* ============ 设置面板（全屏毛玻璃） ============ */
+  .chat-settings-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .chat-settings-panel.active {
+    display: flex;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .chat-settings-panel-inner {
+    width: 100%;
+    max-width: 430px;
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 60px rgba(0, 20, 30, 0.25);
+    overflow: hidden;
+    animation: popIn 0.25s ease;
+  }
+  body.theme-dark .chat-settings-panel-inner {
+    background: rgba(38, 44, 52, 0.95);
+    border-color: var(--theme-card-border);
+  }
+
+  /* ============ 面板头部 ============ */
+  .chat-settings-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 12px 20px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  body.theme-dark .chat-settings-header {
+    border-bottom-color: var(--theme-card-border);
+  }
+
+  .chat-settings-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.5px;
+  }
+  body.theme-dark .chat-settings-title { color: var(--theme-text); }
+  .chat-settings-title i { color: #f8b4b4; }
+
+  .chat-settings-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 9999px;
+    background: #f5f6f8;
+    border: none;
+    color: #55606b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+  .chat-settings-close:active {
+    background: #e8ecf0;
+    transform: scale(0.92);
+  }
+  body.theme-dark .chat-settings-close {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+  }
+
+  /* ============ 选项卡 ============ */
+  .chat-settings-tabs {
+    flex-shrink: 0;
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px 8px 16px;
+    border-bottom: 1px solid #f0f3f6;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .chat-settings-tabs::-webkit-scrollbar { display: none; }
+  body.theme-dark .chat-settings-tabs {
+    border-bottom-color: var(--theme-card-border);
+  }
+
+  .chat-settings-tab {
+    flex: 1;
+    min-width: 72px;
+    padding: 8px 4px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    font-size: 11px;
+    color: #8899a6;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .chat-settings-tab i {
+    font-size: 14px;
+  }
+  .chat-settings-tab.active {
+    background: #fdf0f0;
+    color: #e58b8b;
+  }
+  .chat-settings-tab:active {
+    transform: scale(0.96);
+  }
+  body.theme-dark .chat-settings-tab {
+    color: var(--theme-text-muted);
+  }
+  body.theme-dark .chat-settings-tab.active {
+    background: rgba(248, 180, 180, 0.15);
+    color: #f8b4b4;
+  }
+
+  /* ============ 内容区 ============ */
+  .chat-settings-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px 24px 20px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .chat-settings-body::-webkit-scrollbar { display: none; }
+
+  .chat-settings-tab-panel {
+    display: none;
+  }
+  .chat-settings-tab-panel.active {
+    display: block;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .chat-settings-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7a8a99;
+    letter-spacing: 0.5px;
+    margin: 4px 0 12px 0;
+    text-transform: uppercase;
+  }
+  body.theme-dark .chat-settings-section-title {
+    color: var(--theme-text-muted);
+  }
+
+  /* 占位提示 */
+  .chat-settings-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 60px 20px;
+    background: #fafbfc;
+    border-radius: 18px;
+    border: 1.5px dashed #e2e8ee;
+    text-align: center;
+  }
+  body.theme-dark .chat-settings-placeholder {
+    background: rgba(42, 48, 56, 0.5);
+    border-color: var(--theme-card-border);
+  }
+  .chat-settings-placeholder i {
+    font-size: 32px;
+    color: #dde6ee;
+  }
+  body.theme-dark .chat-settings-placeholder i {
+    color: var(--theme-text-faint);
+  }
+  .chat-settings-placeholder p {
+    font-size: 13px;
+    color: #b6c2cd;
+    margin: 0;
+    line-height: 1.6;
+  }
+  body.theme-dark .chat-settings-placeholder p {
+    color: var(--theme-text-muted);
+  }
+</style>
 </head>
 <body>
 
@@ -3803,6 +4009,7 @@
   <script src="./js/theme-mode.js"></script>
   <script src="./js/video-call.js"></script>
   <script src="./js/group-chat.js"></script>
+  <script src="./js/chat-settings-panel.js"></script>
 
   <!-- ============================================================
        新增脚本：页面切换、回复设定、编辑资料、角色面板、音乐播放器
