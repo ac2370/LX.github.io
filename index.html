@@ -3646,6 +3646,307 @@
     background: rgba(30, 36, 43, 0.85);
   }
 </style>
+     <!-- ============================================================
+     设置面板 - 聊天与字卡 Tab（沿用字卡收纳盒样式）
+     ============================================================ -->
+<style>
+  /* ============ 字卡模式切换（三段式） ============ */
+  .cs-mode-switch {
+    display: flex;
+    gap: 6px;
+    background: #fafbfc;
+    padding: 6px;
+    border-radius: 16px;
+    border: 1px solid #eef1f4;
+    margin-bottom: 8px;
+  }
+  body.theme-dark .cs-mode-switch {
+    background: rgba(42, 48, 56, 0.5);
+    border-color: var(--theme-card-border);
+  }
+  .cs-mode-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    font-size: 11px;
+    color: #8899a6;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .cs-mode-btn i { font-size: 15px; }
+  .cs-mode-btn.active {
+    background: #ffffff;
+    color: #e58b8b;
+    box-shadow: 0 2px 8px rgba(150, 170, 190, 0.12);
+  }
+  .cs-mode-btn:active {
+    transform: scale(0.96);
+  }
+  body.theme-dark .cs-mode-btn.active {
+    background: rgba(248, 180, 180, 0.15);
+    color: #f8b4b4;
+  }
+
+  .cs-mode-hint {
+    font-size: 11px;
+    color: #a8b4c0;
+    padding-left: 4px;
+    line-height: 1.5;
+  }
+  body.theme-dark .cs-mode-hint { color: var(--theme-text-muted); }
+
+  /* ============ 字卡区块头部 ============ */
+  .cs-words-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .cs-words-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    margin-left: 6px;
+    background: #eaf3fb;
+    color: #6fa3cc;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 9999px;
+  }
+  .cs-words-count-private {
+    background: #fdf0f0;
+    color: #e58b8b;
+  }
+  .cs-words-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .cs-words-btn {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #eef1f4;
+    color: #55606b;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
+  }
+  .cs-words-btn:active {
+    background: #f2f6fa;
+    transform: scale(0.97);
+  }
+  body.theme-dark .cs-words-btn {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+    border-color: var(--theme-card-border);
+  }
+  .cs-words-btn i {
+    font-size: 10px;
+    color: #f8b4b4;
+  }
+
+  .cs-words-contact {
+    font-size: 11px;
+    color: #8899a6;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  body.theme-dark .cs-words-contact { color: var(--theme-text-muted); }
+
+  /* ============ 字卡列表（沿用字卡收纳盒风格） ============ */
+  .cs-words-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-right: 2px;
+  }
+  .cs-words-list::-webkit-scrollbar { display: none; }
+
+  .cs-word-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #eef1f4;
+    box-shadow: 0 2px 6px rgba(150, 170, 190, 0.05);
+    transition: background 0.15s ease;
+    animation: popIn 0.15s ease;
+  }
+  body.theme-dark .cs-word-item {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border);
+  }
+
+  .cs-word-item-private {
+    border-left: 3px solid #f8b4b4;
+  }
+
+  .cs-word-text {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  body.theme-dark .cs-word-text { color: var(--theme-text); }
+
+  .cs-word-del {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    background: #fdf0f0;
+    color: #e58b8b;
+    border: none;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+  }
+  .cs-word-del:active { background: #f8d8d8; }
+
+  .cs-words-empty {
+    text-align: center;
+    padding: 24px 12px;
+    font-size: 12px;
+    color: #c0ccd6;
+    background: #fafbfc;
+    border-radius: 12px;
+    border: 1px dashed #eef1f4;
+  }
+  body.theme-dark .cs-words-empty {
+    background: rgba(42, 48, 56, 0.4);
+    border-color: var(--theme-card-border);
+    color: var(--theme-text-faint);
+  }
+
+  /* ============ 字卡输入弹窗 ============ */
+  .cs-word-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 550;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: fadeIn 0.15s ease;
+  }
+
+  .cs-word-modal-panel {
+    width: 100%;
+    max-width: 360px;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+    padding: 22px 20px;
+    animation: popIn 0.2s ease;
+  }
+  body.theme-dark .cs-word-modal-panel {
+    background: rgba(38, 44, 52, 0.97);
+  }
+
+  .cs-word-modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  body.theme-dark .cs-word-modal-title { color: var(--theme-text); }
+
+  .cs-word-modal-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    resize: vertical;
+    min-height: 90px;
+    font-family: inherit;
+    line-height: 1.5;
+    box-sizing: border-box;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+  }
+  .cs-word-modal-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+  }
+  .cs-word-modal-input::placeholder { color: #b6c2cd; }
+  body.theme-dark .cs-word-modal-input {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+
+  .cs-word-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .cs-word-modal-cancel,
+  .cs-word-modal-confirm {
+    flex: 1;
+    padding: 11px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .cs-word-modal-cancel:active,
+  .cs-word-modal-confirm:active { transform: scale(0.97); }
+  .cs-word-modal-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .cs-word-modal-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+    border-color: var(--theme-card-border);
+  }
+  .cs-word-modal-confirm {
+    background: #f8b4b4;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+  }
+</style>
 </head>
 <body>
 
@@ -4368,6 +4669,7 @@
 
    <!-- ⬇️ 新增 reply.js，必须放在 card.js 之前 -->
   <script src="./js/reply.js"></script>
+  <script src="./js/reply-modes.js"></script>
   <script src="./js/card.js"></script>
   <script src="./js/chat.js"></script>
   <script src="./js/home-settings.js"></script>
