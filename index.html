@@ -3646,11 +3646,10 @@
     background: rgba(30, 36, 43, 0.85);
   }
 </style>
-     <!-- ============================================================
+   <!-- ============================================================
      设置面板 - 聊天与字卡 Tab（沿用字卡收纳盒样式）
      ============================================================ -->
 <style>
-  /* ============ 字卡模式切换（三段式） ============ */
   .cs-mode-switch {
     display: flex;
     gap: 6px;
@@ -3687,9 +3686,7 @@
     color: #e58b8b;
     box-shadow: 0 2px 8px rgba(150, 170, 190, 0.12);
   }
-  .cs-mode-btn:active {
-    transform: scale(0.96);
-  }
+  .cs-mode-btn:active { transform: scale(0.96); }
   body.theme-dark .cs-mode-btn.active {
     background: rgba(248, 180, 180, 0.15);
     color: #f8b4b4;
@@ -3703,7 +3700,6 @@
   }
   body.theme-dark .cs-mode-hint { color: var(--theme-text-muted); }
 
-  /* ============ 字卡区块头部 ============ */
   .cs-words-header {
     display: flex;
     align-items: center;
@@ -3771,7 +3767,6 @@
   }
   body.theme-dark .cs-words-contact { color: var(--theme-text-muted); }
 
-  /* ============ 字卡列表（沿用字卡收纳盒风格） ============ */
   .cs-words-list {
     display: flex;
     flex-direction: column;
@@ -3795,17 +3790,14 @@
     border: 1px solid #eef1f4;
     box-shadow: 0 2px 6px rgba(150, 170, 190, 0.05);
     transition: background 0.15s ease;
-    animation: popIn 0.15s ease;
   }
   body.theme-dark .cs-word-item {
     background: rgba(42, 48, 56, 0.9);
     border-color: var(--theme-card-border);
   }
-
   .cs-word-item-private {
     border-left: 3px solid #f8b4b4;
   }
-
   .cs-word-text {
     flex: 1;
     min-width: 0;
@@ -3815,7 +3807,6 @@
     word-break: break-word;
   }
   body.theme-dark .cs-word-text { color: var(--theme-text); }
-
   .cs-word-del {
     flex-shrink: 0;
     width: 24px;
@@ -3848,7 +3839,6 @@
     color: var(--theme-text-faint);
   }
 
-  /* ============ 字卡输入弹窗 ============ */
   .cs-word-modal {
     position: fixed;
     inset: 0;
@@ -3860,9 +3850,7 @@
     background: rgba(20, 30, 40, 0.35);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    animation: fadeIn 0.15s ease;
   }
-
   .cs-word-modal-panel {
     width: 100%;
     max-width: 360px;
@@ -3875,7 +3863,6 @@
   body.theme-dark .cs-word-modal-panel {
     background: rgba(38, 44, 52, 0.97);
   }
-
   .cs-word-modal-title {
     font-size: 15px;
     font-weight: 700;
@@ -3884,7 +3871,6 @@
     text-align: center;
   }
   body.theme-dark .cs-word-modal-title { color: var(--theme-text); }
-
   .cs-word-modal-input {
     width: 100%;
     padding: 12px 14px;
@@ -3911,7 +3897,6 @@
     border-color: var(--theme-input-border);
     color: var(--theme-text);
   }
-
   .cs-word-modal-actions {
     display: flex;
     gap: 12px;
