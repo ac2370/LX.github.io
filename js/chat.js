@@ -140,16 +140,55 @@
   // ==================== 自动回复核心逻辑 ====================
   function triggerAutoReply() {
     const settings = getSettings();
+      const settings = getSettings();
     const db = getDB();
 
-    // 严格限定：只从 reply 和 emoji 抽文字
-    const textPool = [].concat(db.reply, db.emoji);
-    const imagePool = db.sticker || [];
+    // ============ 双轨机制：公共 + 专属 ============
+    var currentContactId = null;
+    try {
+      currentContactId = localStorage.getItem('my_current_contact');
+    } catch (e) {}
 
-    if (!settings.normalReply) {
-      console.log('[传讯] 正常字卡回复已关闭');
-      return;
+    var publicCards = (window.cardDatabase && window.cardDatabase.getPublic)
+      ? window.cardDatabase.getPublic()
+      : [];
+
+    var privateCards = (window.cardDatabase && window.cardDatabase.getPrivate && currentContactId)
+      ? window.cardDatabase.getPrivate(currentContactId)
+      : [];
+
+    var legacyReply = db.reply || [];
+
+    var publicPool = [].concat(publicCards, legacyReply);
+    var privatePool = privateCards;
+
+    // 读取用户选择的模式
+    var cardMode = window.chatCardMode || 'all';
+
+    var textPool;
+    if (cardMode === 'public-only') {
+      textPool = publicPool.slice();
+    } else if (cardMode === 'private-only') {
+      textPool = privatePool.slice();
+    } else {
+      // 全部字卡：50:50 混合
+      if (privatePool.length > 0 && publicPool.length > 0) {
+        var half = Math.ceil((publicPool.length + privatePool.length) / 2);
+        var shuffledPublic = publicPool.slice().sort(function () { return Math.random() - 0.5; });
+        var shuffledPrivate = privatePool.slice().sort(function () { return Math.random() - 0.5; });
+        textPool = shuffledPublic.slice(0, half).concat(shuffledPrivate);
+      } else if (privatePool.length > 0) {
+        textPool = privatePool;
+      } else {
+        textPool = publicPool;
+      }
     }
+
+    // 颜文字仍然从 emoji 抽
+    textPool = textPool.concat(db.emoji);
+
+    // 图片池不变
+    const imagePool = db.sticker || [];
 
     // 如果文字池为空，且图片池也为空，则提示
     if (textPool.length === 0 && imagePool.length === 0) {
@@ -267,6 +306,9 @@
     // ==================== 暴露给外部 ====================
   window.initChatPage = function () {
     scrollToBottom();
+    if (window.cardDatabase && window.cardDatabase.reload) {
+      window.cardDatabase.reload();
+    }
   };
 
   // 暴露自动回复接口，供 chat-extras.js 调用
