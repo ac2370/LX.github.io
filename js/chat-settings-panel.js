@@ -3,7 +3,7 @@
  * - 绑定到底部导航栏现有的"设置"齿轮图标
  * - Tab 1：个人资料（占位）
  * - Tab 2：外观与界面（背景图 + 蒙层 + 毛玻璃）
- * - Tab 3：聊天与字卡（占位）
+ * - Tab 3：聊天与字卡（分组勾选模式）
  * - Tab 4：数据与工具（占位）
  * - 完全独立，不影响任何现有逻辑
  */
@@ -13,18 +13,30 @@
 
   var STORE_KEY_TAB = 'chat_settings_panel_active_tab';
   var STORE_KEY_APPEARANCE = 'chat_settings_appearance';
+  var STORE_KEY_CARD_MODE = 'chat_card_mode';
+  var STORE_KEY_PUBLIC_GROUPS = 'chat_public_groups';
+  var STORE_KEY_PRIVATE_GROUPS = 'chat_private_groups';
+  var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';   // 颜文字勾选
+  var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups'; // 表情包勾选
 
   // ==================== 状态 ====================
   var activeTab = 'profile';
   var appearance = {
-    chatBg: null,          // 聊天背景图 URL 或 DataURL
-    overlayOpacity: 30,    // 蒙层深浅度 0-100
-    glassEffect: true      // 毛玻璃开关
+    chatBg: null,
+    overlayOpacity: 30,
+    glassEffect: true
   };
+  var cardMode = 'all';           // 'all' | 'public-only' | 'private-only'
+
+  // 分组勾选状态
+  var publicGroups = [];          // 回复分类：勾选为公共的字卡分组
+  var privateGroups = [];         // 回复分类：勾选为专属的字卡分组
+  var emojiGroups = [];           // 颜文字分类：勾选的分组
+  var stickerGroups = [];         // 表情包分类：勾选的分组
 
   var settingsTrigger = null;
 
-  // ==================== 持久化 ====================
+  // ==================== 持久化：Tab ====================
   function persistTab() {
     if (typeof localforage !== 'undefined') {
       localforage.setItem(STORE_KEY_TAB, activeTab).catch(function () {});
@@ -48,6 +60,7 @@
     }
   }
 
+  // ==================== 持久化：外观 ====================
   function persistAppearance() {
     if (typeof localforage !== 'undefined') {
       localforage.setItem(STORE_KEY_APPEARANCE, appearance).catch(function () {});
@@ -65,7 +78,6 @@
       }
       if (callback) callback();
     }
-
     if (typeof localforage !== 'undefined') {
       localforage.getItem(STORE_KEY_APPEARANCE).then(apply).catch(function () { apply(null); });
     } else {
@@ -76,21 +88,101 @@
     }
   }
 
+  // ==================== 持久化：字卡模式 ====================
+  function persistCardMode() {
+    if (typeof localforage !== 'undefined') {
+      localforage.setItem(STORE_KEY_CARD_MODE, cardMode).catch(function () {});
+    } else {
+      try { localStorage.setItem(STORE_KEY_CARD_MODE, cardMode); } catch (e) {}
+    }
+    window.chatCardMode = cardMode;
+  }
+
+  function loadCardMode(callback) {
+    if (typeof localforage !== 'undefined') {
+      localforage.getItem(STORE_KEY_CARD_MODE).then(function (val) {
+        if (val) cardMode = val;
+        if (callback) callback();
+      }).catch(function () { if (callback) callback(); });
+    } else {
+      try {
+        var raw = localStorage.getItem(STORE_KEY_CARD_MODE);
+        if (raw) cardMode = raw;
+      } catch (e) {}
+      if (callback) callback();
+    }
+  }
+
+  // ==================== 持久化：分组勾选 ====================
+  function persistGroupSelections() {
+    if (typeof localforage !== 'undefined') {
+      localforage.setItem(STORE_KEY_PUBLIC_GROUPS, publicGroups).catch(function () {});
+      localforage.setItem(STORE_KEY_PRIVATE_GROUPS, privateGroups).catch(function () {});
+      localforage.setItem(STORE_KEY_EMOJI_GROUPS, emojiGroups).catch(function () {});
+      localforage.setItem(STORE_KEY_STICKER_GROUPS, stickerGroups).catch(function () {});
+    } else {
+      try {
+        localStorage.setItem(STORE_KEY_PUBLIC_GROUPS, JSON.stringify(publicGroups));
+        localStorage.setItem(STORE_KEY_PRIVATE_GROUPS, JSON.stringify(privateGroups));
+        localStorage.setItem(STORE_KEY_EMOJI_GROUPS, JSON.stringify(emojiGroups));
+        localStorage.setItem(STORE_KEY_STICKER_GROUPS, JSON.stringify(stickerGroups));
+      } catch (e) {}
+    }
+    // 暴露给外部（供 chat.js 使用）
+    window.chatPublicGroups = publicGroups.slice();
+    window.chatPrivateGroups = privateGroups.slice();
+    window.chatEmojiGroups = emojiGroups.slice();
+    window.chatStickerGroups = stickerGroups.slice();
+  }
+
+  function loadGroupSelections(callback) {
+    var keys = [
+      { store: STORE_KEY_PUBLIC_GROUPS, assign: function (d) { if (Array.isArray(d)) publicGroups = d; } },
+      { store: STORE_KEY_PRIVATE_GROUPS, assign: function (d) { if (Array.isArray(d)) privateGroups = d; } },
+      { store: STORE_KEY_EMOJI_GROUPS, assign: function (d) { if (Array.isArray(d)) emojiGroups = d; } },
+      { store: STORE_KEY_STICKER_GROUPS, assign: function (d) { if (Array.isArray(d)) stickerGroups = d; } }
+    ];
+
+    var remaining = keys.length;
+    function done() {
+      remaining--;
+      if (remaining <= 0) {
+        window.chatPublicGroups = publicGroups.slice();
+        window.chatPrivateGroups = privateGroups.slice();
+        window.chatEmojiGroups = emojiGroups.slice();
+        window.chatStickerGroups = stickerGroups.slice();
+        if (callback) callback();
+      }
+    }
+
+    keys.forEach(function (k) {
+      if (typeof localforage !== 'undefined') {
+        localforage.getItem(k.store).then(function (d) {
+          k.assign(d);
+          done();
+        }).catch(function () { k.assign(null); done(); });
+      } else {
+        try {
+          var raw = localStorage.getItem(k.store);
+          k.assign(raw ? JSON.parse(raw) : null);
+        } catch (e) { k.assign(null); }
+        done();
+      }
+    });
+  }
+
   // ==================== 应用外观到传讯页面 ====================
   function applyAppearance() {
     var pageChat = document.getElementById('pageChat');
     if (!pageChat) return;
 
-    // 确保页面有 overlay 元素
     var overlay = pageChat.querySelector('.chat-bg-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.className = 'chat-bg-overlay';
-      // 插入到 chat-header 之前（作为第一个子元素）
       pageChat.insertBefore(overlay, pageChat.firstChild);
     }
 
-    // 设置背景图（挂在 pageChat 上，overlay 作为蒙层）
     if (appearance.chatBg) {
       pageChat.style.backgroundImage = "url('" + appearance.chatBg + "')";
       pageChat.style.backgroundSize = 'cover';
@@ -102,10 +194,8 @@
       overlay.style.display = 'none';
     }
 
-    // 蒙层深浅度
     overlay.style.background = 'rgba(0, 0, 0, ' + (appearance.overlayOpacity / 100) + ')';
 
-    // 毛玻璃开关：加到 pageChat 上的类
     if (appearance.glassEffect) {
       pageChat.classList.add('glass-on');
       pageChat.classList.remove('glass-off');
@@ -114,7 +204,6 @@
       pageChat.classList.remove('glass-on');
     }
 
-    // 让聊天消息区透明，让背景图透出
     var chatMessages = document.getElementById('chatMessages');
     if (chatMessages) {
       chatMessages.style.background = appearance.chatBg ? 'transparent' : '';
@@ -199,8 +288,6 @@
 
       // Tab 2: 外观与界面（完整内容）
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
-
-      // 区块 1：聊天背景图
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">聊天背景图</div>',
       '        <div class="cs-bg-preview" id="csBgPreview">',
@@ -223,8 +310,6 @@
       '          <button class="cs-bg-url-apply" id="csBgUrlApply">应用</button>',
       '        </div>',
       '      </div>',
-
-      // 区块 2：背景蒙层深浅度
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">背景蒙层深浅度</div>',
       '        <div class="cs-slider-row">',
@@ -233,8 +318,6 @@
       '        </div>',
       '        <div class="cs-slider-hint">拖拽滑块调整背景图上方蒙层的深浅度</div>',
       '      </div>',
-
-      // 区块 3：毛玻璃开关
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">毛玻璃效果</div>',
       '        <div class="cs-toggle-row">',
@@ -248,13 +331,12 @@
       '          </label>',
       '        </div>',
       '      </div>',
-
       '    </div>',
 
-            // Tab 3: 聊天与字卡（完整内容）
+      // Tab 3: 聊天与字卡（分组勾选模式）
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
 
-      // 区块 1：字卡模式切换
+      // 区块 1：字卡模式
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">当前字卡模式</div>',
       '        <div class="cs-mode-switch" id="csModeSwitch">',
@@ -274,37 +356,56 @@
       '        <div class="cs-mode-hint" id="csModeHint">自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取</div>',
       '      </div>',
 
-      // 区块 2：公共字卡库
+      // 区块 2：公共字卡分组
       '      <div class="chat-settings-section">',
       '        <div class="cs-words-header">',
       '          <div class="chat-settings-section-title" style="margin:0;">',
       '            <i class="fa-solid fa-globe" style="color:#6fb1e8;margin-right:4px;"></i>',
-      '            公共字卡库',
+      '            公共字卡分组',
       '            <span class="cs-words-count" id="csPublicCount">0</span>',
       '          </div>',
-      '          <div class="cs-words-actions">',
-      '            <button class="cs-words-btn" id="csPublicAddBtn"><i class="fa-solid fa-plus"></i> 添加</button>',
-      '            <button class="cs-words-btn" id="csPublicImportBtn"><i class="fa-solid fa-file-import"></i> 导入</button>',
-      '          </div>',
       '        </div>',
-      '        <div class="cs-words-list" id="csPublicList"></div>',
+      '        <div class="cs-words-hint">勾选的分组视为"公共字卡"，所有联系人都能抽取</div>',
+      '        <div class="cs-group-list" id="csPublicGroupList"></div>',
       '      </div>',
 
-      // 区块 3：当前联系人专属字卡
+      // 区块 3：专属字卡分组
       '      <div class="chat-settings-section">',
       '        <div class="cs-words-header">',
       '          <div class="chat-settings-section-title" style="margin:0;">',
       '            <i class="fa-solid fa-lock" style="color:#f8b4b4;margin-right:4px;"></i>',
-      '            专属字卡',
+      '            专属字卡分组',
       '            <span class="cs-words-count cs-words-count-private" id="csPrivateCount">0</span>',
       '          </div>',
-      '          <div class="cs-words-actions">',
-      '            <button class="cs-words-btn" id="csPrivateAddBtn"><i class="fa-solid fa-plus"></i> 添加</button>',
-      '            <button class="cs-words-btn" id="csPrivateImportBtn"><i class="fa-solid fa-file-import"></i> 导入</button>',
+      '        </div>',
+      '        <div class="cs-words-hint">勾选的分组视为"当前联系人专属字卡"，只有当前角色能抽取</div>',
+      '        <div class="cs-group-list" id="csPrivateGroupList"></div>',
+      '      </div>',
+
+      // 区块 4：颜文字勾选
+      '      <div class="chat-settings-section">',
+      '        <div class="cs-words-header">',
+      '          <div class="chat-settings-section-title" style="margin:0;">',
+      '            <i class="fa-regular fa-face-smile" style="color:#7ED3A8;margin-right:4px;"></i>',
+      '            颜文字字卡',
+      '            <span class="cs-words-count" id="csEmojiGroupCount" style="background:#e6f5ed;color:#4CAF7D;">0</span>',
       '          </div>',
       '        </div>',
-      '        <div class="cs-words-contact" id="csPrivateContact">当前联系人：—</div>',
-      '        <div class="cs-words-list" id="csPrivateList"></div>',
+      '        <div class="cs-words-hint">勾选的字卡分组会加入自动回复的颜文字池</div>',
+      '        <div class="cs-group-list" id="csEmojiGroupList"></div>',
+      '      </div>',
+
+      // 区块 5：表情包勾选
+      '      <div class="chat-settings-section">',
+      '        <div class="cs-words-header">',
+      '          <div class="chat-settings-section-title" style="margin:0;">',
+      '            <i class="fa-regular fa-image" style="color:#B78BEA;margin-right:4px;"></i>',
+      '            表情包字卡',
+      '            <span class="cs-words-count" id="csStickerGroupCount" style="background:#f0eaf9;color:#8b6bd1;">0</span>',
+      '          </div>',
+      '        </div>',
+      '        <div class="cs-words-hint">勾选的字卡分组会加入自动回复的表情包池</div>',
+      '        <div class="cs-group-list" id="csStickerGroupList"></div>',
       '      </div>',
 
       '    </div>',
@@ -352,8 +453,6 @@
     });
 
     // ============ 外观 Tab 的交互 ============
-
-    // 1. 上传本地图片
     var bgFileInput = document.getElementById('csBgFileInput');
     if (bgFileInput) {
       bgFileInput.addEventListener('change', function () {
@@ -370,7 +469,6 @@
       });
     }
 
-    // 2. 粘贴 URL 并应用
     var bgUrlInput = document.getElementById('csBgUrlInput');
     var bgUrlApply = document.getElementById('csBgUrlApply');
     if (bgUrlApply && bgUrlInput) {
@@ -384,7 +482,6 @@
       });
     }
 
-    // 3. 恢复默认
     var bgClearBtn = document.getElementById('csBgClearBtn');
     if (bgClearBtn) {
       bgClearBtn.addEventListener('click', function () {
@@ -396,7 +493,6 @@
       });
     }
 
-    // 4. 蒙层滑块
     var overlaySlider = document.getElementById('csOverlaySlider');
     var overlayValue = document.getElementById('csOverlayValue');
     if (overlaySlider) {
@@ -404,7 +500,6 @@
         var val = parseInt(overlaySlider.value, 10);
         appearance.overlayOpacity = val;
         if (overlayValue) overlayValue.textContent = val + '%';
-        // 实时预览
         var overlay = document.querySelector('#pageChat .chat-bg-overlay');
         if (overlay) {
           overlay.style.background = 'rgba(0, 0, 0, ' + (val / 100) + ')';
@@ -415,7 +510,6 @@
       });
     }
 
-    // 5. 毛玻璃开关
     var glassToggle = document.getElementById('csGlassToggle');
     if (glassToggle) {
       glassToggle.addEventListener('change', function () {
@@ -424,9 +518,9 @@
         applyAppearance();
       });
     }
-        // ============ 聊天与字卡 Tab 的交互 ============
+
+    // ============ 聊天与字卡 Tab 的交互 ============
     bindChatTabEvents();
-    
   }
 
   // ==================== 更新背景预览 ====================
@@ -447,18 +541,14 @@
 
   // ==================== 填充面板当前值 ====================
   function fillPanelValues() {
-    // 背景预览
     updateBgPreview();
 
-    // URL 输入框
     var bgUrlInput = document.getElementById('csBgUrlInput');
     if (bgUrlInput) {
-      // 如果是 URL（非 DataURL）才显示在输入框
       bgUrlInput.value = (appearance.chatBg && appearance.chatBg.indexOf('data:') !== 0)
         ? appearance.chatBg : '';
     }
 
-    // 蒙层滑块
     var overlaySlider = document.getElementById('csOverlaySlider');
     var overlayValue = document.getElementById('csOverlayValue');
     if (overlaySlider) {
@@ -466,11 +556,257 @@
       if (overlayValue) overlayValue.textContent = appearance.overlayOpacity + '%';
     }
 
-    // 毛玻璃开关
     var glassToggle = document.getElementById('csGlassToggle');
     if (glassToggle) {
       glassToggle.checked = appearance.glassEffect;
     }
+  }
+
+  // ==================== 字卡模式切换 ====================
+  function bindModeSwitch() {
+    var switchEl = document.getElementById('csModeSwitch');
+    if (!switchEl) return;
+    if (switchEl.dataset.bound) return;
+    switchEl.dataset.bound = '1';
+
+    switchEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('.cs-mode-btn');
+      if (!btn) return;
+      var mode = btn.getAttribute('data-mode');
+      if (!mode) return;
+      cardMode = mode;
+      persistCardMode();
+
+      switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-mode') === mode);
+      });
+
+      updateModeHint();
+    });
+  }
+
+  function updateModeHint() {
+    var hintEl = document.getElementById('csModeHint');
+    if (!hintEl) return;
+    if (cardMode === 'public-only') {
+      hintEl.textContent = '自动回复时只从勾选为公共的分组中抽取';
+    } else if (cardMode === 'private-only') {
+      hintEl.textContent = '自动回复时只从勾选为专属的分组中抽取';
+    } else {
+      hintEl.textContent = '自动回复时 50% 从公共分组抽取，50% 从专属分组抽取';
+    }
+  }
+
+  function restoreModeSwitch() {
+    var switchEl = document.getElementById('csModeSwitch');
+    if (!switchEl) return;
+    switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-mode') === cardMode);
+    });
+    updateModeHint();
+  }
+
+  // ==================== 渲染分组勾选列表 ====================
+  function renderAllGroupLists() {
+    renderReplyGroupLists();
+    renderEmojiGroupList();
+    renderStickerGroupList();
+    updateAllGroupCounts();
+  }
+
+  // 渲染回复分类的公共/专属两个列表
+  function renderReplyGroupLists() {
+    var publicList = document.getElementById('csPublicGroupList');
+    var privateList = document.getElementById('csPrivateGroupList');
+    if (!publicList || !privateList) return;
+
+    // 读取分组（category = 'reply'）
+    var groups = [];
+    if (typeof window.getGroups === 'function') {
+      groups = window.getGroups('reply');
+    }
+
+    if (groups.length === 0) {
+      publicList.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
+      privateList.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
+      return;
+    }
+
+    publicList.innerHTML = '';
+    privateList.innerHTML = '';
+
+    groups.forEach(function (name) {
+      publicList.appendChild(createGroupCheckboxItem(name, 'reply', 'public'));
+      privateList.appendChild(createGroupCheckboxItem(name, 'reply', 'private'));
+    });
+  }
+
+  // 渲染颜文字分组列表
+  function renderEmojiGroupList() {
+    var list = document.getElementById('csEmojiGroupList');
+    if (!list) return;
+
+    var groups = [];
+    if (typeof window.getGroups === 'function') {
+      // 颜文字在 card.js 中的分类名是 'kaomoji'
+      groups = window.getGroups('kaomoji');
+    }
+
+    if (groups.length === 0) {
+      list.innerHTML = '<div class="cs-words-empty">还没有颜文字分组，先去字卡收纳盒创建吧~</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    groups.forEach(function (name) {
+      list.appendChild(createGroupCheckboxItem(name, 'kaomoji', 'emoji'));
+    });
+  }
+
+  // 渲染表情包分组列表
+  function renderStickerGroupList() {
+    var list = document.getElementById('csStickerGroupList');
+    if (!list) return;
+
+    // 表情包当前不分组的，只有 cardDatabase.sticker 一个数组
+    // 但为了与分组概念统一，我们可以把它视为"默认分组"
+    var stickerArr = (window.cardDatabase && window.cardDatabase.get)
+      ? (window.cardDatabase.get('sticker') || [])
+      : [];
+
+    if (stickerArr.length === 0) {
+      list.innerHTML = '<div class="cs-words-empty">还没有表情包，先去字卡收纳盒添加吧~</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    // 用一个虚拟分组名 "表情包"
+    list.appendChild(createGroupCheckboxItem('表情包（全部）', 'sticker', 'sticker'));
+  }
+
+  // 创建单个分组勾选行
+  function createGroupCheckboxItem(groupName, category, type) {
+    var item = document.createElement('div');
+    item.className = 'cs-group-item';
+
+    // 判断是否已勾选
+    var isChecked = false;
+    if (type === 'public') {
+      isChecked = publicGroups.indexOf(groupName) >= 0;
+    } else if (type === 'private') {
+      isChecked = privateGroups.indexOf(groupName) >= 0;
+    } else if (type === 'emoji') {
+      isChecked = emojiGroups.indexOf(groupName) >= 0;
+    } else if (type === 'sticker') {
+      isChecked = stickerGroups.indexOf(groupName) >= 0;
+    }
+
+    if (isChecked) item.classList.add('checked');
+
+    // 获取颜色
+    var color = '#5C7CFA';
+    if (typeof window.getGroupColor === 'function') {
+      color = window.getGroupColor(groupName, category);
+    }
+
+    // 获取字卡数量
+    var count = 0;
+    if (category === 'sticker') {
+      count = (window.cardDatabase && window.cardDatabase.get)
+        ? (window.cardDatabase.get('sticker') || []).length
+        : 0;
+    } else {
+      if (typeof window.getCardsInGroup === 'function') {
+        count = window.getCardsInGroup(groupName, category).length;
+      }
+    }
+
+    item.innerHTML =
+      '<label class="cs-group-checkbox">' +
+      '  <input type="checkbox" data-group="' + escapeAttr(groupName) + '" data-type="' + type + '" data-cat="' + category + '"' + (isChecked ? ' checked' : '') + '>' +
+      '  <span class="cs-group-check-mark"><i class="fa-solid fa-check"></i></span>' +
+      '</label>' +
+      '<span class="cs-group-color-dot" style="background:' + color + '"></span>' +
+      '<div class="cs-group-info">' +
+      '  <div class="cs-group-name">' + escapeHtml(groupName) + '</div>' +
+      '  <div class="cs-group-count">' + count + ' 条</div>' +
+      '</div>';
+
+    // 绑定勾选
+    var checkbox = item.querySelector('input[type="checkbox"]');
+    checkbox.addEventListener('change', function () {
+      handleGroupCheckboxChange(groupName, type, checkbox.checked, item);
+    });
+
+    // 整行可点击
+    item.addEventListener('click', function (e) {
+      if (e.target.closest('.cs-group-checkbox')) return;
+      checkbox.checked = !checkbox.checked;
+      handleGroupCheckboxChange(groupName, type, checkbox.checked, item);
+    });
+
+    return item;
+  }
+
+  // 处理勾选变化
+  function handleGroupCheckboxChange(groupName, type, checked, itemEl) {
+    var targetArr = null;
+    if (type === 'public') targetArr = publicGroups;
+    else if (type === 'private') targetArr = privateGroups;
+    else if (type === 'emoji') targetArr = emojiGroups;
+    else if (type === 'sticker') targetArr = stickerGroups;
+
+    if (!targetArr) return;
+
+    var idx = targetArr.indexOf(groupName);
+    if (checked && idx < 0) {
+      targetArr.push(groupName);
+    } else if (!checked && idx >= 0) {
+      targetArr.splice(idx, 1);
+    }
+
+    if (itemEl) {
+      itemEl.classList.toggle('checked', checked);
+    }
+
+    persistGroupSelections();
+    updateAllGroupCounts();
+
+    // 刷新字卡库
+    if (typeof window.refreshCardUI === 'function') {
+      window.refreshCardUI();
+    }
+  }
+
+  // 更新计数
+  function updateAllGroupCounts() {
+    var pubCount = document.getElementById('csPublicCount');
+    var priCount = document.getElementById('csPrivateCount');
+    var emoCount = document.getElementById('csEmojiGroupCount');
+    var stiCount = document.getElementById('csStickerGroupCount');
+
+    if (pubCount) pubCount.textContent = publicGroups.length;
+    if (priCount) priCount.textContent = privateGroups.length;
+    if (emoCount) emoCount.textContent = emojiGroups.length;
+    if (stiCount) stiCount.textContent = stickerGroups.length;
+  }
+
+  // ==================== 绑定聊天 Tab 事件 ====================
+  function bindChatTabEvents() {
+    bindModeSwitch();
+  }
+
+  // ==================== 工具 ====================
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+
+  function escapeAttr(str) {
+    if (!str) return '';
+    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   // ==================== 切换 Tab ====================
@@ -491,257 +827,10 @@
     }
     if (tabName === 'chat') {
       restoreModeSwitch();
-      renderPublicList();
-      renderPrivateList();
+      renderAllGroupLists();
     }
   }
 
-    // ==================== 字卡模式状态 ====================
-  var CARD_MODE_KEY = 'chat_card_mode';
-  var cardMode = 'all';
-
-  function loadCardMode(callback) {
-    if (typeof localforage !== 'undefined') {
-      localforage.getItem(CARD_MODE_KEY).then(function (val) {
-        if (val) cardMode = val;
-        if (callback) callback();
-      }).catch(function () { if (callback) callback(); });
-    } else {
-      try {
-        var raw = localStorage.getItem(CARD_MODE_KEY);
-        if (raw) cardMode = raw;
-      } catch (e) {}
-      if (callback) callback();
-    }
-  }
-
-  function persistCardMode() {
-    if (typeof localforage !== 'undefined') {
-      localforage.setItem(CARD_MODE_KEY, cardMode).catch(function () {});
-    } else {
-      try { localStorage.setItem(CARD_MODE_KEY, cardMode); } catch (e) {}
-    }
-    window.chatCardMode = cardMode;
-  }
-
-  function getCurrentContactId() {
-    try { return localStorage.getItem('my_current_contact'); } catch (e) { return null; }
-  }
-  function getCurrentContactName() {
-    var chatName = document.getElementById('chatName');
-    if (chatName && chatName.textContent) return chatName.textContent;
-    return '当前联系人';
-  }
-
-  function renderPublicList() {
-    var list = document.getElementById('csPublicList');
-    var countEl = document.getElementById('csPublicCount');
-    if (!list) return;
-
-    var cards = (window.cardDatabase && window.cardDatabase.getPublic)
-      ? window.cardDatabase.getPublic() : [];
-
-    if (countEl) countEl.textContent = cards.length;
-
-    if (cards.length === 0) {
-      list.innerHTML = '<div class="cs-words-empty">还没有公共字卡，点上方"添加"新增吧~</div>';
-      return;
-    }
-
-    list.innerHTML = '';
-    cards.forEach(function (text) {
-      var item = document.createElement('div');
-      item.className = 'cs-word-item';
-      item.innerHTML =
-        '<span class="cs-word-text">' + escapeHtml(text) + '</span>' +
-        '<button class="cs-word-del"><i class="fa-solid fa-xmark"></i></button>';
-
-      item.querySelector('.cs-word-del').addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (!confirm('确定删除这条公共字卡吗？')) return;
-        window.cardDatabase.removePublic(text);
-        renderPublicList();
-        syncToCardLibrary();
-      });
-      list.appendChild(item);
-    });
-  }
-
-  function renderPrivateList() {
-    var list = document.getElementById('csPrivateList');
-    var countEl = document.getElementById('csPrivateCount');
-    var contactEl = document.getElementById('csPrivateContact');
-    if (!list) return;
-
-    var contactId = getCurrentContactId();
-    var contactName = getCurrentContactName();
-
-    if (contactEl) contactEl.textContent = '当前联系人：' + contactName;
-
-    var cards = (window.cardDatabase && window.cardDatabase.getPrivate && contactId)
-      ? window.cardDatabase.getPrivate(contactId) : [];
-
-    if (countEl) countEl.textContent = cards.length;
-
-    if (cards.length === 0) {
-      list.innerHTML = '<div class="cs-words-empty">该联系人还没有专属字卡</div>';
-      return;
-    }
-
-    list.innerHTML = '';
-    cards.forEach(function (text) {
-      var item = document.createElement('div');
-      item.className = 'cs-word-item cs-word-item-private';
-      item.innerHTML =
-        '<span class="cs-word-text">' + escapeHtml(text) + '</span>' +
-        '<button class="cs-word-del"><i class="fa-solid fa-xmark"></i></button>';
-
-      item.querySelector('.cs-word-del').addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (!confirm('确定删除这条专属字卡吗？')) return;
-        window.cardDatabase.removePrivate(contactId, text);
-        renderPrivateList();
-        syncToCardLibrary();
-      });
-      list.appendChild(item);
-    });
-  }
-
-  function openWordInputModal(mode, targetType) {
-    var existing = document.getElementById('csWordInputModal');
-    if (existing) existing.remove();
-
-    var modal = document.createElement('div');
-    modal.id = 'csWordInputModal';
-    modal.className = 'cs-word-modal';
-    modal.innerHTML =
-      '<div class="cs-word-modal-panel">' +
-      '  <div class="cs-word-modal-title">' +
-      (mode === 'add' ? '添加' : '导入') +
-      (targetType === 'public' ? '公共' : '专属') + '字卡' +
-      '  </div>' +
-      '  <textarea class="cs-word-modal-input" id="csWordModalInput" placeholder="' +
-      (mode === 'add' ? '输入一句话...' : '每行一条，粘贴多行文字...') +
-      '"></textarea>' +
-      '  <div class="cs-word-modal-actions">' +
-      '    <button class="cs-word-modal-cancel" id="csWordModalCancel">取消</button>' +
-      '    <button class="cs-word-modal-confirm" id="csWordModalConfirm">确定</button>' +
-      '  </div>' +
-      '</div>';
-
-    document.body.appendChild(modal);
-
-    document.getElementById('csWordModalCancel').addEventListener('click', function () {
-      modal.remove();
-    });
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) modal.remove();
-    });
-
-    document.getElementById('csWordModalConfirm').addEventListener('click', function () {
-      var text = document.getElementById('csWordModalInput').value.trim();
-      if (!text) { alert('请输入内容'); return; }
-
-      var lines = text.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
-      if (lines.length === 0) { alert('没有有效内容'); return; }
-
-      if (targetType === 'public') {
-        window.cardDatabase.addPublicMany(lines, true);
-        renderPublicList();
-      } else {
-        var contactId = getCurrentContactId();
-        if (!contactId) { alert('未找到当前联系人'); return; }
-        window.cardDatabase.addPrivateMany(contactId, lines, true);
-        renderPrivateList();
-      }
-
-      modal.remove();
-      syncToCardLibrary();
-    });
-
-    setTimeout(function () {
-      var input = document.getElementById('csWordModalInput');
-      if (input) input.focus();
-    }, 100);
-  }
-
-  function bindModeSwitch() {
-    var switchEl = document.getElementById('csModeSwitch');
-    if (!switchEl) return;
-    switchEl.addEventListener('click', function (e) {
-      var btn = e.target.closest('.cs-mode-btn');
-      if (!btn) return;
-      var mode = btn.getAttribute('data-mode');
-      if (!mode) return;
-      cardMode = mode;
-      persistCardMode();
-
-      switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-mode') === mode);
-      });
-
-      var hintEl = document.getElementById('csModeHint');
-      if (hintEl) {
-        if (mode === 'public-only') {
-          hintEl.textContent = '自动回复时只从公共字卡抽取';
-        } else if (mode === 'private-only') {
-          hintEl.textContent = '自动回复时只从当前联系人的专属字卡抽取';
-        } else {
-          hintEl.textContent = '自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取';
-        }
-      }
-    });
-  }
-
-  function restoreModeSwitch() {
-    var switchEl = document.getElementById('csModeSwitch');
-    if (!switchEl) return;
-    switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-mode') === cardMode);
-    });
-    var hintEl = document.getElementById('csModeHint');
-    if (hintEl) {
-      if (cardMode === 'public-only') hintEl.textContent = '自动回复时只从公共字卡抽取';
-      else if (cardMode === 'private-only') hintEl.textContent = '自动回复时只从当前联系人的专属字卡抽取';
-      else hintEl.textContent = '自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取';
-    }
-  }
-
-  function bindChatTabEvents() {
-    bindModeSwitch();
-
-    var pubAdd = document.getElementById('csPublicAddBtn');
-    var pubImp = document.getElementById('csPublicImportBtn');
-    var priAdd = document.getElementById('csPrivateAddBtn');
-    var priImp = document.getElementById('csPrivateImportBtn');
-
-    if (pubAdd) pubAdd.addEventListener('click', function () {
-      openWordInputModal('add', 'public');
-    });
-    if (pubImp) pubImp.addEventListener('click', function () {
-      openWordInputModal('import', 'public');
-    });
-    if (priAdd) priAdd.addEventListener('click', function () {
-      openWordInputModal('add', 'private');
-    });
-    if (priImp) priImp.addEventListener('click', function () {
-      openWordInputModal('import', 'private');
-    });
-  }
-
-  function syncToCardLibrary() {
-    if (window.refreshCardUI) {
-      window.refreshCardUI();
-    }
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function (m) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-    });
-  }
-  
   // ==================== 打开/关闭 ====================
   function openPanel() {
     createPanel();
@@ -757,7 +846,7 @@
     if (panel) panel.classList.remove('active');
   }
 
-   // ==================== 初始化 ====================
+  // ==================== 初始化 ====================
   function init() {
     createPanel();
     bindSettingsTrigger();
@@ -765,10 +854,12 @@
     loadTab(function () {
       loadCardMode(function () {
         window.chatCardMode = cardMode;
-        loadAppearance(function () {
-          applyAppearance();
-          fillPanelValues();
-          switchTab(activeTab);
+        loadGroupSelections(function () {
+          loadAppearance(function () {
+            applyAppearance();
+            fillPanelValues();
+            switchTab(activeTab);
+          });
         });
       });
     });
@@ -790,7 +881,9 @@
     open: openPanel,
     close: closePanel,
     switchTab: switchTab,
-    applyAppearance: applyAppearance
+    applyAppearance: applyAppearance,
+    refreshGroupCheckboxes: renderAllGroupLists,
+    refreshGroupLists: renderAllGroupLists
   };
 
 })();
