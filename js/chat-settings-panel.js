@@ -1,8 +1,11 @@
 /**
  * 传讯页面 - 设置面板（独立模块）
- * 本版追加：数据与工具 Tab 的导出/导入逻辑
- * - 导出：勾选内容 → 遍历 localforage → 打包 JSON → 浏览器下载
- * - 导入：选择 JSON → 解析 → localforage.setItem 逐条写回 → 提示成功
+ * 本版追加：有消息，轻轻告诉你 —— 通知/保活逻辑
+ * - 允许手机系统通知（Notification API）
+ * - 站内消息横幅开关（持久化）
+ * - 显示消息内容开关（持久化）
+ * - 允许他随机来电（持久化，video-call.js 读取）
+ * - 后台保活 · 静音循环（AudioContext 循环静音）
  */
 
 (function () {
@@ -19,15 +22,14 @@
   var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';
   var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups';
 
-  var CUSTOM_CSS_STYLE_ID = 'user-custom-bubble-css';
+  // 通知 & 保活
+  var STORE_KEY_BANNER_ENABLED = 'chat_notify_banner_enabled';
+  var STORE_KEY_SHOW_CONTENT = 'chat_notify_show_content';
+  var STORE_KEY_RANDOM_CALL = 'chat_notify_random_call';
+  var STORE_KEY_SILENT_LOOP = 'chat_notify_silent_loop';
+  var STORE_KEY_NOTIFY_GRANTED = 'chat_notify_permission_granted';
 
-  // 导出时按分类归类的 key 前缀
-  // 使用前缀匹配可以覆盖所有相关 key
-  var EXPORT_CATEGORIES = {
-    chat: ['chat', 'message', 'messages', 'my_contacts', 'my_current_contact', 'group_chat', 'call'],
-    cards: ['cardDatabase', 'card', 'my_word_cards', 'my_kaomoji_cards', 'my_place_cards', 'my_mood_cards', 'my_emoji_cards', 'my_status_cards', 'my_card_groups'],
-    media: ['home_custom_images', 'avatar', 'piggy', 'piggy_bank']
-  };
+  var CUSTOM_CSS_STYLE_ID = 'user-custom-bubble-css';
 
   // ==================== 状态 ====================
   var activeTab = 'appearance';
@@ -40,6 +42,17 @@
   var emojiGroups = [];
   var stickerGroups = [];
   var settingsTrigger = null;
+
+  // 通知 & 保活状态
+  var notifyState = {
+    bannerEnabled: true,      // 站内消息横幅
+    showContent: true,        // 显示消息内容
+    randomCall: false,        // 允许他随机来电
+    silentLoop: false,        // 后台保活
+    permissionGranted: false  // 系统通知权限
+  };
+
+  var silentLoopNodes = null; // 静音循环的 AudioContext 节点
 
   // ==================== 持久化 ====================
   function persist(key, value) {
@@ -142,6 +155,187 @@
     keys.forEach(function (k) {
       loadValue(k.store, function (d) { k.assign(d); done(); });
     });
+  }
+
+  // ==================== 通知/保活 持久化 ====================
+  function persistNotifyState() {
+    persist(STORE_KEY_BANNER_ENABLED, notifyState.bannerEnabled);
+    persist(STORE_KEY_SHOW_CONTENT, notifyState.showContent);
+    persist(STORE_KEY_RANDOM_CALL, notifyState.randomCall);
+    persist(STORE_KEY_SILENT_LOOP, notifyState.silentLoop);
+    persist(STORE_KEY_NOTIFY_GRANTED, notifyState.permissionGranted);
+
+    // 同步到 window，供其他模块读取
+    window.chatNotifyState = {
+      bannerEnabled: notifyState.bannerEnabled,
+      showContent: notifyState.showContent,
+      randomCall: notifyState.randomCall,
+      silentLoop: notifyState.silentLoop,
+      permissionGranted: notifyState.permissionGranted
+    };
+  }
+
+  function loadNotifyState(cb) {
+    var remaining = 5;
+    function done() {
+      remaining--;
+      if (remaining <= 0) {
+        window.chatNotifyState = {
+          bannerEnabled: notifyState.bannerEnabled,
+          showContent: notifyState.showContent,
+          randomCall: notifyState.randomCall,
+          silentLoop: notifyState.silentLoop,
+          permissionGranted: notifyState.permissionGranted
+        };
+        if (cb) cb();
+      }
+    }
+    loadValue(STORE_KEY_BANNER_ENABLED, function (v) { if (typeof v === 'boolean') notifyState.bannerEnabled = v; done(); });
+    loadValue(STORE_KEY_SHOW_CONTENT, function (v) { if (typeof v === 'boolean') notifyState.showContent = v; done(); });
+    loadValue(STORE_KEY_RANDOM_CALL, function (v) { if (typeof v === 'boolean') notifyState.randomCall = v; done(); });
+    loadValue(STORE_KEY_SILENT_LOOP, function (v) { if (typeof v === 'boolean') notifyState.silentLoop = v; done(); });
+    loadValue(STORE_KEY_NOTIFY_GRANTED, function (v) { if (typeof v === 'boolean') notifyState.permissionGranted = v; done(); });
+  }
+
+  // ==================== 静音循环 ====================
+  function startSilentLoop() {
+    if (silentLoopNodes) return true;
+
+    try {
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return false;
+
+      var ctx = new AudioContext();
+      var oscillator = ctx.createOscillator();
+      var gainNode = ctx.createGain();
+
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 0; // 0Hz 等于无声
+      gainNode.gain.value = 0;
+
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      oscillator.start();
+
+      // 某些浏览器需要 resume
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(function () {});
+      }
+
+      silentLoopNodes = {
+        ctx: ctx,
+        oscillator: oscillator,
+        gainNode: gainNode
+      };
+      console.log('[静音循环] 已开启');
+      return true;
+    } catch (e) {
+      console.warn('[静音循环] 启动失败:', e);
+      return false;
+    }
+  }
+
+  function stopSilentLoop() {
+    if (!silentLoopNodes) return;
+    try {
+      silentLoopNodes.oscillator.stop();
+      silentLoopNodes.oscillator.disconnect();
+      silentLoopNodes.gainNode.disconnect();
+      if (silentLoopNodes.ctx && silentLoopNodes.ctx.state !== 'closed') {
+        silentLoopNodes.ctx.close().catch(function () {});
+      }
+    } catch (e) {}
+    silentLoopNodes = null;
+    console.log('[静音循环] 已关闭');
+  }
+
+  // ==================== 通知权限 ====================
+  function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+      alert('当前浏览器不支持系统通知');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      notifyState.permissionGranted = true;
+      persistNotifyState();
+      updateNotifyUI();
+      alert('系统通知已开启');
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      alert('系统通知已被拒绝。\n请前往 手机设置 → 浏览器 → 通知，手动开启。');
+      return;
+    }
+
+    Notification.requestPermission().then(function (permission) {
+      if (permission === 'granted') {
+        notifyState.permissionGranted = true;
+        persistNotifyState();
+        updateNotifyUI();
+        alert('系统通知已开启');
+      } else {
+        notifyState.permissionGranted = false;
+        persistNotifyState();
+        updateNotifyUI();
+        alert('未开启系统通知。\n如需开启，请前往 手机设置 → 浏览器 → 通知。');
+      }
+    }).catch(function () {
+      alert('无法请求通知权限');
+    });
+  }
+
+  // ==================== 通知 UI 状态刷新 ====================
+  function updateNotifyUI() {
+    // 系统通知按钮
+    var btn = document.getElementById('dsAllowNotifyBtn');
+    if (btn) {
+      if (notifyState.permissionGranted || (('Notification' in window) && Notification.permission === 'granted')) {
+        btn.innerHTML = '<i class="fa-solid fa-bell"></i> 已开启系统通知';
+        btn.style.background = '#e6f5ed';
+        btn.style.color = '#4CAF7D';
+        btn.style.borderColor = '#c6e8d5';
+        btn.disabled = true;
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-bell"></i> 允许手机系统通知';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.disabled = false;
+      }
+    }
+
+    // 三个 Toggle
+    var bannerToggle = document.getElementById('dsBannerToggle');
+    if (bannerToggle) bannerToggle.checked = notifyState.bannerEnabled;
+
+    var showContentToggle = document.getElementById('dsShowContentToggle');
+    if (showContentToggle) showContentToggle.checked = notifyState.showContent;
+
+    var randomCallToggle = document.getElementById('dsRandomCallToggle');
+    if (randomCallToggle) randomCallToggle.checked = notifyState.randomCall;
+
+    // 静音循环按钮和状态
+    var loopBtn = document.getElementById('dsSilentLoopBtn');
+    var loopDesc = document.getElementById('dsSilentLoopDesc');
+    if (loopBtn) {
+      if (notifyState.silentLoop) {
+        loopBtn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 关闭静音循环';
+        loopBtn.style.background = '#e6f5ed';
+        loopBtn.style.color = '#4CAF7D';
+        loopBtn.style.borderColor = '#c6e8d5';
+      } else {
+        loopBtn.innerHTML = '<i class="fa-solid fa-circle-play"></i> 开启静音循环';
+        loopBtn.style.background = '';
+        loopBtn.style.color = '';
+        loopBtn.style.borderColor = '';
+      }
+    }
+    if (loopDesc) {
+      loopDesc.textContent = notifyState.silentLoop ? '静音循环已开启' : '静音循环未开启';
+    }
   }
 
   // ==================== 颜色工具 ====================
@@ -396,7 +590,6 @@
       styleEl.id = CUSTOM_CSS_STYLE_ID;
       styleEl.type = 'text/css';
       document.head.appendChild(styleEl);
-      console.log('[自定义CSS] 已创建 style 容器 #' + CUSTOM_CSS_STYLE_ID);
     }
     return styleEl;
   }
@@ -405,7 +598,6 @@
     var cssText = (bubble.customCss || '').trim();
     var styleEl = ensureCustomCssStyleTag();
     styleEl.innerHTML = cssText;
-    console.log('[自定义CSS] 已注入，长度：', cssText.length);
     if (styleEl.parentNode !== document.head) {
       document.head.appendChild(styleEl);
     }
@@ -416,7 +608,6 @@
     persistBubble();
     var styleEl = ensureCustomCssStyleTag();
     styleEl.innerHTML = '';
-    console.log('[自定义CSS] 已清空');
   }
 
   function applyAll() {
@@ -454,38 +645,25 @@
     }, true);
   }
 
-  // ==================== 【新增】导出/导入数据逻辑 ====================
-
-  // 判断某个 key 属于哪个分类
+  // ==================== 导出/导入（保留原有逻辑） ====================
   function getKeyCategory(key) {
     if (!key) return null;
     var lower = String(key).toLowerCase();
-    // 聊天记录
-    for (var i = 0; i < EXPORT_CATEGORIES.chat.length; i++) {
-      if (lower.indexOf(EXPORT_CATEGORIES.chat[i].toLowerCase()) >= 0) return 'chat';
-    }
-    // 字卡库
-    for (var j = 0; j < EXPORT_CATEGORIES.cards.length; j++) {
-      if (lower.indexOf(EXPORT_CATEGORIES.cards[j].toLowerCase()) >= 0) return 'cards';
-    }
-    // 头像与图片
-    for (var k = 0; k < EXPORT_CATEGORIES.media.length; k++) {
-      if (lower.indexOf(EXPORT_CATEGORIES.media[k].toLowerCase()) >= 0) return 'media';
-    }
+    var chatKeys = ['chat', 'message', 'messages', 'my_contacts', 'my_current_contact', 'group_chat', 'call'];
+    var cardKeys = ['carddatabase', 'card', 'my_word_cards', 'my_kaomoji_cards', 'my_place_cards', 'my_mood_cards', 'my_emoji_cards', 'my_status_cards', 'my_card_groups'];
+    var mediaKeys = ['home_custom_images', 'avatar', 'piggy', 'piggy_bank'];
+    var i;
+    for (i = 0; i < chatKeys.length; i++) if (lower.indexOf(chatKeys[i]) >= 0) return 'chat';
+    for (i = 0; i < cardKeys.length; i++) if (lower.indexOf(cardKeys[i]) >= 0) return 'cards';
+    for (i = 0; i < mediaKeys.length; i++) if (lower.indexOf(mediaKeys[i]) >= 0) return 'media';
     return null;
   }
 
-  // 获取 localforage 所有 key
   function getAllKeys() {
     return new Promise(function (resolve) {
       if (typeof localforage === 'undefined') {
-        // 降级：用 localStorage
         var keys = [];
-        try {
-          for (var i = 0; i < localStorage.length; i++) {
-            keys.push(localStorage.key(i));
-          }
-        } catch (e) {}
+        try { for (var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch (e) {}
         resolve(keys);
         return;
       }
@@ -497,7 +675,6 @@
     });
   }
 
-  // 读取 localforage 中某个 key 的值
   function getItem(key) {
     return new Promise(function (resolve) {
       if (typeof localforage === 'undefined') {
@@ -511,13 +688,10 @@
     });
   }
 
-  // 写入 localforage
   function setItem(key, value) {
     return new Promise(function (resolve) {
       if (typeof localforage === 'undefined') {
-        try {
-          localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
-        } catch (e) {}
+        try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); } catch (e) {}
         resolve();
         return;
       }
@@ -525,7 +699,6 @@
     });
   }
 
-  // 打开"导出数据"面板
   function openExportPanel() {
     var existing = document.getElementById('dsExportModal');
     if (existing) existing.parentNode.removeChild(existing);
@@ -580,7 +753,6 @@
     });
   }
 
-  // 执行导出
   function doExport(includeChat, includeCards, includeMedia) {
     getAllKeys().then(function (keys) {
       var result = {
@@ -589,39 +761,24 @@
           type: 'localforage-backup',
           version: 1,
           exportedAt: new Date().toISOString(),
-          include: {
-            chat: includeChat,
-            cards: includeCards,
-            media: includeMedia
-          }
+          include: { chat: includeChat, cards: includeCards, media: includeMedia }
         },
         data: {}
       };
-
       var promises = [];
       keys.forEach(function (key) {
         var cat = getKeyCategory(key);
-        // 如果没有匹配到分类，默认归到 chat（避免漏掉其他数据）
         var shouldInclude = false;
         if (cat === 'chat') shouldInclude = includeChat;
         else if (cat === 'cards') shouldInclude = includeCards;
         else if (cat === 'media') shouldInclude = includeMedia;
         else shouldInclude = (includeChat || includeCards || includeMedia);
-
         if (!shouldInclude) return;
-
-        promises.push(getItem(key).then(function (val) {
-          result.data[key] = val;
-        }));
+        promises.push(getItem(key).then(function (val) { result.data[key] = val; }));
       });
-
       Promise.all(promises).then(function () {
         var count = Object.keys(result.data).length;
-        if (count === 0) {
-          alert('没有匹配到任何数据可以导出');
-          return;
-        }
-
+        if (count === 0) { alert('没有匹配到任何数据可以导出'); return; }
         var jsonStr = JSON.stringify(result, null, 2);
         var blob = new Blob([jsonStr], { type: 'application/json' });
         var url = URL.createObjectURL(blob);
@@ -633,16 +790,10 @@
         a.click();
         document.body.removeChild(a);
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-
-        console.log('[导出] 已导出 ' + count + ' 项数据');
-      }).catch(function (err) {
-        console.error('[导出] 失败:', err);
-        alert('导出失败：' + err.message);
-      });
+      }).catch(function (err) { alert('导出失败：' + err.message); });
     });
   }
 
-  // 执行导入
   function doImport() {
     var input = document.createElement('input');
     input.type = 'file';
@@ -652,55 +803,24 @@
 
     input.addEventListener('change', function () {
       var file = input.files && input.files[0];
-      if (!file) {
-        document.body.removeChild(input);
-        return;
-      }
-
+      if (!file) { document.body.removeChild(input); return; }
       var reader = new FileReader();
       reader.onload = function (e) {
         try {
           var text = e.target.result;
           var parsed = JSON.parse(text);
           var data = parsed && parsed.data ? parsed.data : parsed;
-          if (!data || typeof data !== 'object') {
-            alert('文件格式不正确');
-            document.body.removeChild(input);
-            return;
-          }
-
+          if (!data || typeof data !== 'object') { alert('文件格式不正确'); document.body.removeChild(input); return; }
           var keys = Object.keys(data);
-          if (keys.length === 0) {
-            alert('文件中没有数据');
-            document.body.removeChild(input);
-            return;
-          }
-
-          if (!confirm('确定要导入 ' + keys.length + ' 项数据吗？\n（同名 key 会被覆盖）')) {
-            document.body.removeChild(input);
-            return;
-          }
-
-          // 逐条写入
-          var promises = keys.map(function (k) {
-            return setItem(k, data[k]);
-          });
-
+          if (keys.length === 0) { alert('文件中没有数据'); document.body.removeChild(input); return; }
+          if (!confirm('确定要导入 ' + keys.length + ' 项数据吗？\n（同名 key 会被覆盖）')) { document.body.removeChild(input); return; }
+          var promises = keys.map(function (k) { return setItem(k, data[k]); });
           Promise.all(promises).then(function () {
-            console.log('[导入] 已导入 ' + keys.length + ' 项数据');
             alert('导入成功！\n共导入 ' + keys.length + ' 项数据。\n\n页面即将刷新以应用更改。');
-            // 延迟刷新，让提示先显示
-            setTimeout(function () {
-              window.location.reload();
-            }, 800);
-          }).catch(function (err) {
-            console.error('[导入] 失败:', err);
-            alert('导入失败：' + err.message);
-          });
-
+            setTimeout(function () { window.location.reload(); }, 800);
+          }).catch(function (err) { alert('导入失败：' + err.message); });
           document.body.removeChild(input);
         } catch (err) {
-          console.error('[导入] 解析失败:', err);
           alert('文件解析失败：' + err.message);
           document.body.removeChild(input);
         }
@@ -920,7 +1040,7 @@
       '        <div class="ds-divider"></div>',
       '        <div class="ds-notify-block">',
       '          <div class="ds-notify-label">后台保活 · 静音循环</div>',
-      '          <div class="ds-notify-desc">静音循环未开启</div>',
+      '          <div class="ds-notify-desc" id="dsSilentLoopDesc">静音循环未开启</div>',
       '          <button class="ds-btn ds-btn-soft ds-btn-full" id="dsSilentLoopBtn">',
       '            <i class="fa-solid fa-circle-play"></i> 开启静音循环',
       '          </button>',
@@ -940,6 +1060,7 @@
     bindPanelEvents();
     renderThemeColors();
     renderBubbleStyles();
+    updateNotifyUI();
   }
 
   var PRESET_COLORS = [
@@ -1011,6 +1132,8 @@
     renderBubbleStyles();
     var cssInput = document.getElementById('csCustomCssInput');
     if (cssInput) cssInput.value = bubble.customCss || '';
+
+    updateNotifyUI();
   }
 
   function bindPanelEvents() {
@@ -1033,6 +1156,7 @@
       });
     });
 
+    // ============ 外观与界面 ============
     var customColorInput = document.getElementById('csCustomColorInput');
     if (customColorInput) {
       customColorInput.addEventListener('input', function () {
@@ -1114,11 +1238,6 @@
         bubble.customCss = cssText;
         persistBubble();
         applyCustomCss();
-        var originalBg = cssApply.style.background;
-        cssApply.style.background = '#7ED3A8';
-        setTimeout(function () {
-          cssApply.style.background = originalBg;
-        }, 400);
       });
     }
     if (cssClear) {
@@ -1139,18 +1258,77 @@
       });
     }
 
-    // ============ 数据与工具 Tab：导出/导入逻辑 ============
+    // ============ 数据与工具：导出/导入 ============
     var exportBtn = document.getElementById('dsExportDataBtn');
     if (exportBtn) {
-      exportBtn.addEventListener('click', function () {
-        openExportPanel();
+      exportBtn.addEventListener('click', function () { openExportPanel(); });
+    }
+    var importBtn = document.getElementById('dsImportDataBtn');
+    if (importBtn) {
+      importBtn.addEventListener('click', function () { doImport(); });
+    }
+
+    // ============ 数据与工具：通知/保活 ============
+
+    // 1. 允许手机系统通知
+    var allowNotifyBtn = document.getElementById('dsAllowNotifyBtn');
+    if (allowNotifyBtn) {
+      allowNotifyBtn.addEventListener('click', function () {
+        requestNotificationPermission();
       });
     }
 
-    var importBtn = document.getElementById('dsImportDataBtn');
-    if (importBtn) {
-      importBtn.addEventListener('click', function () {
-        doImport();
+    // 2. 站内消息横幅开关
+    var bannerToggle = document.getElementById('dsBannerToggle');
+    if (bannerToggle) {
+      bannerToggle.addEventListener('change', function () {
+        notifyState.bannerEnabled = bannerToggle.checked;
+        persistNotifyState();
+        console.log('[通知] 站内消息横幅:', notifyState.bannerEnabled ? '开启' : '关闭');
+      });
+    }
+
+    // 3. 显示消息内容开关
+    var showContentToggle = document.getElementById('dsShowContentToggle');
+    if (showContentToggle) {
+      showContentToggle.addEventListener('change', function () {
+        notifyState.showContent = showContentToggle.checked;
+        persistNotifyState();
+        console.log('[通知] 显示消息内容:', notifyState.showContent ? '开启' : '关闭');
+      });
+    }
+
+    // 4. 允许他随机来电开关
+    var randomCallToggle = document.getElementById('dsRandomCallToggle');
+    if (randomCallToggle) {
+      randomCallToggle.addEventListener('change', function () {
+        notifyState.randomCall = randomCallToggle.checked;
+        persistNotifyState();
+        console.log('[来电] 允许他随机来电:', notifyState.randomCall ? '开启' : '关闭');
+      });
+    }
+
+    // 5. 静音循环开关
+    var silentLoopBtn = document.getElementById('dsSilentLoopBtn');
+    if (silentLoopBtn) {
+      silentLoopBtn.addEventListener('click', function () {
+        if (notifyState.silentLoop) {
+          // 关闭
+          stopSilentLoop();
+          notifyState.silentLoop = false;
+          persistNotifyState();
+          updateNotifyUI();
+        } else {
+          // 开启
+          var ok = startSilentLoop();
+          if (ok) {
+            notifyState.silentLoop = true;
+            persistNotifyState();
+            updateNotifyUI();
+          } else {
+            alert('静音循环启动失败，可能是浏览器不支持');
+          }
+        }
       });
     }
 
@@ -1347,6 +1525,7 @@
     });
     if (tabName === 'appearance') fillPanelValues();
     if (tabName === 'chat') { restoreModeSwitch(); renderAllGroupLists(); }
+    if (tabName === 'data') updateNotifyUI();
   }
 
   function openPanel() {
@@ -1355,6 +1534,7 @@
     if (!panel) return;
     switchTab(activeTab);
     fillPanelValues();
+    updateNotifyUI();
     panel.classList.add('active');
   }
   function closePanel() {
@@ -1374,15 +1554,26 @@
             loadCardMode(function () {
               window.chatCardMode = cardMode;
               loadGroupSelections(function () {
-                applyTheme();
-                applyFont();
-                applyFontUrl();
-                applyBubble();
-                if (bubble.customCss) {
-                  applyCustomCss();
-                }
-                fillPanelValues();
-                switchTab(activeTab);
+                loadNotifyState(function () {
+                  applyTheme();
+                  applyFont();
+                  applyFontUrl();
+                  applyBubble();
+                  if (bubble.customCss) applyCustomCss();
+                  fillPanelValues();
+                  updateNotifyUI();
+                  switchTab(activeTab);
+
+                  // 如果之前开启了静音循环，自动恢复
+                  if (notifyState.silentLoop) {
+                    var ok = startSilentLoop();
+                    if (!ok) {
+                      notifyState.silentLoop = false;
+                      persistNotifyState();
+                      updateNotifyUI();
+                    }
+                  }
+                });
               });
             });
           });
@@ -1417,9 +1608,13 @@
     applyAll: applyAll,
     refreshGroupCheckboxes: renderAllGroupLists,
     refreshGroupLists: renderAllGroupLists,
-    // 新增：导出/导入接口
     exportData: openExportPanel,
-    importData: doImport
+    importData: doImport,
+    // 暴露通知状态
+    getNotifyState: function () { return notifyState; },
+    requestNotification: requestNotificationPermission,
+    startSilentLoop: startSilentLoop,
+    stopSilentLoop: stopSilentLoop
   };
 
   window.setCustomBubbleCss = function (cssText) {
