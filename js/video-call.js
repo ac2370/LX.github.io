@@ -87,8 +87,7 @@
   }
 
   // ==================== 向聊天窗口添加通话记录 ====================
-  function _addCallEvent(icon, label, detail) {
-    // 优先使用全局注册的函数
+   function _addCallEvent(icon, label, detail) {
     if (typeof window._addCallEvent === 'function' && window._addCallEvent !== _addCallEvent) {
       try { window._addCallEvent(icon, label, detail); return; } catch (e) {}
     }
@@ -96,8 +95,9 @@
     var chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
 
+    // 系统消息行：只包含一个居中的提示条，无任何头像
     var row = document.createElement('div');
-    row.className = 'message-row call-record';
+    row.className = 'message-row call-record system-call-event';
 
     var bubble = document.createElement('div');
     bubble.className = 'call-record-bubble';
@@ -109,11 +109,16 @@
     row.appendChild(bubble);
     chatMessages.appendChild(row);
 
+    // 兜底：移除可能被其他脚本添加的头像
+    setTimeout(function () {
+      var avatars = row.querySelectorAll('.chat-msg-avatar');
+      avatars.forEach(function (a) { a.remove(); });
+    }, 50);
+
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
-  // 挂载到 window，供其他模块调用
   window._addCallEvent = _addCallEvent;
 
   // ==================== 注入 CSS ====================
