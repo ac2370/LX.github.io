@@ -1,0 +1,1398 @@
+/* ============================================================
+   chat-settings.css —— 传讯页面设置面板
+   包含：
+     - 设置面板主框架（毛玻璃）
+     - 外观与界面 Tab
+     - 聊天与字卡 Tab
+     - 分组勾选模式
+     - 数据与工具 Tab
+     - 数据导出/导入
+   ============================================================ */
+
+/* ============ 设置面板（全屏毛玻璃） ============ */
+.chat-settings-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.chat-settings-panel.active {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+.chat-settings-panel-inner {
+  width: 100%;
+  max-width: 430px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 60px rgba(0, 20, 30, 0.25);
+  overflow: hidden;
+  animation: popIn 0.25s ease;
+}
+body.theme-dark .chat-settings-panel-inner {
+  background: rgba(38, 44, 52, 0.95);
+  border-color: var(--theme-card-border);
+}
+
+/* ============ 面板头部 ============ */
+.chat-settings-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 20px;
+  border-bottom: 1px solid #f0f3f6;
+}
+body.theme-dark .chat-settings-header {
+  border-bottom-color: var(--theme-card-border);
+}
+
+.chat-settings-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .chat-settings-title { color: var(--theme-text); }
+.chat-settings-title i { color: #f8b4b4; }
+
+.chat-settings-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #f5f6f8;
+  border: none;
+  color: #55606b;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+.chat-settings-close:active {
+  background: #e8ecf0;
+  transform: scale(0.92);
+}
+body.theme-dark .chat-settings-close {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+}
+
+/* ============ 选项卡 ============ */
+.chat-settings-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  padding: 12px 16px 8px 16px;
+  border-bottom: 1px solid #f0f3f6;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chat-settings-tabs::-webkit-scrollbar { display: none; }
+body.theme-dark .chat-settings-tabs {
+  border-bottom-color: var(--theme-card-border);
+}
+
+.chat-settings-tab {
+  flex: 1;
+  min-width: 72px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.chat-settings-tab i {
+  font-size: 14px;
+}
+.chat-settings-tab.active {
+  background: #fdf0f0;
+  color: #e58b8b;
+}
+.chat-settings-tab:active {
+  transform: scale(0.96);
+}
+body.theme-dark .chat-settings-tab {
+  color: var(--theme-text-muted);
+}
+body.theme-dark .chat-settings-tab.active {
+  background: rgba(248, 180, 180, 0.15);
+  color: #f8b4b4;
+}
+
+/* ============ 内容区 ============ */
+.chat-settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chat-settings-body::-webkit-scrollbar { display: none; }
+
+.chat-settings-tab-panel {
+  display: none;
+}
+.chat-settings-tab-panel.active {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.chat-settings-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8a99;
+  letter-spacing: 0.5px;
+  margin: 4px 0 12px 0;
+  text-transform: uppercase;
+}
+body.theme-dark .chat-settings-section-title {
+  color: var(--theme-text-muted);
+}
+
+/* 占位提示 */
+.chat-settings-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  background: #fafbfc;
+  border-radius: 18px;
+  border: 1.5px dashed #e2e8ee;
+  text-align: center;
+}
+body.theme-dark .chat-settings-placeholder {
+  background: rgba(42, 48, 56, 0.5);
+  border-color: var(--theme-card-border);
+}
+.chat-settings-placeholder i {
+  font-size: 32px;
+  color: #dde6ee;
+}
+body.theme-dark .chat-settings-placeholder i {
+  color: var(--theme-text-faint);
+}
+.chat-settings-placeholder p {
+  font-size: 13px;
+  color: #b6c2cd;
+  margin: 0;
+  line-height: 1.6;
+}
+body.theme-dark .chat-settings-placeholder p {
+  color: var(--theme-text-muted);
+}
+
+/* ============ 面板内区块（通用） ============ */
+.chat-settings-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f3f6;
+}
+.chat-settings-section:last-child {
+  border-bottom: none;
+  padding-bottom: 4px;
+}
+body.theme-dark .chat-settings-section {
+  border-bottom-color: var(--theme-card-border);
+}
+
+/* ============ 滑块 ============ */
+.cs-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cs-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: #e2e8ee;
+  outline: none;
+  cursor: pointer;
+}
+.cs-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #f8b4b4;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(248, 180, 180, 0.5);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.cs-slider::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+}
+.cs-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #f8b4b4;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(248, 180, 180, 0.5);
+  cursor: pointer;
+}
+body.theme-dark .cs-slider {
+  background: #3a424a;
+}
+.cs-slider-value {
+  flex-shrink: 0;
+  width: 44px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e58b8b;
+  font-variant-numeric: tabular-nums;
+}
+.cs-slider-hint {
+  font-size: 11px;
+  color: #a8b4c0;
+  margin-top: 6px;
+  padding-left: 2px;
+}
+body.theme-dark .cs-slider-hint {
+  color: var(--theme-text-muted);
+}
+
+/* ============ 主题配色 ============ */
+.cs-theme-colors {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cs-theme-color-btn {
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 0;
+  position: relative;
+}
+.cs-theme-color-btn:active { transform: scale(0.88); }
+.cs-theme-color-btn.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #333;
+}
+body.theme-dark .cs-theme-color-btn.active {
+  border-color: #2a3038;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+.cs-custom-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.cs-custom-color-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  color: #55606b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+.cs-custom-color-btn:active {
+  background: #f2f6fa;
+  transform: scale(0.97);
+}
+body.theme-dark .cs-custom-color-btn {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+.cs-custom-color-btn i { color: #f8b4b4; font-size: 12px; }
+.cs-custom-color-value {
+  font-size: 12px;
+  color: #8899a6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .cs-custom-color-value { color: var(--theme-text-muted); }
+
+/* ============ 字段标签 ============ */
+.cs-field-label {
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+body.theme-dark .cs-field-label { color: var(--theme-text-muted); }
+
+/* ============ 字体选择 ============ */
+.cs-font-select {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238899a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  box-sizing: border-box;
+  transition: border 0.2s ease;
+}
+.cs-font-select:focus { border-color: #f8b4b4; }
+body.theme-dark .cs-font-select {
+  background-color: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+
+/* ============ 字体 URL 输入 ============ */
+.cs-font-url-row {
+  display: flex;
+  gap: 6px;
+}
+.cs-font-url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease;
+}
+.cs-font-url-input:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.cs-font-url-input::placeholder { color: #b6c2cd; }
+body.theme-dark .cs-font-url-input {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+.cs-font-url-apply {
+  flex-shrink: 0;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: #1a2a3a;
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.cs-font-url-apply:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+body.theme-dark .cs-font-url-apply { background: #4a5a6a; }
+
+/* ============ 气泡样式选择 ============ */
+.cs-bubble-styles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.cs-bubble-btn {
+  padding: 10px 4px;
+  border-radius: 14px;
+  background: #fafbfc;
+  border: 1.5px solid #eef1f4;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.cs-bubble-btn:active { transform: scale(0.96); }
+.cs-bubble-btn.active {
+  background: #fdf5f5;
+  border-color: #f8b4b4;
+}
+body.theme-dark .cs-bubble-btn {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .cs-bubble-btn.active {
+  background: rgba(248, 180, 180, 0.12);
+  border-color: rgba(248, 180, 180, 0.4);
+}
+.cs-bubble-preview {
+  width: 32px;
+  height: 22px;
+  background: linear-gradient(135deg, #d8ecfb 0%, #f8b4b4 100%);
+  display: block;
+  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+}
+.cs-bubble-btn span:last-child {
+  font-size: 11px;
+  color: #55606b;
+  font-weight: 600;
+}
+body.theme-dark .cs-bubble-btn span:last-child {
+  color: var(--theme-text-soft);
+}
+.cs-bubble-btn.active span:last-child {
+  color: #e58b8b;
+}
+
+/* ============ 自定义 CSS 文本域 ============ */
+.cs-custom-css-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  resize: vertical;
+  min-height: 100px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.cs-custom-css-input:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.cs-custom-css-input::placeholder { color: #b6c2cd; }
+body.theme-dark .cs-custom-css-input {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+
+.cs-custom-css-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.cs-css-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #eef1f4;
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+.cs-css-btn:active { transform: scale(0.97); }
+.cs-css-apply {
+  background: #f8b4b4;
+  color: #fff;
+  border-color: #f8b4b4;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.3);
+}
+.cs-css-apply:active { background: #e58b8b; }
+.cs-css-clear,
+.cs-css-reset {
+  background: #fafbfc;
+  color: #55606b;
+}
+body.theme-dark .cs-css-clear,
+body.theme-dark .cs-css-reset {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+
+/* ============ 全局主题变量（由 JS 动态设置） ============ */
+:root {
+  --accent-color: #6fb1e8;
+  --accent-color-light: rgba(111, 177, 232, 0.15);
+  --accent-color-dark: #4a86b0;
+  --chat-font-size: 14px;
+  --bubble-radius: 18px;
+}
+
+/* ============================================================
+   设置面板 - 聊天与字卡 Tab（沿用字卡收纳盒样式）
+   ============================================================ */
+.cs-mode-switch {
+  display: flex;
+  gap: 6px;
+  background: #fafbfc;
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid #eef1f4;
+  margin-bottom: 8px;
+}
+body.theme-dark .cs-mode-switch {
+  background: rgba(42, 48, 56, 0.5);
+  border-color: var(--theme-card-border);
+}
+.cs-mode-btn {
+  flex: 1;
+  padding: 10px 4px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.cs-mode-btn i { font-size: 15px; }
+.cs-mode-btn.active {
+  background: #ffffff;
+  color: #e58b8b;
+  box-shadow: 0 2px 8px rgba(150, 170, 190, 0.12);
+}
+.cs-mode-btn:active { transform: scale(0.96); }
+body.theme-dark .cs-mode-btn.active {
+  background: rgba(248, 180, 180, 0.15);
+  color: #f8b4b4;
+}
+
+.cs-mode-hint {
+  font-size: 11px;
+  color: #a8b4c0;
+  padding-left: 4px;
+  line-height: 1.5;
+}
+body.theme-dark .cs-mode-hint { color: var(--theme-text-muted); }
+
+.cs-words-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.cs-words-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 6px;
+  background: #eaf3fb;
+  color: #6fa3cc;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 9999px;
+}
+.cs-words-count-private {
+  background: #fdf0f0;
+  color: #e58b8b;
+}
+.cs-words-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.cs-words-btn {
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  color: #55606b;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+.cs-words-btn:active {
+  background: #f2f6fa;
+  transform: scale(0.97);
+}
+body.theme-dark .cs-words-btn {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+.cs-words-btn i {
+  font-size: 10px;
+  color: #f8b4b4;
+}
+
+.cs-words-contact {
+  font-size: 11px;
+  color: #8899a6;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+body.theme-dark .cs-words-contact { color: var(--theme-text-muted); }
+
+.cs-words-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 2px;
+}
+.cs-words-list::-webkit-scrollbar { display: none; }
+
+.cs-word-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  box-shadow: 0 2px 6px rgba(150, 170, 190, 0.05);
+  transition: background 0.15s ease;
+}
+body.theme-dark .cs-word-item {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border);
+}
+.cs-word-item-private {
+  border-left: 3px solid #f8b4b4;
+}
+.cs-word-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+  word-break: break-word;
+}
+body.theme-dark .cs-word-text { color: var(--theme-text); }
+.cs-word-del {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: #fdf0f0;
+  color: #e58b8b;
+  border: none;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.cs-word-del:active { background: #f8d8d8; }
+
+.cs-words-empty {
+  text-align: center;
+  padding: 24px 12px;
+  font-size: 12px;
+  color: #c0ccd6;
+  background: #fafbfc;
+  border-radius: 12px;
+  border: 1px dashed #eef1f4;
+}
+body.theme-dark .cs-words-empty {
+  background: rgba(42, 48, 56, 0.4);
+  border-color: var(--theme-card-border);
+  color: var(--theme-text-faint);
+}
+
+.cs-word-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.cs-word-modal-panel {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+  padding: 22px 20px;
+  animation: popIn 0.2s ease;
+}
+body.theme-dark .cs-word-modal-panel {
+  background: rgba(38, 44, 52, 0.97);
+}
+.cs-word-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 14px;
+  text-align: center;
+}
+body.theme-dark .cs-word-modal-title { color: var(--theme-text); }
+.cs-word-modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.cs-word-modal-input:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.cs-word-modal-input::placeholder { color: #b6c2cd; }
+body.theme-dark .cs-word-modal-input {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+.cs-word-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+.cs-word-modal-cancel,
+.cs-word-modal-confirm {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.cs-word-modal-cancel:active,
+.cs-word-modal-confirm:active { transform: scale(0.97); }
+.cs-word-modal-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+body.theme-dark .cs-word-modal-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+.cs-word-modal-confirm {
+  background: #f8b4b4;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+}
+
+/* ============================================================
+   设置面板 - 分组勾选模式
+   ============================================================ */
+.cs-words-hint {
+  font-size: 11px;
+  color: #a8b4c0;
+  margin-bottom: 10px;
+  padding-left: 2px;
+  line-height: 1.5;
+}
+body.theme-dark .cs-words-hint { color: var(--theme-text-muted); }
+
+.cs-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 2px;
+}
+.cs-group-list::-webkit-scrollbar { display: none; }
+
+.cs-group-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  box-shadow: 0 2px 6px rgba(150, 170, 190, 0.05);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.cs-group-item:active { transform: scale(0.99); }
+.cs-group-item.checked {
+  background: #fdf5f5;
+  border-color: #f8d8d8;
+}
+body.theme-dark .cs-group-item {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .cs-group-item.checked {
+  background: rgba(248, 180, 180, 0.12);
+  border-color: rgba(248, 180, 180, 0.3);
+}
+
+.cs-group-checkbox {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cs-group-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+}
+.cs-group-check-mark {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  border: 1.5px solid #cbd4dc;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  z-index: 1;
+}
+.cs-group-check-mark i {
+  font-size: 10px;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.15s ease;
+}
+.cs-group-checkbox input:checked + .cs-group-check-mark {
+  background: #f8b4b4;
+  border-color: #f8b4b4;
+}
+.cs-group-checkbox input:checked + .cs-group-check-mark i {
+  opacity: 1;
+  transform: scale(1);
+}
+body.theme-dark .cs-group-check-mark {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .cs-group-checkbox input:checked + .cs-group-check-mark {
+  background: #f8b4b4;
+  border-color: #f8b4b4;
+}
+
+.cs-group-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+body.theme-dark .cs-group-color-dot {
+  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+}
+
+.cs-group-info {
+  flex: 1;
+  min-width: 0;
+}
+.cs-group-name {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-dark .cs-group-name { color: var(--theme-text); }
+.cs-group-count {
+  font-size: 11px;
+  color: #a8b4c0;
+  margin-top: 2px;
+}
+body.theme-dark .cs-group-count { color: var(--theme-text-muted); }
+
+/* ============================================================
+   设置面板 - 数据与工具 Tab
+   ============================================================ */
+.ds-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.ds-btn:active { transform: scale(0.98); }
+.ds-btn i { font-size: 12px; }
+.ds-btn-sub {
+  font-size: 11px;
+  color: #a8b4c0;
+  font-weight: 500;
+}
+.ds-btn-full { margin-bottom: 8px; }
+
+.ds-btn-default {
+  background: #fafbfc;
+  color: #55606b;
+  border-color: #eef1f4;
+  justify-content: flex-start;
+  text-align: left;
+}
+.ds-btn-default:active { background: #f2f6fa; }
+body.theme-dark .ds-btn-default {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+
+.ds-btn-primary {
+  background: #6fb1e8;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(111, 177, 232, 0.3);
+}
+.ds-btn-primary:active { background: #4a86b0; }
+
+.ds-btn-danger {
+  background: #fff5f5;
+  color: #e05a5a;
+  border-color: #f8d8d8;
+  justify-content: flex-start;
+  text-align: left;
+}
+.ds-btn-danger:active { background: #fde8e8; }
+body.theme-dark .ds-btn-danger {
+  background: rgba(224, 90, 90, 0.12);
+  color: #f09a9a;
+  border-color: rgba(224, 90, 90, 0.3);
+}
+.ds-btn-danger i { color: #e05a5a; }
+body.theme-dark .ds-btn-danger i { color: #f09a9a; }
+
+.ds-btn-soft {
+  background: #f5f9fd;
+  color: #4a86b0;
+  border-color: #e0edf8;
+}
+.ds-btn-soft:active { background: #e8f2fa; }
+body.theme-dark .ds-btn-soft {
+  background: rgba(111, 177, 232, 0.12);
+  color: #9cc3e8;
+  border-color: rgba(111, 177, 232, 0.25);
+}
+.ds-btn-soft i { color: #6fb1e8; }
+body.theme-dark .ds-btn-soft i { color: #9cc3e8; }
+
+.ds-btn-hint {
+  font-size: 11px;
+  color: #a8b4c0;
+  text-align: center;
+  margin-top: -4px;
+  margin-bottom: 4px;
+}
+body.theme-dark .ds-btn-hint { color: var(--theme-text-muted); }
+
+.ds-footer-hint {
+  font-size: 11px;
+  color: #a8b4c0;
+  line-height: 1.6;
+  padding: 10px 2px 4px 2px;
+}
+body.theme-dark .ds-footer-hint { color: var(--theme-text-muted); }
+
+/* ============ 区块一：本机存储 ============ */
+.ds-storage-progress-wrap {
+  margin-bottom: 12px;
+}
+.ds-storage-progress-bar {
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  background: #eef1f4;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+body.theme-dark .ds-storage-progress-bar { background: #333a42; }
+
+.ds-storage-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6fb1e8, #8fd1a3);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.ds-storage-progress-text {
+  font-size: 12px;
+  color: #55606b;
+}
+body.theme-dark .ds-storage-progress-text { color: var(--theme-text-soft); }
+.ds-storage-progress-text strong {
+  color: #333;
+  font-weight: 700;
+}
+body.theme-dark .ds-storage-progress-text strong { color: var(--theme-text); }
+
+.ds-storage-card {
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+body.theme-dark .ds-storage-card {
+  background: rgba(42, 48, 56, 0.6);
+  border-color: var(--theme-card-border);
+}
+
+.ds-storage-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #55606b;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+body.theme-dark .ds-storage-card-title { color: var(--theme-text-soft); }
+.ds-storage-card-title i { color: #6fb1e8; font-size: 12px; }
+
+.ds-storage-card-desc {
+  font-size: 11px;
+  color: #8899a6;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+body.theme-dark .ds-storage-card-desc { color: var(--theme-text-muted); }
+
+.ds-storage-card-usage {
+  font-size: 11px;
+  color: #55606b;
+  font-weight: 600;
+}
+body.theme-dark .ds-storage-card-usage { color: var(--theme-text-soft); }
+.ds-storage-card-usage strong {
+  color: #333;
+  font-weight: 700;
+}
+body.theme-dark .ds-storage-card-usage strong { color: var(--theme-text); }
+
+/* ============ 区块三：通知设置 ============ */
+.ds-notify-block {
+  margin-bottom: 12px;
+}
+.ds-notify-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 6px;
+}
+body.theme-dark .ds-notify-label { color: var(--theme-text); }
+
+.ds-notify-desc {
+  font-size: 11px;
+  color: #8899a6;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+body.theme-dark .ds-notify-desc { color: var(--theme-text-muted); }
+
+.ds-divider {
+  height: 1px;
+  background: #f0f3f6;
+  margin: 14px 0;
+}
+body.theme-dark .ds-divider { background: var(--theme-card-border); }
+
+.ds-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+.ds-switch-info { flex: 1; min-width: 0; }
+.ds-switch-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+}
+body.theme-dark .ds-switch-title { color: var(--theme-text); }
+.ds-switch-desc {
+  font-size: 11px;
+  color: #a8b4c0;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+body.theme-dark .ds-switch-desc { color: var(--theme-text-muted); }
+
+.ds-toggle {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.ds-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.ds-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #d8dfe6;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+.ds-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 9999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+.ds-toggle input:checked + .ds-toggle-slider {
+  background: #6fb1e8;
+}
+.ds-toggle input:checked + .ds-toggle-slider::before {
+  transform: translateX(18px);
+}
+body.theme-dark .ds-toggle-slider { background: #3a424a; }
+
+/* ============================================================
+   设置面板 - 数据导出/导入
+   ============================================================ */
+.ds-export-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 40, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: fadeIn 0.2s ease;
+}
+
+.ds-export-panel {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
+  padding: 22px 20px;
+  animation: popIn 0.22s ease;
+}
+body.theme-dark .ds-export-panel {
+  background: rgba(38, 44, 52, 0.96);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+.ds-export-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body.theme-dark .ds-export-title { color: #e8eef4; }
+.ds-export-title i { color: #6fb1e8; }
+
+.ds-export-desc {
+  font-size: 12px;
+  color: #8899a6;
+  margin-bottom: 16px;
+}
+body.theme-dark .ds-export-desc { color: #b8c2cc; }
+
+.ds-export-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  background: #fafbfc;
+  border-radius: 14px;
+  border: 1px solid #eef1f4;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ds-export-check:active { background: #f2f6fa; }
+body.theme-dark .ds-export-check {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: #333a42;
+}
+
+.ds-export-check input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.ds-export-check-mark {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd4dc;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.ds-export-check-mark i {
+  font-size: 10px;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.15s ease;
+}
+.ds-export-check input[type="checkbox"]:checked + .ds-export-check-mark {
+  background: #6fb1e8;
+  border-color: #6fb1e8;
+}
+.ds-export-check input[type="checkbox"]:checked + .ds-export-check-mark i {
+  opacity: 1;
+  transform: scale(1);
+}
+body.theme-dark .ds-export-check-mark {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: #3a424a;
+}
+
+.ds-export-check-label {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+  flex: 1;
+}
+body.theme-dark .ds-export-check-label { color: #e8eef4; }
+
+.ds-export-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ds-export-btn {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.ds-export-btn:active { transform: scale(0.97); }
+.ds-export-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+body.theme-dark .ds-export-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: #b8c2cc;
+  border-color: #333a42;
+}
+.ds-export-confirm {
+  background: #6fb1e8;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(111, 177, 232, 0.35);
+}
+.ds-export-confirm:active { background: #4a86b0; }
