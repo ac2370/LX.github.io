@@ -1,8 +1,9 @@
 /**
- * 传讯聊天逻辑（第 3 步修改版）
- * - 自动回复只从 cardDatabase.reply / emoji 抽取文字
- * - 图片只从 cardDatabase.sticker 抽取
- * - 严格遵守分类隔离：不从地点/心情/状态抽取
+ * 传讯聊天逻辑
+ * - 自动回复：从 publicGroups / privateGroups 抽取文字
+ * - 颜文字：从 emojiGroups 抽取
+ * - 表情包：从 stickerGroups 抽取
+ * - 保持原有等待时间、连发、三点气泡、随机引用机制
  */
 
 (function () {
@@ -29,15 +30,75 @@
     });
   }
 
-  // ==================== 从 cardDatabase 获取数据 ====================
-  function getDB() {
-    if (!window.cardDatabase) {
-      return { reply: [], emoji: [], sticker: [] };
+  // ==================== 从 localforage 读取用户勾选的分组 ====================
+  // 缓存，避免每次回复都读一遍 localforage
+  var groupCache = {
+    publicGroups: [],
+    privateGroups: [],
+    emojiGroups: [],
+    stickerGroups: [],
+    loaded: false
+  };
+
+  function loadGroupSelections(callback) {
+    function assign(data) {
+      groupCache.publicGroups = Array.isArray(data.publicGroups) ? data.publicGroups : [];
+      groupCache.privateGroups = Array.isArray(data.privateGroups) ? data.privateGroups : [];
+      groupCache.emojiGroups = Array.isArray(data.emojiGroups) ? data.emojiGroups : [];
+      groupCache.stickerGroups = Array.isArray(data.stickerGroups) ? data.stickerGroups : [];
+      groupCache.loaded = true;
+      if (callback) callback();
+    }
+
+    if (typeof localforage === 'undefined') {
+      // 降级到 localStorage
+      try {
+        assign({
+          publicGroups: JSON.parse(localStorage.getItem('chat_public_groups') || '[]'),
+          privateGroups: JSON.parse(localStorage.getItem('chat_private_groups') || '[]'),
+          emojiGroups: JSON.parse(localStorage.getItem('chat_emoji_groups') || '[]'),
+          stickerGroups: JSON.parse(localStorage.getItem('chat_sticker_groups') || '[]')
+        });
+      } catch (e) { assign({}); }
+      return;
+    }
+
+    Promise.all([
+      localforage.getItem('chat_public_groups'),
+      localforage.getItem('chat_private_groups'),
+      localforage.getItem('chat_emoji_groups'),
+      localforage.getItem('chat_sticker_groups')
+    ]).then(function (results) {
+      assign({
+        publicGroups: results[0],
+        privateGroups: results[1],
+        emojiGroups: results[2],
+        stickerGroups: results[3]
+      });
+    }).catch(function () {
+      assign({});
+    });
+  }
+
+  // 主动加载一次
+  loadGroupSelections();
+
+  // 也使用 window 上暴露的变量（设置面板会实时更新）
+  function getGroupSelections() {
+    // 优先使用 window 上的实时变量（由 chat-settings-panel.js 维护）
+    if (window.chatPublicGroups !== undefined || window.chatPrivateGroups !== undefined) {
+      return {
+        publicGroups: Array.isArray(window.chatPublicGroups) ? window.chatPublicGroups : [],
+        privateGroups: Array.isArray(window.chatPrivateGroups) ? window.chatPrivateGroups : [],
+        emojiGroups: Array.isArray(window.chatEmojiGroups) ? window.chatEmojiGroups : [],
+        stickerGroups: Array.isArray(window.chatStickerGroups) ? window.chatStickerGroups : []
+      };
     }
     return {
-      reply: window.cardDatabase.reply || [],
-      emoji: window.cardDatabase.emoji || [],
-      sticker: window.cardDatabase.sticker || []
+      publicGroups: groupCache.publicGroups,
+      privateGroups: groupCache.privateGroups,
+      emojiGroups: groupCache.emojiGroups,
+      stickerGroups: groupCache.stickerGroups
     };
   }
 
@@ -61,11 +122,130 @@
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
   function randomPick(arr) {
+    if (!arr || arr.length === 0) return null;
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  // ==================== 颜文字库（备用，当 emoji 分类为空时使用） ====================
-  const KAOMOJI_FALLBACK = ['(๑•̀ㅂ•́)و✧', '(｡･ω･｡)', '(´• ω •`)', '(*/ω＼*)', '(๑´ㅂ`๑)', 'ฅ^•ﻌ•^ฅ'];
+  // ==================== 从分组中抽取字卡 ====================
+  // 从指定分组列表中随机选一个分组，再从该分组随机抽一句
+  function pickFromGroups(groupNames, category) {
+    if (!groupNames || groupNames.length === 0) return null;
+    if (typeof window.getCardsInGroup !== 'function') return null;
+
+    // 过滤出有内容的分组
+    var validGroups = groupNames.filter(function (g) {
+      var cards = window.getCardsInGroup(g, category || 'reply');
+      return Array.isArray(cards) && cards.length > 0;
+    });
+
+    if (validGroups.length === 0) return null;
+
+    // 随机选一个分组
+    var selectedGroup = randomPick(validGroups);
+    var cards = window.getCardsInGroup(selectedGroup, category || 'reply');
+    if (!cards || cards.length === 0) return null;
+
+    // 从该分组随机抽一句
+    return randomPick(cards);
+  }
+
+  // 获取所有分组（供兜底使用）
+  function getAllGroupsOfCategory(category) {
+    if (typeof window.getGroups !== 'function') return [];
+    return window.getGroups(category || 'reply');
+  }
+
+  // ==================== 抽取一条文字回复 ====================
+  // 返回 { text: string, source: 'public' | 'private' }
+  function pickOneTextReply() {
+    var selections = getGroupSelections();
+    var publicGroups = selections.publicGroups;
+    var privateGroups = selections.privateGroups;
+
+    // 过滤出真正有内容的分组
+    function filterValid(groups) {
+      if (!groups || groups.length === 0) return [];
+      if (typeof window.getCardsInGroup !== 'function') return [];
+      return groups.filter(function (g) {
+        var cards = window.getCardsInGroup(g, 'reply');
+        return Array.isArray(cards) && cards.length > 0;
+      });
+    }
+
+    var validPublic = filterValid(publicGroups);
+    var validPrivate = filterValid(privateGroups);
+
+    // 两种情况：都没有 / 只有一边 / 两边都有
+    if (validPublic.length === 0 && validPrivate.length === 0) {
+      // 兜底：从所有回复分组里随机抽
+      var allGroups = getAllGroupsOfCategory('reply');
+      var fallback = pickFromGroups(allGroups, 'reply');
+      if (fallback) return { text: fallback, source: 'fallback' };
+      return null;
+    }
+
+    if (validPublic.length === 0) {
+      // 只从专属抽
+      var privateText = pickFromGroups(validPrivate, 'reply');
+      if (privateText) return { text: privateText, source: 'private' };
+      return null;
+    }
+
+    if (validPrivate.length === 0) {
+      // 只从公共抽
+      var publicText = pickFromGroups(validPublic, 'reply');
+      if (publicText) return { text: publicText, source: 'public' };
+      return null;
+    }
+
+    // 两边都有：50% 概率
+    if (Math.random() < 0.5) {
+      // 抽公共
+      var pt = pickFromGroups(validPublic, 'reply');
+      if (pt) return { text: pt, source: 'public' };
+      // 如果公共抽失败，兜底抽专属
+      var pt2 = pickFromGroups(validPrivate, 'reply');
+      if (pt2) return { text: pt2, source: 'private' };
+    } else {
+      // 抽专属
+      var pv = pickFromGroups(validPrivate, 'reply');
+      if (pv) return { text: pv, source: 'private' };
+      // 如果专属抽失败，兜底抽公共
+      var pv2 = pickFromGroups(validPublic, 'reply');
+      if (pv2) return { text: pv2, source: 'public' };
+    }
+
+    return null;
+  }
+
+  // ==================== 抽取颜文字 ====================
+  function pickOneEmoji() {
+    var selections = getGroupSelections();
+    var emojiGroups = selections.emojiGroups;
+
+    // 如果没勾选任何颜文字分组，返回 null（不加颜文字）
+    if (!emojiGroups || emojiGroups.length === 0) return null;
+
+    // 从勾选的颜文字分组中抽
+    return pickFromGroups(emojiGroups, 'kaomoji');
+  }
+
+  // ==================== 抽取表情包 ====================
+  function pickOneSticker() {
+    var selections = getGroupSelections();
+    var stickerGroups = selections.stickerGroups;
+
+    // 如果没勾选任何表情包分组，返回 null
+    if (!stickerGroups || stickerGroups.length === 0) return null;
+
+    // 表情包目前没有真正的分组，只有 cardDatabase.sticker 一个数组
+    // 如果用户勾选了 "表情包（全部）"，则从 sticker 数组抽取
+    var stickerArr = (window.cardDatabase && window.cardDatabase.get)
+      ? (window.cardDatabase.get('sticker') || [])
+      : [];
+    if (stickerArr.length === 0) return null;
+    return randomPick(stickerArr);
+  }
 
   // ==================== 创建消息行 ====================
   function createMessageRow(type, content) {
@@ -78,7 +258,6 @@
     if (typeof content === 'string') {
       bubble.textContent = content;
     } else if (content && content.type === 'image') {
-      // 图片气泡
       const img = document.createElement('img');
       img.src = content.url;
       img.alt = '表情包';
@@ -86,9 +265,10 @@
       img.style.maxHeight = '160px';
       img.style.borderRadius = '12px';
       img.style.display = 'block';
+      img.style.cursor = 'pointer';
+      img.onclick = function () { window.open(content.url, '_blank'); };
       bubble.appendChild(img);
     } else if (content && content.quote) {
-      // 带引用的文字
       const quoteEl = document.createElement('span');
       quoteEl.className = 'quote-block';
       quoteEl.textContent = '> ' + content.quote;
@@ -140,58 +320,22 @@
   // ==================== 自动回复核心逻辑 ====================
   function triggerAutoReply() {
     const settings = getSettings();
-      const settings = getSettings();
-    const db = getDB();
 
-    // ============ 双轨机制：公共 + 专属 ============
-    var currentContactId = null;
-    try {
-      currentContactId = localStorage.getItem('my_current_contact');
-    } catch (e) {}
-
-    var publicCards = (window.cardDatabase && window.cardDatabase.getPublic)
-      ? window.cardDatabase.getPublic()
-      : [];
-
-    var privateCards = (window.cardDatabase && window.cardDatabase.getPrivate && currentContactId)
-      ? window.cardDatabase.getPrivate(currentContactId)
-      : [];
-
-    var legacyReply = db.reply || [];
-
-    var publicPool = [].concat(publicCards, legacyReply);
-    var privatePool = privateCards;
-
-    // 读取用户选择的模式
-    var cardMode = window.chatCardMode || 'all';
-
-    var textPool;
-    if (cardMode === 'public-only') {
-      textPool = publicPool.slice();
-    } else if (cardMode === 'private-only') {
-      textPool = privatePool.slice();
-    } else {
-      // 全部字卡：50:50 混合
-      if (privatePool.length > 0 && publicPool.length > 0) {
-        var half = Math.ceil((publicPool.length + privatePool.length) / 2);
-        var shuffledPublic = publicPool.slice().sort(function () { return Math.random() - 0.5; });
-        var shuffledPrivate = privatePool.slice().sort(function () { return Math.random() - 0.5; });
-        textPool = shuffledPublic.slice(0, half).concat(shuffledPrivate);
-      } else if (privatePool.length > 0) {
-        textPool = privatePool;
-      } else {
-        textPool = publicPool;
-      }
+    if (!settings.normalReply) {
+      console.log('[传讯] 正常字卡回复已关闭');
+      return;
     }
 
-    // 颜文字仍然从 emoji 抽
-    textPool = textPool.concat(db.emoji);
+    // 检查是否有任何可用的字卡
+    var selections = getGroupSelections();
+    var hasAnyText = false;
+    var allGroups = getAllGroupsOfCategory('reply');
+    allGroups.forEach(function (g) {
+      var cards = window.getCardsInGroup(g, 'reply');
+      if (Array.isArray(cards) && cards.length > 0) hasAnyText = true;
+    });
 
-    // 图片池不变
-    const imagePool = db.sticker || [];
-
-    // 如果文字池为空，且图片池也为空，则提示
-    if (textPool.length === 0 && imagePool.length === 0) {
+    if (!hasAnyText) {
       setTimeout(function () {
         const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~');
         chatMessages.appendChild(row);
@@ -229,49 +373,52 @@
         let replyCount = randomInt(minCount, maxCount);
         if (replyCount === 0) replyCount = 1;
 
-        // 构建回复内容列表
-        const replies = [];
+        // ============ 构建回复列表 ============
+        var replies = [];
 
-        // 文字回复（从 reply + emoji 抽取）
-        if (textPool.length > 0) {
-          const shuffledText = textPool.slice().sort(function () { return Math.random() - 0.5; });
-          for (let i = 0; i < replyCount; i++) {
-            if (i >= shuffledText.length) break;
-            let content = shuffledText[i];
+        // 1. 文字回复：从公共 / 专属分组抽取
+        for (var i = 0; i < replyCount; i++) {
+          var picked = pickOneTextReply();
+          if (!picked) break;
+          var content = picked.text;
 
-            // 如果开启颜文字随机附加，且 emoji 分类有内容，则从 emoji 中抽一个附加
-            if (settings.kaomoji && db.emoji.length > 0 && Math.random() < 0.5) {
-              content = content + ' ' + randomPick(db.emoji);
+          // 随机附加颜文字
+          if (settings.kaomoji) {
+            var emojiText = pickOneEmoji();
+            if (emojiText) {
+              content = content + ' ' + emojiText;
             }
+          }
 
-            // 随机引用上一条用户消息
-            if (settings.quote && lastUserMessage && Math.random() < 0.35) {
-              content = { quote: lastUserMessage, text: content };
-            }
+          // 随机引用上一条用户消息
+          if (settings.quote && lastUserMessage && Math.random() < 0.35) {
+            content = { quote: lastUserMessage, text: content };
+          }
 
-            replies.push({ type: 'text', content: content });
+          replies.push({ type: 'text', content: content });
+        }
+
+        // 2. 图片回复：从表情包勾选分组抽取
+        // 有 40% 概率附赠 1 张表情包
+        if (Math.random() < 0.4) {
+          var stickerUrl = pickOneSticker();
+          if (stickerUrl) {
+            replies.push({ type: 'image', url: stickerUrl });
           }
         }
 
-        // 图片回复（从 sticker 抽取）
-        if (imagePool.length > 0 && Math.random() < 0.4) {
-          const imgUrl = randomPick(imagePool);
-          replies.push({ type: 'image', url: imgUrl });
-        }
-
-        // 如果一条都没有，兜底
+        // 3. 兜底：如果一条都没有，从任意分组抽一条
         if (replies.length === 0) {
-          if (textPool.length > 0) {
-            replies.push({ type: 'text', content: randomPick(textPool) });
-          } else if (imagePool.length > 0) {
-            replies.push({ type: 'image', url: randomPick(imagePool) });
+          var fallbackText = pickFromGroups(getAllGroupsOfCategory('reply'), 'reply');
+          if (fallbackText) {
+            replies.push({ type: 'text', content: fallbackText });
           }
         }
 
-        // 依次显示回复
+        // ============ 依次显示回复 ============
         replies.forEach(function (item, index) {
           setTimeout(function () {
-            let row;
+            var row;
             if (item.type === 'text') {
               row = createMessageRow('other', item.content);
             } else if (item.type === 'image') {
@@ -303,12 +450,14 @@
     });
   });
 
-    // ==================== 暴露给外部 ====================
+  // ==================== 暴露给外部 ====================
   window.initChatPage = function () {
     scrollToBottom();
     if (window.cardDatabase && window.cardDatabase.reload) {
       window.cardDatabase.reload();
     }
+    // 重新加载分组勾选
+    loadGroupSelections();
   };
 
   // 暴露自动回复接口，供 chat-extras.js 调用
