@@ -1,17 +1,10 @@
 /**
- * 传讯页面 - 设置面板（独立模块）
- * - 绑定到底部导航栏现有的"设置"齿轮图标
- * - Tab 1：个人资料（占位）
- * - Tab 2：外观与界面（主题配色 + 文字设置 + 气泡样式 + 自定义 CSS）
- * - Tab 3：聊天与字卡（分组勾选模式）
- * - Tab 4：数据与工具（占位）
- * - 完全独立，不影响任何现有逻辑
- *
- * 本版改动：
- * 1. 全局主题通过 :root CSS 变量同步全站（主页、传讯、字卡库、设置面板）
- * 2. 字体大小同步到 .message-text / .message-bubble
- * 3. 自定义 CSS 使用固定 id="custom-css-style"，并自动加 #pageChat 前缀限定作用域
- * 4. 移除旧版 chat_settings_appearance（背景图/蒙层/毛玻璃）读取逻辑
+ * 传讯页面 - 设置面板（独立模块 · 修复版）
+ * 修复：
+ *  1. 自定义颜色点击无效 → 事件绑定 + 全局 :root CSS 变量
+ *  2. 字体大小不全局 → body font-size + --global-font-size
+ *  3. 字体 URL 无响应 → 动态 link 注入 + 强制刷新
+ *  4. 自定义 CSS 不生效 → 固定 id + !important 强制覆盖
  */
 
 (function () {
@@ -28,35 +21,27 @@
   var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';
   var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups';
 
-  // 注意：本版不再读取 'chat_settings_appearance'（旧版背景图/蒙层/毛玻璃）
-  // 也不主动清除它，避免误删用户数据
-
   // ==================== 状态 ====================
   var activeTab = 'profile';
 
-  // 主题配色
   var theme = {
     accentColor: '#6fb1e8',
     primaryBg: ''
   };
 
-  // 文字设置
   var font = {
     size: 14,
     family: 'system',
     customUrl: ''
   };
 
-  // 气泡样式
   var bubble = {
     style: 'standard',
     customCss: ''
   };
 
-  // 字卡模式
   var cardMode = 'all';
 
-  // 分组勾选
   var publicGroups = [];
   var privateGroups = [];
   var emojiGroups = [];
@@ -64,17 +49,14 @@
 
   var settingsTrigger = null;
 
-  // ==================== 持久化：通用 ====================
+  // ==================== 持久化 ====================
   function persist(key, value) {
     if (typeof localforage !== 'undefined') {
       localforage.setItem(key, value).catch(function () {});
     } else {
       try {
-        if (typeof value === 'string') {
-          localStorage.setItem(key, value);
-        } else {
-          localStorage.setItem(key, JSON.stringify(value));
-        }
+        if (typeof value === 'string') localStorage.setItem(key, value);
+        else localStorage.setItem(key, JSON.stringify(value));
       } catch (e) {}
     }
   }
@@ -87,9 +69,9 @@
     } else {
       try {
         var raw = localStorage.getItem(key);
-        if (raw === null) { if (callback) callback(null); return; }
+        if (raw === null) { callback(null); return; }
         try { callback(JSON.parse(raw)); } catch (e) { callback(raw); }
-      } catch (e) { if (callback) callback(null); }
+      } catch (e) { callback(null); }
     }
   }
 
@@ -135,10 +117,7 @@
     window.chatCardMode = cardMode;
   }
   function loadCardMode(cb) {
-    loadValue(STORE_KEY_CARD_MODE, function (v) {
-      if (v) cardMode = v;
-      cb();
-    });
+    loadValue(STORE_KEY_CARD_MODE, function (v) { if (v) cardMode = v; cb(); });
   }
 
   function persistGroupSelections() {
@@ -175,7 +154,7 @@
     });
   }
 
-  // ==================== 工具：颜色 ====================
+  // ==================== 颜色工具 ====================
   function hexToRgb(hex) {
     if (!hex) return null;
     var m = String(hex).replace('#', '');
@@ -200,27 +179,31 @@
       ('0' + Math.max(0, rgb.b - amount).toString(16)).slice(-2);
   }
 
-  // ==================== 应用主题（全局同步） ====================
+  // ==================== 【修复 1】应用主题：全局 CSS 变量 ====================
   function applyTheme() {
     var root = document.documentElement;
     var color = theme.accentColor || '#6fb1e8';
+    var colorLight = rgba(color, 0.15);
+    var colorSoft = rgba(color, 0.25);
+    var colorMid = rgba(color, 0.5);
+    var colorDark = darken(color, 40);
 
-    // ---- 1. 基础变量 ----
+    // ---- 核心：写入 :root CSS 变量 ----
     root.style.setProperty('--accent-color', color);
-    root.style.setProperty('--accent-color-light', rgba(color, 0.15));
-    root.style.setProperty('--accent-color-dark', darken(color, 40));
+    root.style.setProperty('--accent-color-light', colorLight);
+    root.style.setProperty('--accent-color-soft', colorSoft);
+    root.style.setProperty('--accent-color-mid', colorMid);
+    root.style.setProperty('--accent-color-dark', colorDark);
     root.style.setProperty('--theme-accent', color);
     root.style.setProperty('--global-accent', color);
-
-    // 常用衍生变量
-    root.style.setProperty('--link-color', darken(color, 20));
-    root.style.setProperty('--highlight-color', rgba(color, 0.2));
+    root.style.setProperty('--link-color', colorDark);
+    root.style.setProperty('--highlight-color', colorSoft);
 
     if (theme.primaryBg) {
       root.style.setProperty('--primary-bg', theme.primaryBg);
     }
 
-    // ---- 2. 全站主色同步：注入一个专用 style 标签 ----
+    // ---- 注入全局主题 style 标签（覆盖所有页面的强调色） ----
     var styleId = 'global-theme-vars';
     var styleEl = document.getElementById(styleId);
     if (!styleEl) {
@@ -230,74 +213,177 @@
     }
 
     styleEl.textContent = [
-      /* 主页 */
-      '#pageHome .play-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
-      '#pageHome .tab-btn.active i, #pageHome .tab-btn.active span { color: ' + color + ' !important; }',
-      '#pageHome .function-icon i { color: ' + color + ' !important; }',
+      /* ============ 主页 ============ */
+      '#pageHome .play-btn {',
+      '  background: ' + color + ' !important;',
+      '  box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important;',
+      '}',
+      '#pageHome .tab-btn.active i,',
+      '#pageHome .tab-btn.active span { color: ' + color + ' !important; }',
+      '#pageHome .tab-btn.active { color: ' + color + ' !important; }',
+      '#pageHome .function-icon i { color: ' + colorDark + ' !important; }',
+      '#pageHome .search-glass i { color: ' + color + ' !important; }',
 
-      /* 字卡库 */
-      '#pageCard .cat-grid-item.active { background: ' + rgba(color, 0.12) + ' !important; border-color: ' + color + ' !important; }',
-      '#pageCard .cat-grid-item.active i, #pageCard .cat-grid-item.active .cat-label { color: ' + darken(color, 20) + ' !important; }',
-      '#pageCard .card-group-select:focus { border-color: ' + color + ' !important; }',
-      '#pageCard .word-card-delete { background: ' + rgba(color, 0.12) + ' !important; color: ' + darken(color, 20) + ' !important; }',
+      /* ============ 字卡库 ============ */
+      '#pageCard .cat-grid-item.active {',
+      '  background: ' + colorLight + ' !important;',
+      '  border-color: ' + color + ' !important;',
+      '}',
+      '#pageCard .cat-grid-item.active i,',
+      '#pageCard .cat-grid-item.active .cat-label {',
+      '  color: ' + colorDark + ' !important;',
+      '}',
+      '#pageCard .card-group-select:focus {',
+      '  border-color: ' + color + ' !important;',
+      '  box-shadow: 0 0 0 3px ' + colorLight + ' !important;',
+      '}',
+      '#pageCard .card-search-input:focus {',
+      '  border-color: ' + color + ' !important;',
+      '  box-shadow: 0 0 0 3px ' + colorLight + ' !important;',
+      '}',
+      '#pageCard .word-card-delete {',
+      '  background: ' + colorLight + ' !important;',
+      '  color: ' + colorDark + ' !important;',
+      '}',
       '#pageCard .card-action-btn i { color: ' + color + ' !important; }',
+      '#pageCard .cat-grid-badge { background: ' + color + ' !important; }',
 
-      /* 传讯页 */
-      '#pageChat .send-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
-      '#pageChat .send-btn:active { background: ' + darken(color, 20) + ' !important; }',
-      '#pageChat .chat-action-icon { color: ' + rgba(color, 0.75) + ' !important; }',
-      '#pageChat .chat-action-icon:active { color: ' + color + ' !important; }',
-      '#pageChat .message-row.self .message-bubble { background: ' + rgba(color, 0.35) + ' !important; }',
+      /* ============ 传讯页 ============ */
+      '#pageChat .send-btn {',
+      '  background: ' + color + ' !important;',
+      '  box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important;',
+      '}',
+      '#pageChat .send-btn:active {',
+      '  background: ' + colorDark + ' !important;',
+      '}',
+      '#pageChat .chat-action-icon {',
+      '  color: ' + rgba(color, 0.75) + ' !important;',
+      '}',
+      '#pageChat .chat-action-icon:active {',
+      '  color: ' + color + ' !important;',
+      '}',
+      '#pageChat .message-row.self .message-bubble {',
+      '  background: ' + colorSoft + ' !important;',
+      '}',
+      '#pageChat .input-left-icons i:active {',
+      '  color: ' + color + ' !important;',
+      '}',
 
-      /* 设置面板 */
-      '#chatSettingsPanel .chat-settings-tab.active { background: ' + rgba(color, 0.15) + ' !important; color: ' + darken(color, 20) + ' !important; }',
+      /* ============ 设置面板 ============ */
+      '#chatSettingsPanel .chat-settings-tab.active {',
+      '  background: ' + colorLight + ' !important;',
+      '  color: ' + colorDark + ' !important;',
+      '}',
       '#chatSettingsPanel .chat-settings-title i { color: ' + color + ' !important; }',
-      '#chatSettingsPanel .cs-mode-btn.active { color: ' + darken(color, 20) + ' !important; }',
+      '#chatSettingsPanel .cs-mode-btn.active {',
+      '  color: ' + colorDark + ' !important;',
+      '}',
       '#chatSettingsPanel .cs-words-btn i { color: ' + color + ' !important; }',
-      '#chatSettingsPanel .cs-group-checkbox input:checked + .cs-group-check-mark { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#chatSettingsPanel .cs-group-checkbox input:checked + .cs-group-check-mark {',
+      '  background: ' + color + ' !important;',
+      '  border-color: ' + color + ' !important;',
+      '}',
+      '#chatSettingsPanel .cs-css-apply {',
+      '  background: ' + color + ' !important;',
+      '  border-color: ' + color + ' !important;',
+      '}',
+      '#chatSettingsPanel .cs-font-url-apply { background: ' + colorDark + ' !important; }',
 
-      /* 通用 */
-      '.home-settings-btn i { color: ' + color + ' !important; }'
+      /* ============ 其他页面 ============ */
+      '#pageHome .header-card h1,',
+      '.home-settings-btn i { color: ' + color + ' !important; }',
+      '.floating-settings i { color: ' + color + ' !important; }',
+
+      /* ============ 全局强调 ============ */
+      '.text-accent, [data-accent] { color: ' + color + ' !important; }',
+      'a { color: ' + colorDark + '; }'
     ].join('\n');
 
-    // ---- 3. 底部导航的激活色 ----
+    // 更新底部导航激活色（直接操作元素，双保险）
     document.querySelectorAll('.tab-btn.active i, .tab-btn.active span').forEach(function (el) {
       el.style.color = color;
     });
 
-    // ---- 4. 全局发送按钮 ----
+    // 更新发送按钮
     var sendBtn = document.getElementById('sendBtn');
     if (sendBtn) {
       sendBtn.style.background = color;
       sendBtn.style.boxShadow = '0 3px 10px ' + rgba(color, 0.35);
     }
 
-    // ---- 5. body 变量（供其他脚本读取） ----
+    // body 变量
     document.body.style.setProperty('--global-accent', color);
     document.body.dataset.accentColor = color;
   }
 
-  // ==================== 应用字体（全局同步） ====================
+  // ==================== 【修复 2】应用字体：全局生效 ====================
   function applyFont() {
     var root = document.documentElement;
     var body = document.body;
     var size = font.size || 14;
 
-    // ---- 1. 字体大小：设置变量 + 应用到所有气泡 ----
+    // ---- 1. 全局字号：写入变量 + body ----
+    root.style.setProperty('--global-font-size', size + 'px');
     root.style.setProperty('--chat-font-size', size + 'px');
 
-    // 应用到传讯页气泡（优先使用 .message-text，其次 .message-bubble）
-    document.querySelectorAll('#pageChat .message-text').forEach(function (el) {
+    // 直接设置 body 字号（最小 13px 防止字卡库排版崩）
+    body.style.fontSize = size + 'px';
+
+    // ---- 2. 全局字号覆盖：注入 style 标签 ----
+    var styleId = 'global-font-vars';
+    var styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+
+    // 用相对大小防止越界（用 max 16px 保证 UI 元素不会太大）
+    var uiSize = Math.min(size, 16);
+
+    styleEl.textContent = [
+      /* 聊天消息 */
+      '#pageChat .message-bubble,',
+      '#pageChat .message-text,',
+      '#pageChat .call-record-bubble {',
+      '  font-size: ' + size + 'px !important;',
+      '}',
+      '#pageChat .call-record-bubble { font-size: ' + Math.max(10, size - 3) + 'px !important; }',
+
+      /* 主页 */
+      '#pageHome .function-label { font-size: ' + Math.max(10, uiSize - 4) + 'px !important; }',
+      '#pageHome h1, #pageHome .header-card h1 { font-size: ' + (uiSize + 4) + 'px !important; }',
+      '#pageHome .header-card p { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
+      '#pageHome .tab-btn span { font-size: ' + Math.max(10, uiSize - 4) + 'px !important; }',
+      '#pageHome .search-glass input { font-size: ' + uiSize + 'px !important; }',
+      '#pageHome #songTitle { font-size: ' + uiSize + 'px !important; }',
+      '#pageHome #songArtist { font-size: ' + Math.max(10, uiSize - 4) + 'px !important; }',
+
+      /* 字卡库 */
+      '#pageCard .card-topbar-title { font-size: ' + (uiSize + 3) + 'px !important; }',
+      '#pageCard .cat-label { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
+      '#pageCard .card-action-btn { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
+      '#pageCard .card-group-btn { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
+      '#pageCard .card-search-input { font-size: ' + uiSize + 'px !important; }',
+      '#pageCard .word-card-text { font-size: ' + uiSize + 'px !important; }',
+      '#pageCard .cat-grid-badge { font-size: 9px !important; }',
+      '#pageCard .card-group-select { font-size: ' + uiSize + 'px !important; }',
+      '#pageCard .card-status-counts { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
+
+      /* 设置面板 */
+      '#chatSettingsPanel .chat-settings-title { font-size: ' + (uiSize + 2) + 'px !important; }',
+      '#chatSettingsPanel .chat-settings-tab span { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
+      '#chatSettingsPanel .chat-settings-section-title { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
+      '#chatSettingsPanel .cs-group-name { font-size: ' + uiSize + 'px !important; }',
+      '#chatSettingsPanel .cs-group-count { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }'
+    ].join('\n');
+
+    // 直接应用消息气泡（双保险）
+    document.querySelectorAll('#pageChat .message-bubble, #pageChat .message-text').forEach(function (el) {
       el.style.fontSize = size + 'px';
-    });
-    document.querySelectorAll('#pageChat .message-bubble').forEach(function (el) {
-      el.style.fontSize = size + 'px';
-    });
-    document.querySelectorAll('#pageChat .call-record-bubble').forEach(function (el) {
-      el.style.fontSize = Math.max(10, size - 3) + 'px';
     });
 
-    // ---- 2. 字体族 ----
+    // ---- 3. 字体族 ----
     var fontFamily = '';
     if (font.family === 'system') {
       fontFamily = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -308,27 +394,52 @@
     } else if (font.family === 'heiti') {
       fontFamily = '"Heiti SC", "SimHei", "黑体", STHeiti, sans-serif';
     } else if (font.family === 'custom') {
-      fontFamily = '"CustomFont", ' + '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif';
+      fontFamily = '"CustomFont", "PingFang SC", "Microsoft YaHei", sans-serif';
     }
 
     if (fontFamily) {
       body.style.fontFamily = fontFamily;
-      // 同时设置到 :root，供其他元素读取
       root.style.setProperty('--global-font-family', fontFamily);
-    }
 
-    // ---- 3. 自定义字体 URL ----
-    var fontLinkId = 'custom-font-link';
-    var existing = document.getElementById(fontLinkId);
+      // 全局字体覆盖（强制应用到所有页面元素）
+      var fontStyleId = 'global-font-family';
+      var fontStyleEl = document.getElementById(fontStyleId);
+      if (!fontStyleEl) {
+        fontStyleEl = document.createElement('style');
+        fontStyleEl.id = fontStyleId;
+        document.head.appendChild(fontStyleEl);
+      }
+      fontStyleEl.textContent =
+        'body, body *, #pageHome, #pageChat, #pageCard, #chatSettingsPanel, #chatSettingsPanel * {' +
+        '  font-family: ' + fontFamily + ' !important;' +
+        '}';
+    }
+  }
+
+  // ==================== 【修复 3】字体 URL ====================
+  function applyFontUrl() {
+    var linkId = 'custom-font-link';
+    var existing = document.getElementById(linkId);
     if (existing) existing.remove();
 
-    if (font.customUrl) {
-      var link = document.createElement('link');
-      link.id = fontLinkId;
-      link.rel = 'stylesheet';
-      link.href = font.customUrl;
-      document.head.appendChild(link);
-    }
+    if (!font.customUrl || font.family !== 'custom') return;
+
+    // 动态创建 link 标签，插入到 head 末尾
+    var link = document.createElement('link');
+    link.id = linkId;
+    link.rel = 'stylesheet';
+    link.href = font.customUrl;
+
+    // 加载完成后，确保字体应用到全局
+    link.onload = function () {
+      // 触发一次字体重应用
+      applyFont();
+    };
+    link.onerror = function () {
+      console.warn('[chat-settings-panel] 字体加载失败:', font.customUrl);
+    };
+
+    document.head.appendChild(link);
   }
 
   // ==================== 应用气泡样式 ====================
@@ -342,24 +453,27 @@
 
     root.style.setProperty('--bubble-radius', radius);
 
-    document.querySelectorAll('#pageChat .message-bubble').forEach(function (el) {
-      el.style.borderRadius = radius;
-    });
+    // 注入覆盖样式
+    var styleId = 'bubble-radius-style';
+    var styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent =
+      '#pageChat .message-bubble { border-radius: ' + radius + ' !important; }';
   }
 
-  // ==================== 应用自定义 CSS（限定作用域） ====================
+  // ==================== 【修复 4】自定义 CSS ====================
   function applyCustomCss() {
-    var styleId = 'custom-css-style'; // 固定 id，便于复写
+    var styleId = 'custom-bubble-css'; // 固定 id
     var existing = document.getElementById(styleId);
     if (existing) existing.remove();
 
     if (!bubble.customCss || !bubble.customCss.trim()) return;
 
     var raw = bubble.customCss;
-
-    // 自动限定作用域：
-    // 如果用户输入的 CSS 里没有 #pageChat，就自动加前缀
-    // 让用户的自定义样式只影响传讯页面
     var scoped = scopeCssToPageChat(raw);
 
     var style = document.createElement('style');
@@ -368,37 +482,44 @@
     document.head.appendChild(style);
   }
 
-  // 简单的 CSS 作用域限定：给顶层选择器加 #pageChat 前缀
+  // 给顶层选择器加 #pageChat 前缀 + 关键属性加 !important
   function scopeCssToPageChat(css) {
     if (!css) return '';
-    // 如果用户已经手动加了 #pageChat，就不再重复加
-    if (css.indexOf('#pageChat') >= 0) return css;
+    var hasScope = css.indexOf('#pageChat') >= 0;
 
-    // 按 } 切分规则块，给每个选择器加前缀
     var result = [];
-    // 逐行处理更稳定：找到 "selector {" 这种模式
     var regex = /([^{}]+)\{([^{}]*)\}/g;
     var m;
     var lastIndex = 0;
+
     while ((m = regex.exec(css)) !== null) {
       var selectors = m[1].trim();
       var body = m[2];
-      // 在规则之间保留空白
-      if (selectors) {
-        var prefixedSelectors = selectors.split(',').map(function (sel) {
+
+      if (selectors && selectors.charAt(0) !== '@') {
+        var prefixed = selectors.split(',').map(function (sel) {
           sel = sel.trim();
           if (!sel) return sel;
-          // 跳过 @media / @keyframes 之类的 at-rule
-          if (sel.charAt(0) === '@') return sel;
+          if (hasScope) return sel;
           return '#pageChat ' + sel;
         }).join(', ');
-        result.push(prefixedSelectors + ' {' + body + '}');
+
+        // 给 body 里的关键属性加 !important（如果没有手动加）
+        var enhancedBody = body.replace(/([a-zA-Z-]+)\s*:\s*([^;!}]+)(?=\s*[;}])/g, function (_, prop, val) {
+          // 跳过已带 !important 的
+          if (val.indexOf('!important') >= 0) return _;
+          // 跳过一些不需要加 !important 的
+          var skipProps = ['animation', 'transition', 'transform-origin', 'content', 'display', 'position'];
+          if (skipProps.indexOf(prop.trim()) >= 0) return _;
+          return prop + ': ' + val.trim() + ' !important';
+        });
+
+        result.push(prefixed + ' {' + enhancedBody + '}');
       } else {
         result.push(m[0]);
       }
       lastIndex = regex.lastIndex;
     }
-    // 处理未被匹配的尾部（如 @import、注释等）
     if (lastIndex < css.length) {
       var tail = css.slice(lastIndex);
       if (tail.trim()) result.push(tail);
@@ -410,6 +531,7 @@
   function applyAll() {
     applyTheme();
     applyFont();
+    applyFontUrl();
     applyBubble();
     applyCustomCss();
   }
@@ -478,7 +600,7 @@
 
       '  <div class="chat-settings-body">',
 
-      // Tab 1: 个人资料
+      // Tab 1
       '    <div class="chat-settings-tab-panel" data-panel="profile">',
       '      <div class="chat-settings-section-title">个人资料</div>',
       '      <div class="chat-settings-placeholder">',
@@ -487,10 +609,9 @@
       '      </div>',
       '    </div>',
 
-      // Tab 2: 外观与界面
+      // Tab 2
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
 
-      // 区块 1：全局主题配色
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">全局主题配色</div>',
       '        <div class="cs-theme-colors" id="csThemeColors"></div>',
@@ -501,10 +622,9 @@
       '          <input type="color" id="csCustomColorInput" value="#6fb1e8" style="display:none;">',
       '          <span class="cs-custom-color-value" id="csCustomColorValue">#6fb1e8</span>',
       '        </div>',
-      '        <div class="cs-slider-hint">修改后主页、传讯页、字卡库、设置面板的主色调会同步变化</div>',
+      '        <div class="cs-slider-hint">修改后主页、传讯页、字卡库、设置面板的强调色会同步变化</div>',
       '      </div>',
 
-      // 区块 2：文字设置
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">文字设置</div>',
       '        <div class="cs-field-label">字体大小</div>',
@@ -527,7 +647,6 @@
       '        </div>',
       '      </div>',
 
-      // 区块 3：气泡样式
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">气泡样式</div>',
       '        <div class="cs-bubble-styles" id="csBubbleStyles">',
@@ -560,7 +679,7 @@
 
       '    </div>',
 
-      // Tab 3: 聊天与字卡
+      // Tab 3
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">当前字卡模式</div>',
@@ -630,7 +749,7 @@
       '      </div>',
       '    </div>',
 
-      // Tab 4: 数据与工具
+      // Tab 4
       '    <div class="chat-settings-tab-panel" data-panel="data">',
       '      <div class="chat-settings-section-title">数据与工具</div>',
       '      <div class="chat-settings-placeholder">',
@@ -679,13 +798,18 @@
       if (c.value === '#FFFFFF') {
         btn.style.border = '1px solid #e2e8ee';
       }
-      btn.addEventListener('click', function () {
+      // 【修复 1】使用 click 事件（移动端 + 桌面端最稳）
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
         theme.accentColor = c.value;
         persistTheme();
         applyTheme();
         renderThemeColors();
         var valEl = document.getElementById('csCustomColorValue');
         if (valEl) valEl.textContent = c.value;
+        var picker = document.getElementById('csCustomColorInput');
+        if (picker) picker.value = c.value;
       });
       container.appendChild(btn);
     });
@@ -748,7 +872,7 @@
       });
     });
 
-    // 1. 自定义颜色
+    // 【修复 1】自定义颜色选择器
     var customColorInput = document.getElementById('csCustomColorInput');
     if (customColorInput) {
       customColorInput.addEventListener('input', function () {
@@ -759,9 +883,14 @@
         applyTheme();
         renderThemeColors();
       });
+      customColorInput.addEventListener('change', function () {
+        theme.accentColor = customColorInput.value;
+        persistTheme();
+        applyTheme();
+      });
     }
 
-    // 2. 字体大小滑块
+    // 【修复 2】字体大小滑块
     var fontSizeSlider = document.getElementById('csFontSizeSlider');
     var fontSizeValue = document.getElementById('csFontSizeValue');
     if (fontSizeSlider) {
@@ -776,17 +905,18 @@
       });
     }
 
-    // 3. 字体选择
+    // 字体选择
     var fontSelect = document.getElementById('csFontSelect');
     if (fontSelect) {
       fontSelect.addEventListener('change', function () {
         font.family = fontSelect.value;
         persistFont();
         applyFont();
+        applyFontUrl();
       });
     }
 
-    // 4. 字体 URL 应用
+    // 【修复 3】字体 URL 应用
     var fontUrlInput = document.getElementById('csFontUrlInput');
     var fontUrlApply = document.getElementById('csFontUrlApply');
     if (fontUrlApply && fontUrlInput) {
@@ -796,13 +926,14 @@
         font.customUrl = url;
         font.family = 'custom';
         persistFont();
+        applyFontUrl();
         applyFont();
         var fs = document.getElementById('csFontSelect');
         if (fs) fs.value = 'custom';
       });
     }
 
-    // 5. 气泡样式切换
+    // 气泡样式
     var bubbleStyles = document.getElementById('csBubbleStyles');
     if (bubbleStyles) {
       bubbleStyles.addEventListener('click', function (e) {
@@ -817,7 +948,7 @@
       });
     }
 
-    // 6. 自定义 CSS
+    // 【修复 4】自定义 CSS
     var cssApply = document.getElementById('csCssApply');
     var cssClear = document.getElementById('csCssClear');
     var cssReset = document.getElementById('csCssReset');
@@ -850,7 +981,6 @@
       });
     }
 
-    // 聊天与字卡 Tab
     bindChatTabEvents();
   }
 
@@ -879,13 +1009,9 @@
   function updateModeHint() {
     var hintEl = document.getElementById('csModeHint');
     if (!hintEl) return;
-    if (cardMode === 'public-only') {
-      hintEl.textContent = '自动回复时只从勾选为公共的分组中抽取';
-    } else if (cardMode === 'private-only') {
-      hintEl.textContent = '自动回复时只从勾选为专属的分组中抽取';
-    } else {
-      hintEl.textContent = '自动回复时 50% 从公共分组抽取，50% 从专属分组抽取';
-    }
+    if (cardMode === 'public-only') hintEl.textContent = '自动回复时只从勾选为公共的分组中抽取';
+    else if (cardMode === 'private-only') hintEl.textContent = '自动回复时只从勾选为专属的分组中抽取';
+    else hintEl.textContent = '自动回复时 50% 从公共分组抽取，50% 从专属分组抽取';
   }
 
   function restoreModeSwitch() {
@@ -897,7 +1023,7 @@
     updateModeHint();
   }
 
-  // ==================== 渲染分组勾选列表 ====================
+  // ==================== 分组勾选列表 ====================
   function renderAllGroupLists() {
     renderReplyGroupLists();
     renderEmojiGroupList();
@@ -910,20 +1036,15 @@
     var privateList = document.getElementById('csPrivateGroupList');
     if (!publicList || !privateList) return;
 
-    var groups = [];
-    if (typeof window.getGroups === 'function') {
-      groups = window.getGroups('reply');
-    }
+    var groups = (typeof window.getGroups === 'function') ? window.getGroups('reply') : [];
 
     if (groups.length === 0) {
       publicList.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
       privateList.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
       return;
     }
-
     publicList.innerHTML = '';
     privateList.innerHTML = '';
-
     groups.forEach(function (name) {
       publicList.appendChild(createGroupCheckboxItem(name, 'reply', 'public'));
       privateList.appendChild(createGroupCheckboxItem(name, 'reply', 'private'));
@@ -933,10 +1054,7 @@
   function renderEmojiGroupList() {
     var list = document.getElementById('csEmojiGroupList');
     if (!list) return;
-    var groups = [];
-    if (typeof window.getGroups === 'function') {
-      groups = window.getGroups('kaomoji');
-    }
+    var groups = (typeof window.getGroups === 'function') ? window.getGroups('kaomoji') : [];
     if (groups.length === 0) {
       list.innerHTML = '<div class="cs-words-empty">还没有颜文字分组，先去字卡收纳盒创建吧~</div>';
       return;
@@ -951,8 +1069,7 @@
     var list = document.getElementById('csStickerGroupList');
     if (!list) return;
     var stickerArr = (window.cardDatabase && window.cardDatabase.get)
-      ? (window.cardDatabase.get('sticker') || [])
-      : [];
+      ? (window.cardDatabase.get('sticker') || []) : [];
     if (stickerArr.length === 0) {
       list.innerHTML = '<div class="cs-words-empty">还没有表情包，先去字卡收纳盒添加吧~</div>';
       return;
@@ -981,8 +1098,7 @@
     var count = 0;
     if (category === 'sticker') {
       count = (window.cardDatabase && window.cardDatabase.get)
-        ? (window.cardDatabase.get('sticker') || []).length
-        : 0;
+        ? (window.cardDatabase.get('sticker') || []).length : 0;
     } else {
       if (typeof window.getCardsInGroup === 'function') {
         count = window.getCardsInGroup(groupName, category).length;
@@ -1025,13 +1141,9 @@
     else if (!checked && idx >= 0) targetArr.splice(idx, 1);
 
     if (itemEl) itemEl.classList.toggle('checked', checked);
-
     persistGroupSelections();
     updateAllGroupCounts();
-
-    if (typeof window.refreshCardUI === 'function') {
-      window.refreshCardUI();
-    }
+    if (typeof window.refreshCardUI === 'function') window.refreshCardUI();
   }
 
   function updateAllGroupCounts() {
@@ -1069,14 +1181,11 @@
     panel.querySelectorAll('.chat-settings-tab').forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-tab') === tabName);
     });
-
     panel.querySelectorAll('.chat-settings-tab-panel').forEach(function (p) {
       p.classList.toggle('active', p.getAttribute('data-panel') === tabName);
     });
 
-    if (tabName === 'appearance') {
-      fillPanelValues();
-    }
+    if (tabName === 'appearance') fillPanelValues();
     if (tabName === 'chat') {
       restoreModeSwitch();
       renderAllGroupLists();
@@ -1132,6 +1241,13 @@
   setTimeout(bindSettingsTrigger, 1500);
   setTimeout(bindSettingsTrigger, 3000);
 
+  // 页面加载后，确保从存储恢复的外观设置被应用
+  setTimeout(function () {
+    if (window.chatSettingsPanel) {
+      applyAll();
+    }
+  }, 1000);
+
   // 暴露给外部
   window.chatSettingsPanel = {
     open: openPanel,
@@ -1139,8 +1255,10 @@
     switchTab: switchTab,
     applyTheme: applyTheme,
     applyFont: applyFont,
+    applyFontUrl: applyFontUrl,
     applyBubble: applyBubble,
     applyCustomCss: applyCustomCss,
+    applyAll: applyAll,
     refreshGroupCheckboxes: renderAllGroupLists,
     refreshGroupLists: renderAllGroupLists
   };
