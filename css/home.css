@@ -1,6 +1,7 @@
 /* ============================================================
    home.css —— 主页基础样式 + 音乐播放器弹窗样式
    来源：原 index.html <head> 中大 <style> 块中与主页相关的部分
+   注意：本文件包含全局 .page / .page.active 核心规则，请勿删除
    ============================================================ */
 
 * { box-sizing: border-box; }
@@ -15,6 +16,22 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ============ 全局页面容器（核心规则，勿删） ============ */
+.page {
+  display: none;              /* 默认隐藏，防止所有页面堆叠 */
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+.page.active {
+  display: flex;              /* 只有带 .active 的页面才显示 */
+  flex-direction: column;
+}
+
+/* ============ 背景 ============ */
 .bg-dream {
   position: fixed;
   top: 0;
@@ -39,6 +56,7 @@ body {
   -webkit-backdrop-filter: blur(2px);
 }
 
+/* ============ 毛玻璃基础 ============ */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
@@ -70,6 +88,7 @@ body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
+/* ============ 横向滚动条 ============ */
 .scroll-x {
   overflow-x: auto;
   scrollbar-width: none;
@@ -80,6 +99,7 @@ body {
 }
 .scroll-x::-webkit-scrollbar { display: none; }
 
+/* ============ 底部导航 ============ */
 .bottom-tab {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
@@ -101,6 +121,7 @@ body {
 .tab-btn.active i { color: #1a2a3a; }
 .tab-btn.active span { color: #1a2a3a; }
 
+/* ============ 播放按钮 ============ */
 .play-btn {
   background: #222;
   color: #fff;
@@ -108,6 +129,7 @@ body {
 }
 .play-btn:active { transform: scale(0.94); }
 
+/* ============ 头部卡片 ============ */
 .header-card {
   position: relative;
   border-radius: 24px;
@@ -132,10 +154,13 @@ body {
 }
 .header-card > * { position: relative; z-index: 1; }
 
+/* ============ 底部安全区 ============ */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+/* ============ 图片通用 ============ */
 img { max-width: 100%; display: block; }
 
+/* ============ 主页图片滚动 ============ */
 .photo-scroll-item {
   flex: 0 0 auto;
   width: 92px;
@@ -147,6 +172,7 @@ img { max-width: 100%; display: block; }
 @media (min-width: 400px) { .photo-scroll-item { width: 102px; height: 102px; } }
 @media (min-width: 430px) { .photo-scroll-item { width: 110px; height: 110px; } }
 
+/* ============ 功能格 ============ */
 .function-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -188,6 +214,7 @@ img { max-width: 100%; display: block; }
 }
 @media (min-width: 400px) { .function-label { font-size: 11px; } }
 
+/* ============ 应用容器 ============ */
 .app-container {
   height: 100vh;
   height: 100dvh;
@@ -205,6 +232,7 @@ img { max-width: 100%; display: block; }
 }
 .main-content::-webkit-scrollbar { display: none; }
 
+/* ============ 悬浮设置按钮 ============ */
 .floating-settings {
   position: fixed;
   right: 20px;
@@ -227,18 +255,9 @@ img { max-width: 100%; display: block; }
 }
 .floating-settings:active { transform: scale(0.92); }
 
-.page {
-  display: none;
-  width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
-  min-height: 100vh;
-  min-height: 100dvh;
-  flex-direction: column;
-}
-.page.active { display: flex; }
-
-/* ============ 音乐播放器（黑胶/歌曲列表） ============ */
+/* ============================================================
+   音乐播放器（黑胶 / 歌曲列表）
+   ============================================================ */
 @keyframes spin-vinyl {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -397,6 +416,7 @@ img { max-width: 100%; display: block; }
   margin-top: 3px;
 }
 
+/* ============ 添加歌曲弹窗 ============ */
 .add-modal {
   position: fixed;
   inset: 0;
@@ -472,6 +492,7 @@ img { max-width: 100%; display: block; }
   box-shadow: 0 4px 14px rgba(248, 180, 180, 0.4);
 }
 
+/* ============ 歌单管理弹窗 ============ */
 .manage-modal {
   position: fixed;
   inset: 0;
@@ -544,7 +565,7 @@ img { max-width: 100%; display: block; }
 }
 .manage-cancel:active { color: #55606b; }
 
-/* 通用弹窗动画关键帧 */
+/* ============ 通用动画关键帧 ============ */
 @keyframes popIn {
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
