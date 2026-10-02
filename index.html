@@ -9297,18 +9297,6 @@
     stopTimer();
   }
 
-  // ==================== 绑定"开始陪伴"按钮 ====================
-  var startBtn = document.getElementById('companionStartBtn');
-  if (startBtn) {
-    // 用 cloneNode 移除旧监听，避免重复绑定
-    var newStartBtn = startBtn.cloneNode(true);
-    startBtn.parentNode.replaceChild(newStartBtn, startBtn);
-    newStartBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      showActivePage();
-    });
-  }
 
   // ==================== 绑定"返回"按钮 ====================
   var backBtn = document.getElementById('cpaBackBtn');
