@@ -6,6 +6,12 @@
  * - Tab 3：聊天与字卡（分组勾选模式）
  * - Tab 4：数据与工具（占位）
  * - 完全独立，不影响任何现有逻辑
+ *
+ * 本版改动：
+ * 1. 全局主题通过 :root CSS 变量同步全站（主页、传讯、字卡库、设置面板）
+ * 2. 字体大小同步到 .message-text / .message-bubble
+ * 3. 自定义 CSS 使用固定 id="custom-css-style"，并自动加 #pageChat 前缀限定作用域
+ * 4. 移除旧版 chat_settings_appearance（背景图/蒙层/毛玻璃）读取逻辑
  */
 
 (function () {
@@ -16,39 +22,41 @@
   var STORE_KEY_THEME = 'chat_settings_theme';
   var STORE_KEY_FONT = 'chat_settings_font';
   var STORE_KEY_BUBBLE = 'chat_settings_bubble';
-  var STORE_KEY_CUSTOM_CSS = 'chat_settings_custom_css';
   var STORE_KEY_CARD_MODE = 'chat_card_mode';
   var STORE_KEY_PUBLIC_GROUPS = 'chat_public_groups';
   var STORE_KEY_PRIVATE_GROUPS = 'chat_private_groups';
   var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';
   var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups';
 
+  // 注意：本版不再读取 'chat_settings_appearance'（旧版背景图/蒙层/毛玻璃）
+  // 也不主动清除它，避免误删用户数据
+
   // ==================== 状态 ====================
   var activeTab = 'profile';
 
   // 主题配色
   var theme = {
-    accentColor: '#6fb1e8',    // 主色调
-    primaryBg: ''              // 主页背景色（可选）
+    accentColor: '#6fb1e8',
+    primaryBg: ''
   };
 
   // 文字设置
   var font = {
-    size: 14,                  // 聊天气泡文字大小 px
-    family: 'system',          // 'system' | 'kaiti' | 'songti' | 'heiti' | 'custom'
-    customUrl: ''              // 自定义字体 CSS 链接
+    size: 14,
+    family: 'system',
+    customUrl: ''
   };
 
   // 气泡样式
   var bubble = {
-    style: 'standard',         // 'standard' | 'rounded' | 'large' | 'square'
-    customCss: ''              // 用户自定义 CSS
+    style: 'standard',
+    customCss: ''
   };
 
   // 字卡模式
   var cardMode = 'all';
 
-  // 分组勾选状态
+  // 分组勾选
   var publicGroups = [];
   var privateGroups = [];
   var emojiGroups = [];
@@ -80,66 +88,59 @@
       try {
         var raw = localStorage.getItem(key);
         if (raw === null) { if (callback) callback(null); return; }
-        // 尝试 JSON parse
         try { callback(JSON.parse(raw)); } catch (e) { callback(raw); }
       } catch (e) { if (callback) callback(null); }
     }
   }
 
-  // ==================== 持久化：Tab ====================
   function persistTab() { persist(STORE_KEY_TAB, activeTab); }
-  function loadTab(callback) { loadValue(STORE_KEY_TAB, function (val) { if (val) activeTab = val; callback(); }); }
+  function loadTab(cb) { loadValue(STORE_KEY_TAB, function (v) { if (v) activeTab = v; cb(); }); }
 
-  // ==================== 持久化：主题 ====================
   function persistTheme() { persist(STORE_KEY_THEME, theme); }
-  function loadTheme(callback) {
-    loadValue(STORE_KEY_THEME, function (val) {
-      if (val && typeof val === 'object') {
-        if (val.accentColor) theme.accentColor = val.accentColor;
-        if (val.primaryBg) theme.primaryBg = val.primaryBg;
+  function loadTheme(cb) {
+    loadValue(STORE_KEY_THEME, function (v) {
+      if (v && typeof v === 'object') {
+        if (v.accentColor) theme.accentColor = v.accentColor;
+        if (v.primaryBg) theme.primaryBg = v.primaryBg;
       }
-      callback();
+      cb();
     });
   }
 
-  // ==================== 持久化：字体 ====================
   function persistFont() { persist(STORE_KEY_FONT, font); }
-  function loadFont(callback) {
-    loadValue(STORE_KEY_FONT, function (val) {
-      if (val && typeof val === 'object') {
-        if (typeof val.size === 'number') font.size = val.size;
-        if (val.family) font.family = val.family;
-        if (val.customUrl) font.customUrl = val.customUrl;
+  function loadFont(cb) {
+    loadValue(STORE_KEY_FONT, function (v) {
+      if (v && typeof v === 'object') {
+        if (typeof v.size === 'number') font.size = v.size;
+        if (v.family) font.family = v.family;
+        if (v.customUrl) font.customUrl = v.customUrl;
       }
-      callback();
+      cb();
     });
   }
 
-  // ==================== 持久化：气泡 ====================
   function persistBubble() { persist(STORE_KEY_BUBBLE, bubble); }
-  function loadBubble(callback) {
-    loadValue(STORE_KEY_BUBBLE, function (val) {
-      if (val && typeof val === 'object') {
-        if (val.style) bubble.style = val.style;
-        if (typeof val.customCss === 'string') bubble.customCss = val.customCss;
+  function loadBubble(cb) {
+    loadValue(STORE_KEY_BUBBLE, function (v) {
+      if (v && typeof v === 'object') {
+        if (v.style) bubble.style = v.style;
+        if (typeof v.customCss === 'string') bubble.customCss = v.customCss;
       }
-      callback();
+      cb();
     });
   }
 
-  // ==================== 持久化：字卡模式 ====================
   function persistCardMode() {
     persist(STORE_KEY_CARD_MODE, cardMode);
     window.chatCardMode = cardMode;
   }
-  function loadCardMode(callback) {
-    loadValue(STORE_KEY_CARD_MODE, function (val) {
-      if (val) cardMode = val;
-      callback();
+  function loadCardMode(cb) {
+    loadValue(STORE_KEY_CARD_MODE, function (v) {
+      if (v) cardMode = v;
+      cb();
     });
   }
 
-  // ==================== 持久化：分组勾选 ====================
   function persistGroupSelections() {
     persist(STORE_KEY_PUBLIC_GROUPS, publicGroups);
     persist(STORE_KEY_PRIVATE_GROUPS, privateGroups);
@@ -151,14 +152,13 @@
     window.chatStickerGroups = stickerGroups.slice();
   }
 
-  function loadGroupSelections(callback) {
+  function loadGroupSelections(cb) {
     var keys = [
       { store: STORE_KEY_PUBLIC_GROUPS, assign: function (d) { if (Array.isArray(d)) publicGroups = d; } },
       { store: STORE_KEY_PRIVATE_GROUPS, assign: function (d) { if (Array.isArray(d)) privateGroups = d; } },
       { store: STORE_KEY_EMOJI_GROUPS, assign: function (d) { if (Array.isArray(d)) emojiGroups = d; } },
       { store: STORE_KEY_STICKER_GROUPS, assign: function (d) { if (Array.isArray(d)) stickerGroups = d; } }
     ];
-
     var remaining = keys.length;
     function done() {
       remaining--;
@@ -167,7 +167,7 @@
         window.chatPrivateGroups = privateGroups.slice();
         window.chatEmojiGroups = emojiGroups.slice();
         window.chatStickerGroups = stickerGroups.slice();
-        if (callback) callback();
+        cb();
       }
     }
     keys.forEach(function (k) {
@@ -175,74 +175,129 @@
     });
   }
 
-  // ==================== 应用主题配色 ====================
+  // ==================== 工具：颜色 ====================
+  function hexToRgb(hex) {
+    if (!hex) return null;
+    var m = String(hex).replace('#', '');
+    if (m.length === 3) m = m[0] + m[0] + m[1] + m[1] + m[2] + m[2];
+    var num = parseInt(m, 16);
+    if (isNaN(num)) return null;
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+  }
+
+  function rgba(hex, alpha) {
+    var rgb = hexToRgb(hex);
+    if (!rgb) return 'rgba(111,177,232,' + alpha + ')';
+    return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alpha + ')';
+  }
+
+  function darken(hex, amount) {
+    var rgb = hexToRgb(hex);
+    if (!rgb) return '#4a86b0';
+    return '#' +
+      ('0' + Math.max(0, rgb.r - amount).toString(16)).slice(-2) +
+      ('0' + Math.max(0, rgb.g - amount).toString(16)).slice(-2) +
+      ('0' + Math.max(0, rgb.b - amount).toString(16)).slice(-2);
+  }
+
+  // ==================== 应用主题（全局同步） ====================
   function applyTheme() {
     var root = document.documentElement;
     var color = theme.accentColor || '#6fb1e8';
 
-    // 计算衍生色
-    var rgb = hexToRgb(color);
-    var lighter = rgb ? 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.15)' : 'rgba(111,177,232,0.15)';
-    var darker = rgb ? 'rgba(' + Math.max(0, rgb.r - 40) + ',' + Math.max(0, rgb.g - 40) + ',' + Math.max(0, rgb.b - 40) + ',1)' : '#4a86b0';
-
-    // 注入到 CSS 变量
+    // ---- 1. 基础变量 ----
     root.style.setProperty('--accent-color', color);
-    root.style.setProperty('--accent-color-light', lighter);
-    root.style.setProperty('--accent-color-dark', darker);
+    root.style.setProperty('--accent-color-light', rgba(color, 0.15));
+    root.style.setProperty('--accent-color-dark', darken(color, 40));
     root.style.setProperty('--theme-accent', color);
+    root.style.setProperty('--global-accent', color);
+
+    // 常用衍生变量
+    root.style.setProperty('--link-color', darken(color, 20));
+    root.style.setProperty('--highlight-color', rgba(color, 0.2));
 
     if (theme.primaryBg) {
       root.style.setProperty('--primary-bg', theme.primaryBg);
     }
 
-    // 应用到关键元素
+    // ---- 2. 全站主色同步：注入一个专用 style 标签 ----
+    var styleId = 'global-theme-vars';
+    var styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+
+    styleEl.textContent = [
+      /* 主页 */
+      '#pageHome .play-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
+      '#pageHome .tab-btn.active i, #pageHome .tab-btn.active span { color: ' + color + ' !important; }',
+      '#pageHome .function-icon i { color: ' + color + ' !important; }',
+
+      /* 字卡库 */
+      '#pageCard .cat-grid-item.active { background: ' + rgba(color, 0.12) + ' !important; border-color: ' + color + ' !important; }',
+      '#pageCard .cat-grid-item.active i, #pageCard .cat-grid-item.active .cat-label { color: ' + darken(color, 20) + ' !important; }',
+      '#pageCard .card-group-select:focus { border-color: ' + color + ' !important; }',
+      '#pageCard .word-card-delete { background: ' + rgba(color, 0.12) + ' !important; color: ' + darken(color, 20) + ' !important; }',
+      '#pageCard .card-action-btn i { color: ' + color + ' !important; }',
+
+      /* 传讯页 */
+      '#pageChat .send-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
+      '#pageChat .send-btn:active { background: ' + darken(color, 20) + ' !important; }',
+      '#pageChat .chat-action-icon { color: ' + rgba(color, 0.75) + ' !important; }',
+      '#pageChat .chat-action-icon:active { color: ' + color + ' !important; }',
+      '#pageChat .message-row.self .message-bubble { background: ' + rgba(color, 0.35) + ' !important; }',
+
+      /* 设置面板 */
+      '#chatSettingsPanel .chat-settings-tab.active { background: ' + rgba(color, 0.15) + ' !important; color: ' + darken(color, 20) + ' !important; }',
+      '#chatSettingsPanel .chat-settings-title i { color: ' + color + ' !important; }',
+      '#chatSettingsPanel .cs-mode-btn.active { color: ' + darken(color, 20) + ' !important; }',
+      '#chatSettingsPanel .cs-words-btn i { color: ' + color + ' !important; }',
+      '#chatSettingsPanel .cs-group-checkbox input:checked + .cs-group-check-mark { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
+
+      /* 通用 */
+      '.home-settings-btn i { color: ' + color + ' !important; }'
+    ].join('\n');
+
+    // ---- 3. 底部导航的激活色 ----
+    document.querySelectorAll('.tab-btn.active i, .tab-btn.active span').forEach(function (el) {
+      el.style.color = color;
+    });
+
+    // ---- 4. 全局发送按钮 ----
     var sendBtn = document.getElementById('sendBtn');
     if (sendBtn) {
       sendBtn.style.background = color;
-      sendBtn.style.boxShadow = '0 3px 10px ' + lighter;
+      sendBtn.style.boxShadow = '0 3px 10px ' + rgba(color, 0.35);
     }
 
-    var tabActive = document.querySelectorAll('.tab-btn.active i, .tab-btn.active span');
-    tabActive.forEach(function (el) { el.style.color = color; });
-
-    // 全局（主页等）——给 body 加 CSS 变量
+    // ---- 5. body 变量（供其他脚本读取） ----
     document.body.style.setProperty('--global-accent', color);
-
-    // 应用主页相关元素
-    var homeSendBtn = document.querySelectorAll('#pageHome .play-btn');
-    homeSendBtn.forEach(function (el) {
-      // 保留原样式，只微调颜色
-    });
+    document.body.dataset.accentColor = color;
   }
 
-  function hexToRgb(hex) {
-    if (!hex) return null;
-    var m = hex.replace('#', '');
-    if (m.length === 3) {
-      m = m[0] + m[0] + m[1] + m[1] + m[2] + m[2];
-    }
-    var num = parseInt(m, 16);
-    if (isNaN(num)) return null;
-    return {
-      r: (num >> 16) & 255,
-      g: (num >> 8) & 255,
-      b: num & 255
-    };
-  }
-
-  // ==================== 应用文字设置 ====================
+  // ==================== 应用字体（全局同步） ====================
   function applyFont() {
     var root = document.documentElement;
     var body = document.body;
-
-    // 1. 字体大小
     var size = font.size || 14;
+
+    // ---- 1. 字体大小：设置变量 + 应用到所有气泡 ----
     root.style.setProperty('--chat-font-size', size + 'px');
+
+    // 应用到传讯页气泡（优先使用 .message-text，其次 .message-bubble）
+    document.querySelectorAll('#pageChat .message-text').forEach(function (el) {
+      el.style.fontSize = size + 'px';
+    });
     document.querySelectorAll('#pageChat .message-bubble').forEach(function (el) {
       el.style.fontSize = size + 'px';
     });
+    document.querySelectorAll('#pageChat .call-record-bubble').forEach(function (el) {
+      el.style.fontSize = Math.max(10, size - 3) + 'px';
+    });
 
-    // 2. 字体
+    // ---- 2. 字体族 ----
     var fontFamily = '';
     if (font.family === 'system') {
       fontFamily = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -253,19 +308,21 @@
     } else if (font.family === 'heiti') {
       fontFamily = '"Heiti SC", "SimHei", "黑体", STHeiti, sans-serif';
     } else if (font.family === 'custom') {
-      fontFamily = '"CustomFont", ' + '-apple-system, BlinkMacSystemFont, sans-serif';
+      fontFamily = '"CustomFont", ' + '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif';
     }
 
     if (fontFamily) {
       body.style.fontFamily = fontFamily;
+      // 同时设置到 :root，供其他元素读取
+      root.style.setProperty('--global-font-family', fontFamily);
     }
 
-    // 3. 自定义字体 URL
+    // ---- 3. 自定义字体 URL ----
     var fontLinkId = 'custom-font-link';
     var existing = document.getElementById(fontLinkId);
     if (existing) existing.remove();
 
-    if (font.family === 'custom' && font.customUrl) {
+    if (font.customUrl) {
       var link = document.createElement('link');
       link.id = fontLinkId;
       link.rel = 'stylesheet';
@@ -284,26 +341,72 @@
     else if (bubble.style === 'square') radius = '4px';
 
     root.style.setProperty('--bubble-radius', radius);
+
     document.querySelectorAll('#pageChat .message-bubble').forEach(function (el) {
       el.style.borderRadius = radius;
     });
   }
 
-  // ==================== 应用自定义 CSS ====================
+  // ==================== 应用自定义 CSS（限定作用域） ====================
   function applyCustomCss() {
-    var styleId = 'chat-custom-css';
+    var styleId = 'custom-css-style'; // 固定 id，便于复写
     var existing = document.getElementById(styleId);
     if (existing) existing.remove();
 
-    if (bubble.customCss && bubble.customCss.trim()) {
-      var style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = bubble.customCss;
-      document.head.appendChild(style);
-    }
+    if (!bubble.customCss || !bubble.customCss.trim()) return;
+
+    var raw = bubble.customCss;
+
+    // 自动限定作用域：
+    // 如果用户输入的 CSS 里没有 #pageChat，就自动加前缀
+    // 让用户的自定义样式只影响传讯页面
+    var scoped = scopeCssToPageChat(raw);
+
+    var style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = scoped;
+    document.head.appendChild(style);
   }
 
-  // ==================== 应用所有设置 ====================
+  // 简单的 CSS 作用域限定：给顶层选择器加 #pageChat 前缀
+  function scopeCssToPageChat(css) {
+    if (!css) return '';
+    // 如果用户已经手动加了 #pageChat，就不再重复加
+    if (css.indexOf('#pageChat') >= 0) return css;
+
+    // 按 } 切分规则块，给每个选择器加前缀
+    var result = [];
+    // 逐行处理更稳定：找到 "selector {" 这种模式
+    var regex = /([^{}]+)\{([^{}]*)\}/g;
+    var m;
+    var lastIndex = 0;
+    while ((m = regex.exec(css)) !== null) {
+      var selectors = m[1].trim();
+      var body = m[2];
+      // 在规则之间保留空白
+      if (selectors) {
+        var prefixedSelectors = selectors.split(',').map(function (sel) {
+          sel = sel.trim();
+          if (!sel) return sel;
+          // 跳过 @media / @keyframes 之类的 at-rule
+          if (sel.charAt(0) === '@') return sel;
+          return '#pageChat ' + sel;
+        }).join(', ');
+        result.push(prefixedSelectors + ' {' + body + '}');
+      } else {
+        result.push(m[0]);
+      }
+      lastIndex = regex.lastIndex;
+    }
+    // 处理未被匹配的尾部（如 @import、注释等）
+    if (lastIndex < css.length) {
+      var tail = css.slice(lastIndex);
+      if (tail.trim()) result.push(tail);
+    }
+    return result.join('\n');
+  }
+
+  // ==================== 应用全部 ====================
   function applyAll() {
     applyTheme();
     applyFont();
@@ -349,13 +452,11 @@
     panel.innerHTML = [
       '<div class="chat-settings-panel-inner">',
 
-      // 顶部标题
       '  <div class="chat-settings-header">',
       '    <span class="chat-settings-title"><i class="fa-solid fa-sliders"></i> 设置</span>',
       '    <button class="chat-settings-close" id="chatSettingsClose"><i class="fa-solid fa-xmark"></i></button>',
       '  </div>',
 
-      // 选项卡
       '  <div class="chat-settings-tabs" id="chatSettingsTabs">',
       '    <button class="chat-settings-tab" data-tab="profile">',
       '      <i class="fa-solid fa-user"></i>',
@@ -375,10 +476,9 @@
       '    </button>',
       '  </div>',
 
-      // 内容区
       '  <div class="chat-settings-body">',
 
-      // Tab 1: 个人资料（占位）
+      // Tab 1: 个人资料
       '    <div class="chat-settings-tab-panel" data-panel="profile">',
       '      <div class="chat-settings-section-title">个人资料</div>',
       '      <div class="chat-settings-placeholder">',
@@ -387,7 +487,7 @@
       '      </div>',
       '    </div>',
 
-      // Tab 2: 外观与界面（全新内容）
+      // Tab 2: 外观与界面
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
 
       // 区块 1：全局主题配色
@@ -401,21 +501,17 @@
       '          <input type="color" id="csCustomColorInput" value="#6fb1e8" style="display:none;">',
       '          <span class="cs-custom-color-value" id="csCustomColorValue">#6fb1e8</span>',
       '        </div>',
-      '        <div class="cs-slider-hint">修改后主页、字卡库等页面的主色调会同步变化</div>',
+      '        <div class="cs-slider-hint">修改后主页、传讯页、字卡库、设置面板的主色调会同步变化</div>',
       '      </div>',
 
       // 区块 2：文字设置
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">文字设置</div>',
-
-      // 字体大小滑块
       '        <div class="cs-field-label">字体大小</div>',
       '        <div class="cs-slider-row">',
       '          <input type="range" class="cs-slider" id="csFontSizeSlider" min="12" max="24" value="14">',
       '          <span class="cs-slider-value" id="csFontSizeValue">14px</span>',
       '        </div>',
-
-      // 字体选择
       '        <div class="cs-field-label" style="margin-top:14px;">字体选择</div>',
       '        <select class="cs-font-select" id="csFontSelect">',
       '          <option value="system">系统默认</option>',
@@ -424,8 +520,6 @@
       '          <option value="heiti">黑体</option>',
       '          <option value="custom">自定义字体</option>',
       '        </select>',
-
-      // 自定义字体 URL
       '        <div class="cs-field-label" style="margin-top:14px;">字体 URL</div>',
       '        <div class="cs-font-url-row">',
       '          <input type="text" class="cs-font-url-input" id="csFontUrlInput" placeholder="粘贴字体 CSS 链接...">',
@@ -433,7 +527,7 @@
       '        </div>',
       '      </div>',
 
-      // 区块 3：气泡样式与自定义 CSS
+      // 区块 3：气泡样式
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">气泡样式</div>',
       '        <div class="cs-bubble-styles" id="csBubbleStyles">',
@@ -456,7 +550,7 @@
       '        </div>',
 
       '        <div class="cs-field-label" style="margin-top:16px;">自定义气泡 CSS</div>',
-      '        <textarea class="cs-custom-css-input" id="csCustomCssInput" placeholder="/* 在这里输入自定义 CSS，例如： */&#10;.message-bubble {&#10;  box-shadow: 0 4px 12px rgba(0,0,0,0.1);&#10;}"></textarea>',
+      '        <textarea class="cs-custom-css-input" id="csCustomCssInput" placeholder="/* 只影响传讯页气泡，例如： */&#10;.message-bubble {&#10;  box-shadow: 0 4px 12px rgba(0,0,0,0.1);&#10;}"></textarea>',
       '        <div class="cs-custom-css-actions">',
       '          <button class="cs-css-btn cs-css-apply" id="csCssApply">应用 CSS</button>',
       '          <button class="cs-css-btn cs-css-clear" id="csCssClear">清空</button>',
@@ -466,10 +560,8 @@
 
       '    </div>',
 
-      // Tab 3: 聊天与字卡（分组勾选模式）
+      // Tab 3: 聊天与字卡
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
-
-      // 区块 1：字卡模式
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">当前字卡模式</div>',
       '        <div class="cs-mode-switch" id="csModeSwitch">',
@@ -489,7 +581,6 @@
       '        <div class="cs-mode-hint" id="csModeHint">自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取</div>',
       '      </div>',
 
-      // 区块 2：公共字卡分组
       '      <div class="chat-settings-section">',
       '        <div class="cs-words-header">',
       '          <div class="chat-settings-section-title" style="margin:0;">',
@@ -502,7 +593,6 @@
       '        <div class="cs-group-list" id="csPublicGroupList"></div>',
       '      </div>',
 
-      // 区块 3：专属字卡分组
       '      <div class="chat-settings-section">',
       '        <div class="cs-words-header">',
       '          <div class="chat-settings-section-title" style="margin:0;">',
@@ -515,7 +605,6 @@
       '        <div class="cs-group-list" id="csPrivateGroupList"></div>',
       '      </div>',
 
-      // 区块 4：颜文字勾选
       '      <div class="chat-settings-section">',
       '        <div class="cs-words-header">',
       '          <div class="chat-settings-section-title" style="margin:0;">',
@@ -528,7 +617,6 @@
       '        <div class="cs-group-list" id="csEmojiGroupList"></div>',
       '      </div>',
 
-      // 区块 5：表情包勾选
       '      <div class="chat-settings-section">',
       '        <div class="cs-words-header">',
       '          <div class="chat-settings-section-title" style="margin:0;">',
@@ -540,10 +628,9 @@
       '        <div class="cs-words-hint">勾选的字卡分组会加入自动回复的表情包池</div>',
       '        <div class="cs-group-list" id="csStickerGroupList"></div>',
       '      </div>',
-
       '    </div>',
 
-      // Tab 4: 数据与工具（占位）
+      // Tab 4: 数据与工具
       '    <div class="chat-settings-tab-panel" data-panel="data">',
       '      <div class="chat-settings-section-title">数据与工具</div>',
       '      <div class="chat-settings-placeholder">',
@@ -604,7 +691,6 @@
     });
   }
 
-  // ==================== 渲染气泡样式选择器 ====================
   function renderBubbleStyles() {
     var container = document.getElementById('csBubbleStyles');
     if (!container) return;
@@ -616,14 +702,12 @@
 
   // ==================== 填充面板当前值 ====================
   function fillPanelValues() {
-    // 主题色
     var valEl = document.getElementById('csCustomColorValue');
     if (valEl) valEl.textContent = theme.accentColor;
     var picker = document.getElementById('csCustomColorInput');
     if (picker) picker.value = theme.accentColor;
     renderThemeColors();
 
-    // 字体大小
     var slider = document.getElementById('csFontSizeSlider');
     var sizeVal = document.getElementById('csFontSizeValue');
     if (slider) {
@@ -631,18 +715,14 @@
       if (sizeVal) sizeVal.textContent = font.size + 'px';
     }
 
-    // 字体选择
     var fontSelect = document.getElementById('csFontSelect');
     if (fontSelect) fontSelect.value = font.family;
 
-    // 字体 URL
     var fontUrlInput = document.getElementById('csFontUrlInput');
     if (fontUrlInput) fontUrlInput.value = font.customUrl || '';
 
-    // 气泡样式
     renderBubbleStyles();
 
-    // 自定义 CSS
     var cssInput = document.getElementById('csCustomCssInput');
     if (cssInput) cssInput.value = bubble.customCss || '';
   }
@@ -652,14 +732,12 @@
     var panel = document.getElementById('chatSettingsPanel');
     if (!panel) return;
 
-    // 关闭
     var closeBtn = document.getElementById('chatSettingsClose');
     if (closeBtn) closeBtn.addEventListener('click', closePanel);
     panel.addEventListener('click', function (e) {
       if (e.target === panel) closePanel();
     });
 
-    // Tab 切换
     panel.querySelectorAll('.chat-settings-tab').forEach(function (tab) {
       tab.addEventListener('click', function () {
         var target = tab.getAttribute('data-tab');
@@ -669,8 +747,6 @@
         persistTab();
       });
     });
-
-    // ============ 外观 Tab 的交互 ============
 
     // 1. 自定义颜色
     var customColorInput = document.getElementById('csCustomColorInput');
@@ -741,7 +817,7 @@
       });
     }
 
-    // 6. 自定义 CSS 应用
+    // 6. 自定义 CSS
     var cssApply = document.getElementById('csCssApply');
     var cssClear = document.getElementById('csCssClear');
     var cssReset = document.getElementById('csCssReset');
@@ -774,7 +850,7 @@
       });
     }
 
-    // ============ 聊天与字卡 Tab 的交互 ============
+    // 聊天与字卡 Tab
     bindChatTabEvents();
   }
 
