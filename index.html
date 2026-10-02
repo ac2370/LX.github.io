@@ -4879,6 +4879,665 @@
   }
   body.theme-dark .chat-notify-content { color: #b8c2cc; }
 </style>
+     <!-- ============================================================
+     陪伴页面样式
+     ============================================================ -->
+<style>
+  /* ==================== 陪伴页面容器 ==================== */
+  #pageCompanion {
+    background: linear-gradient(160deg, #e8f0fb 0%, #f0e8fb 50%, #fbe8f2 100%);
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+  }
+  #pageCompanion::-webkit-scrollbar { display: none; }
+  #pageCompanion.active { display: flex; }
+
+  body.theme-dark #pageCompanion {
+    background: linear-gradient(160deg, #1a1f26 0%, #221f2a 50%, #2a1f28 100%);
+    color: #e8eef4;
+  }
+
+  .companion-container {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px 16px 16px;
+    min-height: 100%;
+  }
+
+  /* ==================== 顶部导航栏 ==================== */
+  .companion-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 4px 12px 4px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: transparent;
+  }
+
+  .companion-back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    color: #55606b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background 0.15s ease;
+    box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+  }
+  .companion-back-btn:active {
+    transform: scale(0.9);
+    background: rgba(245, 248, 252, 1);
+  }
+  body.theme-dark .companion-back-btn {
+    background: rgba(38, 44, 52, 0.75);
+    border-color: var(--theme-card-border, #333a42);
+    color: var(--theme-text-soft, #b8c2cc);
+  }
+
+  .companion-topbar-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    letter-spacing: 0.5px;
+  }
+  body.theme-dark .companion-topbar-title { color: #e8eef4; }
+
+  .companion-topbar-placeholder {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* ==================== 中间内容区 ==================== */
+  .companion-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ==================== 中心图标 + 提示语 ==================== */
+  .companion-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px 20px 12px 20px;
+  }
+
+  .companion-hero-icon {
+    width: 84px;
+    height: 84px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #fce0e8 0%, #f8d4e0 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 12px 32px rgba(248, 180, 210, 0.35);
+    animation: companionPulse 2.4s ease-in-out infinite;
+  }
+  .companion-hero-icon i {
+    font-size: 36px;
+    color: #e58b9b;
+  }
+  body.theme-dark .companion-hero-icon {
+    background: linear-gradient(135deg, rgba(248, 180, 210, 0.25) 0%, rgba(248, 180, 210, 0.15) 100%);
+  }
+  body.theme-dark .companion-hero-icon i { color: #f0a4b4; }
+
+  @keyframes companionPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 12px 32px rgba(248, 180, 210, 0.35); }
+    50% { transform: scale(1.04); box-shadow: 0 16px 40px rgba(248, 180, 210, 0.5); }
+  }
+
+  .companion-hero-text {
+    font-size: 13px;
+    color: #7a8a99;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+  body.theme-dark .companion-hero-text { color: var(--theme-text-muted, #8a95a0); }
+
+  /* ==================== 通用 section ==================== */
+  .companion-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .companion-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .companion-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #55606b;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .companion-section-title i {
+    font-size: 12px;
+    color: #e58b9b;
+  }
+  body.theme-dark .companion-section-title { color: var(--theme-text-soft, #b8c2cc); }
+
+  /* ==================== 白噪音胶囊按钮 ==================== */
+  .companion-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 2px;
+  }
+  .companion-pills::-webkit-scrollbar { display: none; }
+
+  .companion-pill {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    color: #55606b;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.18s ease;
+    box-shadow: 0 3px 10px rgba(150, 180, 210, 0.1);
+  }
+  .companion-pill:active { transform: scale(0.96); }
+  .companion-pill.active {
+    background: #fcdce6;
+    border-color: #f8b4c8;
+    color: #d96880;
+    box-shadow: 0 4px 14px rgba(248, 180, 200, 0.35);
+  }
+  body.theme-dark .companion-pill {
+    background: rgba(42, 48, 56, 0.75);
+    border-color: var(--theme-card-border, #333a42);
+    color: var(--theme-text-soft, #b8c2cc);
+  }
+  body.theme-dark .companion-pill.active {
+    background: rgba(248, 180, 200, 0.2);
+    border-color: rgba(248, 180, 200, 0.5);
+    color: #f0a4b4;
+  }
+
+  /* ==================== 陪伴对象卡片 ==================== */
+  .companion-partner-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 16px 18px 16px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 8px 24px rgba(150, 180, 210, 0.12);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .companion-partner-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(150, 180, 210, 0.18);
+  }
+  body.theme-dark .companion-partner-card {
+    background: rgba(42, 48, 56, 0.78);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-partner-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #d4e8fc 0%, #e0d4fc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #6a7a9a;
+    border: 3px solid #ffffff;
+    box-shadow: 0 6px 18px rgba(150, 180, 210, 0.25);
+    overflow: hidden;
+  }
+  .companion-partner-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  body.theme-dark .companion-partner-avatar {
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-partner-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+  }
+  body.theme-dark .companion-partner-name { color: #e8eef4; }
+
+  .companion-partner-hint {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    background: rgba(248, 180, 200, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e58b9b;
+    font-size: 10px;
+  }
+
+  /* ==================== 陪伴场景 2x2 网格 ==================== */
+  .companion-scenes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .companion-scene-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    color: #55606b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 14px rgba(150, 180, 210, 0.1);
+  }
+  .companion-scene-btn:active { transform: scale(0.96); }
+  .companion-scene-btn i {
+    font-size: 22px;
+    color: #8fa8bd;
+  }
+  .companion-scene-btn.active {
+    background: #fcdce6;
+    border-color: #f8b4c8;
+    color: #d96880;
+    box-shadow: 0 6px 18px rgba(248, 180, 200, 0.3);
+  }
+  .companion-scene-btn.active i { color: #e58b9b; }
+
+  body.theme-dark .companion-scene-btn {
+    background: rgba(42, 48, 56, 0.78);
+    border-color: var(--theme-card-border, #333a42);
+    color: var(--theme-text-soft, #b8c2cc);
+  }
+  body.theme-dark .companion-scene-btn i { color: #8a95a0; }
+  body.theme-dark .companion-scene-btn.active {
+    background: rgba(248, 180, 200, 0.2);
+    border-color: rgba(248, 180, 200, 0.5);
+    color: #f0a4b4;
+  }
+  body.theme-dark .companion-scene-btn.active i { color: #f0a4b4; }
+
+  /* ==================== 自定义输入框 ==================== */
+  .companion-custom-input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+  }
+  .companion-custom-input:focus {
+    border-color: #f8b4c8;
+    box-shadow: 0 0 0 3px rgba(248, 180, 200, 0.18);
+  }
+  .companion-custom-input::placeholder { color: #b6c2cd; }
+  body.theme-dark .companion-custom-input {
+    background: rgba(42, 48, 56, 0.78);
+    border-color: var(--theme-card-border, #333a42);
+    color: #e8eef4;
+  }
+
+  /* ==================== 陪伴背景色块 ==================== */
+  .companion-bg-custom-btn {
+    padding: 6px 12px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    color: #e58b9b;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .companion-bg-custom-btn:active {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(0.96);
+  }
+  body.theme-dark .companion-bg-custom-btn {
+    background: rgba(42, 48, 56, 0.8);
+    border-color: var(--theme-card-border, #333a42);
+    color: #f0a4b4;
+  }
+
+  .companion-bg-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .companion-bg-block {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(150, 180, 210, 0.1);
+  }
+  .companion-bg-block:active { transform: scale(0.94); }
+  .companion-bg-block span {
+    font-size: 11px;
+    font-weight: 700;
+    color: #55606b;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 3px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.3px;
+  }
+  .companion-bg-block.active {
+    border-color: #f8b4c8;
+    box-shadow: 0 0 0 2px rgba(248, 180, 200, 0.5), 0 6px 20px rgba(248, 180, 200, 0.35);
+  }
+  body.theme-dark .companion-bg-block {
+    border-color: var(--theme-card-border, #333a42);
+  }
+  body.theme-dark .companion-bg-block.active {
+    border-color: #f0a4b4;
+  }
+
+  /* ==================== 开始陪伴按钮 ==================== */
+  .companion-start-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 16px 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+    border: none;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(248, 180, 200, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+  }
+  .companion-start-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(248, 180, 200, 0.5);
+  }
+  .companion-start-btn i { font-size: 13px; }
+
+  .companion-footer-space {
+    height: 20px;
+  }
+
+  /* ==================== 联系人选择器弹窗 ==================== */
+  .companion-partner-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .companion-partner-modal.active { display: flex; }
+
+  .companion-partner-modal-panel {
+    width: 100%;
+    max-width: 430px;
+    max-height: 70vh;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px 28px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+    padding: 18px 18px 24px 18px;
+    display: flex;
+    flex-direction: column;
+    animation: companionSlideUp 0.25s ease;
+  }
+  @keyframes companionSlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  body.theme-dark .companion-partner-modal-panel {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-partner-modal-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  body.theme-dark .companion-partner-modal-title { color: #e8eef4; }
+
+  .companion-partner-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    margin-bottom: 12px;
+  }
+  .companion-partner-list::-webkit-scrollbar { display: none; }
+
+  .companion-partner-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #fafbfc;
+    border: 1px solid #eef1f4;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .companion-partner-item:active { background: #f2f6fa; }
+  body.theme-dark .companion-partner-item {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-partner-item-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #d4e8fc 0%, #e0d4fc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #6a7a9a;
+    border: 2px solid #ffffff;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .companion-partner-item-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  body.theme-dark .companion-partner-item-avatar {
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-partner-item-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  body.theme-dark .companion-partner-item-name { color: #e8eef4; }
+
+  .companion-partner-modal-cancel {
+    width: 100%;
+    padding: 12px 0;
+    border-radius: 14px;
+    background: #f5f6f8;
+    border: 1px solid #eef1f4;
+    color: #55606b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .companion-partner-modal-cancel:active { background: #e8ecf0; }
+  body.theme-dark .companion-partner-modal-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft, #b8c2cc);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  /* 自定义背景图片弹窗 */
+  .companion-bg-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 30, 40, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .companion-bg-modal.active { display: flex; }
+
+  .companion-bg-modal-panel {
+    width: 100%;
+    max-width: 360px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
+    padding: 22px 20px;
+    animation: popIn 0.22s ease;
+  }
+  body.theme-dark .companion-bg-modal-panel {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-bg-modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  body.theme-dark .companion-bg-modal-title { color: #e8eef4; }
+
+  .companion-bg-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .companion-bg-modal-cancel,
+  .companion-bg-modal-confirm {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+  .companion-bg-modal-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .companion-bg-modal-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--text-soft, #b8c2cc);
+    border-color: var(--theme-card-border, #333a42);
+  }
+  .companion-bg-modal-confirm {
+    background: #f8b4c8;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
+  }
+</style>
 </head>
 <body>
 
@@ -4953,9 +5612,9 @@
             <div class="function-icon"><i class="fa-solid fa-house text-[#222] text-lg"></i></div>
             <span class="function-label">主页</span>
           </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-cloud text-[#222] text-lg"></i></div>
-            <span class="function-label">词云</span>
+           <a class="function-item" id="btnCompanion" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-hand-holding-heart text-[#222] text-lg"></i></div>
+            <span class="function-label">陪伴</span>
           </a>
           <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
             <div class="function-icon"><i class="fa-regular fa-calendar-days text-[#222] text-lg"></i></div>
@@ -5222,7 +5881,123 @@
     </div>
   </div>
 
-  <!-- ==================== 传讯页面 ==================== -->
+  <!-- ==================== 陪伴页面 ==================== -->
+  <div class="page" id="pageCompanion">
+    <div class="companion-container">
+
+      <!-- 顶部导航栏 -->
+      <div class="companion-topbar">
+        <button class="companion-back-btn" id="companionBackBtn">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span class="companion-topbar-title">陪伴模式</span>
+        <div class="companion-topbar-placeholder"></div>
+      </div>
+
+      <!-- 中间内容 -->
+      <div class="companion-body">
+
+        <!-- 中心图标 + 提示语 -->
+        <div class="companion-hero">
+          <div class="companion-hero-icon">
+            <i class="fa-solid fa-hand-holding-heart"></i>
+          </div>
+          <div class="companion-hero-text">选择陪伴对象与场景，开始一起专注</div>
+        </div>
+
+        <!-- 白噪音选项 -->
+        <div class="companion-section">
+          <div class="companion-pills" id="companionAmbientPills">
+            <button class="companion-pill active" data-ambient="white">白噪音</button>
+            <button class="companion-pill" data-ambient="rain">雨声</button>
+            <button class="companion-pill" data-ambient="fireplace">壁炉</button>
+            <button class="companion-pill" data-ambient="breeze">晚风</button>
+          </div>
+        </div>
+
+        <!-- 选择陪伴对象 -->
+        <div class="companion-section">
+          <div class="companion-section-title">选择陪伴对象</div>
+          <div class="companion-partner-card" id="companionPartnerCard">
+            <div class="companion-partner-avatar" id="companionPartnerAvatar">TA</div>
+            <div class="companion-partner-name" id="companionPartnerName">未命名</div>
+            <div class="companion-partner-hint">
+              <i class="fa-solid fa-chevron-down"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- 选择陪伴场景 -->
+        <div class="companion-section">
+          <div class="companion-section-title">选择陪伴场景</div>
+          <div class="companion-scenes">
+            <button class="companion-scene-btn" data-scene="study">
+              <i class="fa-solid fa-book"></i>
+              <span>学习</span>
+            </button>
+            <button class="companion-scene-btn" data-scene="work">
+              <i class="fa-solid fa-briefcase"></i>
+              <span>工作</span>
+            </button>
+            <button class="companion-scene-btn" data-scene="rest">
+              <i class="fa-solid fa-mug-hot"></i>
+              <span>休息</span>
+            </button>
+            <button class="companion-scene-btn" data-scene="sport">
+              <i class="fa-solid fa-person-running"></i>
+              <span>运动</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 自定义陪伴内容 -->
+        <div class="companion-section">
+          <div class="companion-section-title">
+            <i class="fa-solid fa-pencil"></i> 自定义陪伴内容
+          </div>
+          <input type="text" class="companion-custom-input" id="companionCustomInput" placeholder="例如：看一部电影、写周报、午休...">
+        </div>
+
+        <!-- 陪伴背景 -->
+        <div class="companion-section">
+          <div class="companion-section-header">
+            <div class="companion-section-title" style="margin-bottom:0;">陪伴背景（简约浅色）</div>
+            <button class="companion-bg-custom-btn" id="companionBgCustomBtn">自定义图片</button>
+          </div>
+          <div class="companion-bg-options" id="companionBgOptions">
+            <button class="companion-bg-block" data-bg="aurora" style="background: linear-gradient(135deg, #d4e8fc 0%, #e0d4fc 100%);">
+              <span>极光</span>
+            </button>
+            <button class="companion-bg-block" data-bg="deepsea" style="background: linear-gradient(135deg, #b8d4ec 0%, #8fb8d8 100%);">
+              <span>深海</span>
+            </button>
+            <button class="companion-bg-block" data-bg="sunset" style="background: linear-gradient(135deg, #fcdcd4 0%, #fcd4e0 100%);">
+              <span>日落</span>
+            </button>
+            <button class="companion-bg-block" data-bg="forest" style="background: linear-gradient(135deg, #d4ecd8 0%, #b8dcc4 100%);">
+              <span>森林</span>
+            </button>
+            <button class="companion-bg-block" data-bg="night" style="background: linear-gradient(135deg, #c4ccd8 0%, #98a4b8 100%);">
+              <span>深夜</span>
+            </button>
+            <button class="companion-bg-block" data-bg="rose" style="background: linear-gradient(135deg, #fcd4dc 0%, #f8b8c8 100%);">
+              <span>玫瑰</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <button class="companion-start-btn" id="companionStartBtn">
+          <i class="fa-solid fa-play"></i> 开始陪伴
+        </button>
+
+        <div class="companion-footer-space"></div>
+
+      </div>
+    </div>
+  </div>
+     
+<!-- ==================== 传讯页面 ==================== -->
   <div class="page" id="pageChat">
     <div class="chat-header">
       <div id="chatContactArea" style="display:flex;flex-direction:column;align-items:center;">
@@ -7416,5 +8191,199 @@
     box-shadow: 0 3px 10px rgba(248, 180, 180, 0.4);
   }
 </style>
+     <!-- ============================================================
+     陪伴页面交互
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  // ==================== 元素引用 ====================
+  var pageCompanion = document.getElementById('pageCompanion');
+  var btnCompanion = document.getElementById('btnCompanion');
+  var backBtn = document.getElementById('companionBackBtn');
+
+  if (!pageCompanion || !btnCompanion) return;
+
+  // ==================== 页面切换 ====================
+  function showCompanion() {
+    // 隐藏其他页面
+    document.querySelectorAll('.page').forEach(function (p) {
+      p.classList.remove('active');
+    });
+    // 显示陪伴页
+    pageCompanion.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function goHome() {
+    document.querySelectorAll('.page').forEach(function (p) {
+      p.classList.remove('active');
+    });
+    var home = document.getElementById('pageHome');
+    if (home) home.classList.add('active');
+  }
+
+  // ==================== 绑定主页"陪伴"按钮 ====================
+  btnCompanion.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    showCompanion();
+  });
+
+  // ==================== 返回按钮 ====================
+  backBtn.addEventListener('click', function () {
+    goHome();
+  });
+
+  // ==================== 白噪音胶囊选中 ====================
+  var pills = document.querySelectorAll('#companionAmbientPills .companion-pill');
+  pills.forEach(function (pill) {
+    pill.addEventListener('click', function () {
+      pills.forEach(function (p) { p.classList.remove('active'); });
+      pill.classList.add('active');
+      window.chatCompanionAmbient = pill.getAttribute('data-ambient');
+      console.log('[陪伴] 白噪音选择:', window.chatCompanionAmbient);
+    });
+  });
+
+  // ==================== 场景选中 ====================
+  var sceneBtns = document.querySelectorAll('.companion-scene-btn');
+  sceneBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      sceneBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      window.chatCompanionScene = btn.getAttribute('data-scene');
+      console.log('[陪伴] 场景选择:', window.chatCompanionScene);
+    });
+  });
+
+  // ==================== 背景色块选中 ====================
+  var bgBlocks = document.querySelectorAll('.companion-bg-block');
+  bgBlocks.forEach(function (block) {
+    block.addEventListener('click', function () {
+      bgBlocks.forEach(function (b) { b.classList.remove('active'); });
+      block.classList.add('active');
+      window.chatCompanionBg = block.getAttribute('data-bg');
+      console.log('[陪伴] 背景选择:', window.chatCompanionBg);
+    });
+  });
+
+  // ==================== 选择陪伴对象 ====================
+  var partnerCard = document.getElementById('companionPartnerCard');
+  var partnerModal = document.getElementById('companionPartnerModal');
+
+  // 动态创建弹窗
+  function ensurePartnerModal() {
+    if (partnerModal) return partnerModal;
+    partnerModal = document.createElement('div');
+    partnerModal.id = 'companionPartnerModal';
+    partnerModal.className = 'companion-partner-modal';
+    partnerModal.innerHTML =
+      '<div class="companion-partner-modal-panel">' +
+      '  <div class="companion-partner-modal-title">选择陪伴对象</div>' +
+      '  <div class="companion-partner-list" id="companionPartnerList"></div>' +
+      '  <button class="companion-partner-modal-cancel" id="companionPartnerCancel">取消</button>' +
+      '</div>';
+    document.body.appendChild(partnerModal);
+
+    document.getElementById('companionPartnerCancel').addEventListener('click', function () {
+      partnerModal.classList.remove('active');
+    });
+    partnerModal.addEventListener('click', function (e) {
+      if (e.target === partnerModal) partnerModal.classList.remove('active');
+    });
+    return partnerModal;
+  }
+
+  function renderPartnerList() {
+    var list = document.getElementById('companionPartnerList');
+    if (!list) return;
+    list.innerHTML = '';
+
+    // 读取联系人
+    var contacts = [];
+    try {
+      contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+    } catch (e) { contacts = []; }
+
+    if (!Array.isArray(contacts) || contacts.length === 0) {
+      contacts = [{ id: 'default_ta', name: 'Ta', avatar: 'https://picsum.photos/200/200?random=99' }];
+    }
+
+    contacts.forEach(function (c) {
+      var item = document.createElement('div');
+      item.className = 'companion-partner-item';
+      item.innerHTML =
+        '<div class="companion-partner-item-avatar">' +
+        (c.avatar ? '<img src="' + c.avatar + '" alt="">' : (c.name || 'TA').slice(0, 1)) +
+        '</div>' +
+        '<div class="companion-partner-item-name">' + (c.name || '未命名') + '</div>';
+
+      item.addEventListener('click', function () {
+        // 更新卡片
+        var avatarEl = document.getElementById('companionPartnerAvatar');
+        var nameEl = document.getElementById('companionPartnerName');
+        if (avatarEl) {
+          if (c.avatar) {
+            avatarEl.innerHTML = '<img src="' + c.avatar + '" alt="">';
+          } else {
+            avatarEl.textContent = (c.name || 'TA').slice(0, 1).toUpperCase();
+          }
+        }
+        if (nameEl) nameEl.textContent = c.name || '未命名';
+
+        window.chatCompanionPartner = c;
+        partnerModal.classList.remove('active');
+        console.log('[陪伴] 陪伴对象:', c.name);
+      });
+
+      list.appendChild(item);
+    });
+  }
+
+  partnerCard.addEventListener('click', function () {
+    ensurePartnerModal();
+    renderPartnerList();
+    partnerModal.classList.add('active');
+  });
+
+  // ==================== 自定义背景图片 ====================
+  var bgCustomBtn = document.getElementById('companionBgCustomBtn');
+  if (bgCustomBtn) {
+    bgCustomBtn.addEventListener('click', function () {
+      var url = prompt('请输入图片 URL：');
+      if (!url) return;
+      // 应用到陪伴页背景
+      pageCompanion.style.backgroundImage = "url('" + url + "')";
+      pageCompanion.style.backgroundSize = 'cover';
+      pageCompanion.style.backgroundPosition = 'center';
+      pageCompanion.style.backgroundRepeat = 'no-repeat';
+      console.log('[陪伴] 自定义背景:', url);
+    });
+  }
+
+  // ==================== 开始陪伴 ====================
+  var startBtn = document.getElementById('companionStartBtn');
+  if (startBtn) {
+    startBtn.addEventListener('click', function () {
+      var summary = {
+        ambient: window.chatCompanionAmbient || 'white',
+        scene: window.chatCompanionScene || 'study',
+        partner: window.chatCompanionPartner || null,
+        custom: (document.getElementById('companionCustomInput') || {}).value || '',
+        bg: window.chatCompanionBg || 'aurora'
+      };
+      console.log('[陪伴] 开始陪伴:', summary);
+      alert('陪伴模式已开启！\n\n白噪音：' + summary.ambient +
+            '\n场景：' + summary.scene +
+            '\n陪伴对象：' + (summary.partner ? summary.partner.name : '未选择') +
+            '\n自定义内容：' + (summary.custom || '（未填写）') +
+            '\n背景：' + summary.bg);
+    });
+  }
+
+})();
+</script>
 </body>
 </html>
