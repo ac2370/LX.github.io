@@ -8935,8 +8935,7 @@
         '</div>' +
         '<div class="companion-partner-item-name">' + (c.name || '未命名') + '</div>';
 
-      item.addEventListener('click', function () {
-            item.addEventListener('click', function () {
+         item.addEventListener('click', function () {
         // 关键：保存到陪伴页面的独立变量，不影响传讯页面的 my_current_contact
         companionContactId = c.id;
 
@@ -8951,7 +8950,7 @@
           checkStartBtnState();
         }
       });
-           
+
       list.appendChild(item);
     });
   }
