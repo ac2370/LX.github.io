@@ -1,0 +1,714 @@
+/* ============================================================
+   重要日 页面样式
+   ============================================================ */
+
+/* ==================== 重要日 页面容器 ==================== */
+#pageImportantDay {
+  background: #ffffff;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333;
+}
+#pageImportantDay::-webkit-scrollbar { display: none; }
+#pageImportantDay.active { display: flex; }
+
+body.theme-dark #pageImportantDay {
+  background: #1e242b;
+  color: #e8eef4;
+}
+
+.imp-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 16px 16px;
+  min-height: 100%;
+}
+
+/* ==================== 顶部导航栏 ==================== */
+.imp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px 16px 4px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: transparent;
+}
+
+.imp-back-btn,
+.imp-add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  color: #55606b;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+}
+.imp-back-btn:active,
+.imp-add-btn:active {
+  transform: scale(0.9);
+  background: rgba(245, 248, 252, 1);
+}
+.imp-add-btn {
+  color: #e58b9b;
+}
+body.theme-dark .imp-back-btn,
+body.theme-dark .imp-add-btn {
+  background: rgba(38, 44, 52, 0.75);
+  border-color: var(--theme-card-border, #333a42);
+  color: var(--theme-text-soft, #b8c2cc);
+}
+body.theme-dark .imp-add-btn { color: #f0a4b4; }
+
+.imp-topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .imp-topbar-title { color: #e8eef4; }
+
+/* ==================== 卡片列表 ==================== */
+.imp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.imp-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 16px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 20px rgba(150, 180, 210, 0.12);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: impCardIn 0.3s ease;
+}
+@keyframes impCardIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.imp-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 3px 12px rgba(150, 180, 210, 0.18);
+}
+body.theme-dark .imp-card {
+  background: rgba(42, 48, 56, 0.85);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+/* 左侧圆形图标 */
+.imp-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  border: 2px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+}
+body.theme-dark .imp-card-icon {
+  border-color: var(--theme-card-border, #333a42);
+}
+
+/* 中间信息 */
+.imp-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.imp-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+body.theme-dark .imp-card-name { color: #e8eef4; }
+
+.imp-card-date {
+  font-size: 12px;
+  color: #8899a6;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+body.theme-dark .imp-card-date { color: var(--theme-text-muted, #8a95a0); }
+
+.imp-card-remain {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.imp-card-remain.future { color: #6fa3cc; }
+.imp-card-remain.past { color: #e58b9b; }
+.imp-card-remain.today { color: #6ec48d; }
+body.theme-dark .imp-card-remain.future { color: #8ab8dd; }
+body.theme-dark .imp-card-remain.past { color: #f0a4b4; }
+body.theme-dark .imp-card-remain.today { color: #8ed0a4; }
+
+/* 右侧箭头 */
+.imp-card-arrow {
+  color: #cbd4dc;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* ==================== 空状态 ==================== */
+.imp-empty {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  gap: 12px;
+}
+.imp-empty.active { display: flex; }
+
+.imp-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  color: #cbd4dc;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(150, 180, 210, 0.12);
+}
+body.theme-dark .imp-empty-icon {
+  background: rgba(42, 48, 56, 0.75);
+  border-color: var(--theme-card-border, #333a42);
+  color: #6a757f;
+}
+
+.imp-empty-text {
+  font-size: 14px;
+  color: #7a8a99;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+body.theme-dark .imp-empty-text { color: var(--theme-text-soft, #b8c2cc); }
+
+.imp-empty-hint {
+  font-size: 12px;
+  color: #a8b4c0;
+  letter-spacing: 0.3px;
+}
+body.theme-dark .imp-empty-hint { color: var(--theme-text-muted, #8a95a0); }
+
+.imp-footer-space {
+  height: 20px;
+}
+
+/* ==================== 添加重要日 弹窗 ==================== */
+.imp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 40, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.imp-modal.active { display: flex; }
+
+.imp-modal-panel {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
+  padding: 22px 20px;
+  animation: popIn 0.22s ease;
+}
+body.theme-dark .imp-modal-panel {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+.imp-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+body.theme-dark .imp-modal-title { color: #e8eef4; }
+
+.imp-modal-label {
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+body.theme-dark .imp-modal-label { color: var(--theme-text-muted, #8a95a0); }
+
+.imp-modal-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+  font-family: inherit;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.imp-modal-input:focus {
+  border-color: #f8b4c8;
+  box-shadow: 0 0 0 3px rgba(248, 180, 200, 0.18);
+}
+.imp-modal-input::placeholder { color: #b6c2cd; }
+body.theme-dark .imp-modal-input {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border, #333a42);
+  color: #e8eef4;
+}
+
+.imp-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.imp-modal-cancel,
+.imp-modal-confirm {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.imp-modal-cancel:active,
+.imp-modal-confirm:active { transform: scale(0.97); }
+
+.imp-modal-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+body.theme-dark .imp-modal-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft, #b8c2cc);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+.imp-modal-confirm {
+  background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
+}
+
+/* ==================== 自定义类型选择器 ==================== */
+.imp-select {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.imp-select-btn {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  font-family: inherit;
+  text-align: left;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.imp-select-btn:active {
+  background: #f2f6fa;
+}
+.imp-select-btn:focus {
+  outline: none;
+  border-color: #f8b4c8;
+  box-shadow: 0 0 0 3px rgba(248, 180, 200, 0.18);
+}
+
+body.theme-dark .imp-select-btn {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border, #333a42);
+  color: #e8eef4;
+}
+
+.imp-select-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+body.theme-dark .imp-select-dot {
+  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+}
+
+.imp-select-text {
+  flex: 1;
+  text-align: left;
+}
+
+.imp-select-arrow {
+  font-size: 11px;
+  color: #8899a6;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.imp-select-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  box-shadow: 0 12px 30px rgba(0, 20, 30, 0.15);
+  padding: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  display: none;
+  animation: impSelectFadeIn 0.15s ease;
+}
+.imp-select-menu::-webkit-scrollbar { display: none; }
+.imp-select-menu.active { display: block; }
+
+@keyframes impSelectFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body.theme-dark .imp-select-menu {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+.imp-select-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 14px;
+  color: #333;
+}
+.imp-select-item:active {
+  background: #f2f6fa;
+}
+.imp-select-item.active {
+  background: #fdf5f5;
+  color: #e58b9b;
+  font-weight: 700;
+}
+body.theme-dark .imp-select-item {
+  color: #e8eef4;
+}
+body.theme-dark .imp-select-item:active {
+  background: rgba(42, 48, 56, 0.9);
+}
+body.theme-dark .imp-select-item.active {
+  background: rgba(248, 180, 200, 0.12);
+  color: #f0a4b4;
+}
+
+/* ==================== 自定义日历选择器 ==================== */
+.imp-date-picker {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.imp-date-btn {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  font-family: inherit;
+  text-align: left;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.imp-date-btn:active { background: #f2f6fa; }
+.imp-date-btn:focus {
+  outline: none;
+  border-color: #f8b4c8;
+  box-shadow: 0 0 0 3px rgba(248, 180, 200, 0.18);
+}
+body.theme-dark .imp-date-btn {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border, #333a42);
+  color: #e8eef4;
+}
+
+.imp-date-btn-icon {
+  font-size: 14px;
+  color: #e58b9b;
+  flex-shrink: 0;
+}
+
+.imp-date-text {
+  flex: 1;
+  text-align: left;
+  color: #b6c2cd;
+}
+body.theme-dark .imp-date-text { color: #6a757f; }
+
+.imp-date-arrow {
+  font-size: 11px;
+  color: #8899a6;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+/* 日历面板 */
+.imp-calendar {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8ee;
+  box-shadow: 0 12px 30px rgba(0, 20, 30, 0.15);
+  padding: 10px 10px 10px 10px;
+  display: none;
+  animation: impCalFadeIn 0.18s ease;
+  max-height: 420px;
+  overflow: hidden;
+}
+.imp-calendar.expand-up {
+  top: auto;
+  bottom: calc(100% + 6px);
+  animation: impCalFadeInUp 0.18s ease;
+}
+@keyframes impCalFadeInUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.imp-calendar.active { display: block; }
+
+@keyframes impCalFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body.theme-dark .imp-calendar {
+  background: rgba(38, 44, 52, 0.98);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+/* 日历头部 */
+.imp-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+.imp-cal-nav {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: transparent;
+  border: none;
+  color: #8899a6;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.imp-cal-nav:active { background: #f2f6fa; }
+body.theme-dark .imp-cal-nav:active { background: rgba(42, 48, 56, 0.9); }
+
+.imp-cal-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.3px;
+}
+body.theme-dark .imp-cal-title { color: #e8eef4; }
+
+/* 星期行 */
+.imp-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+.imp-cal-weekdays span {
+  text-align: center;
+  font-size: 11px;
+  color: #a8b4c0;
+  font-weight: 600;
+  padding: 2px 0;
+}
+body.theme-dark .imp-cal-weekdays span { color: #6a757f; }
+
+/* 日期网格 */
+.imp-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.imp-cal-day {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  font-variant-numeric: tabular-nums;
+}
+.imp-cal-day:active {
+  background: #f2f6fa;
+}
+body.theme-dark .imp-cal-day {
+  color: #e8eef4;
+}
+body.theme-dark .imp-cal-day:active {
+  background: rgba(42, 48, 56, 0.9);
+}
+
+.imp-cal-day.other-month {
+  color: #cbd4dc;
+}
+body.theme-dark .imp-cal-day.other-month {
+  color: #4a555f;
+}
+
+.imp-cal-day.today {
+  background: #fdf5f5;
+  color: #e58b9b;
+  font-weight: 700;
+}
+body.theme-dark .imp-cal-day.today {
+  background: rgba(248, 180, 200, 0.12);
+  color: #f0a4b4;
+}
+
+.imp-cal-day.selected {
+  background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(248, 180, 200, 0.4);
+}
+.imp-cal-day.selected.today {
+  background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+  color: #ffffff;
+}
+
+/* 底部按钮 */
+.imp-cal-footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f3f6;
+}
+body.theme-dark .imp-cal-footer {
+  border-top-color: var(--theme-card-border, #333a42);
+}
+
+.imp-cal-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.imp-cal-btn:active { transform: scale(0.97); }
+
+.imp-cal-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+body.theme-dark .imp-cal-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft, #b8c2cc);
+  border-color: var(--theme-card-border, #333a42);
+}
+
+.imp-cal-confirm {
+  background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
+}
