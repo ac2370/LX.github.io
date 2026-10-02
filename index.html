@@ -4979,34 +4979,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    padding: 24px 20px 12px 20px;
+    gap: 0;
+    padding: 4px 20px 8px 20px;
   }
 
-  .companion-hero-icon {
-    width: 84px;
-    height: 84px;
-    border-radius: 9999px;
-    background: linear-gradient(135deg, #fce0e8 0%, #f8d4e0 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 12px 32px rgba(248, 180, 210, 0.35);
-    animation: companionPulse 2.4s ease-in-out infinite;
-  }
-  .companion-hero-icon i {
-    font-size: 36px;
-    color: #e58b9b;
-  }
-  body.theme-dark .companion-hero-icon {
-    background: linear-gradient(135deg, rgba(248, 180, 210, 0.25) 0%, rgba(248, 180, 210, 0.15) 100%);
-  }
-  body.theme-dark .companion-hero-icon i { color: #f0a4b4; }
-
-  @keyframes companionPulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 12px 32px rgba(248, 180, 210, 0.35); }
-    50% { transform: scale(1.04); box-shadow: 0 16px 40px rgba(248, 180, 210, 0.5); }
-  }
 
   .companion-hero-text {
     font-size: 13px;
@@ -5897,11 +5873,8 @@
       <!-- 中间内容 -->
       <div class="companion-body">
 
-        <!-- 中心图标 + 提示语 -->
+        <!-- 中心提示语 -->
         <div class="companion-hero">
-          <div class="companion-hero-icon">
-            <i class="fa-solid fa-hand-holding-heart"></i>
-          </div>
           <div class="companion-hero-text">选择陪伴对象与场景，开始一起专注</div>
         </div>
 
