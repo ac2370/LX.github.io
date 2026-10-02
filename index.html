@@ -6756,28 +6756,75 @@
   }
   .video-call-hangup:active { background: #e58b8b; }
 
-  /* 通话记录气泡 */
-  .message-row.call-record {
-    justify-content: center;
+/* ============ 通话记录气泡（系统提示条） ============ */
+  /* 整行 flex 居中，占满宽度 */
+  .message-row.call-record,
+  .message-row.system-call-event {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 8px 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
   }
+
+  /* 强制隐藏该行内所有可能的头像元素 */
+  .message-row.call-record .chat-msg-avatar,
+  .message-row.system-call-event .chat-msg-avatar,
+  .message-row.call-record > img.chat-msg-avatar,
+  .message-row.system-call-event > img.chat-msg-avatar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
+  }
+
+  /* 强制隐藏该行内可能的普通消息气泡 */
+  .message-row.call-record > .message-bubble,
+  .message-row.system-call-event > .message-bubble {
+    display: none !important;
+  }
+
+  /* 系统提示条本体：浅灰圆角胶囊，宽度自适应内容 */
   .call-record-bubble {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: #f0f3f6;
-    border-radius: 14px;
-    font-size: 11px;
-    color: #8899a6;
-    font-weight: 500;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 14px !important;
+    background: #f0f3f6 !important;
+    border-radius: 14px !important;
+    font-size: 11px !important;
+    color: #8899a6 !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    text-align: center !important;
+    max-width: 80% !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    box-shadow: none !important;
+    border: none !important;
   }
-  body.theme-dark .call-record-bubble {
-    background: #2a3038;
-    color: var(--theme-text-muted);
-  }
+
+  /* 系统提示条内的图标 */
   .call-record-bubble i {
-    color: #f8b4b4;
-    font-size: 11px;
+    color: #f8b4b4 !important;
+    font-size: 11px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 夜晚模式 */
+  body.theme-dark .call-record-bubble {
+    background: #2a3038 !important;
+    color: var(--theme-text-muted) !important;
+  }
+  body.theme-dark .call-record-bubble i {
+    color: #f8b4b4 !important;
   }
 
   /* ============ 主动来电横幅 ============ */
