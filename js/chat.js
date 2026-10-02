@@ -9,6 +9,40 @@
 (function () {
   'use strict';
 
+    // ==================== 同步通知状态（供 chatNotify 使用） ====================
+  if (typeof localforage !== 'undefined') {
+    Promise.all([
+      localforage.getItem('chat_notify_banner_enabled'),
+      localforage.getItem('chat_notify_show_content'),
+      localforage.getItem('chat_notify_random_call'),
+      localforage.getItem('chat_notify_permission_granted')
+    ]).then(function (vals) {
+      window.chatNotifyState = {
+        bannerEnabled: vals[0] !== false,
+        showContent: vals[1] !== false,
+        randomCall: vals[2] === true,
+        silentLoop: false,
+        permissionGranted: vals[3] === true
+      };
+    }).catch(function () {
+      window.chatNotifyState = {
+        bannerEnabled: true,
+        showContent: true,
+        randomCall: false,
+        silentLoop: false,
+        permissionGranted: false
+      };
+    });
+  } else {
+    window.chatNotifyState = {
+      bannerEnabled: true,
+      showContent: true,
+      randomCall: false,
+      silentLoop: false,
+      permissionGranted: false
+    };
+  }
+
   const chatMessages = document.getElementById('chatMessages');
   const chatInput = document.getElementById('chatInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -427,6 +461,22 @@
             if (row) {
               chatMessages.appendChild(row);
               scrollToBottom();
+
+              // ============ 触发消息通知 ============
+              if (window.chatNotify && typeof window.chatNotify.show === 'function') {
+                var notifyContent;
+                if (item.type === 'text') {
+                  var c = item.content;
+                  notifyContent = typeof c === 'string'
+                    ? c
+                    : (c && c.text ? c.text : '收到一条新消息');
+                } else if (item.type === 'image') {
+                  notifyContent = '[图片]';
+                } else {
+                  notifyContent = '收到一条新消息';
+                }
+                window.chatNotify.show('Ta', notifyContent);
+              }
             }
           }, index * 500);
         });
