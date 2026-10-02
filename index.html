@@ -5514,6 +5514,45 @@
     box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
   }
 </style>
+     <!-- ============================================================
+     陪伴页面 - 选择音乐
+     ============================================================ -->
+<style>
+  /* "选择音乐"胶囊按钮 —— 保持原有 companion-pill 风格，但改为整条显示 */
+  .companion-music-pill {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-align: center;
+  }
+
+  /* "正在播放"信息条 */
+  .companion-pills {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .companion-now-playing {
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: #8899a6;
+    padding: 6px 4px 0 4px;
+    letter-spacing: 0.3px;
+  }
+  .companion-now-playing span {
+    color: #e58b9b;
+    font-weight: 700;
+  }
+  body.theme-dark .companion-now-playing { color: var(--theme-text-muted, #8a95a0); }
+  body.theme-dark .companion-now-playing span { color: #f0a4b4; }
+
+  /* 让陪伴页底部预留播放器空间 */
+  #pageCompanion.has-player .companion-footer-space {
+    height: 100px;
+  }
+</style>
 </head>
 <body>
 
@@ -5878,13 +5917,15 @@
           <div class="companion-hero-text">选择陪伴对象与场景，开始一起专注</div>
         </div>
 
-        <!-- 白噪音选项 -->
+             <!-- 选择音乐 -->
         <div class="companion-section">
-          <div class="companion-pills" id="companionAmbientPills">
-            <button class="companion-pill active" data-ambient="white">白噪音</button>
-            <button class="companion-pill" data-ambient="rain">雨声</button>
-            <button class="companion-pill" data-ambient="fireplace">壁炉</button>
-            <button class="companion-pill" data-ambient="breeze">晚风</button>
+          <div class="companion-pills" id="companionMusicPills">
+            <button class="companion-pill companion-music-pill" id="companionPickMusicBtn">
+              🎵 选择音乐
+            </button>
+            <div class="companion-now-playing" id="companionNowPlaying" style="display: none;">
+              正在播放：<span id="companionNowPlayingName">—</span>
+            </div>
           </div>
         </div>
 
@@ -6819,6 +6860,16 @@
         renderPlaylistSheet();
         playlistSheet.classList.add('active');
       }
+               // ============ 暴露给陪伴页面调用 ============
+      window.playlist = playlist;
+      window.openPlaylistSheet = openPlaylistSheet;
+      window.playSong = playSong;
+      window.getCurrentSong = function () {
+        if (currentSongIndex >= 0 && currentSongIndex < playlist.length) {
+          return playlist[currentSongIndex];
+        }
+        return null;
+      };
       function closePlaylistSheet() { playlistSheet.classList.remove('active'); }
 
       function playSong(index) {
@@ -8209,17 +8260,70 @@
     goHome();
   });
 
-  // ==================== 白噪音胶囊选中 ====================
-  var pills = document.querySelectorAll('#companionAmbientPills .companion-pill');
-  pills.forEach(function (pill) {
-    pill.addEventListener('click', function () {
-      pills.forEach(function (p) { p.classList.remove('active'); });
-      pill.classList.add('active');
-      window.chatCompanionAmbient = pill.getAttribute('data-ambient');
-      console.log('[陪伴] 白噪音选择:', window.chatCompanionAmbient);
-    });
-  });
+  // ==================== 选择音乐：调用主页播放器 ====================
+  var pickMusicBtn = document.getElementById('companionPickMusicBtn');
+  var nowPlayingBar = document.getElementById('companionNowPlaying');
+  var nowPlayingName = document.getElementById('companionNowPlayingName');
 
+  if (pickMusicBtn) {
+    pickMusicBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 1. 确保主页播放器已初始化
+      if (!window.playlist || !Array.isArray(window.playlist)) {
+        console.warn('[陪伴] 主页播放器 playlist 未就绪');
+        alert('播放器未就绪，请先回到主页加载一次');
+        return;
+      }
+
+      // 2. 如果 window.openPlaylistSheet 存在，直接调用打开歌单
+      if (typeof window.openPlaylistSheet === 'function') {
+        window.openPlaylistSheet();
+        console.log('[陪伴] 已打开主页歌单');
+      } else {
+        // 兜底：直接模拟点击黑胶唱片
+        var vinylCover = document.getElementById('vinylCover');
+        if (vinylCover) {
+          vinylCover.click();
+          console.log('[陪伴] 已通过点击黑胶唱片打开歌单');
+        } else {
+          alert('未找到播放器入口，请先回到主页加载');
+          return;
+        }
+      }
+
+      // 3. 在陪伴页预留底部空间
+      var pageCompanion = document.getElementById('pageCompanion');
+      if (pageCompanion) pageCompanion.classList.add('has-player');
+
+      // 4. 监听选歌事件（通过轮询检测歌曲变化）
+      startWatchingNowPlaying();
+    });
+  }
+
+  // ==================== 监听当前播放的歌曲 ====================
+  var watchTimer = null;
+  var lastSongTitle = '';
+
+  function startWatchingNowPlaying() {
+    if (watchTimer) return; // 已启动
+    watchTimer = setInterval(function () {
+      var songTitle = document.getElementById('songTitle');
+      if (!songTitle) return;
+      var title = songTitle.textContent || '';
+      var artist = (document.getElementById('songArtist') || {}).textContent || '';
+
+      if (title && title !== lastSongTitle) {
+        lastSongTitle = title;
+        // 更新陪伴页的"正在播放"
+        if (nowPlayingName) nowPlayingName.textContent = title;
+        if (nowPlayingBar) nowPlayingBar.style.display = 'block';
+        console.log('[陪伴] 当前播放:', title, '-', artist);
+      }
+    }, 500);
+  }
+     
   // ==================== 场景选中 ====================
   var sceneBtns = document.querySelectorAll('.companion-scene-btn');
   sceneBtns.forEach(function (btn) {
@@ -8340,15 +8444,16 @@
   var startBtn = document.getElementById('companionStartBtn');
   if (startBtn) {
     startBtn.addEventListener('click', function () {
+        var currentSong = (document.getElementById('songTitle') || {}).textContent || '未选择';
       var summary = {
-        ambient: window.chatCompanionAmbient || 'white',
+        music: currentSong,
         scene: window.chatCompanionScene || 'study',
         partner: window.chatCompanionPartner || null,
         custom: (document.getElementById('companionCustomInput') || {}).value || '',
         bg: window.chatCompanionBg || 'aurora'
       };
       console.log('[陪伴] 开始陪伴:', summary);
-      alert('陪伴模式已开启！\n\n白噪音：' + summary.ambient +
+      alert('陪伴模式已开启！\n\n音乐：' + summary.music +
             '\n场景：' + summary.scene +
             '\n陪伴对象：' + (summary.partner ? summary.partner.name : '未选择') +
             '\n自定义内容：' + (summary.custom || '（未填写）') +
