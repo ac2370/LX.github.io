@@ -3932,6 +3932,327 @@
     box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
   }
 </style>
+     <!-- ============================================================
+     字卡收纳盒 - 分组功能 + 新建分组弹窗
+     ============================================================ -->
+<style>
+  /* ============ 弹窗内的分组选择器 ============ */
+  .modal-group-selector {
+    margin-bottom: 14px;
+  }
+  .modal-group-label {
+    font-size: 11px;
+    color: #8899a6;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding-left: 2px;
+    text-transform: uppercase;
+  }
+  body.theme-dark .modal-group-label { color: var(--theme-text-muted); }
+
+  .modal-group-select-wrap {
+    position: relative;
+  }
+  .modal-group-select-btn {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: border 0.2s ease;
+    box-sizing: border-box;
+  }
+  .modal-group-select-btn:active {
+    background: #f2f6fa;
+  }
+  body.theme-dark .modal-group-select-btn {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+
+  .modal-group-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  body.theme-dark .modal-group-color-dot {
+    box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+  }
+
+  .modal-group-name-text {
+    flex: 1;
+    text-align: left;
+  }
+  .modal-group-arrow {
+    font-size: 10px;
+    color: #8899a6;
+    transition: transform 0.2s ease;
+  }
+  .modal-group-dropdown.active ~ .modal-group-select-btn .modal-group-arrow,
+  .modal-group-select-wrap:has(.modal-group-dropdown.active) .modal-group-arrow {
+    transform: rotate(180deg);
+  }
+
+  .modal-group-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    box-shadow: 0 12px 30px rgba(0, 20, 30, 0.15);
+    padding: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: none;
+    animation: fadeIn 0.15s ease;
+  }
+  .modal-group-dropdown::-webkit-scrollbar { display: none; }
+  .modal-group-dropdown.active { display: block; }
+  body.theme-dark .modal-group-dropdown {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border);
+  }
+
+  .modal-group-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-size: 13px;
+    color: #333;
+  }
+  .modal-group-item:active {
+    background: #f2f6fa;
+  }
+  .modal-group-item.active {
+    background: #fdf5f5;
+  }
+  body.theme-dark .modal-group-item {
+    color: var(--theme-text);
+  }
+  body.theme-dark .modal-group-item:active {
+    background: rgba(42, 48, 56, 0.9);
+  }
+  body.theme-dark .modal-group-item.active {
+    background: rgba(248, 180, 180, 0.12);
+  }
+
+  /* ============ 新建分组弹窗 ============ */
+  .new-group-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 460;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: fadeIn 0.15s ease;
+  }
+  .new-group-modal.active { display: flex; }
+
+  .new-group-panel {
+    width: 100%;
+    max-width: 380px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+    padding: 22px 20px;
+    animation: popIn 0.22s ease;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .new-group-panel::-webkit-scrollbar { display: none; }
+  body.theme-dark .new-group-panel {
+    background: rgba(38, 44, 52, 0.97);
+  }
+
+  .new-group-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+  }
+  body.theme-dark .new-group-title { color: var(--theme-text); }
+
+  .new-group-label {
+    font-size: 11px;
+    color: #8899a6;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-left: 2px;
+    text-transform: uppercase;
+  }
+  body.theme-dark .new-group-label { color: var(--theme-text-muted); }
+
+  .new-group-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+  }
+  .new-group-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+  }
+  .new-group-input::placeholder { color: #b6c2cd; }
+  body.theme-dark .new-group-input {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+
+  .new-group-colors {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .new-group-color-btn {
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.15s ease;
+    position: relative;
+    padding: 0;
+  }
+  .new-group-color-btn:active {
+    transform: scale(0.9);
+  }
+  .new-group-color-btn.active {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px #333;
+  }
+  body.theme-dark .new-group-color-btn.active {
+    border-color: #2a3038;
+    box-shadow: 0 0 0 2px #ffffff;
+  }
+
+  .new-group-custom {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .new-group-color-picker {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #e2e8ee;
+    cursor: pointer;
+    padding: 2px;
+    background: #ffffff;
+    flex-shrink: 0;
+  }
+  .new-group-hex-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-sizing: border-box;
+    transition: border 0.2s ease;
+  }
+  .new-group-hex-input:focus {
+    border-color: #f8b4b4;
+  }
+  body.theme-dark .new-group-hex-input {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+  .new-group-preview-btn {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #1a2a3a;
+    color: #fff;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .new-group-preview-btn:active {
+    opacity: 0.85;
+    transform: scale(0.97);
+  }
+  body.theme-dark .new-group-preview-btn {
+    background: #4a5a6a;
+  }
+
+  .new-group-actions {
+    display: flex;
+    gap: 12px;
+  }
+  .new-group-btn {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .new-group-btn:active { transform: scale(0.97); }
+  .new-group-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .new-group-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+    border-color: var(--theme-card-border);
+  }
+  .new-group-confirm {
+    background: #f8b4b4;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+  }
+</style>
 </head>
 <body>
 
@@ -4138,12 +4459,23 @@
         </div>
       </div>
 
-      <!-- 颜文字 -->
+           <!-- 颜文字 -->
       <div class="cat-panel" id="panel-kaomoji">
         <div class="card-action-row">
-          <button class="card-action-btn" id="kaomojiOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          <button class="card-action-btn" id="kaomojiImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="kaomojiExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="kaomojiAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
         </div>
         <div class="card-group-section">
+          <div class="card-group-label">颜文字分组</div>
+          <select class="card-group-select" id="kaomojiGroupSelect">
+            <option>默认分组 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="kaomojiNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="kaomojiRenameGroupBtn">重命名</button>
+            <button class="card-group-btn" id="kaomojiOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          </div>
           <input type="text" class="card-search-input" id="kaomojiSearchInput" placeholder="找一个表情...">
         </div>
         <div class="card-list" id="kaomojiList"></div>
@@ -4156,9 +4488,20 @@
       <!-- 地点 -->
       <div class="cat-panel" id="panel-place">
         <div class="card-action-row">
-          <button class="card-action-btn" id="placeOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          <button class="card-action-btn" id="placeImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="placeExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="placeAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
         </div>
         <div class="card-group-section">
+          <div class="card-group-label">地点分组</div>
+          <select class="card-group-select" id="placeGroupSelect">
+            <option>默认分组 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="placeNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="placeRenameGroupBtn">重命名</button>
+            <button class="card-group-btn" id="placeOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          </div>
           <input type="text" class="card-search-input" id="placeSearchInput" placeholder="找一个熟悉的地方...">
         </div>
         <div class="card-list" id="placeList"></div>
@@ -4168,12 +4511,23 @@
         </div>
       </div>
 
-      <!-- 心情 -->
+           <!-- 心情 -->
       <div class="cat-panel" id="panel-mood">
         <div class="card-action-row">
-          <button class="card-action-btn" id="moodOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          <button class="card-action-btn" id="moodImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="moodExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="moodAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
         </div>
         <div class="card-group-section">
+          <div class="card-group-label">心情分组</div>
+          <select class="card-group-select" id="moodGroupSelect">
+            <option>默认分组 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="moodNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="moodRenameGroupBtn">重命名</button>
+            <button class="card-group-btn" id="moodOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          </div>
           <input type="text" class="card-search-input" id="moodSearchInput" placeholder="找一句话、一种心情...">
         </div>
         <div class="card-list" id="moodList"></div>
@@ -4182,7 +4536,7 @@
           把他的心情，写成一张张小字卡。
         </div>
       </div>
-
+         
       <!-- 表情包 -->
       <div class="cat-panel" id="panel-emoji">
         <div class="card-action-row">
