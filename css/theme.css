@@ -1,0 +1,260 @@
+/* ============================================================
+   theme.css —— 全局昼夜模式（CSS 变量 + 各页面暗色覆盖）
+   注意：本文件必须最先加载，因为其它 CSS 会引用这里的变量
+   ============================================================ */
+
+/* ============ 全局昼夜模式（CSS 变量） ============ */
+:root {
+  --theme-bg: #e3f0fa;
+  --theme-page-bg: #f5f6f8;
+  --theme-chat-bg: #ffffff;
+  --theme-text: #333333;
+  --theme-text-soft: #55606b;
+  --theme-text-muted: #8899a6;
+  --theme-text-faint: #a8b4c0;
+  --theme-card-bg: #ffffff;
+  --theme-card-border: #eef1f4;
+  --theme-input-bg: #ffffff;
+  --theme-input-border: #e2e8ee;
+  --theme-shadow: rgba(0, 20, 30, 0.06);
+  --theme-overlay: rgba(255, 255, 255, 0.7);
+  --theme-header-bg: #fafbfc;
+}
+
+body.theme-dark {
+  --theme-bg: #1a1f26;
+  --theme-page-bg: #12161b;
+  --theme-chat-bg: #1e242b;
+  --theme-text: #e8eef4;
+  --theme-text-soft: #b8c2cc;
+  --theme-text-muted: #8a95a0;
+  --theme-text-faint: #6a757f;
+  --theme-card-bg: #262c34;
+  --theme-card-border: #333a42;
+  --theme-input-bg: #1e242b;
+  --theme-input-border: #3a424a;
+  --theme-shadow: rgba(0, 0, 0, 0.4);
+  --theme-overlay: rgba(30, 36, 43, 0.75);
+  --theme-header-bg: #1a1f26;
+}
+
+/* 主页背景遮罩 */
+body.theme-dark .bg-overlay {
+  background: linear-gradient(145deg, rgba(20, 25, 32, 0.85) 0%, rgba(30, 36, 43, 0.9) 100%);
+}
+
+/* 主页元素 */
+body.theme-dark .header-card::before {
+  background: rgba(30, 36, 43, 0.6);
+}
+body.theme-dark .header-card h1 {
+  color: var(--theme-text) !important;
+}
+body.theme-dark .header-card p {
+  color: var(--theme-text-muted) !important;
+}
+body.theme-dark .search-glass,
+body.theme-dark .glass,
+body.theme-dark .bottom-tab {
+  background: var(--theme-overlay);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .search-glass input {
+  color: var(--theme-text);
+}
+body.theme-dark .search-glass input::placeholder {
+  color: var(--theme-text-faint);
+}
+body.theme-dark #songTitle {
+  color: var(--theme-text) !important;
+}
+body.theme-dark #songArtist {
+  color: var(--theme-text-muted) !important;
+}
+body.theme-dark .function-label {
+  color: var(--theme-text-soft);
+}
+body.theme-dark .function-icon {
+  background: rgba(38, 44, 52, 0.8);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .function-icon i {
+  color: var(--theme-text) !important;
+}
+body.theme-dark .tab-btn {
+  color: var(--theme-text-muted);
+}
+body.theme-dark .tab-btn.active,
+body.theme-dark .tab-btn.active i,
+body.theme-dark .tab-btn.active span {
+  color: var(--theme-text);
+}
+
+/* 字卡库页面 */
+body.theme-dark .card-page {
+  background: var(--theme-page-bg);
+}
+body.theme-dark .card-topbar {
+  background: var(--theme-page-bg);
+}
+body.theme-dark .card-topbar-row i {
+  color: var(--theme-text-soft);
+}
+body.theme-dark .card-topbar-title {
+  color: var(--theme-text);
+}
+body.theme-dark .cat-grid-card,
+body.theme-dark .cat-grid-item,
+body.theme-dark .card-action-btn,
+body.theme-dark .card-dedup-row,
+body.theme-dark .card-group-select,
+body.theme-dark .card-group-btn,
+body.theme-dark .card-search-input,
+body.theme-dark .word-card-item,
+body.theme-dark .emoji-grid-item,
+body.theme-dark .organize-bar {
+  background: var(--theme-card-bg);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .cat-grid-item i,
+body.theme-dark .cat-label,
+body.theme-dark .card-action-btn,
+body.theme-dark .card-group-btn,
+body.theme-dark .word-card-text,
+body.theme-dark .card-search-input,
+body.theme-dark .card-group-select {
+  color: var(--theme-text-soft);
+}
+body.theme-dark .cat-grid-item.active {
+  background: rgba(248, 180, 180, 0.15);
+}
+body.theme-dark .card-status-bar {
+  background: var(--theme-page-bg);
+  border-top-color: var(--theme-card-border);
+}
+body.theme-dark .card-status-counts {
+  color: var(--theme-text-muted);
+}
+body.theme-dark .card-list-placeholder {
+  color: var(--theme-text-faint);
+}
+
+/* 传讯页面 */
+body.theme-dark #pageChat {
+  background: var(--theme-chat-bg);
+}
+body.theme-dark #pageChat .chat-header {
+  background: var(--theme-header-bg);
+  border-bottom-color: var(--theme-card-border);
+}
+body.theme-dark #pageChat .chat-name {
+  color: var(--theme-text);
+}
+body.theme-dark #pageChat .chat-messages {
+  background: var(--theme-chat-bg);
+}
+body.theme-dark #pageChat .message-row.other .message-bubble {
+  background: #2a3038;
+  color: var(--theme-text);
+}
+body.theme-dark #pageChat .message-row.self .message-bubble {
+  background: #1a3a52;
+  color: #c8e0f0;
+}
+body.theme-dark #pageChat .chat-input-bar {
+  background: var(--theme-header-bg);
+  border-top-color: var(--theme-card-border);
+}
+body.theme-dark #pageChat .chat-input {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+body.theme-dark #pageChat .chat-input::placeholder {
+  color: var(--theme-text-faint);
+}
+body.theme-dark #pageChat .chat-action-icon {
+  color: #6a9bc8;
+}
+body.theme-dark #pageChat .input-left-icons i {
+  color: #6a8ca8;
+}
+body.theme-dark .home-return-btn {
+  background: rgba(38, 44, 52, 0.95);
+  border-color: var(--theme-card-border);
+  color: var(--theme-text-soft);
+}
+
+/* 弹窗 / 面板 */
+body.theme-dark .simple-panel,
+body.theme-dark .group-modal-panel,
+body.theme-dark .add-panel,
+body.theme-dark .manage-panel,
+body.theme-dark .edit-profile-panel,
+body.theme-dark .role-panel,
+body.theme-dark .reply-settings-panel,
+body.theme-dark .home-settings-panel-inner,
+body.theme-dark .piggy-panel-inner,
+body.theme-dark .chat-option-inner {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .simple-title,
+body.theme-dark .group-modal-title,
+body.theme-dark .add-title,
+body.theme-dark .manage-title,
+body.theme-dark .edit-profile-title,
+body.theme-dark .role-panel-title,
+body.theme-dark .reply-settings-title,
+body.theme-dark .home-settings-title,
+body.theme-dark .piggy-title,
+body.theme-dark .chat-option-title {
+  color: var(--theme-text);
+}
+body.theme-dark .simple-textarea,
+body.theme-dark .group-modal-input,
+body.theme-dark .add-input,
+body.theme-dark .edit-input,
+body.theme-dark .role-new-input,
+body.theme-dark .hs-input,
+body.theme-dark .piggy-add-input {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+body.theme-dark .simple-btn-cancel,
+body.theme-dark .group-modal-cancel,
+body.theme-dark .add-btn-cancel,
+body.theme-dark .manage-cancel,
+body.theme-dark .edit-btn-cancel,
+body.theme-dark .role-new-save,
+body.theme-dark .hs-btn-cancel,
+body.theme-dark .chat-option-btn,
+body.theme-dark .chat-option-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .role-list-item.current {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: #5a6570;
+}
+body.theme-dark .role-list-name {
+  color: var(--theme-text);
+}
+body.theme-dark .setting-row-title {
+  color: var(--theme-text);
+}
+body.theme-dark .setting-row-desc {
+  color: var(--theme-text-muted);
+}
+body.theme-dark .input-with-unit input {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+body.theme-dark .wide-btn {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
