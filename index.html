@@ -62,7 +62,7 @@
 
   .home-settings-header {
     flex-shrink: 0;
-    display: flex;
+    
     align-items: center;
     justify-content: space-between;
     padding: 18px 20px 12px 20px;
@@ -72,7 +72,7 @@
     font-size: 16px;
     font-weight: 700;
     color: #333;
-    display: flex;
+    
     align-items: center;
     gap: 8px;
   }
@@ -86,7 +86,7 @@
     color: #55606b;
     font-size: 14px;
     cursor: pointer;
-    display: flex;
+    
     align-items: center;
     justify-content: center;
     transition: background 0.15s ease;
@@ -95,7 +95,7 @@
 
   .home-settings-tabs {
     flex-shrink: 0;
-    display: flex;
+    
     gap: 6px;
     padding: 12px 16px 8px 16px;
     border-bottom: 1px solid #f0f3f6;
@@ -6749,7 +6749,7 @@
     flex-shrink: 0;
   }
 
-  /* 日历面板 */
+   /* 日历面板 */
   .imp-calendar {
     position: absolute;
     top: calc(100% + 6px);
@@ -6760,9 +6760,21 @@
     border-radius: 18px;
     border: 1px solid #e2e8ee;
     box-shadow: 0 12px 30px rgba(0, 20, 30, 0.15);
-    padding: 14px 12px 12px 12px;
+    padding: 10px 10px 10px 10px;
     display: none;
     animation: impCalFadeIn 0.18s ease;
+    max-height: 420px;
+    overflow: hidden;
+  }
+  /* 当弹窗空间不足时，日历向上展开 */
+  .imp-calendar.expand-up {
+    top: auto;
+    bottom: calc(100% + 6px);
+    animation: impCalFadeInUp 0.18s ease;
+  }
+  @keyframes impCalFadeInUp {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   .imp-calendar.active { display: block; }
 
@@ -6781,7 +6793,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     padding: 0 2px;
   }
 
@@ -6811,31 +6823,31 @@
   body.theme-dark .imp-cal-title { color: #e8eef4; }
 
   /* 星期行 */
-  .imp-cal-weekdays {
+    .imp-cal-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .imp-cal-weekdays span {
     text-align: center;
     font-size: 11px;
     color: #a8b4c0;
     font-weight: 600;
-    padding: 4px 0;
+    padding: 2px 0;
   }
   body.theme-dark .imp-cal-weekdays span { color: #6a757f; }
 
   /* 日期网格 */
-  .imp-cal-days {
+   .imp-cal-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .imp-cal-day {
-    aspect-ratio: 1 / 1;
+    height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -10938,8 +10950,12 @@
       var today = new Date();
       var todayStr = formatDateStr(today.getFullYear(), today.getMonth() + 1, today.getDate());
 
-      // 42 个格子（6 行 × 7 列）
-      for (var i = 0; i < 42; i++) {
+            // 动态计算需要的行数（5 或 6 行）
+      var totalCells = firstDay + daysInMonth;
+      var rows = Math.ceil(totalCells / 7);
+      var totalSlots = rows * 7;
+
+      for (var i = 0; i < totalSlots; i++) {
         var cell = document.createElement('div');
         cell.className = 'imp-cal-day';
 
@@ -10999,7 +11015,7 @@
       }
     }
 
-    // 打开日历按钮
+       // 打开日历按钮
     if (dateBtn) {
       dateBtn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -11026,6 +11042,18 @@
             calTempDate = null;
           }
           renderCalendar(calCurrentYear, calCurrentMonth);
+
+          // ============ 智能判断：如果日历下方空间不足，就向上展开 ============
+          setTimeout(function () {
+            var rect = calendar.getBoundingClientRect();
+            var viewportHeight = window.innerHeight;
+            // 如果日历底部超出屏幕
+            if (rect.bottom > viewportHeight - 20) {
+              calendar.classList.add('expand-up');
+            } else {
+              calendar.classList.remove('expand-up');
+            }
+          }, 10);
         }
       });
     }
