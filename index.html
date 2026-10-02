@@ -6190,6 +6190,30 @@
     box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
   }
 </style>
+     <!-- ============================================================
+     陪伴中 - 进度条完成状态
+     ============================================================ -->
+<style>
+  /* 进度条填充的过渡动画 */
+  .cpa-focus-fill {
+    transition: width 0.6s ease, background 0.6s ease, box-shadow 0.6s ease;
+  }
+
+  /* 进度条走满 100% 时的高亮状态 */
+  .cpa-focus-fill.completed {
+    background: linear-gradient(90deg, #f0a4b4 0%, #e58b9b 100%);
+    box-shadow: 0 0 12px rgba(240, 164, 180, 0.7);
+  }
+
+  /* "专注"标签在完成时也高亮 */
+  .cpa-focus-labels .focus-completed {
+    color: #e58b9b;
+    font-weight: 700;
+  }
+  body.theme-dark .cpa-focus-labels .focus-completed {
+    color: #f0a4b4;
+  }
+</style>
 </head>
 <body>
 
@@ -9567,6 +9591,12 @@
   var timerId = null;
   var startTime = 0;
 
+  // 目标时长：60 分钟 = 3600 秒（可以根据需要修改）
+  var TARGET_DURATION_SEC = 60 * 60;
+
+  // 记录当前进度（避免重复更新）
+  var lastProgress = -1;
+
   // ==================== 日期显示 ====================
   function updateDate() {
     var el = document.getElementById('cpaDate');
@@ -9578,7 +9608,7 @@
     el.textContent = y + '.' + (m < 10 ? '0' + m : m) + '.' + (day < 10 ? '0' + day : day);
   }
 
-  // ==================== 计时器 ====================
+  // ==================== 计时器 + 进度条同步 ====================
   function formatDuration(sec) {
     var h = Math.floor(sec / 3600);
     var m = Math.floor((sec % 3600) / 60);
@@ -9587,20 +9617,74 @@
   }
 
   function updateTimer() {
-    var el = document.getElementById('cpaTimerValue');
-    if (!el) return;
     var now = Date.now();
     var elapsed = Math.floor((now - startTime) / 1000);
-    el.textContent = formatDuration(elapsed);
+
+    // 1. 更新计时器文字
+    var el = document.getElementById('cpaTimerValue');
+    if (el) {
+      el.textContent = formatDuration(elapsed);
+    }
+
+    // 2. 更新进度条
+    updateFocusProgress(elapsed);
   }
 
-  function startTimer() {
+  // 更新专注度进度条
+  function updateFocusProgress(elapsedSec) {
+    var fill = document.querySelector('#pageCompanionActive .cpa-focus-fill');
+    if (!fill) return;
+
+    // 计算百分比（0 ~ 100）
+    var percent = Math.min(100, (elapsedSec / TARGET_DURATION_SEC) * 100);
+
+    // 避免重复更新
+    var rounded = Math.round(percent * 10) / 10;
+    if (rounded === lastProgress) return;
+    lastProgress = rounded;
+
+    // 更新宽度
+    fill.style.width = percent + '%';
+
+    // 是否完成
+    if (percent >= 100) {
+      fill.classList.add('completed');
+
+      // "专注"标签也高亮
+      var labels = document.querySelectorAll('#pageCompanionActive .cpa-focus-labels span');
+      if (labels && labels.length >= 2) {
+        labels[1].classList.add('focus-completed');
+      }
+    } else {
+      fill.classList.remove('completed');
+      var labels2 = document.querySelectorAll('#pageCompanionActive .cpa-focus-labels span');
+      if (labels2 && labels2.length >= 2) {
+        labels2[1].classList.remove('focus-completed');
+      }
+    }
+  }
+
+  // 重置进度条
+  function resetFocusProgress() {
+    var fill = document.querySelector('#pageCompanionActive .cpa-focus-fill');
+    if (!fill) return;
+    fill.style.width = '0%';
+    fill.classList.remove('completed');
+    lastProgress = -1;
+    var labels = document.querySelectorAll('#pageCompanionActive .cpa-focus-labels span');
+    if (labels && labels.length >= 2) {
+      labels[1].classList.remove('focus-completed');
+    }
+  }
+
+   function startTimer() {
     stopTimer();
     startTime = Date.now();
-    updateTimer();
+    resetFocusProgress();  // 重置进度条
+    updateTimer();          // 立即更新一次（计时器 + 进度条）
     timerId = setInterval(updateTimer, 1000);
   }
-
+     
   function stopTimer() {
     if (timerId) {
       clearInterval(timerId);
@@ -9677,16 +9761,18 @@
   var backBtn = document.getElementById('cpaBackBtn');
   if (backBtn) {
     backBtn.addEventListener('click', function () {
+      stopTimer();
+      resetFocusProgress();  // ← 新增：重置进度条
       showCompanionPage();
     });
   }
 
-   var endBtn = document.getElementById('cpaEndBtn');
+    var endBtn = document.getElementById('cpaEndBtn');
   if (endBtn) {
     endBtn.addEventListener('click', function () {
       stopTimer();
+      resetFocusProgress();  // ← 新增：重置进度条
 
-      // 清空"陪伴中"页面的背景和蒙层状态（下次进入时重新从陪伴模式页读取）
       var pageActive = document.getElementById('pageCompanionActive');
       if (pageActive) {
         pageActive.style.background = '';
