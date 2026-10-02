@@ -5558,7 +5558,7 @@
      ============================================================ -->
 <style>
   #pageCompanionActive {
-    background: linear-gradient(160deg, #e8f0fb 0%, #f0e8fb 50%, #fbe8f2 100%);
+    background: #f0f4fa;
     min-height: 100vh;
     min-height: 100dvh;
     width: 100%;
@@ -5920,13 +5920,15 @@
      ============================================================ -->
 <style>
   /* 陪伴中页面的背景容器（用伪元素实现蒙层，避免遮挡内容） */
-  #pageCompanionActive {
+   #pageCompanionActive {
     position: relative;
     background-size: cover !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
+    background-attachment: scroll !important; /* iOS 避免 fixed 导致模糊 */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
-
    /* 蒙层：只在需要时显示（预设背景时用） */
   #pageCompanionActive::before {
     content: '';
@@ -5940,18 +5942,17 @@
     );
     pointer-events: none;
     z-index: 0;
-    opacity: 0; /* 默认隐藏，通过 .has-mask 类显示 */
-    transition: opacity 0.3s ease;
+    display: none; /* 默认完全移除，避免任何模糊叠加 */
   }
 
   /* 加蒙层状态 */
   #pageCompanionActive.has-mask::before {
-    opacity: 1;
+    display: block;
   }
 
-  /* 不加蒙层状态 */
+  /* 不加蒙层状态（自定义图片）—— 确保彻底不渲染 */
   #pageCompanionActive.no-mask::before {
-    opacity: 0;
+    display: none !important;
   }
 
   /* 内容要在蒙层之上 */
@@ -5976,6 +5977,217 @@
   }
   body.theme-dark #pageCompanionActive:not([style*="background-image"]):not([style*="background:"]) {
     background: linear-gradient(160deg, #1a1f26 0%, #221f2a 50%, #2a1f28 100%);
+  }
+</style>
+     <!-- ============================================================
+     陪伴模式 - 自定义背景图片弹窗
+     ============================================================ -->
+<style>
+  .companion-bg-choice-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(20, 30, 40, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .companion-bg-choice-modal.active { display: flex; }
+
+  .companion-bg-choice-panel {
+    width: 100%;
+    max-width: 430px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px 28px 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+    padding: 20px 18px 24px 18px;
+    animation: companionSlideUp 0.25s ease;
+  }
+  body.theme-dark .companion-bg-choice-panel {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-bg-choice-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  body.theme-dark .companion-bg-choice-title { color: #e8eef4; }
+
+  .companion-bg-choice-btn {
+    width: 100%;
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: #fafbfc;
+    border: 1px solid #eef1f4;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    transition: background 0.15s ease, transform 0.1s ease;
+    font-family: inherit;
+    text-align: left;
+  }
+  .companion-bg-choice-btn:active {
+    background: #f2f6fa;
+    transform: scale(0.98);
+  }
+  body.theme-dark .companion-bg-choice-btn {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border, #333a42);
+    color: #e8eef4;
+  }
+
+  .companion-bg-choice-btn i {
+    font-size: 18px;
+    color: #e58b9b;
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .companion-bg-choice-btn .sub {
+    font-size: 11px;
+    color: #a8b4c0;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  body.theme-dark .companion-bg-choice-btn .sub {
+    color: var(--theme-text-muted, #8a95a0);
+  }
+
+  .companion-bg-choice-cancel {
+    width: 100%;
+    padding: 14px 0;
+    border-radius: 16px;
+    background: #f5f6f8;
+    border: 1px solid #eef1f4;
+    color: #55606b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    font-family: inherit;
+    text-align: center;
+  }
+  .companion-bg-choice-cancel:active { background: #e8ecf0; }
+  body.theme-dark .companion-bg-choice-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft, #b8c2cc);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  /* URL 输入弹窗 */
+  .companion-bg-url-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 601;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 30, 40, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .companion-bg-url-modal.active { display: flex; }
+
+  .companion-bg-url-panel {
+    width: 100%;
+    max-width: 360px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
+    padding: 22px 20px;
+    animation: companionPopIn 0.22s ease;
+  }
+  @keyframes companionPopIn {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  body.theme-dark .companion-bg-url-panel {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .companion-bg-url-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  body.theme-dark .companion-bg-url-title { color: #e8eef4; }
+
+  .companion-bg-url-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+  }
+  .companion-bg-url-input:focus {
+    border-color: #f8b4c8;
+    box-shadow: 0 0 0 3px rgba(248, 180, 200, 0.18);
+  }
+  .companion-bg-url-input::placeholder { color: #b6c2cd; }
+  body.theme-dark .companion-bg-url-input {
+    background: var(--theme-input-bg, #1e242b);
+    border-color: var(--theme-input-border, #3a424a);
+    color: #e8eef4;
+  }
+
+  .companion-bg-url-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .companion-bg-url-btn {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+  }
+  .companion-bg-url-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .companion-bg-url-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: #b8c2cc;
+    border-color: var(--theme-card-border, #333a42);
+  }
+  .companion-bg-url-confirm {
+    background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
   }
 </style>
 </head>
@@ -9036,46 +9248,180 @@
     partnerModal.classList.add('active');
   });
 
-   // ==================== 自定义背景图片 ====================
+   // ==================== 自定义背景图片（毛玻璃弹窗版） ====================
   var bgCustomBtn = document.getElementById('companionBgCustomBtn');
-  if (bgCustomBtn) {
-    bgCustomBtn.addEventListener('click', function () {
-      // 弹出选择：URL 或本地文件
-      var choice = confirm('点击"确定"粘贴图片 URL，点击"取消"上传本地文件');
 
-      if (choice) {
-        // URL 方式
-        var url = prompt('请输入图片 URL：');
-        if (!url) return;
-        applyCustomImageToCompanion(url);
-      } else {
-        // 本地文件方式
-        var input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-        input.addEventListener('change', function () {
-          var file = input.files && input.files[0];
-          if (!file) { document.body.removeChild(input); return; }
-          var reader = new FileReader();
-          reader.onload = function (ev) {
-            applyCustomImageToCompanion(ev.target.result);
-            document.body.removeChild(input);
-          };
-          reader.readAsDataURL(file);
-        });
-        input.click();
-      }
+  // 动态创建两个弹窗
+  function ensureBgChoiceModal() {
+    var modal = document.getElementById('companionBgChoiceModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'companionBgChoiceModal';
+    modal.className = 'companion-bg-choice-modal';
+    modal.innerHTML =
+      '<div class="companion-bg-choice-panel">' +
+      '  <div class="companion-bg-choice-title">自定义背景图片</div>' +
+      '  <button class="companion-bg-choice-btn" id="companionBgChoiceUrl">' +
+      '    <i class="fa-solid fa-link"></i>' +
+      '    <div>' +
+      '      <div>粘贴图片 URL</div>' +
+      '      <div class="sub">从网页链接加载</div>' +
+      '    </div>' +
+      '  </button>' +
+      '  <button class="companion-bg-choice-btn" id="companionBgChoiceFile">' +
+      '    <i class="fa-solid fa-upload"></i>' +
+      '    <div>' +
+      '      <div>上传本地文件</div>' +
+      '      <div class="sub">从手机相册选择</div>' +
+      '    </div>' +
+      '  </button>' +
+      '  <button class="companion-bg-choice-cancel" id="companionBgChoiceCancel">取消</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function ensureBgUrlModal() {
+    var modal = document.getElementById('companionBgUrlModal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'companionBgUrlModal';
+    modal.className = 'companion-bg-url-modal';
+    modal.innerHTML =
+      '<div class="companion-bg-url-panel">' +
+      '  <div class="companion-bg-url-title">粘贴图片 URL</div>' +
+      '  <input type="text" class="companion-bg-url-input" id="companionBgUrlInput" placeholder="https://example.com/image.jpg">' +
+      '  <div class="companion-bg-url-actions">' +
+      '    <button class="companion-bg-url-btn companion-bg-url-cancel" id="companionBgUrlCancel">取消</button>' +
+      '    <button class="companion-bg-url-btn companion-bg-url-confirm" id="companionBgUrlConfirm">确定</button>' +
+      '  </div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function openBgChoiceModal() {
+    var modal = ensureBgChoiceModal();
+    modal.classList.add('active');
+
+    // 绑定（每次打开重新绑定，避免重复）
+    var urlBtn = document.getElementById('companionBgChoiceUrl');
+    var fileBtn = document.getElementById('companionBgChoiceFile');
+    var cancelBtn = document.getElementById('companionBgChoiceCancel');
+
+    // 用克隆替换，清除旧监听
+    var newUrlBtn = urlBtn.cloneNode(true);
+    urlBtn.parentNode.replaceChild(newUrlBtn, urlBtn);
+    newUrlBtn.addEventListener('click', function () {
+      modal.classList.remove('active');
+      openBgUrlModal();
+    });
+
+    var newFileBtn = fileBtn.cloneNode(true);
+    fileBtn.parentNode.replaceChild(newFileBtn, fileBtn);
+    newFileBtn.addEventListener('click', function () {
+      modal.classList.remove('active');
+      openLocalFilePicker();
+    });
+
+    var newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    newCancelBtn.addEventListener('click', function () {
+      modal.classList.remove('active');
+    });
+
+    // 点遮罩关闭
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.classList.remove('active');
     });
   }
 
-  // 应用自定义图片到陪伴页面
+  function openBgUrlModal() {
+    var modal = ensureBgUrlModal();
+    modal.classList.add('active');
+
+    var input = document.getElementById('companionBgUrlInput');
+    var cancelBtn = document.getElementById('companionBgUrlCancel');
+    var confirmBtn = document.getElementById('companionBgUrlConfirm');
+
+    input.value = '';
+    setTimeout(function () { input.focus(); }, 100);
+
+    var newCancel = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    newCancel.addEventListener('click', function () {
+      modal.classList.remove('active');
+    });
+
+    var newConfirm = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+    newConfirm.addEventListener('click', function () {
+      var url = input.value.trim();
+      if (!url) {
+        alert('请输入图片 URL');
+        return;
+      }
+      modal.classList.remove('active');
+      applyCustomImageToCompanion(url);
+    });
+
+    // 回车确认
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        newConfirm.click();
+      }
+    });
+
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+  }
+
+  function openLocalFilePicker() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      if (!file) { document.body.removeChild(input); return; }
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        applyCustomImageToCompanion(ev.target.result);
+        document.body.removeChild(input);
+      };
+      reader.readAsDataURL(file);
+    });
+    input.click();
+  }
+
+  if (bgCustomBtn) {
+    bgCustomBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      openBgChoiceModal();
+    });
+  }
+
+    // 应用自定义图片到陪伴页面
   function applyCustomImageToCompanion(url) {
+    // ============ 应用到陪伴模式页面（#pageCompanion） ============
+    // 先清空，避免残留
+    pageCompanion.style.background = '';
+    pageCompanion.style.backgroundImage = '';
+    pageCompanion.style.backgroundSize = '';
+    pageCompanion.style.backgroundPosition = '';
+    pageCompanion.style.backgroundRepeat = '';
+    pageCompanion.style.backgroundColor = '';
+
+    // 设置图片背景
     pageCompanion.style.backgroundImage = "url('" + url + "')";
     pageCompanion.style.backgroundSize = 'cover';
     pageCompanion.style.backgroundPosition = 'center';
     pageCompanion.style.backgroundRepeat = 'no-repeat';
+    pageCompanion.style.backgroundAttachment = 'scroll';
 
     // 记录状态：自定义图片
     window.chatCompanionBgType = 'custom';
@@ -9155,26 +9501,32 @@
     var pageActive = document.getElementById('pageCompanionActive');
     if (!pageActive) return;
 
-    // ========== 情况 A：自定义图片（不加蒙层） ==========
+      // ========== 情况 A：自定义图片（不加蒙层） ==========
     if (window.chatCompanionBgType === 'custom' && window.chatCompanionBgCustomImage) {
-      // 先清空旧的 background，避免背景色残留
+      // 完全清空旧样式
       pageActive.style.background = '';
       pageActive.style.backgroundImage = '';
-      // 设置图片背景
-      pageActive.style.backgroundImage = "url('" + window.chatCompanionBgCustomImage + "')";
-      pageActive.style.backgroundSize = 'cover';
-      pageActive.style.backgroundPosition = 'center';
-      pageActive.style.backgroundRepeat = 'no-repeat';
+      pageActive.style.backgroundSize = '';
+      pageActive.style.backgroundPosition = '';
+      pageActive.style.backgroundRepeat = '';
       pageActive.style.backgroundColor = '';
+
+      // 用 requestAnimationFrame 确保清空后再设置（避免浏览器优化合并）
+      requestAnimationFrame(function () {
+        pageActive.style.backgroundImage = "url('" + window.chatCompanionBgCustomImage + "')";
+        pageActive.style.backgroundSize = 'cover';
+        pageActive.style.backgroundPosition = 'center';
+        pageActive.style.backgroundRepeat = 'no-repeat';
+        pageActive.style.backgroundAttachment = 'scroll';
+      });
 
       // 移除蒙层
       pageActive.classList.remove('has-mask');
       pageActive.classList.add('no-mask');
 
-      console.log('[陪伴中] 应用自定义背景图片（无蒙层）');
+      console.log('[陪伴中] 应用自定义背景图片（无蒙层，清晰模式）');
       return;
     }
-
     // ========== 情况 B：预设渐变（加蒙层） ==========
     var bgKey = window.chatCompanionBg || 'aurora';
     var gradient = COMPANION_BG_PRESETS[bgKey] || COMPANION_BG_PRESETS.aurora;
