@@ -1,0 +1,1241 @@
+/* ============================================================
+   mood.css —— 心晴手账（多角色双人心情日历）
+   风格对齐 card.css / companion.css
+   ============================================================ */
+
+/* ============ 页面容器 ============ */
+#pageMood {
+  background: #f5f6f8;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.mood-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============ 顶部导航栏 ============ */
+.mood-topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px 18px;
+  background: #f5f6f8;
+}
+.mood-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  color: #55606b;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mood-back-btn:active {
+  background: #f2f6fa;
+  transform: scale(0.94);
+}
+.mood-topbar-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 1px;
+}
+.mood-topbar-placeholder {
+  width: 36px;
+  height: 36px;
+}
+
+/* ============ 当前角色指示 ============ */
+.mood-current-contact {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px 10px 16px;
+}
+.mood-current-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+  background: #f3f5f7;
+}
+.mood-current-name {
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+}
+.mood-current-name b {
+  color: #e58b8b;
+  font-weight: 700;
+}
+
+/* ============ 视图切换 ============ */
+.mood-view-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 12px 16px;
+}
+.mood-view-tab {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+.mood-view-tab i { font-size: 12px; }
+.mood-view-tab.active {
+  background: #fdf0f0;
+  color: #e58b8b;
+  border-color: #f8d8d8;
+}
+.mood-view-tab:active { transform: scale(0.97); }
+
+/* ============ 主体滚动区 ============ */
+.mood-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 16px 20px 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mood-body::-webkit-scrollbar { display: none; }
+
+.mood-view { display: none; }
+.mood-view.active {
+  display: block;
+  animation: moodFadeIn 0.2s ease;
+}
+@keyframes moodFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ 卡片基础 ============ */
+.mood-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(150, 170, 190, 0.08);
+  border: 1px solid #f0f3f6;
+}
+
+/* ============ 日历视图 ============ */
+.mood-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.mood-month-nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  color: #55606b;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mood-month-nav:active {
+  background: #f2f6fa;
+  transform: scale(0.92);
+}
+.mood-month-label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+
+.mood-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.mood-weekday {
+  text-align: center;
+  font-size: 11px;
+  color: #a8b4c0;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.mood-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.mood-day {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  background: #fafbfc;
+  border: 1px solid #f0f3f6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mood-day:active { transform: scale(0.94); }
+.mood-day.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+.mood-day.today {
+  border-color: #f8b4b4;
+  background: #fff8f8;
+}
+.mood-day.has-record {
+  background: #ffffff;
+  border-color: #e8eef4;
+}
+.mood-day-num {
+  font-size: 12px;
+  color: #55606b;
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.mood-day.today .mood-day-num {
+  color: #e58b8b;
+  font-weight: 700;
+}
+.mood-day-dots {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  align-items: center;
+}
+.mood-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+}
+.mood-dot.me { background: #6fb1e8; }
+.mood-dot.partner { background: #f8b4b4; }
+
+/* ============ 日历图例 ============ */
+.mood-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #f0f3f6;
+}
+.mood-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+}
+.mood-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+}
+.mood-legend-dot.me { background: #6fb1e8; }
+.mood-legend-dot.partner { background: #f8b4b4; }
+
+/* ============ 统计视图 ============ */
+.mood-stats-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 18px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 14px rgba(150, 170, 190, 0.08);
+  border: 1px solid #f0f3f6;
+}
+.mood-stats-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8a99;
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.mood-stats-ratio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.mood-stats-ratio-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 9999px;
+  background: #f0f3f6;
+  overflow: hidden;
+  display: flex;
+}
+.mood-stats-ratio-me {
+  background: #6fb1e8;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+.mood-stats-ratio-partner {
+  background: #f8b4b4;
+  height: 100%;
+  transition: width 0.4s ease;
+}
+.mood-stats-ratio-label {
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mood-stats-days {
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0;
+}
+.mood-stats-day-item {
+  text-align: center;
+}
+.mood-stats-day-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+  font-variant-numeric: tabular-nums;
+}
+.mood-stats-day-num.me { color: #6fb1e8; }
+.mood-stats-day-num.partner { color: #f8b4b4; }
+.mood-stats-day-label {
+  font-size: 11px;
+  color: #8899a6;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* 主导心情 */
+.mood-stats-dominant {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.mood-stats-dominant-item {
+  flex: 1;
+  background: #fafbfc;
+  border-radius: 14px;
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #f0f3f6;
+}
+.mood-stats-dominant-emoji {
+  font-size: 22px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.mood-stats-dominant-label {
+  font-size: 11px;
+  color: #55606b;
+  font-weight: 600;
+}
+.mood-stats-dominant-who {
+  font-size: 10px;
+  color: #a8b4c0;
+  margin-top: 4px;
+}
+
+/* 分类条 */
+.mood-stats-categories {
+  margin-top: 8px;
+}
+.mood-stats-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.mood-stats-cat-emoji {
+  font-size: 16px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.mood-stats-cat-label {
+  font-size: 12px;
+  color: #55606b;
+  font-weight: 600;
+  width: 48px;
+  flex-shrink: 0;
+}
+.mood-stats-cat-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: #f0f3f6;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.mood-stats-cat-bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+.mood-stats-cat-count {
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 700;
+  min-width: 20px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mood-stats-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #c0ccd6;
+  font-size: 13px;
+}
+.mood-stats-empty i {
+  font-size: 32px;
+  color: #dde6ee;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* ============ 回收站视图 ============ */
+.mood-trash-tip {
+  font-size: 11px;
+  color: #a8b4c0;
+  text-align: center;
+  padding: 4px 0 12px 0;
+  line-height: 1.6;
+}
+.mood-trash-item {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 3px 10px rgba(150, 170, 190, 0.06);
+  border: 1px solid #f0f3f6;
+}
+.mood-trash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+.mood-trash-date {
+  font-size: 13px;
+  color: #333;
+  font-weight: 700;
+}
+.mood-trash-contact {
+  font-size: 10px;
+  color: #8899a6;
+  background: #f5f6f8;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+.mood-trash-preview {
+  font-size: 12px;
+  color: #8899a6;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.mood-trash-preview b {
+  color: #55606b;
+  font-weight: 600;
+}
+.mood-trash-actions {
+  display: flex;
+  gap: 8px;
+}
+.mood-trash-btn {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #eef1f4;
+  background: #fafbfc;
+  color: #55606b;
+  transition: background 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.mood-trash-btn:active { transform: scale(0.97); }
+.mood-trash-btn.restore {
+  background: #f0faf5;
+  color: #3d9c74;
+  border-color: #c9e6d8;
+}
+.mood-trash-btn.delete {
+  background: #fdf0f0;
+  color: #e58b8b;
+  border-color: #f8d8d8;
+}
+.mood-trash-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #c0ccd6;
+  font-size: 13px;
+}
+.mood-trash-empty i {
+  font-size: 32px;
+  color: #dde6ee;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* ============ 编辑弹层 ============ */
+.mood-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 480;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mood-editor-overlay.active { display: flex; }
+
+.mood-editor-panel {
+  width: 100%;
+  max-width: 430px;
+  max-height: 88vh;
+  background: #ffffff;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+  display: flex;
+  flex-direction: column;
+  animation: moodSlideUp 0.28s ease;
+  overflow: hidden;
+}
+@keyframes moodSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.mood-editor-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 20px;
+  border-bottom: 1px solid #f0f3f6;
+}
+.mood-editor-date {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+.mood-editor-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #f5f6f8;
+  border: none;
+  color: #55606b;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.mood-editor-close:active { background: #e8ecf0; }
+
+/* 双 tab（我 / 对方） */
+.mood-editor-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px 8px 16px;
+  border-bottom: 1px solid #f0f3f6;
+}
+.mood-editor-tab {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: #8899a6;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.mood-editor-tab.active {
+  background: #fdf0f0;
+  color: #e58b8b;
+}
+.mood-editor-tab:active { transform: scale(0.97); }
+
+/* 两页式：第1页 / 第2页 */
+.mood-editor-pages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mood-editor-pages::-webkit-scrollbar { display: none; }
+.mood-editor-page { display: none; }
+.mood-editor-page.active { display: block; }
+
+/* 第1页：心情选择 */
+.mood-options-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.mood-option {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  background: #fafbfc;
+  border: 1.5px solid #eef1f4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.mood-option:active { transform: scale(0.94); }
+.mood-option.selected {
+  border-color: #f8b4b4;
+  background: #fdf5f5;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.25);
+}
+.mood-option-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+.mood-option-label {
+  font-size: 10px;
+  color: #55606b;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+.mood-option.selected .mood-option-label {
+  color: #e58b8b;
+  font-weight: 700;
+}
+.mood-option.custom-del {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: rgba(248, 180, 180, 0.9);
+  color: #fff;
+  font-size: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 添加自定义心情 */
+.mood-custom-add {
+  width: 100%;
+  padding: 10px 0;
+  border-radius: 12px;
+  background: #fafbfc;
+  border: 1.5px dashed #d8dfe6;
+  color: #8899a6;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.mood-custom-add:active {
+  background: #f2f6fa;
+  border-color: #f8b4b4;
+  color: #e58b8b;
+}
+
+/* 第2页：随记 + 天气 */
+.mood-editor-field {
+  margin-bottom: 16px;
+}
+.mood-editor-field-label {
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+.mood-editor-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  resize: vertical;
+  min-height: 90px;
+  font-family: inherit;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.mood-editor-textarea:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.mood-editor-textarea::placeholder { color: #b6c2cd; }
+.mood-editor-input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.mood-editor-input:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.mood-editor-input::placeholder { color: #b6c2cd; }
+
+/* 编辑器底部按钮 */
+.mood-editor-footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 20px 20px;
+  border-top: 1px solid #f0f3f6;
+}
+.mood-editor-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.mood-editor-btn:active { transform: scale(0.97); }
+.mood-editor-btn-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+.mood-editor-btn-next {
+  background: #6fb1e8;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(111, 177, 232, 0.35);
+}
+.mood-editor-btn-back {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+.mood-editor-btn-save {
+  background: #f8b4b4;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+}
+
+/* ============ 自定义心情弹窗 ============ */
+.mood-custom-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 490;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mood-custom-modal.active { display: flex; }
+.mood-custom-panel {
+  width: 100%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+  padding: 22px 20px;
+  animation: moodPopIn 0.22s ease;
+}
+@keyframes moodPopIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.mood-custom-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.mood-custom-field {
+  margin-bottom: 14px;
+}
+.mood-custom-field-label {
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+.mood-custom-emoji-input,
+.mood-custom-label-input {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease;
+}
+.mood-custom-emoji-input {
+  font-size: 22px;
+  text-align: center;
+}
+.mood-custom-emoji-input:focus,
+.mood-custom-label-input:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.mood-custom-colors {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+}
+.mood-custom-color-btn {
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+.mood-custom-color-btn:active { transform: scale(0.88); }
+.mood-custom-color-btn.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #333;
+}
+.mood-custom-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+.mood-custom-btn {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.mood-custom-btn:active { transform: scale(0.97); }
+.mood-custom-btn-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+.mood-custom-btn-confirm {
+  background: #f8b4b4;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+}
+
+/* ============ 详情视图（当天双方记录） ============ */
+.mood-detail-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 480;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mood-detail-overlay.active { display: flex; }
+.mood-detail-panel {
+  width: 100%;
+  max-width: 430px;
+  max-height: 80vh;
+  background: #ffffff;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+  display: flex;
+  flex-direction: column;
+  animation: moodSlideUp 0.28s ease;
+  overflow: hidden;
+}
+.mood-detail-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 20px;
+  border-bottom: 1px solid #f0f3f6;
+}
+.mood-detail-date {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+.mood-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 24px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.mood-detail-body::-webkit-scrollbar { display: none; }
+
+.mood-detail-block {
+  background: #fafbfc;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #f0f3f6;
+}
+.mood-detail-block-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.mood-detail-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+  background: #f3f5f7;
+}
+.mood-detail-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  flex: 1;
+}
+.mood-detail-mood {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #f0f3f6;
+}
+.mood-detail-mood-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+.mood-detail-mood-label {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+}
+.mood-detail-mood-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  margin-left: auto;
+}
+.mood-detail-note {
+  font-size: 13px;
+  color: #55606b;
+  line-height: 1.6;
+  padding: 8px 2px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.mood-detail-weather {
+  font-size: 12px;
+  color: #8899a6;
+  padding: 6px 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.mood-detail-empty {
+  font-size: 12px;
+  color: #c0ccd6;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.mood-detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #f0f3f6;
+}
+.mood-detail-btn {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #eef1f4;
+  background: #ffffff;
+  color: #55606b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mood-detail-btn:active { transform: scale(0.97); }
+.mood-detail-btn.edit {
+  background: #f0f7fd;
+  color: #4a86b0;
+  border-color: #d8e8f5;
+}
+.mood-detail-btn.delete {
+  background: #fdf0f0;
+  color: #e58b8b;
+  border-color: #f8d8d8;
+}
+
+/* ============ 导入选择器 ============ */
+.mood-import-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 495;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 30, 40, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.mood-import-overlay.active { display: flex; }
+.mood-import-panel {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+  padding: 22px 20px 24px 20px;
+  animation: moodSlideUp 0.25s ease;
+}
+.mood-import-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.mood-import-desc {
+  font-size: 11px;
+  color: #a8b4c0;
+  text-align: center;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.mood-import-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.mood-import-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fafbfc;
+  border: 1px solid #f0f3f6;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.mood-import-option:active { background: #f2f6fa; }
+.mood-import-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.mood-import-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd4dc;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.mood-import-check i {
+  font-size: 10px;
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.15s ease;
+}
+.mood-import-option input:checked + .mood-import-check {
+  background: #f8b4b4;
+  border-color: #f8b4b4;
+}
+.mood-import-option input:checked + .mood-import-check i {
+  opacity: 1;
+  transform: scale(1);
+}
+.mood-import-label {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+  flex: 1;
+}
+.mood-import-actions {
+  display: flex;
+  gap: 12px;
+}
+.mood-import-btn {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-align: center;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.mood-import-btn:active { transform: scale(0.97); }
+.mood-import-btn-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+.mood-import-btn-confirm {
+  background: #f8b4b4;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+}
+
+/* ============ 底部操作栏（导出/导入） ============ */
+.mood-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px 14px 16px;
+  background: #f5f6f8;
+  border-top: 1px solid #eef1f4;
+}
+.mood-toolbar-btn {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  font-size: 12px;
+  font-weight: 600;
+  color: #55606b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mood-toolbar-btn:active {
+  background: #f2f6fa;
+  transform: scale(0.97);
+}
+.mood-toolbar-btn i {
+  font-size: 11px;
+  color: #f8b4b4;
+}
+
+/* ============ 无联系人提示 ============ */
+.mood-no-contact {
+  text-align: center;
+  padding: 60px 20px;
+  color: #c0ccd6;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.mood-no-contact i {
+  font-size: 40px;
+  color: #dde6ee;
+  display: block;
+  margin-bottom: 14px;
+}
