@@ -4651,6 +4651,161 @@
   }
   body.theme-dark .ds-toggle-slider { background: #3a424a; }
 </style>
+     <!-- ============================================================
+     设置面板 - 数据导出/导入
+     ============================================================ -->
+<style>
+  /* ============ 导出面板 ============ */
+  .ds-export-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(20, 30, 40, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    animation: fadeIn 0.2s ease;
+  }
+
+  .ds-export-panel {
+    width: 100%;
+    max-width: 360px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
+    padding: 22px 20px;
+    animation: popIn 0.22s ease;
+  }
+  body.theme-dark .ds-export-panel {
+    background: rgba(38, 44, 52, 0.96);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .ds-export-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  body.theme-dark .ds-export-title { color: #e8eef4; }
+  .ds-export-title i { color: #6fb1e8; }
+
+  .ds-export-desc {
+    font-size: 12px;
+    color: #8899a6;
+    margin-bottom: 16px;
+  }
+  body.theme-dark .ds-export-desc { color: #b8c2cc; }
+
+  .ds-export-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 12px;
+    background: #fafbfc;
+    border-radius: 14px;
+    border: 1px solid #eef1f4;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .ds-export-check:active { background: #f2f6fa; }
+  body.theme-dark .ds-export-check {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: #333a42;
+  }
+
+  .ds-export-check input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .ds-export-check-mark {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    border: 1.5px solid #cbd4dc;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .ds-export-check-mark i {
+    font-size: 10px;
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.15s ease;
+  }
+  .ds-export-check input[type="checkbox"]:checked + .ds-export-check-mark {
+    background: #6fb1e8;
+    border-color: #6fb1e8;
+  }
+  .ds-export-check input[type="checkbox"]:checked + .ds-export-check-mark i {
+    opacity: 1;
+    transform: scale(1);
+  }
+  body.theme-dark .ds-export-check-mark {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: #3a424a;
+  }
+
+  .ds-export-check-label {
+    font-size: 13px;
+    color: #333;
+    font-weight: 600;
+    flex: 1;
+  }
+  body.theme-dark .ds-export-check-label { color: #e8eef4; }
+
+  .ds-export-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .ds-export-btn {
+    flex: 1;
+    padding: 11px 0;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .ds-export-btn:active { transform: scale(0.97); }
+  .ds-export-cancel {
+    background: #f5f6f8;
+    color: #55606b;
+    border: 1px solid #eef1f4;
+  }
+  body.theme-dark .ds-export-cancel {
+    background: rgba(42, 48, 56, 0.9);
+    color: #b8c2cc;
+    border-color: #333a42;
+  }
+  .ds-export-confirm {
+    background: #6fb1e8;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(111, 177, 232, 0.35);
+  }
+  .ds-export-confirm:active { background: #4a86b0; }
+</style>
 </head>
 <body>
 
