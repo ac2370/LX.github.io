@@ -5927,7 +5927,7 @@
     background-repeat: no-repeat !important;
   }
 
-  /* 蒙层：淡淡一层，保证文字和卡片清晰 */
+   /* 蒙层：只在需要时显示（预设背景时用） */
   #pageCompanionActive::before {
     content: '';
     position: absolute;
@@ -5940,6 +5940,18 @@
     );
     pointer-events: none;
     z-index: 0;
+    opacity: 0; /* 默认隐藏，通过 .has-mask 类显示 */
+    transition: opacity 0.3s ease;
+  }
+
+  /* 加蒙层状态 */
+  #pageCompanionActive.has-mask::before {
+    opacity: 1;
+  }
+
+  /* 不加蒙层状态 */
+  #pageCompanionActive.no-mask::before {
+    opacity: 0;
   }
 
   /* 内容要在蒙层之上 */
@@ -9138,38 +9150,49 @@
     });
   }
 
-  // ==================== 把背景应用到"陪伴中"页面 ====================
+    // ==================== 把背景应用到"陪伴中"页面 ====================
   function applyBackgroundToActivePage() {
     var pageActive = document.getElementById('pageCompanionActive');
     if (!pageActive) return;
 
-    // 优先：自定义图片
+    // ========== 情况 A：自定义图片（不加蒙层） ==========
     if (window.chatCompanionBgType === 'custom' && window.chatCompanionBgCustomImage) {
-      pageActive.style.backgroundImage = "url('" + window.chatCompanionBgCustomImage + "')";
-      pageActive.style.backgroundSize = 'cover';
-      pageActive.style.backgroundPosition = 'center';
-      pageActive.style.backgroundRepeat = 'no-repeat';
+      // 先清空旧的 background，避免背景色残留
       pageActive.style.background = '';
-      // 重新设置背景图（因为上面清空了 background）
+      pageActive.style.backgroundImage = '';
+      // 设置图片背景
       pageActive.style.backgroundImage = "url('" + window.chatCompanionBgCustomImage + "')";
       pageActive.style.backgroundSize = 'cover';
       pageActive.style.backgroundPosition = 'center';
       pageActive.style.backgroundRepeat = 'no-repeat';
-      console.log('[陪伴中] 应用自定义背景图片');
+      pageActive.style.backgroundColor = '';
+
+      // 移除蒙层
+      pageActive.classList.remove('has-mask');
+      pageActive.classList.add('no-mask');
+
+      console.log('[陪伴中] 应用自定义背景图片（无蒙层）');
       return;
     }
 
-    // 其次：预设渐变
+    // ========== 情况 B：预设渐变（加蒙层） ==========
     var bgKey = window.chatCompanionBg || 'aurora';
-    if (COMPANION_BG_PRESETS[bgKey]) {
-      pageActive.style.backgroundImage = '';
-      pageActive.style.background = COMPANION_BG_PRESETS[bgKey];
-      console.log('[陪伴中] 应用预设背景:', bgKey);
-      return;
-    }
+    var gradient = COMPANION_BG_PRESETS[bgKey] || COMPANION_BG_PRESETS.aurora;
 
-    // 最后：默认兜底（极光）
-    pageActive.style.background = COMPANION_BG_PRESETS.aurora;
+    // 清空图片背景
+    pageActive.style.backgroundImage = '';
+    // 设置渐变背景
+    pageActive.style.background = gradient;
+    pageActive.style.backgroundSize = '';
+    pageActive.style.backgroundPosition = '';
+    pageActive.style.backgroundRepeat = '';
+    pageActive.style.backgroundColor = '';
+
+    // 加蒙层
+    pageActive.classList.remove('no-mask');
+    pageActive.classList.add('has-mask');
+
+    console.log('[陪伴中] 应用预设背景:', bgKey, '（有蒙层）');
   }
 
    // 初始化按钮状态
@@ -9311,11 +9334,17 @@
     endBtn.addEventListener('click', function () {
       stopTimer();
 
-      // 清空"陪伴中"页面的背景（下次进入时重新从陪伴模式页读取）
+      // 清空"陪伴中"页面的背景和蒙层状态（下次进入时重新从陪伴模式页读取）
       var pageActive = document.getElementById('pageCompanionActive');
       if (pageActive) {
         pageActive.style.background = '';
         pageActive.style.backgroundImage = '';
+        pageActive.style.backgroundSize = '';
+        pageActive.style.backgroundPosition = '';
+        pageActive.style.backgroundRepeat = '';
+        pageActive.style.backgroundColor = '';
+        pageActive.classList.remove('has-mask');
+        pageActive.classList.remove('no-mask');
       }
 
       showCompanionPage();
