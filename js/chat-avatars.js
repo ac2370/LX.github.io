@@ -50,7 +50,10 @@
 
   // ==================== 为单条消息添加头像 ====================
   function addAvatarToRow(row) {
-    if (!row || row.querySelector('.chat-msg-avatar')) return;
+    if (!row) return;
+    // 系统消息（通话记录）不加头像
+    if (row.classList.contains('call-record')) return;
+    if (row.querySelector('.chat-msg-avatar')) return;
 
     var isSelf = row.classList.contains('self');
     var avatar = document.createElement('img');
@@ -64,10 +67,8 @@
     };
 
     if (isSelf) {
-      // 自己：头像放在气泡右边
       row.appendChild(avatar);
     } else {
-      // 对方：头像放在气泡左边
       row.insertBefore(avatar, row.firstChild);
     }
   }
@@ -75,22 +76,27 @@
   // ==================== 扫描所有消息 ====================
   function scanAllMessages() {
     chatMessages.querySelectorAll('.message-row').forEach(function (row) {
-      // 跳过三点输入气泡（typingRow 也算 other，但也加头像更自然）
+      // 系统消息（通话记录）不加头像
+      if (row.classList.contains('call-record')) return;
       addAvatarToRow(row);
     });
   }
-
+  
   // ==================== 监听 DOM 变化 ====================
-  var observer = new MutationObserver(function (mutations) {
+   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
       mutation.addedNodes.forEach(function (node) {
         if (node.nodeType === 1) {
           if (node.classList && node.classList.contains('message-row')) {
-            // 延迟一点，确保内容渲染完成
-            setTimeout(function () { addAvatarToRow(node); }, 0);
+            // 系统消息跳过
+            if (!node.classList.contains('call-record')) {
+              setTimeout(function () { addAvatarToRow(node); }, 0);
+            }
           } else if (node.querySelectorAll) {
             node.querySelectorAll('.message-row').forEach(function (row) {
-              setTimeout(function () { addAvatarToRow(row); }, 0);
+              if (!row.classList.contains('call-record')) {
+                setTimeout(function () { addAvatarToRow(row); }, 0);
+              }
             });
           }
         }
