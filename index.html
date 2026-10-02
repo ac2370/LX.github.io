@@ -4806,6 +4806,76 @@
   }
   .ds-export-confirm:active { background: #4a86b0; }
 </style>
+     <!-- ============================================================
+     站内消息横幅
+     ============================================================ -->
+<style>
+  .chat-notify-banner {
+    position: fixed;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    width: calc(100% - 24px);
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 12px 40px rgba(0, 20, 30, 0.25);
+    cursor: pointer;
+    transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+  }
+  .chat-notify-banner.active {
+    top: 12px;
+  }
+  body.theme-dark .chat-notify-banner {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .chat-notify-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 9999px;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(150, 180, 210, 0.3);
+    flex-shrink: 0;
+  }
+  body.theme-dark .chat-notify-avatar { border-color: var(--theme-card-border, #333a42); }
+
+  .chat-notify-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .chat-notify-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.theme-dark .chat-notify-name { color: #e8eef4; }
+
+  .chat-notify-content {
+    font-size: 12px;
+    color: #8899a6;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.theme-dark .chat-notify-content { color: #b8c2cc; }
+</style>
 </head>
 <body>
 
