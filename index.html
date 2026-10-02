@@ -4253,6 +4253,148 @@
     box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
   }
 </style>
+     <!-- ============================================================
+     设置面板 - 分组勾选模式
+     ============================================================ -->
+<style>
+  /* 分组勾选列表 */
+  .cs-words-hint {
+    font-size: 11px;
+    color: #a8b4c0;
+    margin-bottom: 10px;
+    padding-left: 2px;
+    line-height: 1.5;
+  }
+  body.theme-dark .cs-words-hint { color: var(--theme-text-muted); }
+
+  .cs-group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-right: 2px;
+  }
+  .cs-group-list::-webkit-scrollbar { display: none; }
+
+  .cs-group-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #eef1f4;
+    box-shadow: 0 2px 6px rgba(150, 170, 190, 0.05);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+  .cs-group-item:active { transform: scale(0.99); }
+  .cs-group-item.checked {
+    background: #fdf5f5;
+    border-color: #f8d8d8;
+  }
+  body.theme-dark .cs-group-item {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border);
+  }
+  body.theme-dark .cs-group-item.checked {
+    background: rgba(248, 180, 180, 0.12);
+    border-color: rgba(248, 180, 180, 0.3);
+  }
+
+  /* 复选框 */
+  .cs-group-checkbox {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cs-group-checkbox input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    z-index: 2;
+    margin: 0;
+  }
+  .cs-group-check-mark {
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    border: 1.5px solid #cbd4dc;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    z-index: 1;
+  }
+  .cs-group-check-mark i {
+    font-size: 10px;
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.15s ease;
+  }
+  .cs-group-checkbox input:checked + .cs-group-check-mark {
+    background: #f8b4b4;
+    border-color: #f8b4b4;
+  }
+  .cs-group-checkbox input:checked + .cs-group-check-mark i {
+    opacity: 1;
+    transform: scale(1);
+  }
+  body.theme-dark .cs-group-check-mark {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border);
+  }
+  body.theme-dark .cs-group-checkbox input:checked + .cs-group-check-mark {
+    background: #f8b4b4;
+    border-color: #f8b4b4;
+  }
+
+  /* 分组颜色圆点 */
+  .cs-group-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  body.theme-dark .cs-group-color-dot {
+    box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+  }
+
+  /* 分组信息 */
+  .cs-group-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .cs-group-name {
+    font-size: 13px;
+    color: #333;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.theme-dark .cs-group-name { color: var(--theme-text); }
+  .cs-group-count {
+    font-size: 11px;
+    color: #a8b4c0;
+    margin-top: 2px;
+  }
+  body.theme-dark .cs-group-count { color: var(--theme-text-muted); }
+</style>
 </head>
 <body>
 
