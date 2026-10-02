@@ -616,3 +616,311 @@
   box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
 }
 .hidden-file-input { display: none; }
+
+/* ============================================================
+   角色面板 - 新版（role-panel.js 使用）
+   与 .edit-profile-modal / .role-panel-modal 共用骨架
+   ============================================================ */
+
+/* 当前角色编辑区 */
+.rp-current-block {
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.rp-current-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8a99;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+/* 编辑行：头像 + 昵称 */
+.rp-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rp-edit-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.rp-edit-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(150, 180, 210, 0.2);
+  background: #f5f6f8;
+  display: block;
+}
+.rp-edit-avatar-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: #f8b4b4;
+  color: #fff;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+}
+.rp-edit-name {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #ffffff;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease;
+}
+.rp-edit-name:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.rp-edit-name::placeholder { color: #b6c2cd; }
+
+/* URL 应用行 */
+.rp-edit-url-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.rp-edit-url {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #ffffff;
+  font-size: 12px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease;
+}
+.rp-edit-url:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+.rp-edit-url::placeholder { color: #b6c2cd; }
+.rp-edit-apply-url {
+  flex-shrink: 0;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: #1a2a3a;
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.rp-edit-apply-url:active {
+  opacity: 0.85;
+  transform: scale(0.97);
+}
+
+/* 保存按钮 */
+.rp-edit-save {
+  width: 100%;
+  padding: 11px 0;
+  border-radius: 12px;
+  background: #f8b4b4;
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.rp-edit-save:active {
+  background: #e58b8b;
+  transform: scale(0.98);
+}
+
+/* 列表标题 */
+.rp-list-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a8a99;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  padding-left: 2px;
+  text-transform: uppercase;
+}
+
+/* 列表容器 */
+.rp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* 单项 */
+.rp-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1.5px solid #eef1f4;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.rp-item:active { background: #f5f8fb; }
+.rp-item.current {
+  border-color: #f8b4b4;
+  background: #fdf5f5;
+}
+.rp-item-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
+  background: #f3f5f7;
+  flex-shrink: 0;
+}
+.rp-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.rp-item-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rp-item-tag {
+  display: inline-block;
+  font-size: 10px;
+  color: #e58b8b;
+  background: #fdf0f0;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  font-weight: 700;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.rp-item-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.rp-item-btn:active { transform: scale(0.92); }
+.rp-item-btn.switch {
+  background: #f0f7fd;
+  color: #4a86b0;
+}
+.rp-item-btn.switch:disabled {
+  background: #f0faf5;
+  color: #3d9c74;
+  cursor: default;
+}
+.rp-item-btn.del {
+  background: #fdf0f0;
+  color: #e58b8b;
+}
+.rp-item-btn.del:active { background: #f8d8d8; }
+
+/* 新建角色折叠区 */
+.rp-new-block {
+  margin-top: 8px;
+}
+.rp-new-toggle {
+  width: 100%;
+  padding: 11px 0;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1.5px dashed #d8dfe6;
+  color: #8899a6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.rp-new-toggle:active {
+  background: #f2f6fa;
+  border-color: #f8b4b4;
+  color: #e58b8b;
+}
+.rp-new-body {
+  margin-top: 10px;
+  padding: 12px;
+  background: #fafbfc;
+  border-radius: 14px;
+  border: 1px solid #eef1f4;
+}
+
+/* 暗色模式 */
+body.theme-dark .rp-current-block,
+body.theme-dark .rp-new-body {
+  background: rgba(42, 48, 56, 0.6);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .rp-current-title,
+body.theme-dark .rp-list-title {
+  color: var(--theme-text-muted);
+}
+body.theme-dark .rp-edit-name,
+body.theme-dark .rp-edit-url {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+body.theme-dark .rp-item {
+  background: rgba(42, 48, 56, 0.6);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .rp-item.current {
+  background: rgba(248, 180, 180, 0.12);
+}
+body.theme-dark .rp-item-name {
+  color: var(--theme-text);
+}
+body.theme-dark .rp-new-toggle {
+  background: rgba(42, 48, 56, 0.6);
+  border-color: var(--theme-card-border);
+  color: var(--theme-text-soft);
+}
+body.theme-dark .rp-edit-apply-url {
+  background: #4a5a6a;
+}
