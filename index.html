@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="./css/chat-settings.css">
   <link rel="stylesheet" href="./css/companion.css">
   <link rel="stylesheet" href="./css/important-day.css">
+  <link rel="stylesheet" href="./css/mood.css">
 </head>
 <body>
 
@@ -106,7 +107,7 @@
             <div class="function-icon"><i class="fa-regular fa-calendar-days text-[#222] text-lg"></i></div>
             <span class="function-label">重要日</span>
           </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+          <a class="function-item" id="btnMood" style="cursor: pointer;">
             <div class="function-icon"><i class="fa-solid fa-book-open text-[#222] text-lg"></i></div>
             <span class="function-label">心晴手账</span>
           </a>
@@ -563,6 +564,206 @@
     </div>
   </div>
 
+  <!-- ==================== 心晴手账 页面 ==================== -->
+<div class="page" id="pageMood">
+  <div class="mood-container">
+
+    <!-- 顶部导航 -->
+    <div class="mood-topbar">
+      <button class="mood-back-btn" id="moodBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="mood-topbar-title">心晴手账</span>
+      <div class="mood-topbar-placeholder"></div>
+    </div>
+
+    <!-- 当前角色指示 -->
+    <div class="mood-current-contact" id="moodCurrentContact">
+      <img class="mood-current-avatar" id="moodCurrentAvatar" src="" alt="">
+      <span class="mood-current-name">正在记录与 <b id="moodCurrentName">Ta</b> 的心情</span>
+    </div>
+
+    <!-- 视图切换 -->
+    <div class="mood-view-tabs">
+      <button class="mood-view-tab active" data-view="calendar" id="moodTabCalendar">
+        <i class="fa-regular fa-calendar-days"></i> 日历
+      </button>
+      <button class="mood-view-tab" data-view="stats" id="moodTabStats">
+        <i class="fa-solid fa-chart-simple"></i> 统计
+      </button>
+      <button class="mood-view-tab" data-view="trash" id="moodTabTrash">
+        <i class="fa-solid fa-trash-can"></i> 回收站
+      </button>
+    </div>
+
+    <!-- 主体 -->
+    <div class="mood-body">
+
+      <!-- 日历视图 -->
+      <div class="mood-view active" id="moodViewCalendar">
+        <div class="mood-card">
+          <div class="mood-calendar-header">
+            <button class="mood-month-nav" id="moodPrevMonth">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span class="mood-month-label" id="moodMonthLabel">2026年10月</span>
+            <button class="mood-month-nav" id="moodNextMonth">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <div class="mood-weekdays">
+            <div class="mood-weekday">一</div>
+            <div class="mood-weekday">二</div>
+            <div class="mood-weekday">三</div>
+            <div class="mood-weekday">四</div>
+            <div class="mood-weekday">五</div>
+            <div class="mood-weekday">六</div>
+            <div class="mood-weekday">日</div>
+          </div>
+          <div class="mood-calendar-grid" id="moodCalendarGrid"></div>
+          <div class="mood-legend">
+            <div class="mood-legend-item">
+              <span class="mood-legend-dot me"></span> 我的心情
+            </div>
+            <div class="mood-legend-item">
+              <span class="mood-legend-dot partner"></span> Ta 的心情
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计视图 -->
+      <div class="mood-view" id="moodViewStats">
+        <div class="mood-stats-card" id="moodStatsContent"></div>
+      </div>
+
+      <!-- 回收站视图 -->
+      <div class="mood-view" id="moodViewTrash">
+        <div class="mood-trash-tip">删除的记录会先放进这里，可随时恢复</div>
+        <div id="moodTrashList"></div>
+      </div>
+
+    </div>
+
+    <!-- 底部工具栏 -->
+    <div class="mood-toolbar">
+      <button class="mood-toolbar-btn" id="moodExportBtn">
+        <i class="fa-solid fa-file-export"></i> 导出
+      </button>
+      <button class="mood-toolbar-btn" id="moodImportBtn">
+        <i class="fa-solid fa-file-import"></i> 导入
+      </button>
+      <input type="file" id="moodImportFileInput" accept=".json,application/json" style="display:none;">
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 编辑弹层 ==================== -->
+<div class="mood-editor-overlay" id="moodEditorOverlay">
+  <div class="mood-editor-panel">
+    <div class="mood-editor-header">
+      <span class="mood-editor-date" id="moodEditorDate">2026.10.02</span>
+      <button class="mood-editor-close" id="moodEditorClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="mood-editor-tabs">
+      <button class="mood-editor-tab active" data-target="me" id="moodEditorTabMe">我的记录</button>
+      <button class="mood-editor-tab" data-target="partner" id="moodEditorTabPartner">Ta 的记录</button>
+    </div>
+    <div class="mood-editor-pages">
+      <!-- 第 1 页：选心情 -->
+      <div class="mood-editor-page active" id="moodEditorPage1">
+        <div class="mood-options-grid" id="moodOptionsGrid"></div>
+        <button class="mood-custom-add" id="moodCustomAddBtn">
+          <i class="fa-solid fa-plus"></i> 添加自定义心情
+        </button>
+      </div>
+      <!-- 第 2 页：随记 + 天气 -->
+      <div class="mood-editor-page" id="moodEditorPage2">
+        <div class="mood-editor-field">
+          <div class="mood-editor-field-label">随记</div>
+          <textarea class="mood-editor-textarea" id="moodNoteInput" placeholder="写点什么..."></textarea>
+        </div>
+        <div class="mood-editor-field">
+          <div class="mood-editor-field-label">天气</div>
+          <input type="text" class="mood-editor-input" id="moodWeatherInput" placeholder="例如：晴朗、小雨、多云...">
+        </div>
+      </div>
+    </div>
+    <div class="mood-editor-footer" id="moodEditorFooter">
+      <button class="mood-editor-btn mood-editor-btn-cancel" id="moodEditorCancel">取消</button>
+      <button class="mood-editor-btn mood-editor-btn-next" id="moodEditorNext">下一步</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 自定义心情弹窗 ==================== -->
+<div class="mood-custom-modal" id="moodCustomModal">
+  <div class="mood-custom-panel">
+    <div class="mood-custom-title">添加自定义心情</div>
+    <div class="mood-custom-field">
+      <div class="mood-custom-field-label">表情</div>
+      <input type="text" class="mood-custom-emoji-input" id="moodCustomEmoji" placeholder="😊" maxlength="2">
+    </div>
+    <div class="mood-custom-field">
+      <div class="mood-custom-field-label">名称</div>
+      <input type="text" class="mood-custom-label-input" id="moodCustomLabel" placeholder="例如：开心、摸鱼、想你..." maxlength="6">
+    </div>
+    <div class="mood-custom-field">
+      <div class="mood-custom-field-label">颜色</div>
+      <div class="mood-custom-colors" id="moodCustomColors"></div>
+    </div>
+    <div class="mood-custom-actions">
+      <button class="mood-custom-btn mood-custom-btn-cancel" id="moodCustomCancel">取消</button>
+      <button class="mood-custom-btn mood-custom-btn-confirm" id="moodCustomConfirm">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 详情弹层 ==================== -->
+<div class="mood-detail-overlay" id="moodDetailOverlay">
+  <div class="mood-detail-panel">
+    <div class="mood-detail-header">
+      <span class="mood-detail-date" id="moodDetailDate">2026.10.02</span>
+      <button class="mood-editor-close" id="moodDetailClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="mood-detail-body" id="moodDetailBody"></div>
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 导入选择器 ==================== -->
+<div class="mood-import-overlay" id="moodImportOverlay">
+  <div class="mood-import-panel">
+    <div class="mood-import-title">选择导入内容</div>
+    <div class="mood-import-desc">合并导入，不会覆盖你现有的记录</div>
+    <div class="mood-import-options">
+      <label class="mood-import-option">
+        <input type="checkbox" id="moodImportCalendar" checked>
+        <span class="mood-import-check"><i class="fa-solid fa-check"></i></span>
+        <span class="mood-import-label">心情日历</span>
+      </label>
+      <label class="mood-import-option">
+        <input type="checkbox" id="moodImportCustom" checked>
+        <span class="mood-import-check"><i class="fa-solid fa-check"></i></span>
+        <span class="mood-import-label">自定义心情</span>
+      </label>
+      <label class="mood-import-option">
+        <input type="checkbox" id="moodImportTrash">
+        <span class="mood-import-check"><i class="fa-solid fa-check"></i></span>
+        <span class="mood-import-label">回收站</span>
+      </label>
+    </div>
+    <div class="mood-import-actions">
+      <button class="mood-import-btn mood-import-btn-cancel" id="moodImportCancel">取消</button>
+      <button class="mood-import-btn mood-import-btn-confirm" id="moodImportConfirm">确认导入</button>
+    </div>
+  </div>
+</div>
+  
   <!-- ==================== 传讯页面 ==================== -->
   <div class="page" id="pageChat">
     <div class="chat-header">
@@ -928,5 +1129,6 @@
   <!-- 5) 陪伴 / 重要日 -->
   <script src="./js/companion.js"></script>
   <script src="./js/important-day.js"></script>
+  <script src="./js/mood.js"></script>
 </body>
 </html>
