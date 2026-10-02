@@ -3277,139 +3277,146 @@
     color: var(--theme-text-muted);
   }
 </style>
-     <!-- ============================================================
-     设置面板 - 外观与界面 Tab
+ <!-- ============================================================
+     设置面板 - 外观与界面 Tab（主题配色 + 文字 + 气泡 + 自定义 CSS）
      ============================================================ -->
 <style>
-  /* ============ 面板内区块 ============ */
-  .chat-settings-section {
-    margin-bottom: 24px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f0f3f6;
+  /* ============ 主题配色 ============ */
+  .cs-theme-colors {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
   }
-  .chat-settings-section:last-child {
-    border-bottom: none;
-    padding-bottom: 4px;
-  }
-  body.theme-dark .chat-settings-section {
-    border-bottom-color: var(--theme-card-border);
-  }
-
-  /* ============ 背景图预览 ============ */
-  .cs-bg-preview {
-    width: 100%;
-    height: 120px;
-    border-radius: 16px;
-    background: #fafbfc;
-    border: 1.5px dashed #e2e8ee;
-    margin-bottom: 10px;
-    overflow: hidden;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+  .cs-theme-color-btn {
+    aspect-ratio: 1;
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
     position: relative;
   }
-  body.theme-dark .cs-bg-preview {
-    background: rgba(42, 48, 56, 0.5);
-    border-color: var(--theme-card-border);
+  .cs-theme-color-btn:active {
+    transform: scale(0.88);
+  }
+  .cs-theme-color-btn.active {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px #333;
+  }
+  body.theme-dark .cs-theme-color-btn.active {
+    border-color: #2a3038;
+    box-shadow: 0 0 0 2px #ffffff;
   }
 
-  .cs-bg-preview-empty {
+  .cs-custom-color-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    height: 100%;
-    color: #c0ccd6;
-    font-size: 12px;
-  }
-  body.theme-dark .cs-bg-preview-empty {
-    color: var(--theme-text-faint);
-  }
-  .cs-bg-preview-empty i {
-    font-size: 24px;
-    color: #dde6ee;
-  }
-  body.theme-dark .cs-bg-preview-empty i {
-    color: var(--theme-text-faint);
-  }
-
-  /* ============ 背景图操作按钮 ============ */
-  .cs-bg-actions {
-    display: flex;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 8px;
   }
-  .cs-bg-upload-btn,
-  .cs-bg-clear-btn {
-    flex: 1;
-    padding: 10px 8px;
+  .cs-custom-color-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
     border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #eef1f4;
+    color: #55606b;
     font-size: 12px;
     font-weight: 600;
-    text-align: center;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
     transition: background 0.15s ease, transform 0.1s ease;
-    border: 1px solid #eef1f4;
     white-space: nowrap;
   }
-  .cs-bg-upload-btn {
-    background: #f8b4b4;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.3);
-  }
-  .cs-bg-upload-btn:active {
-    background: #e58b8b;
-    transform: scale(0.97);
-  }
-  .cs-bg-clear-btn {
-    background: #fafbfc;
-    color: #55606b;
-  }
-  .cs-bg-clear-btn:active {
+  .cs-custom-color-btn:active {
     background: #f2f6fa;
     transform: scale(0.97);
   }
-  body.theme-dark .cs-bg-clear-btn {
+  body.theme-dark .cs-custom-color-btn {
     background: rgba(42, 48, 56, 0.9);
     color: var(--theme-text-soft);
     border-color: var(--theme-card-border);
   }
+  .cs-custom-color-btn i { color: #f8b4b4; font-size: 12px; }
+  .cs-custom-color-value {
+    font-size: 12px;
+    color: #8899a6;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  body.theme-dark .cs-custom-color-value { color: var(--theme-text-muted); }
 
-  /* ============ 背景 URL 输入行 ============ */
-  .cs-bg-url-row {
+  /* ============ 字段标签 ============ */
+  .cs-field-label {
+    font-size: 12px;
+    color: #8899a6;
+    font-weight: 600;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  body.theme-dark .cs-field-label { color: var(--theme-text-muted); }
+
+  /* ============ 字体选择 ============ */
+  .cs-font-select {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 13px;
+    color: #333;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238899a6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+    box-sizing: border-box;
+    transition: border 0.2s ease;
+  }
+  .cs-font-select:focus {
+    border-color: #f8b4b4;
+  }
+  body.theme-dark .cs-font-select {
+    background-color: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+    color: var(--theme-text);
+  }
+
+  /* ============ 字体 URL 输入 ============ */
+  .cs-font-url-row {
     display: flex;
     gap: 6px;
   }
-  .cs-bg-url-input {
+  .cs-font-url-input {
     flex: 1;
     min-width: 0;
-    padding: 10px 12px;
+    padding: 11px 12px;
     border-radius: 12px;
     border: 1px solid #e2e8ee;
-    background: #ffffff;
+    background: #fafbfc;
     font-size: 12px;
     color: #333;
     outline: none;
     box-sizing: border-box;
-    transition: border 0.2s ease, box-shadow 0.2s ease;
+    transition: border 0.2s ease;
   }
-  .cs-bg-url-input:focus {
+  .cs-font-url-input:focus {
     border-color: #f8b4b4;
     box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
   }
-  .cs-bg-url-input::placeholder { color: #b6c2cd; }
-  body.theme-dark .cs-bg-url-input {
+  .cs-font-url-input::placeholder { color: #b6c2cd; }
+  body.theme-dark .cs-font-url-input {
     background: var(--theme-input-bg);
     border-color: var(--theme-input-border);
     color: var(--theme-text);
   }
-  .cs-bg-url-apply {
+  .cs-font-url-apply {
     flex-shrink: 0;
     padding: 0 16px;
     border-radius: 12px;
@@ -3421,229 +3428,139 @@
     cursor: pointer;
     transition: opacity 0.15s ease, transform 0.1s ease;
   }
-  .cs-bg-url-apply:active {
+  .cs-font-url-apply:active {
     opacity: 0.85;
     transform: scale(0.97);
   }
-  body.theme-dark .cs-bg-url-apply {
+  body.theme-dark .cs-font-url-apply {
     background: #4a5a6a;
   }
 
-  /* ============ 蒙层滑块 ============ */
-  .cs-slider-row {
+  /* ============ 气泡样式选择 ============ */
+  .cs-bubble-styles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .cs-bubble-btn {
+    padding: 10px 4px;
+    border-radius: 14px;
+    background: #fafbfc;
+    border: 1.5px solid #eef1f4;
+    cursor: pointer;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
+    transition: all 0.15s ease;
   }
-  .cs-slider {
-    flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    border-radius: 9999px;
-    background: #e2e8ee;
-    outline: none;
-    cursor: pointer;
+  .cs-bubble-btn:active {
+    transform: scale(0.96);
   }
-  .cs-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 9999px;
-    background: #f8b4b4;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(248, 180, 180, 0.5);
-    cursor: pointer;
-    transition: transform 0.12s ease;
+  .cs-bubble-btn.active {
+    background: #fdf5f5;
+    border-color: #f8b4b4;
   }
-  .cs-slider::-webkit-slider-thumb:active {
-    transform: scale(1.1);
+  body.theme-dark .cs-bubble-btn {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border);
   }
-  .cs-slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 9999px;
-    background: #f8b4b4;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 8px rgba(248, 180, 180, 0.5);
-    cursor: pointer;
+  body.theme-dark .cs-bubble-btn.active {
+    background: rgba(248, 180, 180, 0.12);
+    border-color: rgba(248, 180, 180, 0.4);
   }
-  body.theme-dark .cs-slider {
-    background: #3a424a;
+  .cs-bubble-preview {
+    width: 32px;
+    height: 22px;
+    background: linear-gradient(135deg, #d8ecfb 0%, #f8b4b4 100%);
+    display: block;
+    box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
   }
-  .cs-slider-value {
-    flex-shrink: 0;
-    width: 44px;
-    text-align: right;
-    font-size: 13px;
-    font-weight: 700;
-    color: #e58b8b;
-    font-variant-numeric: tabular-nums;
-  }
-  .cs-slider-hint {
+  .cs-bubble-btn span:last-child {
     font-size: 11px;
-    color: #a8b4c0;
-    margin-top: 6px;
-    padding-left: 2px;
+    color: #55606b;
+    font-weight: 600;
   }
-  body.theme-dark .cs-slider-hint {
-    color: var(--theme-text-muted);
+  body.theme-dark .cs-bubble-btn span:last-child {
+    color: var(--theme-text-soft);
+  }
+  .cs-bubble-btn.active span:last-child {
+    color: #e58b8b;
   }
 
-  /* ============ 毛玻璃开关 ============ */
-  .cs-toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 0;
-  }
-  .cs-toggle-info {
-    flex: 1;
-    min-width: 0;
-  }
-  .cs-toggle-title {
-    font-size: 13px;
+  /* ============ 自定义 CSS 文本域 ============ */
+  .cs-custom-css-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 12px;
     color: #333;
-    font-weight: 600;
-    line-height: 1.4;
+    outline: none;
+    resize: vertical;
+    min-height: 100px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    line-height: 1.5;
+    box-sizing: border-box;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
   }
-  body.theme-dark .cs-toggle-title {
+  .cs-custom-css-input:focus {
+    border-color: #f8b4b4;
+    box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+  }
+  .cs-custom-css-input::placeholder { color: #b6c2cd; }
+  body.theme-dark .cs-custom-css-input {
+    background: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
     color: var(--theme-text);
   }
-  .cs-toggle-desc {
-    font-size: 11px;
-    color: #a8b4c0;
-    margin-top: 3px;
-    line-height: 1.5;
-  }
-  body.theme-dark .cs-toggle-desc {
-    color: var(--theme-text-muted);
-  }
 
-  .cs-toggle-switch {
-    position: relative;
-    width: 44px;
-    height: 26px;
-    flex-shrink: 0;
+  .cs-custom-css-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .cs-css-btn {
+    flex: 1;
+    padding: 10px 6px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
+    border: 1px solid #eef1f4;
+    transition: background 0.15s ease, transform 0.1s ease;
+    white-space: nowrap;
   }
-  .cs-toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    position: absolute;
+  .cs-css-btn:active {
+    transform: scale(0.97);
   }
-  .cs-toggle-slider {
-    position: absolute;
-    inset: 0;
-    background: #d8dfe6;
-    border-radius: 9999px;
-    transition: background 0.2s ease;
-  }
-  .cs-toggle-slider::before {
-    content: '';
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    left: 3px;
-    top: 3px;
-    background: #fff;
-    border-radius: 9999px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    transition: transform 0.2s ease;
-  }
-  .cs-toggle-switch input:checked + .cs-toggle-slider {
+  .cs-css-apply {
     background: #f8b4b4;
+    color: #fff;
+    border-color: #f8b4b4;
+    box-shadow: 0 4px 12px rgba(248, 180, 180, 0.3);
   }
-  .cs-toggle-switch input:checked + .cs-toggle-slider::before {
-    transform: translateX(18px);
+  .cs-css-apply:active { background: #e58b8b; }
+  .cs-css-clear,
+  .cs-css-reset {
+    background: #fafbfc;
+    color: #55606b;
   }
-  body.theme-dark .cs-toggle-slider {
-    background: #3a424a;
-  }
-
-  /* ============ 传讯页面：背景图 + 蒙层 + 毛玻璃 ============ */
-  /* 蒙层容器 */
-  #pageChat .chat-bg-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    display: none;
-    transition: background 0.15s ease;
+  body.theme-dark .cs-css-clear,
+  body.theme-dark .cs-css-reset {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+    border-color: var(--theme-card-border);
   }
 
-  /* 保证 chat-header / chat-messages / chat-input-bar 在蒙层之上 */
-  #pageChat .chat-header {
-    position: relative;
-    z-index: 2;
-  }
-  #pageChat .chat-messages {
-    position: relative;
-    z-index: 2;
-  }
-  #pageChat .chat-input-bar {
-    position: relative;
-    z-index: 2;
-  }
-  #pageChat .home-return-btn {
-    z-index: 3;
-  }
-
-  /* 背景图存在时，让消息区透明 */
-  #pageChat.chat-has-bg .chat-messages {
-    background: transparent;
-  }
-
-  /* ============ 毛玻璃开关 ============ */
-  /* 开启毛玻璃：气泡和输入框有 backdrop-filter */
-  #pageChat.glass-on .message-bubble {
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-  }
-  #pageChat.glass-on .chat-input {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-  #pageChat.glass-on .chat-input-bar {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  /* 关闭毛玻璃：移除模糊 */
-  #pageChat.glass-off .message-bubble,
-  #pageChat.glass-off .chat-input,
-  #pageChat.glass-off .chat-input-bar {
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  /* 有背景图时，气泡使用半透明白色，让背景透出 */
-  #pageChat.chat-has-bg .message-row.other .message-bubble {
-    background: rgba(243, 245, 247, 0.85);
-  }
-  #pageChat.chat-has-bg .message-row.self .message-bubble {
-    background: rgba(216, 236, 251, 0.9);
-  }
-  body.theme-dark #pageChat.chat-has-bg .message-row.other .message-bubble {
-    background: rgba(42, 48, 56, 0.85);
-  }
-  body.theme-dark #pageChat.chat-has-bg .message-row.self .message-bubble {
-    background: rgba(26, 58, 82, 0.9);
-  }
-  #pageChat.chat-has-bg .chat-input-bar {
-    background: rgba(250, 251, 252, 0.85);
-  }
-  body.theme-dark #pageChat.chat-has-bg .chat-input-bar {
-    background: rgba(30, 36, 43, 0.85);
-  }
-  #pageChat.chat-has-bg .chat-header {
-    background: rgba(250, 251, 252, 0.85);
-  }
-  body.theme-dark #pageChat.chat-has-bg .chat-header {
-    background: rgba(30, 36, 43, 0.85);
+  /* ============ 全局主题变量（由 JS 动态设置） ============ */
+  :root {
+    --accent-color: #6fb1e8;
+    --accent-color-light: rgba(111, 177, 232, 0.15);
+    --accent-color-dark: #4a86b0;
+    --chat-font-size: 14px;
+    --bubble-radius: 18px;
   }
 </style>
    <!-- ============================================================
