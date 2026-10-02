@@ -4378,6 +4378,279 @@
   }
   body.theme-dark .cs-group-count { color: var(--theme-text-muted); }
 </style>
+     <!-- ============================================================
+     设置面板 - 数据与工具 Tab
+     ============================================================ -->
+<style>
+  /* ============ 通用按钮 ============ */
+  .ds-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: background 0.15s ease, transform 0.1s ease, border-color 0.15s ease;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+  }
+  .ds-btn:active { transform: scale(0.98); }
+  .ds-btn i { font-size: 12px; }
+  .ds-btn-sub {
+    font-size: 11px;
+    color: #a8b4c0;
+    font-weight: 500;
+  }
+  .ds-btn-full { margin-bottom: 8px; }
+
+  /* 默认按钮 */
+  .ds-btn-default {
+    background: #fafbfc;
+    color: #55606b;
+    border-color: #eef1f4;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .ds-btn-default:active { background: #f2f6fa; }
+  body.theme-dark .ds-btn-default {
+    background: rgba(42, 48, 56, 0.9);
+    color: var(--theme-text-soft);
+    border-color: var(--theme-card-border);
+  }
+
+  /* 主按钮 */
+  .ds-btn-primary {
+    background: #6fb1e8;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(111, 177, 232, 0.3);
+  }
+  .ds-btn-primary:active { background: #4a86b0; }
+
+  /* 危险按钮 */
+  .ds-btn-danger {
+    background: #fff5f5;
+    color: #e05a5a;
+    border-color: #f8d8d8;
+    justify-content: flex-start;
+    text-align: left;
+  }
+  .ds-btn-danger:active { background: #fde8e8; }
+  body.theme-dark .ds-btn-danger {
+    background: rgba(224, 90, 90, 0.12);
+    color: #f09a9a;
+    border-color: rgba(224, 90, 90, 0.3);
+  }
+  .ds-btn-danger i { color: #e05a5a; }
+  body.theme-dark .ds-btn-danger i { color: #f09a9a; }
+
+  /* 柔和按钮 */
+  .ds-btn-soft {
+    background: #f5f9fd;
+    color: #4a86b0;
+    border-color: #e0edf8;
+  }
+  .ds-btn-soft:active { background: #e8f2fa; }
+  body.theme-dark .ds-btn-soft {
+    background: rgba(111, 177, 232, 0.12);
+    color: #9cc3e8;
+    border-color: rgba(111, 177, 232, 0.25);
+  }
+  .ds-btn-soft i { color: #6fb1e8; }
+  body.theme-dark .ds-btn-soft i { color: #9cc3e8; }
+
+  /* 按钮下方小提示 */
+  .ds-btn-hint {
+    font-size: 11px;
+    color: #a8b4c0;
+    text-align: center;
+    margin-top: -4px;
+    margin-bottom: 4px;
+  }
+  body.theme-dark .ds-btn-hint { color: var(--theme-text-muted); }
+
+  /* 底部提示文字 */
+  .ds-footer-hint {
+    font-size: 11px;
+    color: #a8b4c0;
+    line-height: 1.6;
+    padding: 10px 2px 4px 2px;
+  }
+  body.theme-dark .ds-footer-hint { color: var(--theme-text-muted); }
+
+  /* ============ 区块一：本机存储 ============ */
+  .ds-storage-progress-wrap {
+    margin-bottom: 12px;
+  }
+  .ds-storage-progress-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 9999px;
+    background: #eef1f4;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  body.theme-dark .ds-storage-progress-bar { background: #333a42; }
+
+  .ds-storage-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6fb1e8, #8fd1a3);
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+  }
+
+  .ds-storage-progress-text {
+    font-size: 12px;
+    color: #55606b;
+  }
+  body.theme-dark .ds-storage-progress-text { color: var(--theme-text-soft); }
+  .ds-storage-progress-text strong {
+    color: #333;
+    font-weight: 700;
+  }
+  body.theme-dark .ds-storage-progress-text strong { color: var(--theme-text); }
+
+  .ds-storage-card {
+    background: #fafbfc;
+    border: 1px solid #eef1f4;
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  body.theme-dark .ds-storage-card {
+    background: rgba(42, 48, 56, 0.6);
+    border-color: var(--theme-card-border);
+  }
+
+  .ds-storage-card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #55606b;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  body.theme-dark .ds-storage-card-title { color: var(--theme-text-soft); }
+  .ds-storage-card-title i { color: #6fb1e8; font-size: 12px; }
+
+  .ds-storage-card-desc {
+    font-size: 11px;
+    color: #8899a6;
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  body.theme-dark .ds-storage-card-desc { color: var(--theme-text-muted); }
+
+  .ds-storage-card-usage {
+    font-size: 11px;
+    color: #55606b;
+    font-weight: 600;
+  }
+  body.theme-dark .ds-storage-card-usage { color: var(--theme-text-soft); }
+  .ds-storage-card-usage strong {
+    color: #333;
+    font-weight: 700;
+  }
+  body.theme-dark .ds-storage-card-usage strong { color: var(--theme-text); }
+
+  /* ============ 区块三：通知设置 ============ */
+  .ds-notify-block {
+    margin-bottom: 12px;
+  }
+  .ds-notify-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 6px;
+  }
+  body.theme-dark .ds-notify-label { color: var(--theme-text); }
+
+  .ds-notify-desc {
+    font-size: 11px;
+    color: #8899a6;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  body.theme-dark .ds-notify-desc { color: var(--theme-text-muted); }
+
+  .ds-divider {
+    height: 1px;
+    background: #f0f3f6;
+    margin: 14px 0;
+  }
+  body.theme-dark .ds-divider { background: var(--theme-card-border); }
+
+  /* 开关行 */
+  .ds-switch-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .ds-switch-info { flex: 1; min-width: 0; }
+  .ds-switch-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.4;
+  }
+  body.theme-dark .ds-switch-title { color: var(--theme-text); }
+  .ds-switch-desc {
+    font-size: 11px;
+    color: #a8b4c0;
+    line-height: 1.5;
+    margin-top: 3px;
+  }
+  body.theme-dark .ds-switch-desc { color: var(--theme-text-muted); }
+
+  /* Toggle 开关 */
+  .ds-toggle {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .ds-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+  }
+  .ds-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #d8dfe6;
+    border-radius: 9999px;
+    transition: background 0.2s ease;
+  }
+  .ds-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 9999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease;
+  }
+  .ds-toggle input:checked + .ds-toggle-slider {
+    background: #6fb1e8;
+  }
+  .ds-toggle input:checked + .ds-toggle-slider::before {
+    transform: translateX(18px);
+  }
+  body.theme-dark .ds-toggle-slider { background: #3a424a; }
+</style>
 </head>
 <body>
 
