@@ -2,7 +2,7 @@
  * 传讯页面 - 设置面板（独立模块）
  * - 绑定到底部导航栏现有的"设置"齿轮图标
  * - Tab 1：个人资料（占位）
- * - Tab 2：外观与界面（背景图 + 蒙层 + 毛玻璃）
+ * - Tab 2：外观与界面（主题配色 + 文字设置 + 气泡样式 + 自定义 CSS）
  * - Tab 3：聊天与字卡（分组勾选模式）
  * - Tab 4：数据与工具（占位）
  * - 完全独立，不影响任何现有逻辑
@@ -11,124 +11,140 @@
 (function () {
   'use strict';
 
+  // ==================== 存储 Key ====================
   var STORE_KEY_TAB = 'chat_settings_panel_active_tab';
-  var STORE_KEY_APPEARANCE = 'chat_settings_appearance';
+  var STORE_KEY_THEME = 'chat_settings_theme';
+  var STORE_KEY_FONT = 'chat_settings_font';
+  var STORE_KEY_BUBBLE = 'chat_settings_bubble';
+  var STORE_KEY_CUSTOM_CSS = 'chat_settings_custom_css';
   var STORE_KEY_CARD_MODE = 'chat_card_mode';
   var STORE_KEY_PUBLIC_GROUPS = 'chat_public_groups';
   var STORE_KEY_PRIVATE_GROUPS = 'chat_private_groups';
-  var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';   // 颜文字勾选
-  var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups'; // 表情包勾选
+  var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';
+  var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups';
 
   // ==================== 状态 ====================
   var activeTab = 'profile';
-  var appearance = {
-    chatBg: null,
-    overlayOpacity: 30,
-    glassEffect: true
+
+  // 主题配色
+  var theme = {
+    accentColor: '#6fb1e8',    // 主色调
+    primaryBg: ''              // 主页背景色（可选）
   };
-  var cardMode = 'all';           // 'all' | 'public-only' | 'private-only'
+
+  // 文字设置
+  var font = {
+    size: 14,                  // 聊天气泡文字大小 px
+    family: 'system',          // 'system' | 'kaiti' | 'songti' | 'heiti' | 'custom'
+    customUrl: ''              // 自定义字体 CSS 链接
+  };
+
+  // 气泡样式
+  var bubble = {
+    style: 'standard',         // 'standard' | 'rounded' | 'large' | 'square'
+    customCss: ''              // 用户自定义 CSS
+  };
+
+  // 字卡模式
+  var cardMode = 'all';
 
   // 分组勾选状态
-  var publicGroups = [];          // 回复分类：勾选为公共的字卡分组
-  var privateGroups = [];         // 回复分类：勾选为专属的字卡分组
-  var emojiGroups = [];           // 颜文字分类：勾选的分组
-  var stickerGroups = [];         // 表情包分类：勾选的分组
+  var publicGroups = [];
+  var privateGroups = [];
+  var emojiGroups = [];
+  var stickerGroups = [];
 
   var settingsTrigger = null;
 
-  // ==================== 持久化：Tab ====================
-  function persistTab() {
+  // ==================== 持久化：通用 ====================
+  function persist(key, value) {
     if (typeof localforage !== 'undefined') {
-      localforage.setItem(STORE_KEY_TAB, activeTab).catch(function () {});
-    } else {
-      try { localStorage.setItem(STORE_KEY_TAB, activeTab); } catch (e) {}
-    }
-  }
-
-  function loadTab(callback) {
-    if (typeof localforage !== 'undefined') {
-      localforage.getItem(STORE_KEY_TAB).then(function (val) {
-        if (val) activeTab = val;
-        if (callback) callback();
-      }).catch(function () { if (callback) callback(); });
+      localforage.setItem(key, value).catch(function () {});
     } else {
       try {
-        var raw = localStorage.getItem(STORE_KEY_TAB);
-        if (raw) activeTab = raw;
+        if (typeof value === 'string') {
+          localStorage.setItem(key, value);
+        } else {
+          localStorage.setItem(key, JSON.stringify(value));
+        }
       } catch (e) {}
-      if (callback) callback();
     }
   }
 
-  // ==================== 持久化：外观 ====================
-  function persistAppearance() {
+  function loadValue(key, callback) {
     if (typeof localforage !== 'undefined') {
-      localforage.setItem(STORE_KEY_APPEARANCE, appearance).catch(function () {});
-    } else {
-      try { localStorage.setItem(STORE_KEY_APPEARANCE, JSON.stringify(appearance)); } catch (e) {}
-    }
-  }
-
-  function loadAppearance(callback) {
-    function apply(data) {
-      if (data && typeof data === 'object') {
-        if (data.chatBg !== undefined) appearance.chatBg = data.chatBg;
-        if (typeof data.overlayOpacity === 'number') appearance.overlayOpacity = data.overlayOpacity;
-        if (typeof data.glassEffect === 'boolean') appearance.glassEffect = data.glassEffect;
-      }
-      if (callback) callback();
-    }
-    if (typeof localforage !== 'undefined') {
-      localforage.getItem(STORE_KEY_APPEARANCE).then(apply).catch(function () { apply(null); });
+      localforage.getItem(key).then(function (val) {
+        if (callback) callback(val);
+      }).catch(function () { if (callback) callback(null); });
     } else {
       try {
-        var raw = localStorage.getItem(STORE_KEY_APPEARANCE);
-        apply(raw ? JSON.parse(raw) : null);
-      } catch (e) { apply(null); }
+        var raw = localStorage.getItem(key);
+        if (raw === null) { if (callback) callback(null); return; }
+        // 尝试 JSON parse
+        try { callback(JSON.parse(raw)); } catch (e) { callback(raw); }
+      } catch (e) { if (callback) callback(null); }
     }
+  }
+
+  // ==================== 持久化：Tab ====================
+  function persistTab() { persist(STORE_KEY_TAB, activeTab); }
+  function loadTab(callback) { loadValue(STORE_KEY_TAB, function (val) { if (val) activeTab = val; callback(); }); }
+
+  // ==================== 持久化：主题 ====================
+  function persistTheme() { persist(STORE_KEY_THEME, theme); }
+  function loadTheme(callback) {
+    loadValue(STORE_KEY_THEME, function (val) {
+      if (val && typeof val === 'object') {
+        if (val.accentColor) theme.accentColor = val.accentColor;
+        if (val.primaryBg) theme.primaryBg = val.primaryBg;
+      }
+      callback();
+    });
+  }
+
+  // ==================== 持久化：字体 ====================
+  function persistFont() { persist(STORE_KEY_FONT, font); }
+  function loadFont(callback) {
+    loadValue(STORE_KEY_FONT, function (val) {
+      if (val && typeof val === 'object') {
+        if (typeof val.size === 'number') font.size = val.size;
+        if (val.family) font.family = val.family;
+        if (val.customUrl) font.customUrl = val.customUrl;
+      }
+      callback();
+    });
+  }
+
+  // ==================== 持久化：气泡 ====================
+  function persistBubble() { persist(STORE_KEY_BUBBLE, bubble); }
+  function loadBubble(callback) {
+    loadValue(STORE_KEY_BUBBLE, function (val) {
+      if (val && typeof val === 'object') {
+        if (val.style) bubble.style = val.style;
+        if (typeof val.customCss === 'string') bubble.customCss = val.customCss;
+      }
+      callback();
+    });
   }
 
   // ==================== 持久化：字卡模式 ====================
   function persistCardMode() {
-    if (typeof localforage !== 'undefined') {
-      localforage.setItem(STORE_KEY_CARD_MODE, cardMode).catch(function () {});
-    } else {
-      try { localStorage.setItem(STORE_KEY_CARD_MODE, cardMode); } catch (e) {}
-    }
+    persist(STORE_KEY_CARD_MODE, cardMode);
     window.chatCardMode = cardMode;
   }
-
   function loadCardMode(callback) {
-    if (typeof localforage !== 'undefined') {
-      localforage.getItem(STORE_KEY_CARD_MODE).then(function (val) {
-        if (val) cardMode = val;
-        if (callback) callback();
-      }).catch(function () { if (callback) callback(); });
-    } else {
-      try {
-        var raw = localStorage.getItem(STORE_KEY_CARD_MODE);
-        if (raw) cardMode = raw;
-      } catch (e) {}
-      if (callback) callback();
-    }
+    loadValue(STORE_KEY_CARD_MODE, function (val) {
+      if (val) cardMode = val;
+      callback();
+    });
   }
 
   // ==================== 持久化：分组勾选 ====================
   function persistGroupSelections() {
-    if (typeof localforage !== 'undefined') {
-      localforage.setItem(STORE_KEY_PUBLIC_GROUPS, publicGroups).catch(function () {});
-      localforage.setItem(STORE_KEY_PRIVATE_GROUPS, privateGroups).catch(function () {});
-      localforage.setItem(STORE_KEY_EMOJI_GROUPS, emojiGroups).catch(function () {});
-      localforage.setItem(STORE_KEY_STICKER_GROUPS, stickerGroups).catch(function () {});
-    } else {
-      try {
-        localStorage.setItem(STORE_KEY_PUBLIC_GROUPS, JSON.stringify(publicGroups));
-        localStorage.setItem(STORE_KEY_PRIVATE_GROUPS, JSON.stringify(privateGroups));
-        localStorage.setItem(STORE_KEY_EMOJI_GROUPS, JSON.stringify(emojiGroups));
-        localStorage.setItem(STORE_KEY_STICKER_GROUPS, JSON.stringify(stickerGroups));
-      } catch (e) {}
-    }
-    // 暴露给外部（供 chat.js 使用）
+    persist(STORE_KEY_PUBLIC_GROUPS, publicGroups);
+    persist(STORE_KEY_PRIVATE_GROUPS, privateGroups);
+    persist(STORE_KEY_EMOJI_GROUPS, emojiGroups);
+    persist(STORE_KEY_STICKER_GROUPS, stickerGroups);
     window.chatPublicGroups = publicGroups.slice();
     window.chatPrivateGroups = privateGroups.slice();
     window.chatEmojiGroups = emojiGroups.slice();
@@ -154,60 +170,145 @@
         if (callback) callback();
       }
     }
-
     keys.forEach(function (k) {
-      if (typeof localforage !== 'undefined') {
-        localforage.getItem(k.store).then(function (d) {
-          k.assign(d);
-          done();
-        }).catch(function () { k.assign(null); done(); });
-      } else {
-        try {
-          var raw = localStorage.getItem(k.store);
-          k.assign(raw ? JSON.parse(raw) : null);
-        } catch (e) { k.assign(null); }
-        done();
-      }
+      loadValue(k.store, function (d) { k.assign(d); done(); });
     });
   }
 
-  // ==================== 应用外观到传讯页面 ====================
-  function applyAppearance() {
-    var pageChat = document.getElementById('pageChat');
-    if (!pageChat) return;
+  // ==================== 应用主题配色 ====================
+  function applyTheme() {
+    var root = document.documentElement;
+    var color = theme.accentColor || '#6fb1e8';
 
-    var overlay = pageChat.querySelector('.chat-bg-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.className = 'chat-bg-overlay';
-      pageChat.insertBefore(overlay, pageChat.firstChild);
+    // 计算衍生色
+    var rgb = hexToRgb(color);
+    var lighter = rgb ? 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',0.15)' : 'rgba(111,177,232,0.15)';
+    var darker = rgb ? 'rgba(' + Math.max(0, rgb.r - 40) + ',' + Math.max(0, rgb.g - 40) + ',' + Math.max(0, rgb.b - 40) + ',1)' : '#4a86b0';
+
+    // 注入到 CSS 变量
+    root.style.setProperty('--accent-color', color);
+    root.style.setProperty('--accent-color-light', lighter);
+    root.style.setProperty('--accent-color-dark', darker);
+    root.style.setProperty('--theme-accent', color);
+
+    if (theme.primaryBg) {
+      root.style.setProperty('--primary-bg', theme.primaryBg);
     }
 
-    if (appearance.chatBg) {
-      pageChat.style.backgroundImage = "url('" + appearance.chatBg + "')";
-      pageChat.style.backgroundSize = 'cover';
-      pageChat.style.backgroundPosition = 'center';
-      pageChat.style.backgroundRepeat = 'no-repeat';
-      overlay.style.display = 'block';
-    } else {
-      pageChat.style.backgroundImage = '';
-      overlay.style.display = 'none';
+    // 应用到关键元素
+    var sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) {
+      sendBtn.style.background = color;
+      sendBtn.style.boxShadow = '0 3px 10px ' + lighter;
     }
 
-    overlay.style.background = 'rgba(0, 0, 0, ' + (appearance.overlayOpacity / 100) + ')';
+    var tabActive = document.querySelectorAll('.tab-btn.active i, .tab-btn.active span');
+    tabActive.forEach(function (el) { el.style.color = color; });
 
-    if (appearance.glassEffect) {
-      pageChat.classList.add('glass-on');
-      pageChat.classList.remove('glass-off');
-    } else {
-      pageChat.classList.add('glass-off');
-      pageChat.classList.remove('glass-on');
+    // 全局（主页等）——给 body 加 CSS 变量
+    document.body.style.setProperty('--global-accent', color);
+
+    // 应用主页相关元素
+    var homeSendBtn = document.querySelectorAll('#pageHome .play-btn');
+    homeSendBtn.forEach(function (el) {
+      // 保留原样式，只微调颜色
+    });
+  }
+
+  function hexToRgb(hex) {
+    if (!hex) return null;
+    var m = hex.replace('#', '');
+    if (m.length === 3) {
+      m = m[0] + m[0] + m[1] + m[1] + m[2] + m[2];
+    }
+    var num = parseInt(m, 16);
+    if (isNaN(num)) return null;
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255
+    };
+  }
+
+  // ==================== 应用文字设置 ====================
+  function applyFont() {
+    var root = document.documentElement;
+    var body = document.body;
+
+    // 1. 字体大小
+    var size = font.size || 14;
+    root.style.setProperty('--chat-font-size', size + 'px');
+    document.querySelectorAll('#pageChat .message-bubble').forEach(function (el) {
+      el.style.fontSize = size + 'px';
+    });
+
+    // 2. 字体
+    var fontFamily = '';
+    if (font.family === 'system') {
+      fontFamily = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    } else if (font.family === 'kaiti') {
+      fontFamily = '"Kaiti SC", "KaiTi", "楷体", STKaiti, serif';
+    } else if (font.family === 'songti') {
+      fontFamily = '"Songti SC", "SimSun", "宋体", STSong, serif';
+    } else if (font.family === 'heiti') {
+      fontFamily = '"Heiti SC", "SimHei", "黑体", STHeiti, sans-serif';
+    } else if (font.family === 'custom') {
+      fontFamily = '"CustomFont", ' + '-apple-system, BlinkMacSystemFont, sans-serif';
     }
 
-    var chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-      chatMessages.style.background = appearance.chatBg ? 'transparent' : '';
+    if (fontFamily) {
+      body.style.fontFamily = fontFamily;
     }
+
+    // 3. 自定义字体 URL
+    var fontLinkId = 'custom-font-link';
+    var existing = document.getElementById(fontLinkId);
+    if (existing) existing.remove();
+
+    if (font.family === 'custom' && font.customUrl) {
+      var link = document.createElement('link');
+      link.id = fontLinkId;
+      link.rel = 'stylesheet';
+      link.href = font.customUrl;
+      document.head.appendChild(link);
+    }
+  }
+
+  // ==================== 应用气泡样式 ====================
+  function applyBubble() {
+    var root = document.documentElement;
+    var radius = '18px';
+    if (bubble.style === 'standard') radius = '18px';
+    else if (bubble.style === 'rounded') radius = '10px';
+    else if (bubble.style === 'large') radius = '24px';
+    else if (bubble.style === 'square') radius = '4px';
+
+    root.style.setProperty('--bubble-radius', radius);
+    document.querySelectorAll('#pageChat .message-bubble').forEach(function (el) {
+      el.style.borderRadius = radius;
+    });
+  }
+
+  // ==================== 应用自定义 CSS ====================
+  function applyCustomCss() {
+    var styleId = 'chat-custom-css';
+    var existing = document.getElementById(styleId);
+    if (existing) existing.remove();
+
+    if (bubble.customCss && bubble.customCss.trim()) {
+      var style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = bubble.customCss;
+      document.head.appendChild(style);
+    }
+  }
+
+  // ==================== 应用所有设置 ====================
+  function applyAll() {
+    applyTheme();
+    applyFont();
+    applyBubble();
+    applyCustomCss();
   }
 
   // ==================== 找到设置齿轮图标 ====================
@@ -286,51 +387,83 @@
       '      </div>',
       '    </div>',
 
-      // Tab 2: 外观与界面（完整内容）
+      // Tab 2: 外观与界面（全新内容）
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
+
+      // 区块 1：全局主题配色
       '      <div class="chat-settings-section">',
-      '        <div class="chat-settings-section-title">聊天背景图</div>',
-      '        <div class="cs-bg-preview" id="csBgPreview">',
-      '          <div class="cs-bg-preview-empty" id="csBgPreviewEmpty">',
-      '            <i class="fa-regular fa-image"></i>',
-      '            <span>暂无背景</span>',
-      '          </div>',
-      '        </div>',
-      '        <div class="cs-bg-actions">',
-      '          <label class="cs-bg-upload-btn" for="csBgFileInput">',
-      '            <i class="fa-solid fa-upload"></i> 上传本地图片',
+      '        <div class="chat-settings-section-title">全局主题配色</div>',
+      '        <div class="cs-theme-colors" id="csThemeColors"></div>',
+      '        <div class="cs-custom-color-row">',
+      '          <label class="cs-custom-color-btn" for="csCustomColorInput">',
+      '            <i class="fa-solid fa-eye-dropper"></i> 自定义颜色',
       '          </label>',
-      '          <input type="file" id="csBgFileInput" accept="image/*" style="display:none;">',
-      '          <button class="cs-bg-clear-btn" id="csBgClearBtn">',
-      '            <i class="fa-solid fa-rotate-left"></i> 恢复默认',
+      '          <input type="color" id="csCustomColorInput" value="#6fb1e8" style="display:none;">',
+      '          <span class="cs-custom-color-value" id="csCustomColorValue">#6fb1e8</span>',
+      '        </div>',
+      '        <div class="cs-slider-hint">修改后主页、字卡库等页面的主色调会同步变化</div>',
+      '      </div>',
+
+      // 区块 2：文字设置
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title">文字设置</div>',
+
+      // 字体大小滑块
+      '        <div class="cs-field-label">字体大小</div>',
+      '        <div class="cs-slider-row">',
+      '          <input type="range" class="cs-slider" id="csFontSizeSlider" min="12" max="24" value="14">',
+      '          <span class="cs-slider-value" id="csFontSizeValue">14px</span>',
+      '        </div>',
+
+      // 字体选择
+      '        <div class="cs-field-label" style="margin-top:14px;">字体选择</div>',
+      '        <select class="cs-font-select" id="csFontSelect">',
+      '          <option value="system">系统默认</option>',
+      '          <option value="kaiti">楷体</option>',
+      '          <option value="songti">宋体</option>',
+      '          <option value="heiti">黑体</option>',
+      '          <option value="custom">自定义字体</option>',
+      '        </select>',
+
+      // 自定义字体 URL
+      '        <div class="cs-field-label" style="margin-top:14px;">字体 URL</div>',
+      '        <div class="cs-font-url-row">',
+      '          <input type="text" class="cs-font-url-input" id="csFontUrlInput" placeholder="粘贴字体 CSS 链接...">',
+      '          <button class="cs-font-url-apply" id="csFontUrlApply">应用</button>',
+      '        </div>',
+      '      </div>',
+
+      // 区块 3：气泡样式与自定义 CSS
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title">气泡样式</div>',
+      '        <div class="cs-bubble-styles" id="csBubbleStyles">',
+      '          <button class="cs-bubble-btn active" data-style="standard">',
+      '            <span class="cs-bubble-preview" style="border-radius:18px;"></span>',
+      '            <span>标准</span>',
+      '          </button>',
+      '          <button class="cs-bubble-btn" data-style="rounded">',
+      '            <span class="cs-bubble-preview" style="border-radius:10px;"></span>',
+      '            <span>圆角</span>',
+      '          </button>',
+      '          <button class="cs-bubble-btn" data-style="large">',
+      '            <span class="cs-bubble-preview" style="border-radius:24px;"></span>',
+      '            <span>大圆角</span>',
+      '          </button>',
+      '          <button class="cs-bubble-btn" data-style="square">',
+      '            <span class="cs-bubble-preview" style="border-radius:4px;"></span>',
+      '            <span>方形</span>',
       '          </button>',
       '        </div>',
-      '        <div class="cs-bg-url-row">',
-      '          <input type="text" class="cs-bg-url-input" id="csBgUrlInput" placeholder="或粘贴图片 URL...">',
-      '          <button class="cs-bg-url-apply" id="csBgUrlApply">应用</button>',
+
+      '        <div class="cs-field-label" style="margin-top:16px;">自定义气泡 CSS</div>',
+      '        <textarea class="cs-custom-css-input" id="csCustomCssInput" placeholder="/* 在这里输入自定义 CSS，例如： */&#10;.message-bubble {&#10;  box-shadow: 0 4px 12px rgba(0,0,0,0.1);&#10;}"></textarea>',
+      '        <div class="cs-custom-css-actions">',
+      '          <button class="cs-css-btn cs-css-apply" id="csCssApply">应用 CSS</button>',
+      '          <button class="cs-css-btn cs-css-clear" id="csCssClear">清空</button>',
+      '          <button class="cs-css-btn cs-css-reset" id="csCssReset">恢复默认</button>',
       '        </div>',
       '      </div>',
-      '      <div class="chat-settings-section">',
-      '        <div class="chat-settings-section-title">背景蒙层深浅度</div>',
-      '        <div class="cs-slider-row">',
-      '          <input type="range" class="cs-slider" id="csOverlaySlider" min="0" max="100" value="30">',
-      '          <span class="cs-slider-value" id="csOverlayValue">30%</span>',
-      '        </div>',
-      '        <div class="cs-slider-hint">拖拽滑块调整背景图上方蒙层的深浅度</div>',
-      '      </div>',
-      '      <div class="chat-settings-section">',
-      '        <div class="chat-settings-section-title">毛玻璃效果</div>',
-      '        <div class="cs-toggle-row">',
-      '          <div class="cs-toggle-info">',
-      '            <div class="cs-toggle-title">气泡与输入框毛玻璃</div>',
-      '            <div class="cs-toggle-desc">开启后气泡和输入框会有背景模糊效果</div>',
-      '          </div>',
-      '          <label class="cs-toggle-switch">',
-      '            <input type="checkbox" id="csGlassToggle" checked>',
-      '            <span class="cs-toggle-slider"></span>',
-      '          </label>',
-      '        </div>',
-      '      </div>',
+
       '    </div>',
 
       // Tab 3: 聊天与字卡（分组勾选模式）
@@ -427,6 +560,91 @@
     document.body.appendChild(panel);
 
     bindPanelEvents();
+    renderThemeColors();
+    renderBubbleStyles();
+  }
+
+  // ==================== 渲染主题色选择器 ====================
+  var PRESET_COLORS = [
+    { name: '红', value: '#F05A5A' },
+    { name: '橙', value: '#F5A623' },
+    { name: '黄', value: '#FFD54F' },
+    { name: '绿', value: '#7ED3A8' },
+    { name: '蓝', value: '#6FB1E8' },
+    { name: '紫', value: '#B78BEA' },
+    { name: '粉', value: '#F8B4B4' },
+    { name: '黑', value: '#333333' },
+    { name: '白', value: '#FFFFFF' }
+  ];
+
+  function renderThemeColors() {
+    var container = document.getElementById('csThemeColors');
+    if (!container) return;
+    container.innerHTML = '';
+
+    PRESET_COLORS.forEach(function (c) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cs-theme-color-btn' + (c.value.toLowerCase() === theme.accentColor.toLowerCase() ? ' active' : '');
+      btn.style.background = c.value;
+      btn.setAttribute('data-color', c.value);
+      btn.title = c.name;
+      if (c.value === '#FFFFFF') {
+        btn.style.border = '1px solid #e2e8ee';
+      }
+      btn.addEventListener('click', function () {
+        theme.accentColor = c.value;
+        persistTheme();
+        applyTheme();
+        renderThemeColors();
+        var valEl = document.getElementById('csCustomColorValue');
+        if (valEl) valEl.textContent = c.value;
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  // ==================== 渲染气泡样式选择器 ====================
+  function renderBubbleStyles() {
+    var container = document.getElementById('csBubbleStyles');
+    if (!container) return;
+    container.querySelectorAll('.cs-bubble-btn').forEach(function (btn) {
+      var style = btn.getAttribute('data-style');
+      btn.classList.toggle('active', style === bubble.style);
+    });
+  }
+
+  // ==================== 填充面板当前值 ====================
+  function fillPanelValues() {
+    // 主题色
+    var valEl = document.getElementById('csCustomColorValue');
+    if (valEl) valEl.textContent = theme.accentColor;
+    var picker = document.getElementById('csCustomColorInput');
+    if (picker) picker.value = theme.accentColor;
+    renderThemeColors();
+
+    // 字体大小
+    var slider = document.getElementById('csFontSizeSlider');
+    var sizeVal = document.getElementById('csFontSizeValue');
+    if (slider) {
+      slider.value = font.size;
+      if (sizeVal) sizeVal.textContent = font.size + 'px';
+    }
+
+    // 字体选择
+    var fontSelect = document.getElementById('csFontSelect');
+    if (fontSelect) fontSelect.value = font.family;
+
+    // 字体 URL
+    var fontUrlInput = document.getElementById('csFontUrlInput');
+    if (fontUrlInput) fontUrlInput.value = font.customUrl || '';
+
+    // 气泡样式
+    renderBubbleStyles();
+
+    // 自定义 CSS
+    var cssInput = document.getElementById('csCustomCssInput');
+    if (cssInput) cssInput.value = bubble.customCss || '';
   }
 
   // ==================== 事件绑定 ====================
@@ -453,113 +671,111 @@
     });
 
     // ============ 外观 Tab 的交互 ============
-    var bgFileInput = document.getElementById('csBgFileInput');
-    if (bgFileInput) {
-      bgFileInput.addEventListener('change', function () {
-        var file = bgFileInput.files && bgFileInput.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          appearance.chatBg = e.target.result;
-          persistAppearance();
-          applyAppearance();
-          updateBgPreview();
-        };
-        reader.readAsDataURL(file);
+
+    // 1. 自定义颜色
+    var customColorInput = document.getElementById('csCustomColorInput');
+    if (customColorInput) {
+      customColorInput.addEventListener('input', function () {
+        theme.accentColor = customColorInput.value;
+        var valEl = document.getElementById('csCustomColorValue');
+        if (valEl) valEl.textContent = customColorInput.value;
+        persistTheme();
+        applyTheme();
+        renderThemeColors();
       });
     }
 
-    var bgUrlInput = document.getElementById('csBgUrlInput');
-    var bgUrlApply = document.getElementById('csBgUrlApply');
-    if (bgUrlApply && bgUrlInput) {
-      bgUrlApply.addEventListener('click', function () {
-        var url = bgUrlInput.value.trim();
-        if (!url) { alert('请输入图片 URL'); return; }
-        appearance.chatBg = url;
-        persistAppearance();
-        applyAppearance();
-        updateBgPreview();
+    // 2. 字体大小滑块
+    var fontSizeSlider = document.getElementById('csFontSizeSlider');
+    var fontSizeValue = document.getElementById('csFontSizeValue');
+    if (fontSizeSlider) {
+      fontSizeSlider.addEventListener('input', function () {
+        var val = parseInt(fontSizeSlider.value, 10);
+        font.size = val;
+        if (fontSizeValue) fontSizeValue.textContent = val + 'px';
+        applyFont();
+      });
+      fontSizeSlider.addEventListener('change', function () {
+        persistFont();
       });
     }
 
-    var bgClearBtn = document.getElementById('csBgClearBtn');
-    if (bgClearBtn) {
-      bgClearBtn.addEventListener('click', function () {
-        appearance.chatBg = null;
-        persistAppearance();
-        applyAppearance();
-        updateBgPreview();
-        if (bgUrlInput) bgUrlInput.value = '';
+    // 3. 字体选择
+    var fontSelect = document.getElementById('csFontSelect');
+    if (fontSelect) {
+      fontSelect.addEventListener('change', function () {
+        font.family = fontSelect.value;
+        persistFont();
+        applyFont();
       });
     }
 
-    var overlaySlider = document.getElementById('csOverlaySlider');
-    var overlayValue = document.getElementById('csOverlayValue');
-    if (overlaySlider) {
-      overlaySlider.addEventListener('input', function () {
-        var val = parseInt(overlaySlider.value, 10);
-        appearance.overlayOpacity = val;
-        if (overlayValue) overlayValue.textContent = val + '%';
-        var overlay = document.querySelector('#pageChat .chat-bg-overlay');
-        if (overlay) {
-          overlay.style.background = 'rgba(0, 0, 0, ' + (val / 100) + ')';
-        }
-      });
-      overlaySlider.addEventListener('change', function () {
-        persistAppearance();
+    // 4. 字体 URL 应用
+    var fontUrlInput = document.getElementById('csFontUrlInput');
+    var fontUrlApply = document.getElementById('csFontUrlApply');
+    if (fontUrlApply && fontUrlInput) {
+      fontUrlApply.addEventListener('click', function () {
+        var url = fontUrlInput.value.trim();
+        if (!url) { alert('请输入字体 CSS 链接'); return; }
+        font.customUrl = url;
+        font.family = 'custom';
+        persistFont();
+        applyFont();
+        var fs = document.getElementById('csFontSelect');
+        if (fs) fs.value = 'custom';
       });
     }
 
-    var glassToggle = document.getElementById('csGlassToggle');
-    if (glassToggle) {
-      glassToggle.addEventListener('change', function () {
-        appearance.glassEffect = glassToggle.checked;
-        persistAppearance();
-        applyAppearance();
+    // 5. 气泡样式切换
+    var bubbleStyles = document.getElementById('csBubbleStyles');
+    if (bubbleStyles) {
+      bubbleStyles.addEventListener('click', function (e) {
+        var btn = e.target.closest('.cs-bubble-btn');
+        if (!btn) return;
+        var style = btn.getAttribute('data-style');
+        if (!style) return;
+        bubble.style = style;
+        persistBubble();
+        applyBubble();
+        renderBubbleStyles();
+      });
+    }
+
+    // 6. 自定义 CSS 应用
+    var cssApply = document.getElementById('csCssApply');
+    var cssClear = document.getElementById('csCssClear');
+    var cssReset = document.getElementById('csCssReset');
+    var cssInput = document.getElementById('csCustomCssInput');
+
+    if (cssApply && cssInput) {
+      cssApply.addEventListener('click', function () {
+        bubble.customCss = cssInput.value;
+        persistBubble();
+        applyCustomCss();
+      });
+    }
+    if (cssClear && cssInput) {
+      cssClear.addEventListener('click', function () {
+        cssInput.value = '';
+        bubble.customCss = '';
+        persistBubble();
+        applyCustomCss();
+      });
+    }
+    if (cssReset && cssInput) {
+      cssReset.addEventListener('click', function () {
+        cssInput.value = '';
+        bubble.customCss = '';
+        bubble.style = 'standard';
+        persistBubble();
+        applyCustomCss();
+        applyBubble();
+        renderBubbleStyles();
       });
     }
 
     // ============ 聊天与字卡 Tab 的交互 ============
     bindChatTabEvents();
-  }
-
-  // ==================== 更新背景预览 ====================
-  function updateBgPreview() {
-    var preview = document.getElementById('csBgPreview');
-    var empty = document.getElementById('csBgPreviewEmpty');
-    if (!preview) return;
-    if (appearance.chatBg) {
-      preview.style.backgroundImage = "url('" + appearance.chatBg + "')";
-      preview.style.backgroundSize = 'cover';
-      preview.style.backgroundPosition = 'center';
-      if (empty) empty.style.display = 'none';
-    } else {
-      preview.style.backgroundImage = '';
-      if (empty) empty.style.display = 'flex';
-    }
-  }
-
-  // ==================== 填充面板当前值 ====================
-  function fillPanelValues() {
-    updateBgPreview();
-
-    var bgUrlInput = document.getElementById('csBgUrlInput');
-    if (bgUrlInput) {
-      bgUrlInput.value = (appearance.chatBg && appearance.chatBg.indexOf('data:') !== 0)
-        ? appearance.chatBg : '';
-    }
-
-    var overlaySlider = document.getElementById('csOverlaySlider');
-    var overlayValue = document.getElementById('csOverlayValue');
-    if (overlaySlider) {
-      overlaySlider.value = appearance.overlayOpacity;
-      if (overlayValue) overlayValue.textContent = appearance.overlayOpacity + '%';
-    }
-
-    var glassToggle = document.getElementById('csGlassToggle');
-    if (glassToggle) {
-      glassToggle.checked = appearance.glassEffect;
-    }
   }
 
   // ==================== 字卡模式切换 ====================
@@ -580,7 +796,6 @@
       switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
         b.classList.toggle('active', b.getAttribute('data-mode') === mode);
       });
-
       updateModeHint();
     });
   }
@@ -614,13 +829,11 @@
     updateAllGroupCounts();
   }
 
-  // 渲染回复分类的公共/专属两个列表
   function renderReplyGroupLists() {
     var publicList = document.getElementById('csPublicGroupList');
     var privateList = document.getElementById('csPrivateGroupList');
     if (!publicList || !privateList) return;
 
-    // 读取分组（category = 'reply'）
     var groups = [];
     if (typeof window.getGroups === 'function') {
       groups = window.getGroups('reply');
@@ -641,75 +854,54 @@
     });
   }
 
-  // 渲染颜文字分组列表
   function renderEmojiGroupList() {
     var list = document.getElementById('csEmojiGroupList');
     if (!list) return;
-
     var groups = [];
     if (typeof window.getGroups === 'function') {
-      // 颜文字在 card.js 中的分类名是 'kaomoji'
       groups = window.getGroups('kaomoji');
     }
-
     if (groups.length === 0) {
       list.innerHTML = '<div class="cs-words-empty">还没有颜文字分组，先去字卡收纳盒创建吧~</div>';
       return;
     }
-
     list.innerHTML = '';
     groups.forEach(function (name) {
       list.appendChild(createGroupCheckboxItem(name, 'kaomoji', 'emoji'));
     });
   }
 
-  // 渲染表情包分组列表
   function renderStickerGroupList() {
     var list = document.getElementById('csStickerGroupList');
     if (!list) return;
-
-    // 表情包当前不分组的，只有 cardDatabase.sticker 一个数组
-    // 但为了与分组概念统一，我们可以把它视为"默认分组"
     var stickerArr = (window.cardDatabase && window.cardDatabase.get)
       ? (window.cardDatabase.get('sticker') || [])
       : [];
-
     if (stickerArr.length === 0) {
       list.innerHTML = '<div class="cs-words-empty">还没有表情包，先去字卡收纳盒添加吧~</div>';
       return;
     }
-
     list.innerHTML = '';
-    // 用一个虚拟分组名 "表情包"
     list.appendChild(createGroupCheckboxItem('表情包（全部）', 'sticker', 'sticker'));
   }
 
-  // 创建单个分组勾选行
   function createGroupCheckboxItem(groupName, category, type) {
     var item = document.createElement('div');
     item.className = 'cs-group-item';
 
-    // 判断是否已勾选
     var isChecked = false;
-    if (type === 'public') {
-      isChecked = publicGroups.indexOf(groupName) >= 0;
-    } else if (type === 'private') {
-      isChecked = privateGroups.indexOf(groupName) >= 0;
-    } else if (type === 'emoji') {
-      isChecked = emojiGroups.indexOf(groupName) >= 0;
-    } else if (type === 'sticker') {
-      isChecked = stickerGroups.indexOf(groupName) >= 0;
-    }
+    if (type === 'public') isChecked = publicGroups.indexOf(groupName) >= 0;
+    else if (type === 'private') isChecked = privateGroups.indexOf(groupName) >= 0;
+    else if (type === 'emoji') isChecked = emojiGroups.indexOf(groupName) >= 0;
+    else if (type === 'sticker') isChecked = stickerGroups.indexOf(groupName) >= 0;
 
     if (isChecked) item.classList.add('checked');
 
-    // 获取颜色
     var color = '#5C7CFA';
     if (typeof window.getGroupColor === 'function') {
       color = window.getGroupColor(groupName, category);
     }
 
-    // 获取字卡数量
     var count = 0;
     if (category === 'sticker') {
       count = (window.cardDatabase && window.cardDatabase.get)
@@ -732,66 +924,51 @@
       '  <div class="cs-group-count">' + count + ' 条</div>' +
       '</div>';
 
-    // 绑定勾选
     var checkbox = item.querySelector('input[type="checkbox"]');
     checkbox.addEventListener('change', function () {
       handleGroupCheckboxChange(groupName, type, checkbox.checked, item);
     });
-
-    // 整行可点击
     item.addEventListener('click', function (e) {
       if (e.target.closest('.cs-group-checkbox')) return;
       checkbox.checked = !checkbox.checked;
       handleGroupCheckboxChange(groupName, type, checkbox.checked, item);
     });
-
     return item;
   }
 
-  // 处理勾选变化
   function handleGroupCheckboxChange(groupName, type, checked, itemEl) {
     var targetArr = null;
     if (type === 'public') targetArr = publicGroups;
     else if (type === 'private') targetArr = privateGroups;
     else if (type === 'emoji') targetArr = emojiGroups;
     else if (type === 'sticker') targetArr = stickerGroups;
-
     if (!targetArr) return;
 
     var idx = targetArr.indexOf(groupName);
-    if (checked && idx < 0) {
-      targetArr.push(groupName);
-    } else if (!checked && idx >= 0) {
-      targetArr.splice(idx, 1);
-    }
+    if (checked && idx < 0) targetArr.push(groupName);
+    else if (!checked && idx >= 0) targetArr.splice(idx, 1);
 
-    if (itemEl) {
-      itemEl.classList.toggle('checked', checked);
-    }
+    if (itemEl) itemEl.classList.toggle('checked', checked);
 
     persistGroupSelections();
     updateAllGroupCounts();
 
-    // 刷新字卡库
     if (typeof window.refreshCardUI === 'function') {
       window.refreshCardUI();
     }
   }
 
-  // 更新计数
   function updateAllGroupCounts() {
     var pubCount = document.getElementById('csPublicCount');
     var priCount = document.getElementById('csPrivateCount');
     var emoCount = document.getElementById('csEmojiGroupCount');
     var stiCount = document.getElementById('csStickerGroupCount');
-
     if (pubCount) pubCount.textContent = publicGroups.length;
     if (priCount) priCount.textContent = privateGroups.length;
     if (emoCount) emoCount.textContent = emojiGroups.length;
     if (stiCount) stiCount.textContent = stickerGroups.length;
   }
 
-  // ==================== 绑定聊天 Tab 事件 ====================
   function bindChatTabEvents() {
     bindModeSwitch();
   }
@@ -803,7 +980,6 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
     });
   }
-
   function escapeAttr(str) {
     if (!str) return '';
     return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -852,13 +1028,17 @@
     bindSettingsTrigger();
 
     loadTab(function () {
-      loadCardMode(function () {
-        window.chatCardMode = cardMode;
-        loadGroupSelections(function () {
-          loadAppearance(function () {
-            applyAppearance();
-            fillPanelValues();
-            switchTab(activeTab);
+      loadTheme(function () {
+        loadFont(function () {
+          loadBubble(function () {
+            loadCardMode(function () {
+              window.chatCardMode = cardMode;
+              loadGroupSelections(function () {
+                applyAll();
+                fillPanelValues();
+                switchTab(activeTab);
+              });
+            });
           });
         });
       });
@@ -881,7 +1061,10 @@
     open: openPanel,
     close: closePanel,
     switchTab: switchTab,
-    applyAppearance: applyAppearance,
+    applyTheme: applyTheme,
+    applyFont: applyFont,
+    applyBubble: applyBubble,
+    applyCustomCss: applyCustomCss,
     refreshGroupCheckboxes: renderAllGroupLists,
     refreshGroupLists: renderAllGroupLists
   };
