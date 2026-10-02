@@ -6941,60 +6941,6 @@
     box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
   }
 </style>
-     <!-- ============================================================
-     重要日 - 类型切换按钮
-     ============================================================ -->
-<style>
-  .imp-type-switch {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-
-  .imp-type-btn {
-    flex: 1;
-    padding: 11px 0;
-    border-radius: 12px;
-    background: #fafbfc;
-    border: 1.5px solid #eef1f4;
-    color: #8899a6;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    font-family: inherit;
-  }
-  .imp-type-btn:active {
-    transform: scale(0.97);
-  }
-  .imp-type-btn.active {
-    background: #fdf5f5;
-    border-color: #f8b4c8;
-    color: #e58b9b;
-    box-shadow: 0 4px 12px rgba(248, 180, 200, 0.2);
-  }
-
-  body.theme-dark .imp-type-btn {
-    background: rgba(42, 48, 56, 0.9);
-    border-color: var(--theme-card-border, #333a42);
-    color: #b8c2cc;
-  }
-  body.theme-dark .imp-type-btn.active {
-    background: rgba(248, 180, 200, 0.12);
-    border-color: rgba(248, 180, 200, 0.5);
-    color: #f0a4b4;
-  }
-
-  /* 日期输入框：统一风格 */
-  .imp-modal-input[type="date"] {
-    -webkit-appearance: none;
-    appearance: none;
-    min-height: 44px;
-  }
-  body.theme-dark .imp-modal-input[type="date"] {
-    color-scheme: dark;
-  }
-</style>
 </head>
 <body>
 
@@ -10652,8 +10598,8 @@
 
 })();
 </script>
-<!-- ============================================================
-     重要日 页面交互（新增/删除/存储）
+     <!-- ============================================================
+     重要日 页面交互
      ============================================================ -->
 <script>
 (function () {
@@ -10663,24 +10609,16 @@
   var btnImp = document.getElementById('btnImportantDay');
   if (!pageImp) return;
 
-  // ==================== 存储 ====================
   var STORE_KEY = 'my_important_days';
 
+  // ==================== 数据读写 ====================
   function loadData() {
     try {
       var raw = localStorage.getItem(STORE_KEY);
       if (!raw) return [];
       var data = JSON.parse(raw);
       if (!Array.isArray(data)) return [];
-      // 兼容旧数据：把 name 字段统一成 title
-      return data.map(function (item) {
-        return {
-          id: item.id || genId(),
-          title: item.title || item.name || '未命名',
-          date: item.date || '',
-          type: item.type || 'anniversary'
-        };
-      });
+      return data;
     } catch (e) { return []; }
   }
 
@@ -10690,86 +10628,37 @@
     } catch (e) {}
   }
 
-  function genId() {
-    return 'id_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-  }
-
-  // ==================== 颜色/图标配置 ====================
-  var TYPE_META = {
-    anniversary: {
-      bg: 'linear-gradient(135deg, #fcd8e0 0%, #f8c0d0 100%)',
-      icon: 'fa-heart',
-      color: '#e58b9b',
-      label: '纪念日'
-    },
-    countdown: {
-      bg: 'linear-gradient(135deg, #d8ecfc 0%, #c0d8f8 100%)',
-      icon: 'fa-hourglass-half',
-      color: '#6fa3cc',
-      label: '倒数日'
-    },
-    birthday: {
-      bg: 'linear-gradient(135deg, #fce4d8 0%, #fcd0b8 100%)',
-      icon: 'fa-birthday-cake',
-      color: '#e09b6b',
-      label: '生日'
-    },
-    default: {
-      bg: 'linear-gradient(135deg, #e0d8fc 0%, #d0c0f8 100%)',
-      icon: 'fa-star',
-      color: '#9b8bd0',
-      label: '其他'
-    }
+  // ==================== 颜色池（按类型分） ====================
+  var COLOR_POOL = {
+    anniversary: { bg: 'linear-gradient(135deg, #fcd8e0 0%, #f8c0d0 100%)', icon: 'fa-heart', color: '#e58b9b' },
+    birthday:    { bg: 'linear-gradient(135deg, #fce4d8 0%, #fcd0b8 100%)', icon: 'fa-birthday-cake', color: '#e09b6b' },
+    countdown:   { bg: 'linear-gradient(135deg, #d8ecfc 0%, #c0d8f8 100%)', icon: 'fa-hourglass-half', color: '#6fa3cc' },
+    default:     { bg: 'linear-gradient(135deg, #e0d8fc 0%, #d0c0f8 100%)', icon: 'fa-star', color: '#9b8bd0' }
   };
 
-  // ==================== 计算天数 ====================
-  // 返回 { days: number, text: string, status: 'past' | 'future' | 'today' }
-  function calcDays(item) {
-    if (!item.date) return { days: 0, text: '日期无效', status: 'future' };
-
-    var target = new Date(item.date + 'T00:00:00');
-    if (isNaN(target.getTime())) return { days: 0, text: '日期无效', status: 'future' };
+  // ==================== 计算剩余/已过天数 ====================
+  function calcDays(dateStr) {
+    // dateStr 格式：YYYY-MM-DD
+    var target = new Date(dateStr + 'T00:00:00');
+    if (isNaN(target.getTime())) return { text: '日期无效', type: 'future' };
 
     var now = new Date();
     now.setHours(0, 0, 0, 0);
+    var diff = Math.round((now - target) / 86400000);
 
-    var diffMs = now - target;
-    var diffDays = Math.round(diffMs / 86400000);
-
-    if (item.type === 'anniversary') {
-      // 纪念日：从 date 到今天
-      if (diffDays === 0) {
-        return { days: 0, text: '就是今天', status: 'today' };
-      } else if (diffDays > 0) {
-        return { days: diffDays, text: '已相伴 ' + diffDays + ' 天', status: 'past' };
-      } else {
-        return { days: Math.abs(diffDays), text: '还有 ' + Math.abs(diffDays) + ' 天', status: 'future' };
-      }
+    if (diff === 0) {
+      return { text: '就是今天', type: 'today' };
+    } else if (diff > 0) {
+      return { text: '已过 ' + diff + ' 天', type: 'past' };
     } else {
-      // 倒数日：从今天到 date
-      if (diffDays === 0) {
-        return { days: 0, text: '就是今天', status: 'today' };
-      } else if (diffDays > 0) {
-        // date 在未来 → 还有 X 天
-        return { days: diffDays, text: '还有 ' + diffDays + ' 天', status: 'future' };
-      } else {
-        // date 已过
-        return { days: Math.abs(diffDays), text: '已过 ' + Math.abs(diffDays) + ' 天', status: 'past' };
-      }
+      return { text: '还有 ' + Math.abs(diff) + ' 天', type: 'future' };
     }
   }
 
-  // ==================== 日期格式 ====================
-  function formatDate(str) {
-    if (!str) return '';
-    return str.replace(/-/g, '.');
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function (m) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-    });
+  // ==================== 日期格式显示 ====================
+  function formatDateDisplay(dateStr) {
+    // 输入：YYYY-MM-DD → 输出：YYYY.MM.DD
+    return dateStr.replace(/-/g, '.');
   }
 
   // ==================== 渲染列表 ====================
@@ -10789,52 +10678,48 @@
     if (emptyEl) emptyEl.classList.remove('active');
     listEl.innerHTML = '';
 
-    data.forEach(function (item) {
-      var meta = TYPE_META[item.type] || TYPE_META.default;
-      var calc = calcDays(item);
+    data.forEach(function (item, index) {
+      var meta = COLOR_POOL[item.type] || COLOR_POOL.default;
+      var calc = calcDays(item.date);
 
       var card = document.createElement('div');
       card.className = 'imp-card';
-      card.setAttribute('data-id', item.id);
       card.innerHTML =
         '<div class="imp-card-icon" style="background: ' + meta.bg + ';">' +
         '  <i class="fa-solid ' + meta.icon + '" style="color: ' + meta.color + ';"></i>' +
         '</div>' +
         '<div class="imp-card-info">' +
-        '  <div class="imp-card-name">' + escapeHtml(item.title) + '</div>' +
-        '  <div class="imp-card-date">' + formatDate(item.date) + '</div>' +
-        '  <div class="imp-card-remain ' + calc.status + '">' + calc.text + '</div>' +
+        '  <div class="imp-card-name">' + escapeHtml(item.name || '未命名') + '</div>' +
+        '  <div class="imp-card-date">' + formatDateDisplay(item.date || '') + '</div>' +
+        '  <div class="imp-card-remain ' + calc.type + '">' + calc.text + '</div>' +
         '</div>' +
         '<div class="imp-card-arrow"><i class="fa-solid fa-chevron-right"></i></div>';
 
-      // 点击卡片 → 弹出操作菜单
+      // 点击卡片 → 提示（后续可扩展详情页）
       card.addEventListener('click', function () {
-        showCardActions(item);
+        alert('重要日：' + (item.name || '未命名') + '\n日期：' + formatDateDisplay(item.date || '') + '\n' + calc.text);
+      });
+
+      // 长按删除
+      card.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        if (confirm('删除「' + (item.name || '未命名') + '」吗？')) {
+          var arr = loadData();
+          arr.splice(index, 1);
+          saveData(arr);
+          renderList();
+        }
       });
 
       listEl.appendChild(card);
     });
   }
 
-  // ==================== 卡片点击：操作菜单 ====================
-  function showCardActions(item) {
-    var calc = calcDays(item);
-    var meta = TYPE_META[item.type] || TYPE_META.default;
-    var action = confirm(
-      '【' + item.title + '】\n' +
-      '类型：' + meta.label + '\n' +
-      '日期：' + formatDate(item.date) + '\n' +
-      '状态：' + calc.text + '\n\n' +
-      '点击"确定"删除，点击"取消"关闭'
-    );
-    if (action) {
-      if (confirm('确定要删除「' + item.title + '」吗？')) {
-        var arr = loadData();
-        var newArr = arr.filter(function (d) { return d.id !== item.id; });
-        saveData(newArr);
-        renderList();
-      }
-    }
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
   }
 
   // ==================== 页面切换 ====================
@@ -10875,8 +10760,6 @@
   // ==================== 添加重要日弹窗 ====================
   var addBtn = document.getElementById('impAddBtn');
   var modal = null;
-  var currentType = 'anniversary'; // 当前选中的类型
-  var selectedDate = '';           // 当前选中的日期
 
   function ensureModal() {
     if (modal) return modal;
@@ -10885,21 +10768,64 @@
     modal.id = 'impModal';
     modal.className = 'imp-modal';
     modal.innerHTML =
+      modal.innerHTML =
       '<div class="imp-modal-panel">' +
       '  <div class="imp-modal-title">添加重要日</div>' +
-
-      '  <div class="imp-modal-label">标题</div>' +
-      '  <input type="text" class="imp-modal-input" id="impModalTitle" placeholder="例如：恋爱纪念日">' +
-
+      '  <div class="imp-modal-label">名称</div>' +
+      '  <input type="text" class="imp-modal-input" id="impModalName" placeholder="例如：恋爱纪念日">' +
       '  <div class="imp-modal-label">日期</div>' +
-      '  <input type="date" class="imp-modal-input" id="impModalDate">' +
-
-      '  <div class="imp-modal-label">类型</div>' +
-      '  <div class="imp-type-switch" id="impTypeSwitch">' +
-      '    <button type="button" class="imp-type-btn active" data-type="anniversary">纪念日</button>' +
-      '    <button type="button" class="imp-type-btn" data-type="countdown">倒数日</button>' +
+      '  <div class="imp-date-picker" id="impDatePickerWrap">' +
+      '    <button type="button" class="imp-date-btn" id="impDateBtn">' +
+      '      <i class="fa-regular fa-calendar-days imp-date-btn-icon"></i>' +
+      '      <span class="imp-date-text" id="impDateText">选择日期</span>' +
+      '      <i class="fa-solid fa-chevron-down imp-date-arrow"></i>' +
+      '    </button>' +
+      '    <div class="imp-calendar" id="impCalendar">' +
+      '      <div class="imp-cal-header">' +
+      '        <button type="button" class="imp-cal-nav" id="impCalPrev">' +
+      '          <i class="fa-solid fa-chevron-left"></i>' +
+      '        </button>' +
+      '        <div class="imp-cal-title" id="impCalTitle">2026年10月</div>' +
+      '        <button type="button" class="imp-cal-nav" id="impCalNext">' +
+      '          <i class="fa-solid fa-chevron-right"></i>' +
+      '        </button>' +
+      '      </div>' +
+      '      <div class="imp-cal-weekdays">' +
+      '        <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>' +
+      '      </div>' +
+      '      <div class="imp-cal-days" id="impCalDays"></div>' +
+      '      <div class="imp-cal-footer">' +
+      '        <button type="button" class="imp-cal-btn imp-cal-cancel" id="impCalCancel">取消</button>' +
+      '        <button type="button" class="imp-cal-btn imp-cal-confirm" id="impCalConfirm">确定</button>' +
+      '      </div>' +
+      '    </div>' +
       '  </div>' +
-
+      '  <div class="imp-modal-label">类型</div>' +
+      '  <div class="imp-select" id="impModalTypeSelect">' +
+      '    <button type="button" class="imp-select-btn" id="impModalTypeBtn">' +
+      '      <span class="imp-select-dot" style="background: #e58b9b;"></span>' +
+      '      <span class="imp-select-text" id="impModalTypeText">纪念日</span>' +
+      '      <i class="fa-solid fa-chevron-down imp-select-arrow"></i>' +
+      '    </button>' +
+      '    <div class="imp-select-menu" id="impModalTypeMenu">' +
+      '      <div class="imp-select-item active" data-value="anniversary">' +
+      '        <span class="imp-select-dot" style="background: #e58b9b;"></span>' +
+      '        <span>纪念日</span>' +
+      '      </div>' +
+      '      <div class="imp-select-item" data-value="birthday">' +
+      '        <span class="imp-select-dot" style="background: #e09b6b;"></span>' +
+      '        <span>生日</span>' +
+      '      </div>' +
+      '      <div class="imp-select-item" data-value="countdown">' +
+      '        <span class="imp-select-dot" style="background: #6fa3cc;"></span>' +
+      '        <span>倒数日</span>' +
+      '      </div>' +
+      '      <div class="imp-select-item" data-value="default">' +
+      '        <span class="imp-select-dot" style="background: #9b8bd0;"></span>' +
+      '        <span>其他</span>' +
+      '      </div>' +
+      '    </div>' +
+      '  </div>' +
       '  <div class="imp-modal-actions">' +
       '    <button class="imp-modal-cancel" id="impModalCancel">取消</button>' +
       '    <button class="imp-modal-confirm" id="impModalConfirm">保存</button>' +
@@ -10908,103 +10834,349 @@
 
     document.body.appendChild(modal);
 
-    // ---- 取消 ----
     document.getElementById('impModalCancel').addEventListener('click', function () {
-      closeModal();
+      modal.classList.remove('active');
     });
-
-    // ---- 点击遮罩关闭 ----
     modal.addEventListener('click', function (e) {
-      if (e.target === modal) closeModal();
+      if (e.target === modal) modal.classList.remove('active');
     });
 
-    // ---- 类型切换按钮 ----
-    var typeSwitch = document.getElementById('impTypeSwitch');
-    if (typeSwitch) {
-      typeSwitch.querySelectorAll('.imp-type-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          typeSwitch.querySelectorAll('.imp-type-btn').forEach(function (b) {
-            b.classList.remove('active');
+        // ============ 自定义类型下拉选择器 ============
+    var currentType = 'anniversary';
+    var typeColors = {
+      anniversary: '#e58b9b',
+      birthday: '#e09b6b',
+      countdown: '#6fa3cc',
+      default: '#9b8bd0'
+    };
+    var typeNames = {
+      anniversary: '纪念日',
+      birthday: '生日',
+      countdown: '倒数日',
+      default: '其他'
+    };
+
+    var typeBtn = document.getElementById('impModalTypeBtn');
+    var typeMenu = document.getElementById('impModalTypeMenu');
+    var typeText = document.getElementById('impModalTypeText');
+
+    if (typeBtn && typeMenu) {
+      // 打开/关闭菜单
+      typeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        typeMenu.classList.toggle('active');
+        var arrow = typeBtn.querySelector('.imp-select-arrow');
+        if (arrow) {
+          arrow.style.transform = typeMenu.classList.contains('active')
+            ? 'rotate(180deg)' : 'rotate(0)';
+        }
+      });
+
+      // 点击选项
+      typeMenu.querySelectorAll('.imp-select-item').forEach(function (item) {
+        item.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var val = item.getAttribute('data-value');
+          currentType = val;
+
+          // 更新按钮文本和圆点
+          typeText.textContent = typeNames[val];
+          var dot = typeBtn.querySelector('.imp-select-dot');
+          if (dot) dot.style.background = typeColors[val];
+
+          // 更新选中状态
+          typeMenu.querySelectorAll('.imp-select-item').forEach(function (i) {
+            i.classList.remove('active');
           });
-          btn.classList.add('active');
-          currentType = btn.getAttribute('data-type');
+          item.classList.add('active');
+
+          // 关闭菜单
+          typeMenu.classList.remove('active');
+          var arrow2 = typeBtn.querySelector('.imp-select-arrow');
+          if (arrow2) arrow2.style.transform = 'rotate(0)';
         });
       });
-    }
 
-    // ---- 日期输入监听 ----
-    var dateInput = document.getElementById('impModalDate');
-    if (dateInput) {
-      dateInput.addEventListener('change', function () {
-        selectedDate = dateInput.value;
+      // 点击外部关闭菜单
+      document.addEventListener('click', function () {
+        typeMenu.classList.remove('active');
+        var arrow3 = typeBtn.querySelector('.imp-select-arrow');
+        if (arrow3) arrow3.style.transform = 'rotate(0)';
       });
     }
 
-    // ---- 保存 ----
-    document.getElementById('impModalConfirm').addEventListener('click', function () {
-      var titleEl = document.getElementById('impModalTitle');
-      var dateEl = document.getElementById('impModalDate');
+    // ============ 自定义日历选择器 ============
+    var calCurrentYear = 0;
+    var calCurrentMonth = 0; // 0-11
+    var calSelectedDate = null; // 选中的日期字符串 YYYY-MM-DD
+    var calTempDate = null;      // 临时选中（未点确定前）
 
-      var title = (titleEl.value || '').trim();
-      var date = dateEl.value;
+    var dateBtn = document.getElementById('impDateBtn');
+    var dateText = document.getElementById('impDateText');
+    var calendar = document.getElementById('impCalendar');
+    var calTitle = document.getElementById('impCalTitle');
+    var calDays = document.getElementById('impCalDays');
+    var calPrev = document.getElementById('impCalPrev');
+    var calNext = document.getElementById('impCalNext');
+    var calCancel = document.getElementById('impCalCancel');
+    var calConfirm = document.getElementById('impCalConfirm');
 
-      if (!title) { alert('请输入标题'); return; }
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function formatDateStr(y, m, d) {
+      // m 是 1-12
+      return y + '-' + pad2(m) + '-' + pad2(d);
+    }
+
+    function formatDateDisplay(str) {
+      if (!str) return '选择日期';
+      return str.replace(/-/g, '.');
+    }
+
+    function renderCalendar(year, month) {
+      // month: 0-11
+      calTitle.textContent = year + '年' + (month + 1) + '月';
+
+      // 第一天是周几（0=周日）
+      var firstDay = new Date(year, month, 1).getDay();
+      // 这个月有多少天
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // 上个月最后一天是几号
+      var prevMonthDays = new Date(year, month, 0).getDate();
+
+      calDays.innerHTML = '';
+
+      var today = new Date();
+      var todayStr = formatDateStr(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+            // 动态计算需要的行数（5 或 6 行）
+      var totalCells = firstDay + daysInMonth;
+      var rows = Math.ceil(totalCells / 7);
+      var totalSlots = rows * 7;
+
+      for (var i = 0; i < totalSlots; i++) {
+        var cell = document.createElement('div');
+        cell.className = 'imp-cal-day';
+
+        var dayNum, isCurrentMonth = true, isPrev = false, isNext = false;
+        if (i < firstDay) {
+          // 上个月
+          dayNum = prevMonthDays - firstDay + i + 1;
+          isCurrentMonth = false;
+          isPrev = true;
+        } else if (i >= firstDay + daysInMonth) {
+          // 下个月
+          dayNum = i - firstDay - daysInMonth + 1;
+          isCurrentMonth = false;
+          isNext = true;
+        } else {
+          // 当前月
+          dayNum = i - firstDay + 1;
+        }
+
+        cell.textContent = dayNum;
+        if (!isCurrentMonth) {
+          cell.classList.add('other-month');
+        }
+
+        // 计算这个格子的实际年月日
+        var cellYear = year, cellMonth = month + 1, cellDay = dayNum;
+        if (isPrev) {
+          cellMonth = month;
+          if (cellMonth === 0) { cellMonth = 12; cellYear = year - 1; }
+        } else if (isNext) {
+          cellMonth = month + 2;
+          if (cellMonth === 13) { cellMonth = 1; cellYear = year + 1; }
+        }
+        var cellDateStr = formatDateStr(cellYear, cellMonth, cellDay);
+
+        // 高亮今天
+        if (cellDateStr === todayStr) {
+          cell.classList.add('today');
+        }
+
+        // 高亮选中的日期
+        if (calTempDate === cellDateStr) {
+          cell.classList.add('selected');
+        }
+
+        // 点击事件
+        (function (dateStr, c) {
+          c.addEventListener('click', function (e) {
+            e.stopPropagation();
+            calTempDate = dateStr;
+            // 重新渲染（清除之前的 selected）
+            renderCalendar(year, month);
+          });
+        })(cellDateStr, cell);
+
+        calDays.appendChild(cell);
+      }
+    }
+
+       // 打开日历按钮
+    if (dateBtn) {
+      dateBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        calendar.classList.toggle('active');
+        var arrow = dateBtn.querySelector('.imp-date-arrow');
+        if (arrow) {
+          arrow.style.transform = calendar.classList.contains('active')
+            ? 'rotate(180deg)' : 'rotate(0)';
+        }
+
+        // 初始化日历
+        if (calendar.classList.contains('active')) {
+          if (calSelectedDate) {
+            // 已有选中日期 → 定位到该日期
+            var parts = calSelectedDate.split('-');
+            calCurrentYear = parseInt(parts[0], 10);
+            calCurrentMonth = parseInt(parts[1], 10) - 1;
+            calTempDate = calSelectedDate;
+          } else {
+            // 无选中日期 → 定位到今天
+            var now = new Date();
+            calCurrentYear = now.getFullYear();
+            calCurrentMonth = now.getMonth();
+            calTempDate = null;
+          }
+          renderCalendar(calCurrentYear, calCurrentMonth);
+
+          // ============ 智能判断：如果日历下方空间不足，就向上展开 ============
+          setTimeout(function () {
+            var rect = calendar.getBoundingClientRect();
+            var viewportHeight = window.innerHeight;
+            // 如果日历底部超出屏幕
+            if (rect.bottom > viewportHeight - 20) {
+              calendar.classList.add('expand-up');
+            } else {
+              calendar.classList.remove('expand-up');
+            }
+          }, 10);
+        }
+      });
+    }
+
+    // 上个月
+    if (calPrev) {
+      calPrev.addEventListener('click', function (e) {
+        e.stopPropagation();
+        calCurrentMonth--;
+        if (calCurrentMonth < 0) { calCurrentMonth = 11; calCurrentYear--; }
+        renderCalendar(calCurrentYear, calCurrentMonth);
+      });
+    }
+
+    // 下个月
+    if (calNext) {
+      calNext.addEventListener('click', function (e) {
+        e.stopPropagation();
+        calCurrentMonth++;
+        if (calCurrentMonth > 11) { calCurrentMonth = 0; calCurrentYear++; }
+        renderCalendar(calCurrentYear, calCurrentMonth);
+      });
+    }
+
+    // 取消
+    if (calCancel) {
+      calCancel.addEventListener('click', function (e) {
+        e.stopPropagation();
+        calendar.classList.remove('active');
+        var arrow = dateBtn.querySelector('.imp-date-arrow');
+        if (arrow) arrow.style.transform = 'rotate(0)';
+        calTempDate = calSelectedDate; // 恢复到之前的选择
+      });
+    }
+
+    // 确定
+    if (calConfirm) {
+      calConfirm.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!calTempDate) {
+          alert('请选择日期');
+          return;
+        }
+        calSelectedDate = calTempDate;
+        dateText.textContent = formatDateDisplay(calSelectedDate);
+        dateText.style.color = '#333';
+        calendar.classList.remove('active');
+        var arrow = dateBtn.querySelector('.imp-date-arrow');
+        if (arrow) arrow.style.transform = 'rotate(0)';
+      });
+    }
+
+    // 点击外部关闭日历
+    document.addEventListener('click', function (e) {
+      if (calendar && calendar.classList.contains('active')) {
+        if (!calendar.contains(e.target) && e.target !== dateBtn && !dateBtn.contains(e.target)) {
+          calendar.classList.remove('active');
+          var arrow = dateBtn.querySelector('.imp-date-arrow');
+          if (arrow) arrow.style.transform = 'rotate(0)';
+        }
+      }
+    });
+       
+        document.getElementById('impModalConfirm').addEventListener('click', function () {
+      var name = (document.getElementById('impModalName').value || '').trim();
+      var date = calSelectedDate;
+      var type = currentType;
+
+      if (!name) { alert('请输入名称'); return; }
       if (!date) { alert('请选择日期'); return; }
 
       var arr = loadData();
       arr.push({
-        id: genId(),
-        title: title,
+        name: name,
         date: date,
-        type: currentType
+        type: type,
+        createdAt: Date.now()
       });
       saveData(arr);
-
-      closeModal();
+      modal.classList.remove('active');
       renderList();
 
-      console.log('[重要日] 已添加:', title, date, currentType);
-    });
+      // 清空
+      document.getElementById('impModalName').value = '';
 
-    return modal;
-  }
+      // 重置日期选择器
+      calSelectedDate = null;
+      calTempDate = null;
+      if (dateText) {
+        dateText.textContent = '选择日期';
+        dateText.style.color = '';
+      }
 
-  function closeModal() {
-    if (!modal) return;
-    modal.classList.remove('active');
-    // 重置表单
-    var titleEl = document.getElementById('impModalTitle');
-    var dateEl = document.getElementById('impModalDate');
-    var typeSwitch = document.getElementById('impTypeSwitch');
-    if (titleEl) titleEl.value = '';
-    if (dateEl) dateEl.value = '';
-    if (typeSwitch) {
-      typeSwitch.querySelectorAll('.imp-type-btn').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-type') === 'anniversary');
+      // 重置类型选择器
+      currentType = 'anniversary';
+      if (typeText) typeText.textContent = '纪念日';
+      var dot2 = typeBtn.querySelector('.imp-select-dot');
+      if (dot2) dot2.style.background = '#e58b9b';
+      typeMenu.querySelectorAll('.imp-select-item').forEach(function (i) {
+        i.classList.toggle('active', i.getAttribute('data-value') === 'anniversary');
       });
-    }
-    currentType = 'anniversary';
-    selectedDate = '';
+    });
+    return modal;
   }
 
   if (addBtn) {
     addBtn.addEventListener('click', function () {
       ensureModal();
 
-      // 默认日期为今天
+      // 打开弹窗时，不默认设置日期（让用户自己选）
+      // 或者您想让默认是今天，就用下面这段：
+      /*
       var today = new Date();
       var y = today.getFullYear();
       var m = today.getMonth() + 1;
       var d = today.getDate();
-      var dateStr = y + '-' + (m < 10 ? '0' + m : m) + '-' + (d < 10 ? '0' + d : d);
-      var dateEl = document.getElementById('impModalDate');
-      if (dateEl) dateEl.value = dateStr;
-      selectedDate = dateStr;
+      // 需要能访问到 calSelectedDate，这里因为作用域问题不好直接改
+      // 建议直接不设默认值，让用户主动选
+      */
 
       modal.classList.add('active');
     });
   }
-
   // ==================== 初始化 ====================
   renderList();
 
@@ -11012,9 +11184,7 @@
   window.pageImportantDay = {
     show: showImpPage,
     back: goHome,
-    refresh: renderList,
-    loadData: loadData,
-    saveData: saveData
+    refresh: renderList
   };
 
 })();
