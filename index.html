@@ -8346,6 +8346,97 @@
     });
   });
 
+  // ==================== 读取联系人数据 ====================
+  // 独立变量：陪伴页面选中的联系人 ID（不影响传讯页面的 my_current_contact）
+  var companionContactId = null;
+
+  function loadContacts() {
+    try {
+      var raw = localStorage.getItem('my_contacts');
+      if (!raw) return [];
+      var data = JSON.parse(raw);
+      if (!Array.isArray(data)) return [];
+      return data;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 获取当前传讯页面的选中联系人（用于陪伴页默认显示）
+  function getDefaultCompanionContact() {
+    var contacts = loadContacts();
+    if (contacts.length === 0) return null;
+
+    // 优先使用陪伴页面自己选中的联系人
+    if (companionContactId) {
+      var found = contacts.find(function (c) { return c.id === companionContactId; });
+      if (found) return found;
+    }
+
+    // 兜底：使用传讯页面的当前联系人
+    try {
+      var currentId = localStorage.getItem('my_current_contact');
+      if (currentId) {
+        var cur = contacts.find(function (c) { return c.id === currentId; });
+        if (cur) return cur;
+      }
+    } catch (e) {}
+
+    // 再兜底：第一个联系人
+    return contacts[0];
+  }
+
+  // 更新卡片 UI
+  function updatePartnerCard(contact) {
+    var avatarEl = document.getElementById('companionPartnerAvatar');
+    var nameEl = document.getElementById('companionPartnerName');
+    if (!avatarEl || !nameEl) return;
+
+    if (!contact) {
+      // 空状态：显示默认 TA
+      avatarEl.innerHTML = 'TA';
+      nameEl.textContent = '未命名';
+      window.chatCompanionPartner = null;
+      return;
+    }
+
+    // 头像
+    if (contact.avatar) {
+      avatarEl.innerHTML = '<img src="' + contact.avatar + '" alt="">';
+    } else {
+      avatarEl.textContent = (contact.name || 'TA').slice(0, 1).toUpperCase();
+    }
+
+    // 名字
+    nameEl.textContent = contact.name || '未命名';
+
+    // 保存到全局变量
+    window.chatCompanionPartner = contact;
+  }
+
+  // 页面加载时初始化
+  function initCompanionPartner() {
+    var contact = getDefaultCompanionContact();
+    updatePartnerCard(contact);
+  }
+
+  // 监听 localStorage 变化（传讯页面切换联系人时同步）
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'my_contacts' || e.key === 'my_current_contact') {
+      // 如果陪伴页面没有独立选择，则跟随传讯页面
+      if (!companionContactId) {
+        initCompanionPartner();
+      }
+    }
+  });
+
+  // 每次切换到陪伴页面时刷新
+  function refreshCompanionPartner() {
+    // 如果有独立选择，保持；否则读取默认
+    var contact = getDefaultCompanionContact();
+    updatePartnerCard(contact);
+  }
+     
   // ==================== 选择陪伴对象 ====================
   var partnerCard = document.getElementById('companionPartnerCard');
   var partnerModal = document.getElementById('companionPartnerModal');
@@ -8378,19 +8469,25 @@
     if (!list) return;
     list.innerHTML = '';
 
-    // 读取联系人
-    var contacts = [];
-    try {
-      contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-    } catch (e) { contacts = []; }
+    var contacts = loadContacts();
 
-    if (!Array.isArray(contacts) || contacts.length === 0) {
-      contacts = [{ id: 'default_ta', name: 'Ta', avatar: 'https://picsum.photos/200/200?random=99' }];
+    if (contacts.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:24px;color:#a8b4c0;font-size:13px;">还没有联系人，先去传讯页面添加吧~</div>';
+      return;
     }
 
     contacts.forEach(function (c) {
       var item = document.createElement('div');
       item.className = 'companion-partner-item';
+
+      // 高亮当前陪伴对象
+      var isActive = (companionContactId === c.id) ||
+                     (!companionContactId && window.chatCompanionPartner && window.chatCompanionPartner.id === c.id);
+      if (isActive) {
+        item.style.background = '#fcdce6';
+        item.style.borderColor = '#f8b4c8';
+      }
+
       item.innerHTML =
         '<div class="companion-partner-item-avatar">' +
         (c.avatar ? '<img src="' + c.avatar + '" alt="">' : (c.name || 'TA').slice(0, 1)) +
@@ -8398,21 +8495,14 @@
         '<div class="companion-partner-item-name">' + (c.name || '未命名') + '</div>';
 
       item.addEventListener('click', function () {
-        // 更新卡片
-        var avatarEl = document.getElementById('companionPartnerAvatar');
-        var nameEl = document.getElementById('companionPartnerName');
-        if (avatarEl) {
-          if (c.avatar) {
-            avatarEl.innerHTML = '<img src="' + c.avatar + '" alt="">';
-          } else {
-            avatarEl.textContent = (c.name || 'TA').slice(0, 1).toUpperCase();
-          }
-        }
-        if (nameEl) nameEl.textContent = c.name || '未命名';
+        // 关键：保存到陪伴页面的独立变量，不影响传讯页面的 my_current_contact
+        companionContactId = c.id;
 
-        window.chatCompanionPartner = c;
+        // 更新卡片
+        updatePartnerCard(c);
+
         partnerModal.classList.remove('active');
-        console.log('[陪伴] 陪伴对象:', c.name);
+        console.log('[陪伴] 陪伴对象:', c.name, '(id:', c.id, ')');
       });
 
       list.appendChild(item);
@@ -8460,7 +8550,34 @@
             '\n背景：' + summary.bg);
     });
   }
+  // ==================== 【新增】页面加载时初始化陪伴联系人 ====================
+  initCompanionPartner();
 
+  // 暴露刷新接口给外部调用
+  window.refreshCompanionPartner = refreshCompanionPartner;
+
+  // 每次切换到陪伴页面时刷新
+  var origShowCompanion = showCompanion;
+  showCompanion = function () {
+    origShowCompanion();
+    setTimeout(function () {
+      refreshCompanionPartner();
+    }, 50);
+  };
+
+  // 重新绑定"陪伴"按钮（用新的 showCompanion）
+  if (btnCompanion) {
+    var newBtn = btnCompanion.cloneNode(true);
+    btnCompanion.parentNode.replaceChild(newBtn, btnCompanion);
+    btnCompanion = newBtn;
+
+    btnCompanion.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      showCompanion();
+    });
+  }
+     
 })();
 </script>
 </body>
