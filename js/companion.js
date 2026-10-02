@@ -2,6 +2,13 @@
  * 陪伴模式 + 陪伴中 页面逻辑（独立模块）
  * - 依赖：无（只读取 localStorage 与 window 上的全局变量）
  * - 在 DOMContentLoaded 之后执行
+ *
+ * 本版改动：
+ * - 自定义背景改为「上传本地图片」
+ * - 上传的图片只应用到「陪伴中」页面
+ * - 使用 window.chatCompanionBgImage 保存 DataURL
+ * - 自定义图片应用时【不加】白色蒙层
+ * - 已移除深色模式相关逻辑
  */
 
 (function () {
@@ -206,50 +213,67 @@
       block.classList.add('active');
       window.chatCompanionBg = block.getAttribute('data-bg');
       window.chatCompanionBgType = 'preset';
-      window.chatCompanionBgCustomImage = null;
+      // 选了预设背景，清掉自定义图片
+      window.chatCompanionBgImage = null;
     });
   });
 
-  // ==================== 自定义背景图片 ====================
+  // ==================== 自定义背景图片（上传本地文件） ====================
   var bgCustomBtn = document.getElementById('companionBgCustomBtn');
-  if (bgCustomBtn) {
-    bgCustomBtn.addEventListener('click', function () {
-      var choice = confirm('点击"确定"粘贴图片 URL，点击"取消"上传本地文件');
-      if (choice) {
-        var url = prompt('请输入图片 URL：');
-        if (!url) return;
-        applyCustomImageToCompanion(url);
-      } else {
-        var input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-        input.addEventListener('change', function () {
-          var file = input.files && input.files[0];
-          if (!file) { document.body.removeChild(input); return; }
-          var reader = new FileReader();
-          reader.onload = function (ev) {
-            applyCustomImageToCompanion(ev.target.result);
-            document.body.removeChild(input);
-          };
-          reader.readAsDataURL(file);
-        });
-        input.click();
-      }
+  var bgFileInput = null;
+
+  function ensureBgFileInput() {
+    if (bgFileInput) return bgFileInput;
+    bgFileInput = document.createElement('input');
+    bgFileInput.type = 'file';
+    bgFileInput.accept = 'image/*';
+    bgFileInput.style.display = 'none';
+    document.body.appendChild(bgFileInput);
+
+    bgFileInput.addEventListener('change', function () {
+      var file = bgFileInput.files && bgFileInput.files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function (ev) {
+        var dataUrl = ev.target.result;
+
+        // 只保存到全局变量，等"开始陪伴"时才应用到"陪伴中"页面
+        window.chatCompanionBgImage = dataUrl;
+        window.chatCompanionBgType = 'custom';
+        window.chatCompanionBg = 'custom';
+
+        // 清除色块选中
+        bgBlocks.forEach(function (b) { b.classList.remove('active'); });
+
+        // 轻提示
+        if (bgCustomBtn) {
+          var originalText = bgCustomBtn.textContent;
+          bgCustomBtn.textContent = '✓ 已选图片';
+          bgCustomBtn.style.color = '#4CAF7D';
+          setTimeout(function () {
+            bgCustomBtn.textContent = originalText;
+            bgCustomBtn.style.color = '';
+          }, 1500);
+        }
+
+        console.log('[陪伴] 已选择自定义背景图片（' + Math.round(dataUrl.length / 1024) + ' KB）');
+      };
+      reader.readAsDataURL(file);
+
+      bgFileInput.value = '';
     });
+
+    return bgFileInput;
   }
 
-  function applyCustomImageToCompanion(url) {
-    pageCompanion.style.backgroundImage = "url('" + url + "')";
-    pageCompanion.style.backgroundSize = 'cover';
-    pageCompanion.style.backgroundPosition = 'center';
-    pageCompanion.style.backgroundRepeat = 'no-repeat';
-
-    window.chatCompanionBgType = 'custom';
-    window.chatCompanionBgCustomImage = url;
-    window.chatCompanionBg = 'custom';
-    bgBlocks.forEach(function (b) { b.classList.remove('active'); });
+  if (bgCustomBtn) {
+    bgCustomBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      ensureBgFileInput();
+      bgFileInput.click();
+    });
   }
 
   // ==================== 陪伴对象选择器 ====================
@@ -372,26 +396,43 @@
     });
   }
 
+  // ==================== 应用背景到"陪伴中"页面 ====================
   function applyBackgroundToActivePage() {
     if (!pageActive) return;
 
-    if (window.chatCompanionBgType === 'custom' && window.chatCompanionBgCustomImage) {
-      pageActive.style.backgroundImage = "url('" + window.chatCompanionBgCustomImage + "')";
+    // 1. 自定义图片（DataURL）—— 不加蒙层
+    if (window.chatCompanionBgType === 'custom' && window.chatCompanionBgImage) {
+      pageActive.style.background = '';
+      pageActive.style.backgroundImage = "url('" + window.chatCompanionBgImage + "')";
       pageActive.style.backgroundSize = 'cover';
       pageActive.style.backgroundPosition = 'center';
       pageActive.style.backgroundRepeat = 'no-repeat';
-      pageActive.style.background = '';
+
+      // 关键：加 no-mask 类，明确关闭蒙层
+      pageActive.classList.remove('has-mask');
+      pageActive.classList.add('no-mask');
+
+      console.log('[陪伴中] 应用自定义背景图片（无蒙层）');
       return;
     }
 
+    // 2. 预设渐变 —— 加蒙层
     var bgKey = window.chatCompanionBg || 'aurora';
     if (COMPANION_BG_PRESETS[bgKey]) {
       pageActive.style.backgroundImage = '';
       pageActive.style.background = COMPANION_BG_PRESETS[bgKey];
+
+      pageActive.classList.remove('no-mask');
+      pageActive.classList.add('has-mask');
+
+      console.log('[陪伴中] 应用预设背景:', bgKey);
       return;
     }
 
+    // 3. 兜底：极光渐变 + 蒙层
     pageActive.style.background = COMPANION_BG_PRESETS.aurora;
+    pageActive.classList.remove('no-mask');
+    pageActive.classList.add('has-mask');
   }
 
   // ==================== 陪伴中 页面逻辑 ====================
