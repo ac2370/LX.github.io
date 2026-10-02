@@ -1,9 +1,8 @@
 /**
  * 传讯页面 - 设置面板（独立模块）
- * 本版改动：删除"个人资料" Tab，保留 3 个 Tab 平均分布
- * - 外观与界面
- * - 聊天与字卡
- * - 数据与工具
+ * 本版改动：重写"数据与工具"Tab 的 UI（暂不含逻辑）
+ * - 3 个 Tab 框架不变
+ * - 外观与界面 / 聊天与字卡 完全保留
  */
 
 (function () {
@@ -23,7 +22,6 @@
   var CUSTOM_CSS_STYLE_ID = 'user-custom-bubble-css';
 
   // ==================== 状态 ====================
-  // 默认激活"外观与界面"
   var activeTab = 'appearance';
   var theme = { accentColor: '#6fb1e8' };
   var font = { size: 14, family: 'system', customUrl: '' };
@@ -64,7 +62,6 @@
   function persistTab() { persist(STORE_KEY_TAB, activeTab); }
   function loadTab(cb) {
     loadValue(STORE_KEY_TAB, function (v) {
-      // 兼容旧值：如果存储的是 'profile'，回退到 'appearance'
       if (v && v !== 'profile') activeTab = v;
       else activeTab = 'appearance';
       cb();
@@ -400,12 +397,8 @@
     var cssText = (bubble.customCss || '').trim();
     var styleEl = ensureCustomCssStyleTag();
     styleEl.innerHTML = cssText;
-
     console.log('[自定义CSS] 已注入，长度：', cssText.length);
-    console.log('[自定义CSS] 内容预览：', cssText.slice(0, 200));
-
     if (styleEl.parentNode !== document.head) {
-      console.warn('[自定义CSS] ⚠️ 容器不在 head 中，正在修复');
       document.head.appendChild(styleEl);
     }
   }
@@ -453,7 +446,7 @@
     }, true);
   }
 
-  // ==================== 创建面板（已删除"个人资料"Tab） ====================
+  // ==================== 创建面板 ====================
   function createPanel() {
     if (document.getElementById('chatSettingsPanel')) return;
 
@@ -468,7 +461,7 @@
       '    <button class="chat-settings-close" id="chatSettingsClose"><i class="fa-solid fa-xmark"></i></button>',
       '  </div>',
 
-      // 3 个 Tab（删除"个人资料"）
+      // 3 个 Tab
       '  <div class="chat-settings-tabs" id="chatSettingsTabs" style="justify-content: space-around;">',
       '    <button class="chat-settings-tab" data-tab="appearance" style="flex: 1 1 0; max-width: 33.33%;">',
       '      <i class="fa-solid fa-palette"></i>',
@@ -486,7 +479,7 @@
 
       '  <div class="chat-settings-body">',
 
-      // Tab 1: 外观与界面
+      // ============ Tab 1: 外观与界面 ============
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">全局主题配色</div>',
@@ -539,7 +532,7 @@
       '      </div>',
       '    </div>',
 
-      // Tab 2: 聊天与字卡
+      // ============ Tab 2: 聊天与字卡 ============
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">当前字卡模式</div>',
@@ -572,10 +565,129 @@
       '      </div>',
       '    </div>',
 
-      // Tab 3: 数据与工具
+      // ============ Tab 3: 数据与工具（重写内容） ============
       '    <div class="chat-settings-tab-panel" data-panel="data">',
-      '      <div class="chat-settings-section-title">数据与工具</div>',
-      '      <div class="chat-settings-placeholder"><i class="fa-solid fa-database"></i><p>存钱罐、数据备份</p></div>',
+
+      // ---- 区块一：本机存储 ----
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title">本机存储</div>',
+
+      // 进度条
+      '        <div class="ds-storage-progress-wrap">',
+      '          <div class="ds-storage-progress-bar">',
+      '            <div class="ds-storage-progress-fill" style="width: 1%;"></div>',
+      '          </div>',
+      '          <div class="ds-storage-progress-text">本机快取已用 <strong>35KB</strong> / 约 5MB（1%）</div>',
+      '        </div>',
+
+      // 大容量库说明卡片
+      '        <div class="ds-storage-card">',
+      '          <div class="ds-storage-card-title"><i class="fa-solid fa-database"></i> 大容量库</div>',
+      '          <div class="ds-storage-card-desc">聊天记录、表情包、字卡、头像等数据保存在「大容量库」（IndexedDB）</div>',
+      '          <div class="ds-storage-card-usage">已用 <strong>247KB</strong> · 可用 <strong>38.4GB</strong></div>',
+      '        </div>',
+
+      // 整理按钮
+      '        <button class="ds-btn ds-btn-primary ds-btn-full" id="dsCleanCacheBtn">',
+      '          <i class="fa-solid fa-broom"></i> 一键整理快取',
+      '        </button>',
+      '        <div class="ds-btn-hint">不动任何聊天 / 图片</div>',
+      '      </div>',
+
+      // ---- 区块二：数据 ----
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title">数据</div>',
+
+      '        <button class="ds-btn ds-btn-default ds-btn-full" id="dsExportDataBtn">',
+      '          <i class="fa-solid fa-file-export"></i> 导出数据...',
+      '          <span class="ds-btn-sub">（可勾选内容）</span>',
+      '        </button>',
+      '        <button class="ds-btn ds-btn-default ds-btn-full" id="dsImportDataBtn">',
+      '          <i class="fa-solid fa-file-import"></i> 导入数据',
+      '        </button>',
+      '        <button class="ds-btn ds-btn-default ds-btn-full" id="dsRollbackBtn">',
+      '          <i class="fa-solid fa-clock-rotate-left"></i> 回滚到最近一次正常存档',
+      '        </button>',
+
+      '        <button class="ds-btn ds-btn-danger ds-btn-full" id="dsClearChatBtn">',
+      '          <i class="fa-solid fa-trash-can"></i> 清空全部聊天记录',
+      '        </button>',
+      '        <button class="ds-btn ds-btn-danger ds-btn-full" id="dsResetCardLibraryBtn">',
+      '          <i class="fa-solid fa-rotate-left"></i> 恢复默认字卡库',
+      '        </button>',
+
+      '        <div class="ds-footer-hint">',
+      '          「导出数据」里可以分别勾选字卡（含分组 / 表情包 / 拍一拍）和聊天记录（单人 / 群聊），也可以一键全部导出。',
+      '        </div>',
+      '      </div>',
+
+      // ---- 区块三：有消息，轻轻告诉你 ----
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title">有消息，轻轻告诉你</div>',
+
+      // 手机系统通知
+      '        <div class="ds-notify-block">',
+      '          <div class="ds-notify-label">手机系统通知</div>',
+      '          <div class="ds-notify-desc">iPhone 请先用 Safari 添加到主屏幕，再从主屏打开，即可开启系统推送通知。</div>',
+      '          <button class="ds-btn ds-btn-soft ds-btn-full" id="dsAllowNotifyBtn">',
+      '            <i class="fa-solid fa-bell"></i> 允许手机系统通知',
+      '          </button>',
+      '        </div>',
+
+      '        <div class="ds-divider"></div>',
+
+      // 站内消息横幅
+      '        <div class="ds-switch-row">',
+      '          <div class="ds-switch-info">',
+      '            <div class="ds-switch-title">站内消息横幅</div>',
+      '            <div class="ds-switch-desc">收到他的回复时，在聊天页以外显示</div>',
+      '          </div>',
+      '          <label class="ds-toggle">',
+      '            <input type="checkbox" id="dsBannerToggle" checked>',
+      '            <span class="ds-toggle-slider"></span>',
+      '          </label>',
+      '        </div>',
+
+      // 显示消息内容
+      '        <div class="ds-switch-row">',
+      '          <div class="ds-switch-info">',
+      '            <div class="ds-switch-title">显示消息内容</div>',
+      '            <div class="ds-switch-desc">关闭后只显示「你收到了一条新消息」</div>',
+      '          </div>',
+      '          <label class="ds-toggle">',
+      '            <input type="checkbox" id="dsShowContentToggle" checked>',
+      '            <span class="ds-toggle-slider"></span>',
+      '          </label>',
+      '        </div>',
+
+      // 允许他随机来电
+      '        <div class="ds-switch-row">',
+      '          <div class="ds-switch-info">',
+      '            <div class="ds-switch-title">允许他随机来电</div>',
+      '            <div class="ds-switch-desc">可能很快来电... 仅模拟角色来电</div>',
+      '          </div>',
+      '          <label class="ds-toggle">',
+      '            <input type="checkbox" id="dsRandomCallToggle">',
+      '            <span class="ds-toggle-slider"></span>',
+      '          </label>',
+      '        </div>',
+
+      '        <div class="ds-divider"></div>',
+
+      // 后台保活 · 静音循环
+      '        <div class="ds-notify-block">',
+      '          <div class="ds-notify-label">后台保活 · 静音循环</div>',
+      '          <div class="ds-notify-desc">静音循环未开启</div>',
+      '          <button class="ds-btn ds-btn-soft ds-btn-full" id="dsSilentLoopBtn">',
+      '            <i class="fa-solid fa-circle-play"></i> 开启静音循环',
+      '          </button>',
+      '        </div>',
+
+      '        <div class="ds-footer-hint">',
+      '          iOS 仍可能暂停网页或回收进程，建议保留在主屏幕打开。',
+      '        </div>',
+      '      </div>',
+
       '    </div>',
 
       '  </div>',
@@ -761,7 +873,6 @@
         bubble.customCss = cssText;
         persistBubble();
         applyCustomCss();
-
         var originalBg = cssApply.style.background;
         cssApply.style.background = '#7ED3A8';
         setTimeout(function () {
@@ -769,14 +880,12 @@
         }, 400);
       });
     }
-
     if (cssClear) {
       cssClear.addEventListener('click', function () {
         if (cssInput) cssInput.value = '';
         clearCustomCss();
       });
     }
-
     if (cssReset) {
       cssReset.addEventListener('click', function () {
         if (cssInput) cssInput.value = '';
@@ -790,6 +899,9 @@
     }
 
     bindChatTabEvents();
+
+    // 注：数据与工具 Tab 的按钮/开关暂不绑定逻辑
+    // 只做 UI 展示，等下一步实现
   }
 
   function bindModeSwitch() {
@@ -970,13 +1082,10 @@
   function switchTab(tabName) {
     var panel = document.getElementById('chatSettingsPanel');
     if (!panel) return;
-
-    // 防御：如果 tabName 是 'profile'（已删除），回退到 'appearance'
     if (tabName === 'profile' || !tabName) {
       tabName = 'appearance';
       activeTab = 'appearance';
     }
-
     panel.querySelectorAll('.chat-settings-tab').forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-tab') === tabName);
     });
@@ -1016,12 +1125,10 @@
                 applyFont();
                 applyFontUrl();
                 applyBubble();
-
                 if (bubble.customCss) {
                   applyCustomCss();
                   console.log('[自定义CSS] 已从存储恢复');
                 }
-
                 fillPanelValues();
                 switchTab(activeTab);
               });
