@@ -1,9 +1,8 @@
 /**
- * 传讯页面 - 设置面板（修复版）
- * 修复：
- *  1. FontAwesome 图标不再被全局字体覆盖
- *  2. 主题色只改强调色，不改页面背景
- *  3. 字体大小只影响文字，不影响图标
+ * 传讯页面 - 设置面板（独立模块）
+ * 修复重点：
+ *  #3 字体 URL 无响应 → 动态 link + 全局 font-family + localforage 持久化 + 刷新自动注入
+ *  #4 自定义 CSS 不生效 → 固定 id + 强 !important + 只作用于传讯页 + 刷新自动应用
  */
 
 (function () {
@@ -151,7 +150,7 @@
       ('0' + Math.max(0, rgb.b - amount).toString(16)).slice(-2);
   }
 
-  // ==================== 【修复 1+2】主题：只改强调色，不改背景 ====================
+  // ==================== 主题（只改强调色） ====================
   function applyTheme() {
     var root = document.documentElement;
     var color = theme.accentColor || '#6fb1e8';
@@ -159,13 +158,11 @@
     var colorSoft = rgba(color, 0.25);
     var colorDark = darken(color, 40);
 
-    // 只写强调色相关变量，绝对不写 --primary-bg / --secondary-bg
     root.style.setProperty('--accent-color', color);
     root.style.setProperty('--accent-color-light', colorLight);
     root.style.setProperty('--accent-color-soft', colorSoft);
     root.style.setProperty('--accent-color-dark', colorDark);
 
-    // 注入主题 style 标签
     var styleId = 'global-theme-vars';
     var styleEl = document.getElementById(styleId);
     if (!styleEl) {
@@ -175,64 +172,31 @@
     }
 
     styleEl.textContent = [
-      /* 主页 —— 只改强调色，不碰背景 */
-      '#pageHome .play-btn {',
-      '  background: ' + color + ' !important;',
-      '  box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important;',
-      '}',
-      '#pageHome .tab-btn.active i,',
-      '#pageHome .tab-btn.active span { color: ' + color + ' !important; }',
+      '#pageHome .play-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
+      '#pageHome .tab-btn.active i, #pageHome .tab-btn.active span { color: ' + color + ' !important; }',
       '#pageHome .tab-btn.active { color: ' + color + ' !important; }',
       '#pageHome .function-icon i { color: ' + colorDark + ' !important; }',
       '#pageHome .search-glass i { color: ' + color + ' !important; }',
-
-      /* 字卡库 —— 只改强调色 */
-      '#pageCard .cat-grid-item.active {',
-      '  background: ' + colorLight + ' !important;',
-      '  border-color: ' + color + ' !important;',
-      '}',
-      '#pageCard .cat-grid-item.active i,',
-      '#pageCard .cat-grid-item.active .cat-label { color: ' + colorDark + ' !important; }',
-      '#pageCard .word-card-delete {',
-      '  background: ' + colorLight + ' !important;',
-      '  color: ' + colorDark + ' !important;',
-      '}',
+      '#pageCard .cat-grid-item.active { background: ' + colorLight + ' !important; border-color: ' + color + ' !important; }',
+      '#pageCard .cat-grid-item.active i, #pageCard .cat-grid-item.active .cat-label { color: ' + colorDark + ' !important; }',
+      '#pageCard .word-card-delete { background: ' + colorLight + ' !important; color: ' + colorDark + ' !important; }',
       '#pageCard .card-action-btn i { color: ' + color + ' !important; }',
       '#pageCard .cat-grid-badge { background: ' + color + ' !important; }',
-
-      /* 传讯页 */
-      '#pageChat .send-btn {',
-      '  background: ' + color + ' !important;',
-      '  box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important;',
-      '}',
+      '#pageChat .send-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
       '#pageChat .send-btn:active { background: ' + colorDark + ' !important; }',
       '#pageChat .chat-action-icon { color: ' + rgba(color, 0.75) + ' !important; }',
       '#pageChat .chat-action-icon:active { color: ' + color + ' !important; }',
       '#pageChat .message-row.self .message-bubble { background: ' + colorSoft + ' !important; }',
-
-      /* 设置面板 */
-      '#chatSettingsPanel .chat-settings-tab.active {',
-      '  background: ' + colorLight + ' !important;',
-      '  color: ' + colorDark + ' !important;',
-      '}',
+      '#chatSettingsPanel .chat-settings-tab.active { background: ' + colorLight + ' !important; color: ' + colorDark + ' !important; }',
       '#chatSettingsPanel .chat-settings-title i { color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-mode-btn.active { color: ' + colorDark + ' !important; }',
       '#chatSettingsPanel .cs-words-btn i { color: ' + color + ' !important; }',
-      '#chatSettingsPanel .cs-group-checkbox input:checked + .cs-group-check-mark {',
-      '  background: ' + color + ' !important;',
-      '  border-color: ' + color + ' !important;',
-      '}',
-      '#chatSettingsPanel .cs-css-apply {',
-      '  background: ' + color + ' !important;',
-      '  border-color: ' + color + ' !important;',
-      '}',
+      '#chatSettingsPanel .cs-group-checkbox input:checked + .cs-group-check-mark { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#chatSettingsPanel .cs-css-apply { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-font-url-apply { background: ' + colorDark + ' !important; }',
-
-      /* 全局强调（不涉及背景） */
       '.home-settings-btn i, .floating-settings i { color: ' + color + ' !important; }'
     ].join('\n');
 
-    // 底部导航激活色
     document.querySelectorAll('.tab-btn.active i, .tab-btn.active span').forEach(function (el) {
       el.style.color = color;
     });
@@ -244,17 +208,13 @@
     }
   }
 
-  // ==================== 【修复 1】字体：不覆盖 FontAwesome ====================
+  // ==================== 字体大小 + 字体族（不覆盖 FontAwesome） ====================
   function applyFont() {
     var root = document.documentElement;
-    var body = document.body;
     var size = font.size || 14;
-
-    // ---- 1. 全局字号变量 ----
     root.style.setProperty('--global-font-size', size + 'px');
     root.style.setProperty('--chat-font-size', size + 'px');
 
-    // ---- 2. 字号覆盖：只作用于文字元素，绝对不包含 i.fa-* ----
     var styleId = 'global-font-vars';
     var styleEl = document.getElementById(styleId);
     if (!styleEl) {
@@ -266,12 +226,8 @@
     var uiSize = Math.min(size, 16);
 
     styleEl.textContent = [
-      /* 聊天消息 */
-      '#pageChat .message-bubble,',
-      '#pageChat .message-text { font-size: ' + size + 'px !important; }',
+      '#pageChat .message-bubble, #pageChat .message-text { font-size: ' + size + 'px !important; }',
       '#pageChat .call-record-bubble { font-size: ' + Math.max(10, size - 3) + 'px !important; }',
-
-      /* 主页文字（不含 i 图标） */
       '#pageHome .function-label { font-size: ' + Math.max(10, uiSize - 4) + 'px !important; }',
       '#pageHome h1, #pageHome .header-card h1 { font-size: ' + (uiSize + 4) + 'px !important; }',
       '#pageHome .header-card p { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
@@ -279,8 +235,6 @@
       '#pageHome .search-glass input { font-size: ' + uiSize + 'px !important; }',
       '#pageHome #songTitle { font-size: ' + uiSize + 'px !important; }',
       '#pageHome #songArtist { font-size: ' + Math.max(10, uiSize - 4) + 'px !important; }',
-
-      /* 字卡库文字（不含 i 图标） */
       '#pageCard .card-topbar-title { font-size: ' + (uiSize + 3) + 'px !important; }',
       '#pageCard .cat-label { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
       '#pageCard .card-action-btn span { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
@@ -289,15 +243,12 @@
       '#pageCard .word-card-text { font-size: ' + uiSize + 'px !important; }',
       '#pageCard .card-group-select { font-size: ' + uiSize + 'px !important; }',
       '#pageCard .card-status-counts { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
-
-      /* 设置面板文字（不含 i 图标） */
       '#chatSettingsPanel .chat-settings-title span { font-size: ' + (uiSize + 2) + 'px !important; }',
       '#chatSettingsPanel .chat-settings-tab span { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
       '#chatSettingsPanel .chat-settings-section-title { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
       '#chatSettingsPanel .cs-group-name { font-size: ' + uiSize + 'px !important; }',
       '#chatSettingsPanel .cs-group-count { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
-
-      /* ============ 【核心修复】强制恢复 FontAwesome 图标字体 ============ */
+      /* FontAwesome 强制恢复 */
       '.fa, .fas, .far, .fal, .fad, .fab,',
       '.fa-solid, .fa-regular, .fa-light, .fa-thin, .fa-duotone, .fa-brands,',
       '[class*="fa-"],',
@@ -309,12 +260,11 @@
       '.fa-brands, .fab { font-family: "Font Awesome 6 Brands", "FontAwesome" !important; font-weight: 400 !important; }'
     ].join('\n');
 
-    // ---- 3. 直接应用聊天气泡字号（双保险） ----
     document.querySelectorAll('#pageChat .message-bubble, #pageChat .message-text').forEach(function (el) {
       el.style.fontSize = size + 'px';
     });
 
-    // ---- 4. 字体族：只作用于 body 和文字元素，不碰图标 ----
+    // 字体族选择
     var fontFamily = '';
     if (font.family === 'system') {
       fontFamily = '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
@@ -325,14 +275,13 @@
     } else if (font.family === 'heiti') {
       fontFamily = '"Heiti SC", "SimHei", "黑体", STHeiti, sans-serif';
     } else if (font.family === 'custom') {
-      fontFamily = '"CustomFont", "PingFang SC", "Microsoft YaHei", sans-serif';
+      // 自定义字体：使用用户上传字体名 + 全局回退
+      fontFamily = '"CustomFont", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
     }
 
     if (fontFamily) {
-      // 只设置 body 的 fontFamily（不加 !important，避免污染子元素）
-      body.style.fontFamily = fontFamily;
+      document.body.style.fontFamily = fontFamily;
 
-      // 注入字体样式：只作用于文字元素，明确排除 FontAwesome
       var fontStyleId = 'global-font-family';
       var fontStyleEl = document.getElementById(fontStyleId);
       if (!fontStyleEl) {
@@ -341,14 +290,13 @@
         document.head.appendChild(fontStyleEl);
       }
 
-      // 【核心】使用 :not([class*="fa-"]) 排除 FontAwesome 图标
+      // 只对文字元素应用字体，明确排除 FontAwesome
       fontStyleEl.textContent = [
         'body { font-family: ' + fontFamily + ' !important; }',
-        // 只对没有 fa- 类的元素应用字体
         'h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label {',
         '  font-family: ' + fontFamily + ' !important;',
         '}',
-        // 强制恢复图标字体（优先级更高）
+        // 强制恢复图标字体
         'i[class*="fa-"], i[class*="fas"], i[class*="far"], i[class*="fab"], i.fa, i.fas, i.far, i.fab,',
         '.fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands {',
         '  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "FontAwesome" !important;',
@@ -357,22 +305,81 @@
     }
   }
 
-  // ==================== 字体 URL ====================
+  // ==================== 【修复 #3】字体 URL ====================
   function applyFontUrl() {
+    // 无论用户选了什么字体，都要先注入自定义 URL 的 link
     var linkId = 'custom-font-link';
     var existing = document.getElementById(linkId);
     if (existing) existing.remove();
-    if (!font.customUrl || font.family !== 'custom') return;
+
+    if (!font.customUrl) return;
 
     var link = document.createElement('link');
     link.id = linkId;
     link.rel = 'stylesheet';
+    link.type = 'text/css';
     link.href = font.customUrl;
-    link.onload = function () { applyFont(); };
+
+    // 加载完成后，重新应用字体（确保新字体名生效）
+    link.onload = function () {
+      // 让浏览器重新计算字体
+      document.body.style.fontFamily = '';
+      // 触发重排（让新字体生效）
+      void document.body.offsetHeight;
+      applyFont();
+
+      // 如果用户当时是 custom 模式，直接应用
+      if (font.family === 'custom') {
+        applyCustomFontFamily();
+      }
+    };
     link.onerror = function () {
       console.warn('[chat-settings-panel] 字体加载失败:', font.customUrl);
     };
+
+    // 插入到 head 末尾
     document.head.appendChild(link);
+
+    // 如果当前就是 custom 模式，立刻尝试应用
+    if (font.family === 'custom') {
+      applyCustomFontFamily();
+    }
+  }
+
+  // 从用户上传的字体 CSS 中推断字体名（常见格式）
+  function applyCustomFontFamily() {
+    // 常见字体名（用于 Google Fonts 等）
+    var commonNames = [
+      '"CustomFont"',
+      '"Ma Shan Zheng"',
+      '"ZCOOL KuaiLe"',
+      '"Long Cang"',
+      '"Liu Jian Mao Cao"',
+      '"Zhi Mang Xing"',
+      '"Noto Sans SC"',
+      '"Noto Serif SC"'
+    ];
+    var fontFamily = commonNames.join(', ') + ', "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
+
+    document.body.style.fontFamily = fontFamily;
+
+    var fontStyleId = 'global-font-family';
+    var fontStyleEl = document.getElementById(fontStyleId);
+    if (!fontStyleEl) {
+      fontStyleEl = document.createElement('style');
+      fontStyleEl.id = fontStyleId;
+      document.head.appendChild(fontStyleEl);
+    }
+
+    fontStyleEl.textContent = [
+      'body { font-family: ' + fontFamily + ' !important; }',
+      'h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label {',
+      '  font-family: ' + fontFamily + ' !important;',
+      '}',
+      'i[class*="fa-"], .fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands {',
+      '  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "FontAwesome" !important;',
+      '}'
+    ].join('\n');
   }
 
   // ==================== 气泡样式 ====================
@@ -396,47 +403,83 @@
     styleEl.textContent = '#pageChat .message-bubble { border-radius: ' + radius + ' !important; }';
   }
 
-  // ==================== 自定义 CSS ====================
+  // ==================== 【修复 #4】自定义 CSS ====================
   function applyCustomCss() {
+    // 固定 id，先移除旧标签
     var styleId = 'custom-bubble-css';
     var existing = document.getElementById(styleId);
-    if (existing) existing.remove();
-    if (!bubble.customCss || !bubble.customCss.trim()) return;
+    if (existing) existing.parentNode.removeChild(existing);
 
+    var css = (bubble.customCss || '').trim();
+    if (!css) return;
+
+    // 作用域限定：只影响传讯页
+    var scoped = scopeCssToPageChat(css);
+
+    // 创建 style 标签
     var style = document.createElement('style');
     style.id = styleId;
-    style.textContent = scopeCssToPageChat(bubble.customCss);
+    style.type = 'text/css';
+    // 使用 textContent 避免注入错误
+    style.textContent = scoped;
+
+    // 确保插入到 </head> 之前（appendChild 到 head 就是在末尾）
     document.head.appendChild(style);
   }
 
+  // 给顶层选择器加 #pageChat 前缀 + 关键属性加 !important
   function scopeCssToPageChat(css) {
     if (!css) return '';
     var hasScope = css.indexOf('#pageChat') >= 0;
+
     var result = [];
     var regex = /([^{}]+)\{([^{}]*)\}/g;
     var m, lastIndex = 0;
+
+    // 需要强制加 !important 的属性白名单（覆盖常用的气泡样式）
+    var forceImportant = [
+      'color', 'background', 'background-color', 'background-image',
+      'border', 'border-color', 'border-width', 'border-style', 'border-radius',
+      'box-shadow', 'padding', 'padding-top', 'padding-bottom', 'padding-left', 'padding-right',
+      'margin', 'margin-top', 'margin-bottom', 'margin-left', 'margin-right',
+      'font-size', 'font-weight', 'font-family', 'line-height', 'letter-spacing',
+      'text-align', 'text-shadow', 'opacity',
+      'max-width', 'min-width', 'width', 'height', 'min-height', 'max-height'
+    ];
+
     while ((m = regex.exec(css)) !== null) {
       var selectors = m[1].trim();
       var body = m[2];
+
       if (selectors && selectors.charAt(0) !== '@') {
+        // 给选择器加 #pageChat 前缀
         var prefixed = selectors.split(',').map(function (sel) {
           sel = sel.trim();
           if (!sel) return sel;
           if (hasScope) return sel;
           return '#pageChat ' + sel;
         }).join(', ');
-        var enhancedBody = body.replace(/([a-zA-Z-]+)\s*:\s*([^;!}]+)(?=\s*[;}])/g, function (_, prop, val) {
-          if (val.indexOf('!important') >= 0) return _;
-          var skipProps = ['animation', 'transition', 'transform-origin', 'content', 'display', 'position'];
-          if (skipProps.indexOf(prop.trim()) >= 0) return _;
-          return prop + ': ' + val.trim() + ' !important';
+
+        // 给 body 加 !important
+        var enhancedBody = body.replace(/([a-zA-Z-]+)\s*:\s*([^;!}]+)(?=\s*[;}])/g, function (match, prop, val) {
+          var p = prop.trim();
+          var v = val.trim();
+          if (v.indexOf('!important') >= 0) return match;
+          // 只对白名单属性加 !important
+          if (forceImportant.indexOf(p) >= 0) {
+            return p + ': ' + v + ' !important';
+          }
+          return match;
         });
+
         result.push(prefixed + ' {' + enhancedBody + '}');
       } else {
+        // @media / @keyframes 等原样保留
         result.push(m[0]);
       }
       lastIndex = regex.lastIndex;
     }
+
     if (lastIndex < css.length) {
       var tail = css.slice(lastIndex);
       if (tail.trim()) result.push(tail);
@@ -536,6 +579,7 @@
       '          <input type="text" class="cs-font-url-input" id="csFontUrlInput" placeholder="粘贴字体 CSS 链接...">',
       '          <button class="cs-font-url-apply" id="csFontUrlApply">应用</button>',
       '        </div>',
+      '        <div class="cs-slider-hint">支持 Google Fonts、字体 CDN 等 CSS 链接</div>',
       '      </div>',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">气泡样式</div>',
@@ -728,23 +772,40 @@
         font.family = fontSelect.value;
         persistFont();
         applyFont();
-        applyFontUrl();
+        if (font.customUrl) applyFontUrl();
       });
     }
 
+    // 【修复 #3】字体 URL 应用
     var fontUrlInput = document.getElementById('csFontUrlInput');
     var fontUrlApply = document.getElementById('csFontUrlApply');
     if (fontUrlApply && fontUrlInput) {
       fontUrlApply.addEventListener('click', function () {
         var url = fontUrlInput.value.trim();
         if (!url) { alert('请输入字体 CSS 链接'); return; }
+
+        // 校验一下 URL 格式
+        if (!/^https?:\/\//i.test(url) && url.indexOf('//') !== 0) {
+          alert('请输入完整链接（以 http:// 或 https:// 开头）');
+          return;
+        }
+
         font.customUrl = url;
         font.family = 'custom';
         persistFont();
+
+        // 1. 注入 link 标签
         applyFontUrl();
-        applyFont();
+
+        // 2. 应用字体族（等待 link 加载后触发）
+        applyCustomFontFamily();
+
+        // 3. 下拉框切换到"自定义"
         var fs = document.getElementById('csFontSelect');
         if (fs) fs.value = 'custom';
+
+        // 4. 简单反馈
+        console.log('[chat-settings-panel] 已应用字体 URL:', url);
       });
     }
 
@@ -762,6 +823,7 @@
       });
     }
 
+    // 【修复 #4】自定义 CSS
     var cssApply = document.getElementById('csCssApply');
     var cssClear = document.getElementById('csCssClear');
     var cssReset = document.getElementById('csCssReset');
@@ -772,6 +834,14 @@
         bubble.customCss = cssInput.value;
         persistBubble();
         applyCustomCss();
+
+        // 视觉反馈：按钮变一下色
+        var btn = cssApply;
+        var originalBg = btn.style.background;
+        btn.style.background = '#7ED3A8';
+        setTimeout(function () {
+          btn.style.background = originalBg;
+        }, 400);
       });
     }
     if (cssClear && cssInput) {
@@ -1008,7 +1078,12 @@
             loadCardMode(function () {
               window.chatCardMode = cardMode;
               loadGroupSelections(function () {
-                applyAll();
+                // 【修复】加载时先注入字体 URL 和自定义 CSS
+                applyTheme();
+                applyFont();
+                applyFontUrl();      // ← 刷新时自动重新注入字体链接
+                applyBubble();
+                applyCustomCss();    // ← 刷新时自动重新应用自定义 CSS
                 fillPanelValues();
                 switchTab(activeTab);
               });
@@ -1037,6 +1112,7 @@
     applyTheme: applyTheme,
     applyFont: applyFont,
     applyFontUrl: applyFontUrl,
+    applyCustomFontFamily: applyCustomFontFamily,
     applyBubble: applyBubble,
     applyCustomCss: applyCustomCss,
     applyAll: applyAll,
