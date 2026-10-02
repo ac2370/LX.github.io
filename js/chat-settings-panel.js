@@ -1,8 +1,8 @@
 /**
  * 传讯页面 - 设置面板（独立模块）
- * 本版改动：重写"数据与工具"Tab 的 UI（暂不含逻辑）
- * - 3 个 Tab 框架不变
- * - 外观与界面 / 聊天与字卡 完全保留
+ * 本版追加：数据与工具 Tab 的导出/导入逻辑
+ * - 导出：勾选内容 → 遍历 localforage → 打包 JSON → 浏览器下载
+ * - 导入：选择 JSON → 解析 → localforage.setItem 逐条写回 → 提示成功
  */
 
 (function () {
@@ -20,6 +20,14 @@
   var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups';
 
   var CUSTOM_CSS_STYLE_ID = 'user-custom-bubble-css';
+
+  // 导出时按分类归类的 key 前缀
+  // 使用前缀匹配可以覆盖所有相关 key
+  var EXPORT_CATEGORIES = {
+    chat: ['chat', 'message', 'messages', 'my_contacts', 'my_current_contact', 'group_chat', 'call'],
+    cards: ['cardDatabase', 'card', 'my_word_cards', 'my_kaomoji_cards', 'my_place_cards', 'my_mood_cards', 'my_emoji_cards', 'my_status_cards', 'my_card_groups'],
+    media: ['home_custom_images', 'avatar', 'piggy', 'piggy_bank']
+  };
 
   // ==================== 状态 ====================
   var activeTab = 'appearance';
@@ -446,6 +454,263 @@
     }, true);
   }
 
+  // ==================== 【新增】导出/导入数据逻辑 ====================
+
+  // 判断某个 key 属于哪个分类
+  function getKeyCategory(key) {
+    if (!key) return null;
+    var lower = String(key).toLowerCase();
+    // 聊天记录
+    for (var i = 0; i < EXPORT_CATEGORIES.chat.length; i++) {
+      if (lower.indexOf(EXPORT_CATEGORIES.chat[i].toLowerCase()) >= 0) return 'chat';
+    }
+    // 字卡库
+    for (var j = 0; j < EXPORT_CATEGORIES.cards.length; j++) {
+      if (lower.indexOf(EXPORT_CATEGORIES.cards[j].toLowerCase()) >= 0) return 'cards';
+    }
+    // 头像与图片
+    for (var k = 0; k < EXPORT_CATEGORIES.media.length; k++) {
+      if (lower.indexOf(EXPORT_CATEGORIES.media[k].toLowerCase()) >= 0) return 'media';
+    }
+    return null;
+  }
+
+  // 获取 localforage 所有 key
+  function getAllKeys() {
+    return new Promise(function (resolve) {
+      if (typeof localforage === 'undefined') {
+        // 降级：用 localStorage
+        var keys = [];
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            keys.push(localStorage.key(i));
+          }
+        } catch (e) {}
+        resolve(keys);
+        return;
+      }
+      if (typeof localforage.keys === 'function') {
+        localforage.keys().then(resolve).catch(function () { resolve([]); });
+      } else {
+        resolve([]);
+      }
+    });
+  }
+
+  // 读取 localforage 中某个 key 的值
+  function getItem(key) {
+    return new Promise(function (resolve) {
+      if (typeof localforage === 'undefined') {
+        try {
+          var raw = localStorage.getItem(key);
+          try { resolve(JSON.parse(raw)); } catch (e) { resolve(raw); }
+        } catch (e) { resolve(null); }
+        return;
+      }
+      localforage.getItem(key).then(resolve).catch(function () { resolve(null); });
+    });
+  }
+
+  // 写入 localforage
+  function setItem(key, value) {
+    return new Promise(function (resolve) {
+      if (typeof localforage === 'undefined') {
+        try {
+          localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+        } catch (e) {}
+        resolve();
+        return;
+      }
+      localforage.setItem(key, value).then(resolve).catch(function () { resolve(); });
+    });
+  }
+
+  // 打开"导出数据"面板
+  function openExportPanel() {
+    var existing = document.getElementById('dsExportModal');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var modal = document.createElement('div');
+    modal.id = 'dsExportModal';
+    modal.className = 'ds-export-modal';
+    modal.innerHTML = [
+      '<div class="ds-export-panel">',
+      '  <div class="ds-export-title"><i class="fa-solid fa-file-export"></i> 导出数据</div>',
+      '  <div class="ds-export-desc">勾选需要导出的内容</div>',
+      '  <label class="ds-export-check">',
+      '    <input type="checkbox" id="dsExportChat" checked>',
+      '    <span class="ds-export-check-mark"><i class="fa-solid fa-check"></i></span>',
+      '    <span class="ds-export-check-label">聊天记录</span>',
+      '  </label>',
+      '  <label class="ds-export-check">',
+      '    <input type="checkbox" id="dsExportCards" checked>',
+      '    <span class="ds-export-check-mark"><i class="fa-solid fa-check"></i></span>',
+      '    <span class="ds-export-check-label">字卡库（含分组 / 表情包）</span>',
+      '  </label>',
+      '  <label class="ds-export-check">',
+      '    <input type="checkbox" id="dsExportMedia" checked>',
+      '    <span class="ds-export-check-mark"><i class="fa-solid fa-check"></i></span>',
+      '    <span class="ds-export-check-label">头像与图片</span>',
+      '  </label>',
+      '  <div class="ds-export-actions">',
+      '    <button class="ds-export-btn ds-export-cancel" id="dsExportCancel">取消</button>',
+      '    <button class="ds-export-btn ds-export-confirm" id="dsExportConfirm">开始导出</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+
+    document.body.appendChild(modal);
+
+    document.getElementById('dsExportCancel').addEventListener('click', function () {
+      modal.parentNode.removeChild(modal);
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.parentNode.removeChild(modal);
+    });
+    document.getElementById('dsExportConfirm').addEventListener('click', function () {
+      var includeChat = document.getElementById('dsExportChat').checked;
+      var includeCards = document.getElementById('dsExportCards').checked;
+      var includeMedia = document.getElementById('dsExportMedia').checked;
+      if (!includeChat && !includeCards && !includeMedia) {
+        alert('请至少勾选一项');
+        return;
+      }
+      doExport(includeChat, includeCards, includeMedia);
+      modal.parentNode.removeChild(modal);
+    });
+  }
+
+  // 执行导出
+  function doExport(includeChat, includeCards, includeMedia) {
+    getAllKeys().then(function (keys) {
+      var result = {
+        _meta: {
+          app: 'ac2370.github.io',
+          type: 'localforage-backup',
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          include: {
+            chat: includeChat,
+            cards: includeCards,
+            media: includeMedia
+          }
+        },
+        data: {}
+      };
+
+      var promises = [];
+      keys.forEach(function (key) {
+        var cat = getKeyCategory(key);
+        // 如果没有匹配到分类，默认归到 chat（避免漏掉其他数据）
+        var shouldInclude = false;
+        if (cat === 'chat') shouldInclude = includeChat;
+        else if (cat === 'cards') shouldInclude = includeCards;
+        else if (cat === 'media') shouldInclude = includeMedia;
+        else shouldInclude = (includeChat || includeCards || includeMedia);
+
+        if (!shouldInclude) return;
+
+        promises.push(getItem(key).then(function (val) {
+          result.data[key] = val;
+        }));
+      });
+
+      Promise.all(promises).then(function () {
+        var count = Object.keys(result.data).length;
+        if (count === 0) {
+          alert('没有匹配到任何数据可以导出');
+          return;
+        }
+
+        var jsonStr = JSON.stringify(result, null, 2);
+        var blob = new Blob([jsonStr], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        var ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        a.href = url;
+        a.download = 'chat-backup-' + ts + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+
+        console.log('[导出] 已导出 ' + count + ' 项数据');
+      }).catch(function (err) {
+        console.error('[导出] 失败:', err);
+        alert('导出失败：' + err.message);
+      });
+    });
+  }
+
+  // 执行导入
+  function doImport() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    input.addEventListener('change', function () {
+      var file = input.files && input.files[0];
+      if (!file) {
+        document.body.removeChild(input);
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          var text = e.target.result;
+          var parsed = JSON.parse(text);
+          var data = parsed && parsed.data ? parsed.data : parsed;
+          if (!data || typeof data !== 'object') {
+            alert('文件格式不正确');
+            document.body.removeChild(input);
+            return;
+          }
+
+          var keys = Object.keys(data);
+          if (keys.length === 0) {
+            alert('文件中没有数据');
+            document.body.removeChild(input);
+            return;
+          }
+
+          if (!confirm('确定要导入 ' + keys.length + ' 项数据吗？\n（同名 key 会被覆盖）')) {
+            document.body.removeChild(input);
+            return;
+          }
+
+          // 逐条写入
+          var promises = keys.map(function (k) {
+            return setItem(k, data[k]);
+          });
+
+          Promise.all(promises).then(function () {
+            console.log('[导入] 已导入 ' + keys.length + ' 项数据');
+            alert('导入成功！\n共导入 ' + keys.length + ' 项数据。\n\n页面即将刷新以应用更改。');
+            // 延迟刷新，让提示先显示
+            setTimeout(function () {
+              window.location.reload();
+            }, 800);
+          }).catch(function (err) {
+            console.error('[导入] 失败:', err);
+            alert('导入失败：' + err.message);
+          });
+
+          document.body.removeChild(input);
+        } catch (err) {
+          console.error('[导入] 解析失败:', err);
+          alert('文件解析失败：' + err.message);
+          document.body.removeChild(input);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    input.click();
+  }
+
   // ==================== 创建面板 ====================
   function createPanel() {
     if (document.getElementById('chatSettingsPanel')) return;
@@ -461,7 +726,6 @@
       '    <button class="chat-settings-close" id="chatSettingsClose"><i class="fa-solid fa-xmark"></i></button>',
       '  </div>',
 
-      // 3 个 Tab
       '  <div class="chat-settings-tabs" id="chatSettingsTabs" style="justify-content: space-around;">',
       '    <button class="chat-settings-tab" data-tab="appearance" style="flex: 1 1 0; max-width: 33.33%;">',
       '      <i class="fa-solid fa-palette"></i>',
@@ -479,7 +743,7 @@
 
       '  <div class="chat-settings-body">',
 
-      // ============ Tab 1: 外观与界面 ============
+      // Tab 1
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">全局主题配色</div>',
@@ -532,7 +796,7 @@
       '      </div>',
       '    </div>',
 
-      // ============ Tab 2: 聊天与字卡 ============
+      // Tab 2
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">当前字卡模式</div>',
@@ -565,39 +829,32 @@
       '      </div>',
       '    </div>',
 
-      // ============ Tab 3: 数据与工具（重写内容） ============
+      // Tab 3
       '    <div class="chat-settings-tab-panel" data-panel="data">',
 
-      // ---- 区块一：本机存储 ----
+      // 区块一：本机存储
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">本机存储</div>',
-
-      // 进度条
       '        <div class="ds-storage-progress-wrap">',
       '          <div class="ds-storage-progress-bar">',
       '            <div class="ds-storage-progress-fill" style="width: 1%;"></div>',
       '          </div>',
       '          <div class="ds-storage-progress-text">本机快取已用 <strong>35KB</strong> / 约 5MB（1%）</div>',
       '        </div>',
-
-      // 大容量库说明卡片
       '        <div class="ds-storage-card">',
       '          <div class="ds-storage-card-title"><i class="fa-solid fa-database"></i> 大容量库</div>',
       '          <div class="ds-storage-card-desc">聊天记录、表情包、字卡、头像等数据保存在「大容量库」（IndexedDB）</div>',
       '          <div class="ds-storage-card-usage">已用 <strong>247KB</strong> · 可用 <strong>38.4GB</strong></div>',
       '        </div>',
-
-      // 整理按钮
       '        <button class="ds-btn ds-btn-primary ds-btn-full" id="dsCleanCacheBtn">',
       '          <i class="fa-solid fa-broom"></i> 一键整理快取',
       '        </button>',
       '        <div class="ds-btn-hint">不动任何聊天 / 图片</div>',
       '      </div>',
 
-      // ---- 区块二：数据 ----
+      // 区块二：数据
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">数据</div>',
-
       '        <button class="ds-btn ds-btn-default ds-btn-full" id="dsExportDataBtn">',
       '          <i class="fa-solid fa-file-export"></i> 导出数据...',
       '          <span class="ds-btn-sub">（可勾选内容）</span>',
@@ -608,24 +865,20 @@
       '        <button class="ds-btn ds-btn-default ds-btn-full" id="dsRollbackBtn">',
       '          <i class="fa-solid fa-clock-rotate-left"></i> 回滚到最近一次正常存档',
       '        </button>',
-
       '        <button class="ds-btn ds-btn-danger ds-btn-full" id="dsClearChatBtn">',
       '          <i class="fa-solid fa-trash-can"></i> 清空全部聊天记录',
       '        </button>',
       '        <button class="ds-btn ds-btn-danger ds-btn-full" id="dsResetCardLibraryBtn">',
       '          <i class="fa-solid fa-rotate-left"></i> 恢复默认字卡库',
       '        </button>',
-
       '        <div class="ds-footer-hint">',
       '          「导出数据」里可以分别勾选字卡（含分组 / 表情包 / 拍一拍）和聊天记录（单人 / 群聊），也可以一键全部导出。',
       '        </div>',
       '      </div>',
 
-      // ---- 区块三：有消息，轻轻告诉你 ----
+      // 区块三：通知
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">有消息，轻轻告诉你</div>',
-
-      // 手机系统通知
       '        <div class="ds-notify-block">',
       '          <div class="ds-notify-label">手机系统通知</div>',
       '          <div class="ds-notify-desc">iPhone 请先用 Safari 添加到主屏幕，再从主屏打开，即可开启系统推送通知。</div>',
@@ -633,10 +886,7 @@
       '            <i class="fa-solid fa-bell"></i> 允许手机系统通知',
       '          </button>',
       '        </div>',
-
       '        <div class="ds-divider"></div>',
-
-      // 站内消息横幅
       '        <div class="ds-switch-row">',
       '          <div class="ds-switch-info">',
       '            <div class="ds-switch-title">站内消息横幅</div>',
@@ -647,8 +897,6 @@
       '            <span class="ds-toggle-slider"></span>',
       '          </label>',
       '        </div>',
-
-      // 显示消息内容
       '        <div class="ds-switch-row">',
       '          <div class="ds-switch-info">',
       '            <div class="ds-switch-title">显示消息内容</div>',
@@ -659,8 +907,6 @@
       '            <span class="ds-toggle-slider"></span>',
       '          </label>',
       '        </div>',
-
-      // 允许他随机来电
       '        <div class="ds-switch-row">',
       '          <div class="ds-switch-info">',
       '            <div class="ds-switch-title">允许他随机来电</div>',
@@ -671,10 +917,7 @@
       '            <span class="ds-toggle-slider"></span>',
       '          </label>',
       '        </div>',
-
       '        <div class="ds-divider"></div>',
-
-      // 后台保活 · 静音循环
       '        <div class="ds-notify-block">',
       '          <div class="ds-notify-label">后台保活 · 静音循环</div>',
       '          <div class="ds-notify-desc">静音循环未开启</div>',
@@ -682,7 +925,6 @@
       '            <i class="fa-solid fa-circle-play"></i> 开启静音循环',
       '          </button>',
       '        </div>',
-
       '        <div class="ds-footer-hint">',
       '          iOS 仍可能暂停网页或回收进程，建议保留在主屏幕打开。',
       '        </div>',
@@ -844,7 +1086,6 @@
         applyCustomFontFamily();
         var fs = document.getElementById('csFontSelect');
         if (fs) fs.value = 'custom';
-        console.log('[chat-settings-panel] 已应用字体 URL:', url);
       });
     }
 
@@ -898,10 +1139,22 @@
       });
     }
 
-    bindChatTabEvents();
+    // ============ 数据与工具 Tab：导出/导入逻辑 ============
+    var exportBtn = document.getElementById('dsExportDataBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', function () {
+        openExportPanel();
+      });
+    }
 
-    // 注：数据与工具 Tab 的按钮/开关暂不绑定逻辑
-    // 只做 UI 展示，等下一步实现
+    var importBtn = document.getElementById('dsImportDataBtn');
+    if (importBtn) {
+      importBtn.addEventListener('click', function () {
+        doImport();
+      });
+    }
+
+    bindChatTabEvents();
   }
 
   function bindModeSwitch() {
@@ -1127,7 +1380,6 @@
                 applyBubble();
                 if (bubble.customCss) {
                   applyCustomCss();
-                  console.log('[自定义CSS] 已从存储恢复');
                 }
                 fillPanelValues();
                 switchTab(activeTab);
@@ -1164,7 +1416,10 @@
     ensureCustomCssStyleTag: ensureCustomCssStyleTag,
     applyAll: applyAll,
     refreshGroupCheckboxes: renderAllGroupLists,
-    refreshGroupLists: renderAllGroupLists
+    refreshGroupLists: renderAllGroupLists,
+    // 新增：导出/导入接口
+    exportData: openExportPanel,
+    importData: doImport
   };
 
   window.setCustomBubbleCss = function (cssText) {
