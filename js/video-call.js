@@ -1089,19 +1089,38 @@
     _addCallEvent('fa-solid fa-video', '视频通话 · 已拒绝');
   }
 
-  // ==================== 随机来电调度 ====================
+   // ==================== 随机来电调度（读取用户开关） ====================
+  function isRandomCallEnabled() {
+    // 优先读 window.chatNotifyState
+    if (window.chatNotifyState && typeof window.chatNotifyState.randomCall === 'boolean') {
+      return window.chatNotifyState.randomCall;
+    }
+    // 降级：直接读 localforage / localStorage
+    // 由于异步，这里只能同步读 localStorage
+    try {
+      var raw = localStorage.getItem('chat_notify_random_call');
+      if (raw === 'true') return true;
+      if (raw === 'false') return false;
+      // localforage 里存的可能是 JSON
+      var parsed = JSON.parse(raw);
+      if (typeof parsed === 'boolean') return parsed;
+    } catch (e) {}
+    // 默认关闭（用户需要在设置里主动开启）
+    return false;
+  }
+
   function scheduleRandomCall() {
     if (state.randomCallTimer) clearTimeout(state.randomCallTimer);
 
     var delay = rand(RANDOM_CALL_MIN_MS, RANDOM_CALL_MAX_MS);
     state.randomCallTimer = setTimeout(function () {
-      // 如果当前没有通话，按概率触发来电
-      if (!state.active) {
+      // 每次触发前检查用户开关
+      if (isRandomCallEnabled() && !state.active) {
         if (Math.random() < RANDOM_CALL_PROBABILITY) {
           showIncomingCall();
         }
       }
-      // 递归调度下一次
+      // 递归调度下一次（无论是否触发都继续调度，以便用户后续开启）
       scheduleRandomCall();
     }, delay);
   }
@@ -1128,6 +1147,13 @@
     createIncomingOverlay();
     bindVideoCallIcon();
     scheduleRandomCall();
+
+    // 监听开关变化（可选）
+    window.addEventListener('storage', function (e) {
+      if (e.key === 'chat_notify_random_call') {
+        console.log('[视频通话] 随机来电开关变化:', e.newValue);
+      }
+    });
   }
 
   if (document.readyState === 'loading') {
