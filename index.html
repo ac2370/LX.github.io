@@ -5553,6 +5553,337 @@
     height: 100px;
   }
 </style>
+     <!-- ============================================================
+     陪伴中 页面样式
+     ============================================================ -->
+<style>
+  #pageCompanionActive {
+    background: linear-gradient(160deg, #e8f0fb 0%, #f0e8fb 50%, #fbe8f2 100%);
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 430px;
+    margin: 0 auto;
+    flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #333;
+  }
+  #pageCompanionActive::-webkit-scrollbar { display: none; }
+  #pageCompanionActive.active { display: flex; }
+
+  body.theme-dark #pageCompanionActive {
+    background: linear-gradient(160deg, #1a1f26 0%, #221f2a 50%, #2a1f28 100%);
+    color: #e8eef4;
+  }
+
+  .cpa-container {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+    min-height: 100%;
+  }
+
+  /* ==================== 顶部导航栏 ==================== */
+  .cpa-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 4px 8px 4px;
+  }
+
+  .cpa-back-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    color: #55606b;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease;
+    box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
+  }
+  .cpa-back-btn:active { transform: scale(0.9); }
+  body.theme-dark .cpa-back-btn {
+    background: rgba(38, 44, 52, 0.75);
+    border-color: var(--theme-card-border, #333a42);
+    color: var(--theme-text-soft, #b8c2cc);
+  }
+
+  .cpa-topbar-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #55606b;
+    letter-spacing: 0.5px;
+  }
+  body.theme-dark .cpa-topbar-title { color: #b8c2cc; }
+
+  .cpa-topbar-placeholder {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* ==================== 日期 ==================== */
+  .cpa-date {
+    text-align: center;
+    font-size: 13px;
+    color: #8899a6;
+    letter-spacing: 1px;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  body.theme-dark .cpa-date { color: var(--theme-text-muted, #8a95a0); }
+
+  /* ==================== 中心头像 ==================== */
+  .cpa-avatar-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 28px 0 20px 0;
+    height: 140px;
+  }
+
+  .cpa-avatar-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(248, 200, 220, 0.55) 0%, rgba(248, 200, 220, 0) 70%);
+    z-index: 0;
+  }
+
+  .cpa-avatar {
+    position: relative;
+    z-index: 1;
+    width: 100px;
+    height: 100px;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #ffffff 0%, #f5f0fa 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    font-weight: 700;
+    color: #8a7a9a;
+    border: 3px solid #ffffff;
+    box-shadow: 0 12px 32px rgba(180, 160, 200, 0.25);
+    overflow: hidden;
+  }
+  .cpa-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 9999px;
+  }
+  body.theme-dark .cpa-avatar {
+    background: linear-gradient(135deg, #333a42 0%, #2a3038 100%);
+    border-color: var(--theme-card-border, #333a42);
+    color: #b8c2cc;
+  }
+
+  /* ==================== 陪伴状态 ==================== */
+  .cpa-status {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  .cpa-status-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+  }
+  body.theme-dark .cpa-status-title { color: #e8eef4; }
+
+  .cpa-status-sub {
+    font-size: 13px;
+    color: #8899a6;
+    letter-spacing: 0.3px;
+  }
+  body.theme-dark .cpa-status-sub { color: var(--theme-text-muted, #8a95a0); }
+
+  /* ==================== 选择音乐 ==================== */
+  .cpa-music-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .cpa-music-pill {
+    padding: 12px 24px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    color: #55606b;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 14px rgba(150, 180, 210, 0.15);
+    font-family: inherit;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cpa-music-pill:active {
+    transform: scale(0.96);
+    background: rgba(245, 248, 252, 1);
+  }
+  body.theme-dark .cpa-music-pill {
+    background: rgba(42, 48, 56, 0.85);
+    border-color: var(--theme-card-border, #333a42);
+    color: var(--theme-text-soft, #b8c2cc);
+  }
+
+  /* ==================== 专注度进度条 ==================== */
+  .cpa-focus {
+    margin-bottom: 22px;
+  }
+
+  .cpa-focus-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #8899a6;
+    margin-bottom: 8px;
+    padding: 0 2px;
+  }
+  body.theme-dark .cpa-focus-labels { color: var(--theme-text-muted, #8a95a0); }
+
+  .cpa-focus-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 9999px;
+    background: rgba(200, 210, 225, 0.4);
+    overflow: hidden;
+  }
+  body.theme-dark .cpa-focus-bar { background: rgba(60, 70, 80, 0.6); }
+
+  .cpa-focus-fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #d4e8fc 0%, #f8c8dc 100%);
+    transition: width 0.6s ease;
+  }
+
+  /* ==================== 陪伴计时卡片 ==================== */
+  .cpa-timer-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 8px 24px rgba(150, 180, 210, 0.12);
+    margin-bottom: 24px;
+  }
+  body.theme-dark .cpa-timer-card {
+    background: rgba(42, 48, 56, 0.85);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .cpa-timer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cpa-timer-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  body.theme-dark .cpa-timer-label { color: #e8eef4; }
+
+  .cpa-timer-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #6ec48d;
+    font-weight: 500;
+  }
+
+  .cpa-timer-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: #6ec48d;
+    animation: cpaDotPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes cpaDotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .cpa-timer-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.5px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  body.theme-dark .cpa-timer-value { color: #e8eef4; }
+
+  /* ==================== 底部按钮 ==================== */
+  .cpa-footer {
+    margin-top: auto;
+    padding-bottom: 8px;
+  }
+
+  .cpa-end-btn {
+    width: 100%;
+    padding: 16px 0;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+    border: none;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(248, 180, 200, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+  }
+  .cpa-end-btn:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 16px rgba(248, 180, 200, 0.5);
+  }
+  .cpa-end-btn i { font-size: 14px; }
+
+  .cpa-footer-space {
+    height: 20px;
+  }
+</style>
 </head>
 <body>
 
@@ -6008,6 +6339,75 @@
         <div class="companion-footer-space"></div>
 
       </div>
+    </div>
+  </div>
+
+       <!-- ==================== 陪伴中 页面 ==================== -->
+  <div class="page" id="pageCompanionActive">
+    <div class="cpa-container">
+
+      <!-- 顶部导航栏 -->
+      <div class="cpa-topbar">
+        <button class="cpa-back-btn" id="cpaBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="cpa-topbar-title">陪伴中</span>
+        <div class="cpa-topbar-placeholder"></div>
+      </div>
+
+      <!-- 日期 -->
+      <div class="cpa-date" id="cpaDate">2026.10.02</div>
+
+      <!-- 中心头像 -->
+      <div class="cpa-avatar-wrap">
+        <div class="cpa-avatar-glow"></div>
+        <div class="cpa-avatar" id="cpaAvatar">TA</div>
+      </div>
+
+      <!-- 陪伴状态 -->
+      <div class="cpa-status">
+        <div class="cpa-status-title" id="cpaStatusTitle">TA 和你一起学习</div>
+        <div class="cpa-status-sub">不打扰，只是安静陪着</div>
+      </div>
+
+      <!-- 选择音乐 -->
+      <div class="cpa-music-row">
+        <button class="cpa-music-pill" id="cpaMusicPill">🎵 选择音乐</button>
+      </div>
+
+      <!-- 专注度进度条 -->
+      <div class="cpa-focus">
+        <div class="cpa-focus-labels">
+          <span>闲散</span>
+          <span>专注</span>
+        </div>
+        <div class="cpa-focus-bar">
+          <div class="cpa-focus-fill" style="width: 60%;"></div>
+        </div>
+      </div>
+
+      <!-- 陪伴计时卡片 -->
+      <div class="cpa-timer-card">
+        <div class="cpa-timer-left">
+          <div class="cpa-timer-label">已陪伴时长</div>
+          <div class="cpa-timer-status">
+            <span class="cpa-timer-dot"></span>
+            <span>实时连接中</span>
+          </div>
+        </div>
+        <div class="cpa-timer-value" id="cpaTimerValue">0小时0分钟0秒</div>
+      </div>
+
+      <!-- 底部按钮 -->
+      <div class="cpa-footer">
+        <button class="cpa-end-btn" id="cpaEndBtn">
+          <i class="fa-solid fa-xmark"></i>
+          <span>结束陪伴</span>
+        </button>
+      </div>
+
+      <div class="cpa-footer-space"></div>
+
     </div>
   </div>
      
@@ -8578,6 +8978,206 @@
     });
   }
      
+})();
+</script>
+     <!-- ============================================================
+     陪伴中 页面交互
+     ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  var pageActive = document.getElementById('pageCompanionActive');
+  var pageCompanion = document.getElementById('pageCompanion');
+  if (!pageActive) return;
+
+  // ==================== 状态 ====================
+  var timerId = null;
+  var startTime = 0;
+
+  // ==================== 日期显示 ====================
+  function updateDate() {
+    var el = document.getElementById('cpaDate');
+    if (!el) return;
+    var d = new Date();
+    var y = d.getFullYear();
+    var m = d.getMonth() + 1;
+    var day = d.getDate();
+    el.textContent = y + '.' + (m < 10 ? '0' + m : m) + '.' + (day < 10 ? '0' + day : day);
+  }
+
+  // ==================== 计时器 ====================
+  function formatDuration(sec) {
+    var h = Math.floor(sec / 3600);
+    var m = Math.floor((sec % 3600) / 60);
+    var s = sec % 60;
+    return h + '小时' + m + '分钟' + s + '秒';
+  }
+
+  function updateTimer() {
+    var el = document.getElementById('cpaTimerValue');
+    if (!el) return;
+    var now = Date.now();
+    var elapsed = Math.floor((now - startTime) / 1000);
+    el.textContent = formatDuration(elapsed);
+  }
+
+  function startTimer() {
+    stopTimer();
+    startTime = Date.now();
+    updateTimer();
+    timerId = setInterval(updateTimer, 1000);
+  }
+
+  function stopTimer() {
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+  }
+
+  // ==================== 更新头像和状态文字 ====================
+  function updateAvatarAndStatus() {
+    // 从陪伴页面读取当前选中的联系人
+    var partner = window.chatCompanionPartner || null;
+    var scene = window.chatCompanionScene || 'study';
+
+    // 场景名映射
+    var sceneMap = {
+      study: '学习',
+      work: '工作',
+      rest: '休息',
+      sport: '运动'
+    };
+    var sceneText = sceneMap[scene] || '学习';
+
+    // 联系人名字
+    var partnerName = 'TA';
+    var partnerAvatar = '';
+    if (partner && partner.name) {
+      partnerName = partner.name;
+      partnerAvatar = partner.avatar || '';
+    }
+
+    // 更新头像
+    var avatarEl = document.getElementById('cpaAvatar');
+    if (avatarEl) {
+      if (partnerAvatar) {
+        avatarEl.innerHTML = '<img src="' + partnerAvatar + '" alt="">';
+      } else {
+        avatarEl.textContent = partnerName.slice(0, 2);
+      }
+    }
+
+    // 更新状态标题
+    var titleEl = document.getElementById('cpaStatusTitle');
+    if (titleEl) {
+      titleEl.textContent = partnerName + ' 和你一起' + sceneText;
+    }
+  }
+
+  // ==================== 页面切换 ====================
+  function showActivePage() {
+    document.querySelectorAll('.page').forEach(function (p) {
+      p.classList.remove('active');
+    });
+    pageActive.classList.add('active');
+    window.scrollTo(0, 0);
+
+    updateDate();
+    updateAvatarAndStatus();
+    startTimer();
+  }
+
+  function showCompanionPage() {
+    document.querySelectorAll('.page').forEach(function (p) {
+      p.classList.remove('active');
+    });
+    if (pageCompanion) {
+      pageCompanion.classList.add('active');
+      window.scrollTo(0, 0);
+    }
+    stopTimer();
+  }
+
+  // ==================== 绑定"开始陪伴"按钮 ====================
+  var startBtn = document.getElementById('companionStartBtn');
+  if (startBtn) {
+    // 用 cloneNode 移除旧监听，避免重复绑定
+    var newStartBtn = startBtn.cloneNode(true);
+    startBtn.parentNode.replaceChild(newStartBtn, startBtn);
+    newStartBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      showActivePage();
+    });
+  }
+
+  // ==================== 绑定"返回"按钮 ====================
+  var backBtn = document.getElementById('cpaBackBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function () {
+      showCompanionPage();
+    });
+  }
+
+  // ==================== 绑定"结束陪伴"按钮 ====================
+  var endBtn = document.getElementById('cpaEndBtn');
+  if (endBtn) {
+    endBtn.addEventListener('click', function () {
+      stopTimer();
+      showCompanionPage();
+    });
+  }
+
+  // ==================== 绑定"选择音乐"按钮 ====================
+  var musicPill = document.getElementById('cpaMusicPill');
+  if (musicPill) {
+    musicPill.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // 调用主页已有的播放器逻辑
+      if (typeof window.openPlaylistSheet === 'function') {
+        window.openPlaylistSheet();
+      } else {
+        // 兜底：模拟点击主页的黑胶唱片
+        var vinylCover = document.getElementById('vinylCover');
+        if (vinylCover) {
+          vinylCover.click();
+        } else {
+          alert('播放器未就绪，请先回到主页加载一次');
+        }
+      }
+    });
+  }
+
+  // ==================== 监听当前播放歌曲，更新按钮文字 ====================
+  var lastSongTitle = '';
+  setInterval(function () {
+    var songTitleEl = document.getElementById('songTitle');
+    if (!songTitleEl) return;
+    var title = songTitleEl.textContent || '';
+    if (title && title !== lastSongTitle) {
+      lastSongTitle = title;
+      if (musicPill) {
+        // 只在陪伴中页面处于激活状态时更新按钮文案
+        if (pageActive.classList.contains('active')) {
+          musicPill.textContent = '🎵 正在播放：' + title;
+        }
+      }
+    }
+  }, 500);
+
+  // ==================== 初始化 ====================
+  updateDate();
+
+  // 暴露给外部
+  window.pageCompanionActive = {
+    show: showActivePage,
+    back: showCompanionPage
+  };
+
 })();
 </script>
 </body>
