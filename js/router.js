@@ -8,12 +8,12 @@
   'use strict';
 
   // ==================== 页面节点 ====================
-  var pageHome             = document.getElementById('pageHome');
-  var pageCard             = document.getElementById('pageCard');
-  var pageChat             = document.getElementById('pageChat');
-  var pageCompanion        = document.getElementById('pageCompanion');
-  var pageCompanionActive  = document.getElementById('pageCompanionActive');
-  var pageImportantDay     = document.getElementById('pageImportantDay');
+  var pageHome            = document.getElementById('pageHome');
+  var pageCard            = document.getElementById('pageCard');
+  var pageChat            = document.getElementById('pageChat');
+  var pageCompanion       = document.getElementById('pageCompanion');
+  var pageCompanionActive = document.getElementById('pageCompanionActive');
+  var pageImportantDay    = document.getElementById('pageImportantDay');
 
   // 所有需要参与切换的页面集合（自动收集所有 .page）
   var allPages = Array.prototype.slice.call(document.querySelectorAll('.page'));
@@ -27,11 +27,32 @@
 
   function showPage(page) {
     if (!page) return;
+
+    // 1) 先移除所有页面的 .active
     hideAll();
+
+    // 2) 再给目标页面添加 .active
     page.classList.add('active');
-    // 切换页面后回到顶部，避免继承上一页的滚动位置
+
+    // 3) 回到顶部，避免继承上一页滚动位置
     try { window.scrollTo(0, 0); } catch (e) {}
   }
+
+  // 兜底：页面加载完成后，确保只有一个页面处于 active
+  // （防止 HTML 里手滑给多个 .page 加了 active）
+  (function ensureSingleActive() {
+    var actives = document.querySelectorAll('.page.active');
+    if (actives.length > 1) {
+      // 保留第一个，移除其余
+      for (var i = 1; i < actives.length; i++) {
+        actives[i].classList.remove('active');
+      }
+    }
+    // 如果一个 active 都没有，就把主页激活
+    if (document.querySelectorAll('.page.active').length === 0 && pageHome) {
+      pageHome.classList.add('active');
+    }
+  })();
 
   // ==================== 底部导航 ====================
   var tabCard = document.getElementById('tabCard');
@@ -82,6 +103,7 @@
 
   // ==================== 挂载到 window ====================
   window.showPage            = showPage;
+  window.hideAllPages        = hideAll;
   window.pageHome            = pageHome;
   window.pageCard            = pageCard;
   window.pageChat            = pageChat;
