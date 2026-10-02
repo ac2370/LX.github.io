@@ -1,10 +1,9 @@
 /**
  * 传讯页面 - 设置面板（独立模块）
- * 本版重点修复：自定义气泡 CSS 注入完全失效
- * - 固定 style 容器 id = user-custom-bubble-css
- * - 直接 innerHTML 注入
- * - 控制台打印验证
- * - localforage 持久化 + 刷新自动注入
+ * 本版改动：删除"个人资料" Tab，保留 3 个 Tab 平均分布
+ * - 外观与界面
+ * - 聊天与字卡
+ * - 数据与工具
  */
 
 (function () {
@@ -24,7 +23,8 @@
   var CUSTOM_CSS_STYLE_ID = 'user-custom-bubble-css';
 
   // ==================== 状态 ====================
-  var activeTab = 'profile';
+  // 默认激活"外观与界面"
+  var activeTab = 'appearance';
   var theme = { accentColor: '#6fb1e8' };
   var font = { size: 14, family: 'system', customUrl: '' };
   var bubble = { style: 'standard', customCss: '' };
@@ -62,7 +62,15 @@
   }
 
   function persistTab() { persist(STORE_KEY_TAB, activeTab); }
-  function loadTab(cb) { loadValue(STORE_KEY_TAB, function (v) { if (v) activeTab = v; cb(); }); }
+  function loadTab(cb) {
+    loadValue(STORE_KEY_TAB, function (v) {
+      // 兼容旧值：如果存储的是 'profile'，回退到 'appearance'
+      if (v && v !== 'profile') activeTab = v;
+      else activeTab = 'appearance';
+      cb();
+    });
+  }
+
   function persistTheme() { persist(STORE_KEY_THEME, theme); }
   function loadTheme(cb) {
     loadValue(STORE_KEY_THEME, function (v) {
@@ -212,7 +220,7 @@
     }
   }
 
-  // ==================== 字体（不覆盖 FontAwesome） ====================
+  // ==================== 字体 ====================
   function applyFont() {
     var root = document.documentElement;
     var size = font.size || 14;
@@ -375,48 +383,33 @@
     styleEl.textContent = '#pageChat .message-bubble { border-radius: ' + radius + ' !important; }';
   }
 
-  // ==================== 【核心修复】自定义气泡 CSS 注入 ====================
-  /**
-   * 确保 <style id="user-custom-bubble-css"> 存在于 document.head 末尾
-   * 若不存在则创建，并返回该元素
-   */
+  // ==================== 自定义 CSS ====================
   function ensureCustomCssStyleTag() {
     var styleEl = document.getElementById(CUSTOM_CSS_STYLE_ID);
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = CUSTOM_CSS_STYLE_ID;
       styleEl.type = 'text/css';
-      // 插入到 head 的末尾
       document.head.appendChild(styleEl);
       console.log('[自定义CSS] 已创建 style 容器 #' + CUSTOM_CSS_STYLE_ID);
     }
     return styleEl;
   }
 
-  /**
-   * 把用户输入的 CSS 注入到 style 容器中
-   */
   function applyCustomCss() {
     var cssText = (bubble.customCss || '').trim();
-
-    // 1. 确保容器存在
     var styleEl = ensureCustomCssStyleTag();
-
-    // 2. 直接 innerHTML 赋值
     styleEl.innerHTML = cssText;
 
-    // 3. 控制台打印验证
     console.log('[自定义CSS] 已注入，长度：', cssText.length);
     console.log('[自定义CSS] 内容预览：', cssText.slice(0, 200));
 
-    // 4. 额外验证：确认 style 标签真的在 head 里
     if (styleEl.parentNode !== document.head) {
       console.warn('[自定义CSS] ⚠️ 容器不在 head 中，正在修复');
       document.head.appendChild(styleEl);
     }
   }
 
-  // 清空自定义 CSS
   function clearCustomCss() {
     bubble.customCss = '';
     persistBubble();
@@ -460,7 +453,7 @@
     }, true);
   }
 
-  // ==================== 创建面板 ====================
+  // ==================== 创建面板（已删除"个人资料"Tab） ====================
   function createPanel() {
     if (document.getElementById('chatSettingsPanel')) return;
 
@@ -469,23 +462,31 @@
     panel.className = 'chat-settings-panel';
     panel.innerHTML = [
       '<div class="chat-settings-panel-inner">',
+
       '  <div class="chat-settings-header">',
       '    <span class="chat-settings-title"><i class="fa-solid fa-sliders"></i> 设置</span>',
       '    <button class="chat-settings-close" id="chatSettingsClose"><i class="fa-solid fa-xmark"></i></button>',
       '  </div>',
-      '  <div class="chat-settings-tabs" id="chatSettingsTabs">',
-      '    <button class="chat-settings-tab" data-tab="profile"><i class="fa-solid fa-user"></i><span>个人资料</span></button>',
-      '    <button class="chat-settings-tab" data-tab="appearance"><i class="fa-solid fa-palette"></i><span>外观与界面</span></button>',
-      '    <button class="chat-settings-tab" data-tab="chat"><i class="fa-solid fa-comments"></i><span>聊天与字卡</span></button>',
-      '    <button class="chat-settings-tab" data-tab="data"><i class="fa-solid fa-database"></i><span>数据与工具</span></button>',
+
+      // 3 个 Tab（删除"个人资料"）
+      '  <div class="chat-settings-tabs" id="chatSettingsTabs" style="justify-content: space-around;">',
+      '    <button class="chat-settings-tab" data-tab="appearance" style="flex: 1 1 0; max-width: 33.33%;">',
+      '      <i class="fa-solid fa-palette"></i>',
+      '      <span>外观与界面</span>',
+      '    </button>',
+      '    <button class="chat-settings-tab" data-tab="chat" style="flex: 1 1 0; max-width: 33.33%;">',
+      '      <i class="fa-solid fa-comments"></i>',
+      '      <span>聊天与字卡</span>',
+      '    </button>',
+      '    <button class="chat-settings-tab" data-tab="data" style="flex: 1 1 0; max-width: 33.33%;">',
+      '      <i class="fa-solid fa-database"></i>',
+      '      <span>数据与工具</span>',
+      '    </button>',
       '  </div>',
+
       '  <div class="chat-settings-body">',
 
-      '    <div class="chat-settings-tab-panel" data-panel="profile">',
-      '      <div class="chat-settings-section-title">个人资料</div>',
-      '      <div class="chat-settings-placeholder"><i class="fa-solid fa-user"></i><p>修改我和对方的昵称、头像等</p></div>',
-      '    </div>',
-
+      // Tab 1: 外观与界面
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">全局主题配色</div>',
@@ -538,6 +539,7 @@
       '      </div>',
       '    </div>',
 
+      // Tab 2: 聊天与字卡
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">当前字卡模式</div>',
@@ -570,6 +572,7 @@
       '      </div>',
       '    </div>',
 
+      // Tab 3: 数据与工具
       '    <div class="chat-settings-tab-panel" data-panel="data">',
       '      <div class="chat-settings-section-title">数据与工具</div>',
       '      <div class="chat-settings-placeholder"><i class="fa-solid fa-database"></i><p>存钱罐、数据备份</p></div>',
@@ -747,7 +750,6 @@
       });
     }
 
-    // ============ 自定义 CSS：核心修复 ============
     var cssApply = document.getElementById('csCssApply');
     var cssClear = document.getElementById('csCssClear');
     var cssReset = document.getElementById('csCssReset');
@@ -760,7 +762,6 @@
         persistBubble();
         applyCustomCss();
 
-        // 视觉反馈
         var originalBg = cssApply.style.background;
         cssApply.style.background = '#7ED3A8';
         setTimeout(function () {
@@ -969,6 +970,13 @@
   function switchTab(tabName) {
     var panel = document.getElementById('chatSettingsPanel');
     if (!panel) return;
+
+    // 防御：如果 tabName 是 'profile'（已删除），回退到 'appearance'
+    if (tabName === 'profile' || !tabName) {
+      tabName = 'appearance';
+      activeTab = 'appearance';
+    }
+
     panel.querySelectorAll('.chat-settings-tab').forEach(function (t) {
       t.classList.toggle('active', t.getAttribute('data-tab') === tabName);
     });
@@ -993,9 +1001,7 @@
   }
 
   function init() {
-    // 1. 启动时确保 style 容器已存在
     ensureCustomCssStyleTag();
-
     createPanel();
     bindSettingsTrigger();
 
@@ -1006,13 +1012,11 @@
             loadCardMode(function () {
               window.chatCardMode = cardMode;
               loadGroupSelections(function () {
-                // 应用所有设置
                 applyTheme();
                 applyFont();
                 applyFontUrl();
                 applyBubble();
 
-                // 【核心】自动恢复用户自定义 CSS
                 if (bubble.customCss) {
                   applyCustomCss();
                   console.log('[自定义CSS] 已从存储恢复');
@@ -1039,7 +1043,6 @@
   setTimeout(bindSettingsTrigger, 1500);
   setTimeout(bindSettingsTrigger, 3000);
 
-  // ==================== 暴露给外部（供控制台测试） ====================
   window.chatSettingsPanel = {
     open: openPanel,
     close: closePanel,
@@ -1057,7 +1060,6 @@
     refreshGroupLists: renderAllGroupLists
   };
 
-  // 挂一个便捷函数，方便您在控制台快速注入测试
   window.setCustomBubbleCss = function (cssText) {
     bubble.customCss = cssText || '';
     persistBubble();
