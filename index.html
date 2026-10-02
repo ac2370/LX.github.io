@@ -3277,10 +3277,86 @@
     color: var(--theme-text-muted);
   }
 </style>
- <!-- ============================================================
-     设置面板 - 外观与界面 Tab（主题配色 + 文字 + 气泡 + 自定义 CSS）
+<!-- ============================================================
+     设置面板 - 外观与界面 Tab（合并版）
      ============================================================ -->
 <style>
+  /* ============ 面板内区块（保留，通用） ============ */
+  .chat-settings-section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  .chat-settings-section:last-child {
+    border-bottom: none;
+    padding-bottom: 4px;
+  }
+  body.theme-dark .chat-settings-section {
+    border-bottom-color: var(--theme-card-border);
+  }
+
+  /* ============ 滑块（保留，字体大小滑块复用） ============ */
+  .cs-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .cs-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: #e2e8ee;
+    outline: none;
+    cursor: pointer;
+  }
+  .cs-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background: #f8b4b4;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(248, 180, 180, 0.5);
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+  .cs-slider::-webkit-slider-thumb:active {
+    transform: scale(1.1);
+  }
+  .cs-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background: #f8b4b4;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 8px rgba(248, 180, 180, 0.5);
+    cursor: pointer;
+  }
+  body.theme-dark .cs-slider {
+    background: #3a424a;
+  }
+  .cs-slider-value {
+    flex-shrink: 0;
+    width: 44px;
+    text-align: right;
+    font-size: 13px;
+    font-weight: 700;
+    color: #e58b8b;
+    font-variant-numeric: tabular-nums;
+  }
+  .cs-slider-hint {
+    font-size: 11px;
+    color: #a8b4c0;
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+  body.theme-dark .cs-slider-hint {
+    color: var(--theme-text-muted);
+  }
+
   /* ============ 主题配色 ============ */
   .cs-theme-colors {
     display: grid;
@@ -3297,9 +3373,7 @@
     padding: 0;
     position: relative;
   }
-  .cs-theme-color-btn:active {
-    transform: scale(0.88);
-  }
+  .cs-theme-color-btn:active { transform: scale(0.88); }
   .cs-theme-color-btn.active {
     border-color: #ffffff;
     box-shadow: 0 0 0 2px #333;
@@ -3379,9 +3453,7 @@
     box-sizing: border-box;
     transition: border 0.2s ease;
   }
-  .cs-font-select:focus {
-    border-color: #f8b4b4;
-  }
+  .cs-font-select:focus { border-color: #f8b4b4; }
   body.theme-dark .cs-font-select {
     background-color: var(--theme-input-bg);
     border-color: var(--theme-input-border);
@@ -3432,9 +3504,7 @@
     opacity: 0.85;
     transform: scale(0.97);
   }
-  body.theme-dark .cs-font-url-apply {
-    background: #4a5a6a;
-  }
+  body.theme-dark .cs-font-url-apply { background: #4a5a6a; }
 
   /* ============ 气泡样式选择 ============ */
   .cs-bubble-styles {
@@ -3454,9 +3524,7 @@
     gap: 6px;
     transition: all 0.15s ease;
   }
-  .cs-bubble-btn:active {
-    transform: scale(0.96);
-  }
+  .cs-bubble-btn:active { transform: scale(0.96); }
   .cs-bubble-btn.active {
     background: #fdf5f5;
     border-color: #f8b4b4;
@@ -3532,9 +3600,7 @@
     transition: background 0.15s ease, transform 0.1s ease;
     white-space: nowrap;
   }
-  .cs-css-btn:active {
-    transform: scale(0.97);
-  }
+  .cs-css-btn:active { transform: scale(0.97); }
   .cs-css-apply {
     background: #f8b4b4;
     color: #fff;
