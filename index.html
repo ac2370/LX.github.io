@@ -5884,6 +5884,37 @@
     height: 20px;
   }
 </style>
+     <!-- ============================================================
+     陪伴模式 - 开始陪伴按钮状态
+     ============================================================ -->
+<style>
+  /* 未激活状态（置灰、半透明、不可点击） */
+  #companionStartBtn.disabled {
+    opacity: 0.45;
+    background: #d8dfe6;
+    box-shadow: none;
+    cursor: not-allowed;
+    pointer-events: auto; /* 保留点击事件，用 JS 拦截并提示 */
+  }
+  #companionStartBtn.disabled:active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* 激活状态（正常粉色、带阴影） */
+  #companionStartBtn.active {
+    opacity: 1;
+    background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
+    box-shadow: 0 8px 24px rgba(248, 180, 200, 0.4);
+    cursor: pointer;
+  }
+
+  /* 夜晚模式兼容 */
+  body.theme-dark #companionStartBtn.disabled {
+    background: #3a424a;
+    color: #8899a6;
+  }
+</style>
 </head>
 <body>
 
@@ -6332,7 +6363,7 @@
         </div>
 
         <!-- 底部按钮 -->
-        <button class="companion-start-btn" id="companionStartBtn">
+      <button class="companion-start-btn disabled" id="companionStartBtn">
           <i class="fa-solid fa-play"></i> 开始陪伴
         </button>
 
@@ -8725,13 +8756,18 @@
   }
      
   // ==================== 场景选中 ====================
-  var sceneBtns = document.querySelectorAll('.companion-scene-btn');
+   var sceneBtns = document.querySelectorAll('.companion-scene-btn');
   sceneBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
       sceneBtns.forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       window.chatCompanionScene = btn.getAttribute('data-scene');
       console.log('[陪伴] 场景选择:', window.chatCompanionScene);
+
+      // 检查"开始陪伴"按钮状态
+      if (typeof checkStartBtnState === 'function') {
+        checkStartBtnState();
+      }
     });
   });
 
@@ -8831,10 +8867,15 @@
   });
 
   // 每次切换到陪伴页面时刷新
-  function refreshCompanionPartner() {
+    function refreshCompanionPartner() {
     // 如果有独立选择，保持；否则读取默认
     var contact = getDefaultCompanionContact();
     updatePartnerCard(contact);
+
+    // 每次进入页面时检查按钮状态
+    if (typeof checkStartBtnState === 'function') {
+      checkStartBtnState();
+    }
   }
      
   // ==================== 选择陪伴对象 ====================
@@ -8895,6 +8936,7 @@
         '<div class="companion-partner-item-name">' + (c.name || '未命名') + '</div>';
 
       item.addEventListener('click', function () {
+            item.addEventListener('click', function () {
         // 关键：保存到陪伴页面的独立变量，不影响传讯页面的 my_current_contact
         companionContactId = c.id;
 
@@ -8903,8 +8945,13 @@
 
         partnerModal.classList.remove('active');
         console.log('[陪伴] 陪伴对象:', c.name, '(id:', c.id, ')');
-      });
 
+        // 检查"开始陪伴"按钮状态
+        if (typeof checkStartBtnState === 'function') {
+          checkStartBtnState();
+        }
+      });
+           
       list.appendChild(item);
     });
   }
@@ -8930,56 +8977,68 @@
     });
   }
 
+   // ==================== "开始陪伴"按钮状态检查 ====================
+  function checkStartBtnState() {
+    var startBtn = document.getElementById('companionStartBtn');
+    if (!startBtn) return;
+
+    var hasPartner = !!(window.chatCompanionPartner && window.chatCompanionPartner.id);
+    var hasScene = !!window.chatCompanionScene;
+
+    if (hasPartner && hasScene) {
+      startBtn.classList.remove('disabled');
+      startBtn.classList.add('active');
+    } else {
+      startBtn.classList.add('disabled');
+      startBtn.classList.remove('active');
+    }
+  }
+
   // ==================== 开始陪伴 ====================
   var startBtn = document.getElementById('companionStartBtn');
   if (startBtn) {
-    startBtn.addEventListener('click', function () {
-        var currentSong = (document.getElementById('songTitle') || {}).textContent || '未选择';
-      var summary = {
-        music: currentSong,
-        scene: window.chatCompanionScene || 'study',
-        partner: window.chatCompanionPartner || null,
-        custom: (document.getElementById('companionCustomInput') || {}).value || '',
-        bg: window.chatCompanionBg || 'aurora'
-      };
-      console.log('[陪伴] 开始陪伴:', summary);
-      alert('陪伴模式已开启！\n\n音乐：' + summary.music +
-            '\n场景：' + summary.scene +
-            '\n陪伴对象：' + (summary.partner ? summary.partner.name : '未选择') +
-            '\n自定义内容：' + (summary.custom || '（未填写）') +
-            '\n背景：' + summary.bg);
-    });
-  }
-  // ==================== 【新增】页面加载时初始化陪伴联系人 ====================
-  initCompanionPartner();
-
-  // 暴露刷新接口给外部调用
-  window.refreshCompanionPartner = refreshCompanionPartner;
-
-  // 每次切换到陪伴页面时刷新
-  var origShowCompanion = showCompanion;
-  showCompanion = function () {
-    origShowCompanion();
-    setTimeout(function () {
-      refreshCompanionPartner();
-    }, 50);
-  };
-
-  // 重新绑定"陪伴"按钮（用新的 showCompanion）
-  if (btnCompanion) {
-    var newBtn = btnCompanion.cloneNode(true);
-    btnCompanion.parentNode.replaceChild(newBtn, btnCompanion);
-    btnCompanion = newBtn;
-
-    btnCompanion.addEventListener('click', function (e) {
+    startBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      showCompanion();
+
+      // 校验：必须选择陪伴对象和场景
+      var hasPartner = !!(window.chatCompanionPartner && window.chatCompanionPartner.id);
+      var hasScene = !!window.chatCompanionScene;
+
+      if (!hasPartner && !hasScene) {
+        alert('请先选择陪伴对象和场景');
+        return;
+      }
+      if (!hasPartner) {
+        alert('请先选择陪伴对象');
+        return;
+      }
+      if (!hasScene) {
+        alert('请先选择陪伴场景');
+        return;
+      }
+
+      // ============ 通过校验，进入陪伴中页面 ============
+      // 若 window.pageCompanionActive 存在，直接调用
+      if (window.pageCompanionActive && typeof window.pageCompanionActive.show === 'function') {
+        window.pageCompanionActive.show();
+        return;
+      }
+
+      // 兜底：手动切换页面
+      var pageActive = document.getElementById('pageCompanionActive');
+      if (pageActive) {
+        document.querySelectorAll('.page').forEach(function (p) {
+          p.classList.remove('active');
+        });
+        pageActive.classList.add('active');
+        window.scrollTo(0, 0);
+      }
     });
   }
-     
-})();
-</script>
+
+  // 初始化按钮状态
+  checkStartBtnState();
      <!-- ============================================================
      陪伴中 页面交互
      ============================================================ -->
