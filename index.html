@@ -6218,8 +6218,8 @@
      重要日 页面样式
      ============================================================ -->
 <style>
-  #pageImportantDay {
-    background: linear-gradient(160deg, #e8f0fb 0%, #f0e8fb 50%, #fbe8f2 100%);
+    #pageImportantDay {
+    background: #ffffff;
     min-height: 100vh;
     min-height: 100dvh;
     width: 100%;
@@ -6235,8 +6235,8 @@
   #pageImportantDay::-webkit-scrollbar { display: none; }
   #pageImportantDay.active { display: flex; }
 
-  body.theme-dark #pageImportantDay {
-    background: linear-gradient(160deg, #1a1f26 0%, #221f2a 50%, #2a1f28 100%);
+   body.theme-dark #pageImportantDay {
+    background: #1e242b;
     color: #e8eef4;
   }
 
@@ -6561,6 +6561,132 @@
     background: linear-gradient(135deg, #f8b4c8 0%, #f0a4b4 100%);
     color: #fff;
     box-shadow: 0 4px 12px rgba(248, 180, 200, 0.35);
+  }
+</style>
+     <!-- ============================================================
+     重要日 - 自定义类型选择器
+     ============================================================ -->
+<style>
+  .imp-select {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .imp-select-btn {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    background: #fafbfc;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    font-family: inherit;
+    text-align: left;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+  }
+  .imp-select-btn:active {
+    background: #f2f6fa;
+  }
+  .imp-select-btn:focus {
+    outline: none;
+    border-color: #f8b4c8;
+    box-shadow: 0 0 0 3px rgba(248, 180, 200, 0.18);
+  }
+
+  body.theme-dark .imp-select-btn {
+    background: rgba(42, 48, 56, 0.9);
+    border-color: var(--theme-card-border, #333a42);
+    color: #e8eef4;
+  }
+
+  .imp-select-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  body.theme-dark .imp-select-dot {
+    box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+  }
+
+  .imp-select-text {
+    flex: 1;
+    text-align: left;
+  }
+
+  .imp-select-arrow {
+    font-size: 11px;
+    color: #8899a6;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  /* 下拉菜单 */
+  .imp-select-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8ee;
+    box-shadow: 0 12px 30px rgba(0, 20, 30, 0.15);
+    padding: 6px;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    display: none;
+    animation: impSelectFadeIn 0.15s ease;
+  }
+  .imp-select-menu::-webkit-scrollbar { display: none; }
+  .imp-select-menu.active { display: block; }
+
+  @keyframes impSelectFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  body.theme-dark .imp-select-menu {
+    background: rgba(38, 44, 52, 0.97);
+    border-color: var(--theme-card-border, #333a42);
+  }
+
+  .imp-select-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    font-size: 14px;
+    color: #333;
+  }
+  .imp-select-item:active {
+    background: #f2f6fa;
+  }
+  .imp-select-item.active {
+    background: #fdf5f5;
+    color: #e58b9b;
+    font-weight: 700;
+  }
+  body.theme-dark .imp-select-item {
+    color: #e8eef4;
+  }
+  body.theme-dark .imp-select-item:active {
+    background: rgba(42, 48, 56, 0.9);
+  }
+  body.theme-dark .imp-select-item.active {
+    background: rgba(248, 180, 200, 0.12);
+    color: #f0a4b4;
   }
 </style>
 </head>
@@ -10396,13 +10522,32 @@
       '  <input type="text" class="imp-modal-input" id="impModalName" placeholder="例如：恋爱纪念日">' +
       '  <div class="imp-modal-label">日期</div>' +
       '  <input type="date" class="imp-modal-input" id="impModalDate">' +
-      '  <div class="imp-modal-label">类型</div>' +
-      '  <select class="imp-modal-input" id="impModalType">' +
-      '    <option value="anniversary">纪念日</option>' +
-      '    <option value="birthday">生日</option>' +
-      '    <option value="countdown">倒数日</option>' +
-      '    <option value="default">其他</option>' +
-      '  </select>' +
+      '        '  <div class="imp-modal-label">类型</div>' +
+      '  <div class="imp-select" id="impModalTypeSelect">' +
+      '    <button type="button" class="imp-select-btn" id="impModalTypeBtn">' +
+      '      <span class="imp-select-dot" style="background: #e58b9b;"></span>' +
+      '      <span class="imp-select-text" id="impModalTypeText">纪念日</span>' +
+      '      <i class="fa-solid fa-chevron-down imp-select-arrow"></i>' +
+      '    </button>' +
+      '    <div class="imp-select-menu" id="impModalTypeMenu">' +
+      '      <div class="imp-select-item active" data-value="anniversary">' +
+      '        <span class="imp-select-dot" style="background: #e58b9b;"></span>' +
+      '        <span>纪念日</span>' +
+      '      </div>' +
+      '      <div class="imp-select-item" data-value="birthday">' +
+      '        <span class="imp-select-dot" style="background: #e09b6b;"></span>' +
+      '        <span>生日</span>' +
+      '      </div>' +
+      '      <div class="imp-select-item" data-value="countdown">' +
+      '        <span class="imp-select-dot" style="background: #6fa3cc;"></span>' +
+      '        <span>倒数日</span>' +
+      '      </div>' +
+      '      <div class="imp-select-item" data-value="default">' +
+      '        <span class="imp-select-dot" style="background: #9b8bd0;"></span>' +
+      '        <span>其他</span>' +
+      '      </div>' +
+      '    </div>' +
+      '  </div>' +
       '  <div class="imp-modal-actions">' +
       '    <button class="imp-modal-cancel" id="impModalCancel">取消</button>' +
       '    <button class="imp-modal-confirm" id="impModalConfirm">保存</button>' +
@@ -10418,10 +10563,74 @@
       if (e.target === modal) modal.classList.remove('active');
     });
 
+        // ============ 自定义类型下拉选择器 ============
+    var currentType = 'anniversary';
+    var typeColors = {
+      anniversary: '#e58b9b',
+      birthday: '#e09b6b',
+      countdown: '#6fa3cc',
+      default: '#9b8bd0'
+    };
+    var typeNames = {
+      anniversary: '纪念日',
+      birthday: '生日',
+      countdown: '倒数日',
+      default: '其他'
+    };
+
+    var typeBtn = document.getElementById('impModalTypeBtn');
+    var typeMenu = document.getElementById('impModalTypeMenu');
+    var typeText = document.getElementById('impModalTypeText');
+
+    if (typeBtn && typeMenu) {
+      // 打开/关闭菜单
+      typeBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        typeMenu.classList.toggle('active');
+        var arrow = typeBtn.querySelector('.imp-select-arrow');
+        if (arrow) {
+          arrow.style.transform = typeMenu.classList.contains('active')
+            ? 'rotate(180deg)' : 'rotate(0)';
+        }
+      });
+
+      // 点击选项
+      typeMenu.querySelectorAll('.imp-select-item').forEach(function (item) {
+        item.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var val = item.getAttribute('data-value');
+          currentType = val;
+
+          // 更新按钮文本和圆点
+          typeText.textContent = typeNames[val];
+          var dot = typeBtn.querySelector('.imp-select-dot');
+          if (dot) dot.style.background = typeColors[val];
+
+          // 更新选中状态
+          typeMenu.querySelectorAll('.imp-select-item').forEach(function (i) {
+            i.classList.remove('active');
+          });
+          item.classList.add('active');
+
+          // 关闭菜单
+          typeMenu.classList.remove('active');
+          var arrow2 = typeBtn.querySelector('.imp-select-arrow');
+          if (arrow2) arrow2.style.transform = 'rotate(0)';
+        });
+      });
+
+      // 点击外部关闭菜单
+      document.addEventListener('click', function () {
+        typeMenu.classList.remove('active');
+        var arrow3 = typeBtn.querySelector('.imp-select-arrow');
+        if (arrow3) arrow3.style.transform = 'rotate(0)';
+      });
+    }
+
     document.getElementById('impModalConfirm').addEventListener('click', function () {
       var name = (document.getElementById('impModalName').value || '').trim();
       var date = document.getElementById('impModalDate').value;
-      var type = document.getElementById('impModalType').value;
+      var type = currentType;
 
       if (!name) { alert('请输入名称'); return; }
       if (!date) { alert('请选择日期'); return; }
@@ -10437,11 +10646,19 @@
       modal.classList.remove('active');
       renderList();
 
-      // 清空
+            // 清空
       document.getElementById('impModalName').value = '';
       document.getElementById('impModalDate').value = '';
-    });
 
+      // 重置类型选择器
+      currentType = 'anniversary';
+      if (typeText) typeText.textContent = '纪念日';
+      var dot2 = typeBtn.querySelector('.imp-select-dot');
+      if (dot2) dot2.style.background = '#e58b9b';
+      typeMenu.querySelectorAll('.imp-select-item').forEach(function (i) {
+        i.classList.toggle('active', i.getAttribute('data-value') === 'anniversary');
+      });
+    });
     return modal;
   }
 
