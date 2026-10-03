@@ -1,166 +1,115 @@
 /**
- * 字卡数据库（分类存储 + localforage 持久化）
- * - reply:    回复分类（纯文字）
- * - emoji:    颜文字分类（纯文字）
- * - sticker:  表情包分类（图片链接）
+ * 字卡数据库工具（轻量版）
  *
- * 严格限定：传讯自动回复只从 reply / emoji 抽文字，从 sticker 抽图片
+ * 重要说明：
+ * - 本文件不再定义 window.cardDatabase，不再读写 cardDatabase_v3
+ * - 字卡数据的存储、分组、持久化全部由 js/card.js 统一负责
+ * - 这里只保留一个「兜底读取」的工具函数，供 chat.js 等模块使用
+ *
+ * 为什么这么做：
+ * - 之前 reply.js 会自己初始化 cardDatabase.reply = [] 并写入 cardDatabase_v3
+ * - card.js 读写的是 my_word_cards（分组对象），两者 key 不冲突
+ * - 但 reply.js 的默认数据 + card.js 的数据会互相覆盖，导致刷新后字卡变 0 条
+ * - 所以 reply.js 现在只提供只读工具，不再参与数据存储
  */
 
 (function () {
   'use strict';
 
-  // ==================== 全局数据对象 ====================
-  window.cardDatabase = {
-    reply: [],
-    emoji: [],
-    sticker: []
-  };
+  // ==================== 工具函数 ====================
 
-  // ==================== localforage 配置 ====================
-  // 若未引入 localforage，则降级为 localStorage
-  var hasLocalforage = typeof localforage !== 'undefined';
+  /**
+   * 从 card.js 的分组接口读取所有「回复」分类的字卡
+   * 优先使用 window.getGroups + window.getCardsInGroup（card.js 暴露的接口）
+   * 如果 card.js 未加载，则返回空数组
+   */
+  function getAllReplyCards() {
+    var all = [];
 
-  var STORE_KEY = 'cardDatabase_v3';
-
-  // ==================== 保存到本地 ====================
-  function persist() {
-    var data = {
-      reply: window.cardDatabase.reply,
-      emoji: window.cardDatabase.emoji,
-      sticker: window.cardDatabase.sticker
-    };
-    if (hasLocalforage) {
-      localforage.setItem(STORE_KEY, data).catch(function (e) {
-        console.warn('[cardDatabase] localforage 保存失败', e);
-      });
-    } else {
+    // 1) 优先走 card.js 的分组接口
+    if (typeof window.getGroups === 'function' && typeof window.getCardsInGroup === 'function') {
       try {
-        localStorage.setItem(STORE_KEY, JSON.stringify(data));
+        var groups = window.getGroups('reply') || [];
+        groups.forEach(function (g) {
+          var arr = window.getCardsInGroup(g, 'reply') || [];
+          if (Array.isArray(arr)) all = all.concat(arr);
+        });
       } catch (e) {
-        console.warn('[cardDatabase] localStorage 保存失败', e);
+        console.warn('[reply] 读取分组字卡失败', e);
       }
     }
+
+    // 2) 兜底：card.js 暴露的 window.getReplyCards()
+    if (all.length === 0 && typeof window.getReplyCards === 'function') {
+      try {
+        var alt = window.getReplyCards();
+        if (Array.isArray(alt)) all = alt;
+      } catch (e) {
+        console.warn('[reply] getReplyCards 失败', e);
+      }
+    }
+
+    return all;
   }
 
-  // ==================== 从本地加载 ====================
-  function load(callback) {
-    function applyData(data) {
-      if (!data) {
-        // 首次进入：初始化默认回复字卡
-        window.cardDatabase.reply = [
-          '今天天气很好',
-          '在想你',
-          '记得按时吃饭',
-          '早点休息，别熬夜',
-          '我一直在的',
-          '抱抱你'
-        ];
-        window.cardDatabase.emoji = [];
-        window.cardDatabase.sticker = [];
-        persist();
-        if (callback) callback();
-        return;
+  /**
+   * 从 card.js 的分组接口读取所有「拍一拍」分类的字卡
+   */
+  function getAllPatCards() {
+    var all = [];
+
+    if (typeof window.getGroups === 'function' && typeof window.getCardsInGroup === 'function') {
+      try {
+        var groups = window.getGroups('pat') || [];
+        groups.forEach(function (g) {
+          var arr = window.getCardsInGroup(g, 'pat') || [];
+          if (Array.isArray(arr)) all = all.concat(arr);
+        });
+      } catch (e) {
+        console.warn('[reply] 读取拍一拍字卡失败', e);
       }
-      window.cardDatabase.reply = Array.isArray(data.reply) ? data.reply : [];
-      window.cardDatabase.emoji = Array.isArray(data.emoji) ? data.emoji : [];
-      window.cardDatabase.sticker = Array.isArray(data.sticker) ? data.sticker : [];
-      if (callback) callback();
     }
 
-    if (hasLocalforage) {
-      localforage.getItem(STORE_KEY).then(function (data) {
-        applyData(data);
-      }).catch(function (e) {
-        console.warn('[cardDatabase] localforage 读取失败', e);
-        applyData(null);
-      });
-    } else {
+    if (all.length === 0 && typeof window.getPatCards === 'function') {
       try {
-        var raw = localStorage.getItem(STORE_KEY);
-        applyData(raw ? JSON.parse(raw) : null);
+        var alt = window.getPatCards();
+        if (Array.isArray(alt)) all = alt;
       } catch (e) {
-        applyData(null);
+        console.warn('[reply] getPatCards 失败', e);
       }
     }
+
+    return all;
   }
 
-  // ==================== 对外 API ====================
+  /**
+   * 随机抽一条回复字卡
+   * 返回字符串，没数据时返回 null
+   */
+  function pickRandomReply() {
+    var all = getAllReplyCards();
+    if (!all || all.length === 0) return null;
+    return all[Math.floor(Math.random() * all.length)];
+  }
 
-  // 获取指定分类的数组引用
-  window.cardDatabase.get = function (category) {
-    if (category === 'reply') return window.cardDatabase.reply;
-    if (category === 'emoji') return window.cardDatabase.emoji;
-    if (category === 'sticker') return window.cardDatabase.sticker;
-    return [];
+  /**
+   * 随机抽一条拍一拍字卡
+   */
+  function pickRandomPat() {
+    var all = getAllPatCards();
+    if (!all || all.length === 0) return null;
+    return all[Math.floor(Math.random() * all.length)];
+  }
+
+  // ==================== 对外暴露 ====================
+  window.reply = {
+    getAllReplyCards: getAllReplyCards,
+    getAllPatCards: getAllPatCards,
+    pickRandomReply: pickRandomReply,
+    pickRandomPat: pickRandomPat
   };
 
-  // 添加一条（自动去重）
-  window.cardDatabase.add = function (category, value, autoDedup) {
-    if (!value) return;
-    var arr = window.cardDatabase.get(category);
-    if (!arr) return;
-    if (autoDedup && arr.indexOf(value) >= 0) return;
-    arr.push(value);
-    persist();
-  };
-
-  // 批量添加
-  window.cardDatabase.addMany = function (category, values, autoDedup) {
-    if (!Array.isArray(values)) return;
-    values.forEach(function (v) {
-      window.cardDatabase.add(category, v, autoDedup);
-    });
-  };
-
-  // 删除一条
-  window.cardDatabase.remove = function (category, value) {
-    var arr = window.cardDatabase.get(category);
-    if (!arr) return;
-    var idx = arr.indexOf(value);
-    if (idx >= 0) {
-      arr.splice(idx, 1);
-      persist();
-    }
-  };
-
-  // 清空某一分类
-  window.cardDatabase.clear = function (category) {
-    var arr = window.cardDatabase.get(category);
-    if (!arr) return;
-    arr.length = 0;
-    persist();
-  };
-
-  // 去重
-  window.cardDatabase.deduplicate = function (category) {
-    var arr = window.cardDatabase.get(category);
-    if (!arr) return;
-    var seen = new Set();
-    var result = arr.filter(function (item) {
-      if (seen.has(item)) return false;
-      seen.add(item);
-      return true;
-    });
-    arr.length = 0;
-    result.forEach(function (item) { arr.push(item); });
-    persist();
-  };
-
-  // 手动保存
-  window.cardDatabase.persist = persist;
-
-  // 重新加载（供外部刷新）
-  window.cardDatabase.reload = function (callback) {
-    load(callback);
-  };
-
-  // ==================== 初始化 ====================
-  load(function () {
-    // 暴露就绪标志
-    window.cardDatabase.ready = true;
-    // 触发自定义事件，通知外部数据已就绪
-    window.dispatchEvent(new Event('cardDatabaseReady'));
-  });
+  // 兼容旧调用：以前可能有代码调 window.replyCards 或 window.getReplyCards
+  // 这里不覆盖 card.js 已经暴露的 window.getReplyCards，只保证工具函数可用
 
 })();
