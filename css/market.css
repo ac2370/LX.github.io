@@ -779,3 +779,71 @@ body.theme-dark .chat-gift-btn.claimed {
   margin-bottom: 6px;
   padding-left: 2px;
 }
+
+/* ============================================================
+   主页"心意集市"入口的小红点
+   ============================================================ */
+#btnMarket {
+  position: relative;
+}
+.market-unread-dot {
+  position: absolute;
+  top: 6px;
+  right: 22px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #f57171;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  animation: marketDotPulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes marketDotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.75; }
+}
+body.theme-dark .market-unread-dot {
+  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+}
+
+/* ============================================================
+   礼物浮层提示
+   ============================================================ */
+.market-gift-toast-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 40px rgba(0, 20, 30, 0.25);
+}
+body.theme-dark .market-gift-toast-inner {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border);
+}
+.market-gift-toast-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  animation: marketGiftBounce 1.2s ease-in-out infinite;
+}
+@keyframes marketGiftBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+.market-gift-toast-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-dark .market-gift-toast-text {
+  color: var(--theme-text);
+}
