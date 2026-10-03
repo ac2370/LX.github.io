@@ -996,6 +996,7 @@
     modal.addEventListener('click', function (e) {
       if (e.target === modal) close();
     });
+  }
 
   // ==================== 回复面板事件 ====================
   if (btnAddCard) btnAddCard.addEventListener('click', function () {
