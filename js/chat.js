@@ -265,15 +265,22 @@
     }
   }
 
-  // ==================== 读专属字卡（当前联系人勾选的分组） ====================
+   // ==================== 读专属字卡（当前联系人勾选的分组） ====================
   function getExclusiveReplyCards() {
     try {
-      if (!window.contactCards || typeof window.contactCards.getFor !== 'function') return [];
+      if (!window.contactCards) return [];
       var contactId = null;
       try { contactId = localStorage.getItem('my_current_contact'); } catch (e) {}
       if (!contactId) return [];
 
-      var groups = window.contactCards.getFor(contactId);
+      var groups = [];
+      if (typeof window.contactCards.getForReply === 'function') {
+        groups = window.contactCards.getForReply(contactId) || [];
+      } else if (typeof window.contactCards.getFor === 'function') {
+        var entry = window.contactCards.getFor(contactId);
+        if (Array.isArray(entry)) groups = entry;
+        else if (entry && Array.isArray(entry.reply)) groups = entry.reply;
+      }
       if (!Array.isArray(groups) || groups.length === 0) return [];
       if (typeof window.getCardsInGroup !== 'function') return [];
 
