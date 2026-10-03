@@ -414,11 +414,23 @@
   }
 
   // ==================== 发送消息 ====================
-  function sendMessage() {
+   function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    chatMessages.appendChild(createMessageRow('self', text));
+    // 如果有引用，组装成带引用的内容
+    var content;
+    if (currentQuote && currentQuote.text) {
+      content = { quote: currentQuote.text, text: text };
+      // 发完清掉引用
+      currentQuote = null;
+      var bar = document.getElementById('quotePreviewBar');
+      if (bar) bar.style.display = 'none';
+    } else {
+      content = text;
+    }
+
+    chatMessages.appendChild(createMessageRow('self', content));
     lastUserMessage = text;
 
     chatInput.value = '';
