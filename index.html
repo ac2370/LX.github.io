@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="./css/important-day.css">
   <link rel="stylesheet" href="./css/mood.css">
   <link rel="stylesheet" href="./css/envelope.css">
+  <link rel="stylesheet" href="./css/feed.css">
 </head>
 <body>
 
@@ -116,7 +117,7 @@
             <div class="function-icon"><i class="fa-solid fa-envelope text-[#222] text-lg"></i></div>
             <span class="function-label">信箱</span>
           </a>   
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+          <a class="function-item" id="btnFeed" style="cursor: pointer;">
             <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
             <span class="function-label">朋友圈</span>
           </a>
@@ -660,6 +661,79 @@
     </div>
     <div class="env-read-footer" id="envReadFooter">
       <!-- 按钮由 JS 填充 -->
+    </div>
+  </div>
+</div>
+
+  <!-- ==================== 朋友圈 页面 ==================== -->
+<div class="page" id="pageFeed">
+  <div class="feed-container">
+
+    <!-- 顶部导航栏 -->
+    <div class="feed-topbar">
+      <button class="feed-back-btn" id="feedBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="feed-topbar-title">朋友圈</span>
+      <button class="feed-settings-btn" id="feedSettingsBtn">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+
+    <!-- 主体滚动区 -->
+    <div class="feed-body">
+
+      <!-- 头部卡片：头像 + 名字 + 封面 -->
+      <div class="feed-header-card">
+        <div class="feed-cover" id="feedCover"></div>
+        <div class="feed-header-info">
+          <img class="feed-header-avatar" id="feedHeaderAvatar" src="https://picsum.photos/200/200?random=99" alt="">
+          <div class="feed-header-text">
+            <div class="feed-header-name" id="feedHeaderName">Ta</div>
+            <div class="feed-header-sub">我的朋友圈</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 发帖输入框 -->
+      <div class="feed-post-bar" id="feedPostBar">
+        <div class="feed-post-avatar">
+          <img id="feedPostAvatar" src="https://picsum.photos/100/100?random=1" alt="">
+        </div>
+        <div class="feed-post-input">今天想记录什么？</div>
+        <i class="fa-solid fa-pen-to-square feed-post-icon"></i>
+      </div>
+
+      <!-- 动态列表 -->
+      <div class="feed-list" id="feedList"></div>
+
+      <!-- 空状态 -->
+      <div class="feed-empty" id="feedEmpty">
+        <i class="fa-regular fa-image"></i>
+        <div class="feed-empty-text">还没有动态</div>
+        <div class="feed-empty-hint">点上方输入框发一条吧</div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== 朋友圈 - 发帖弹层 ==================== -->
+<div class="feed-post-modal" id="feedPostModal">
+  <div class="feed-post-panel">
+    <div class="feed-post-header">
+      <span class="feed-post-title">发表动态</span>
+      <button class="feed-post-close" id="feedPostClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="feed-post-body">
+      <textarea class="feed-post-textarea" id="feedPostText" placeholder="今天想记录什么？"></textarea>
+    </div>
+    <div class="feed-post-footer">
+      <button class="feed-post-btn-cancel" id="feedPostCancel">取消</button>
+      <button class="feed-post-btn-submit" id="feedPostSubmit">发表</button>
     </div>
   </div>
 </div>
@@ -1221,5 +1295,6 @@
   <script src="./js/important-day.js"></script>
   <script src="./js/mood.js"></script>
   <script src="./js/features/envelope.js"></script>
+  <script src="./js/feed.js"></script>
 </body>
 </html>
