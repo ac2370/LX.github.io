@@ -39,10 +39,10 @@
   };
 
   // ★ 测试用
-  var TEST_REACTION_DELAY_MS      = 5 * 1000;   // 三件套反应延迟
-  var TEST_COMMENT_REPLY_DELAY_MS = 5 * 1000;   // TA 回复评论延迟
-  var TEST_AUTO_POST_MIN_MS       = 5 * 1000;
-  var TEST_AUTO_POST_MAX_MS       = 5 * 1000;
+  var TEST_REACTION_DELAY_MS      = randomInt(1000, 60000);
+  var TEST_COMMENT_REPLY_DELAY_MS = randomInt(1000, 60000);
+  var TEST_AUTO_POST_MIN_MS       = 15 * 60 * 1000;
+  var TEST_AUTO_POST_MAX_MS       = 60 * 60 * 1000;
 
   // 概率
   var AUTO_POST_PROBABILITY = 0.30;
