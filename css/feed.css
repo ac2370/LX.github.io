@@ -4,14 +4,14 @@
    ============================================================ */
 
 /* ============ 页面容器 ============ */
-#pageEnvelope {
+#pageFeed {
   background: #ffffff;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
 }
-body.theme-dark #pageEnvelope {
-  background: #1e242b;
+body.theme-dark #pageFeed {
+  background: linear-gradient(160deg, #1e242b 0%, #2a2028 100%);
 }
 
 .feed-container {
