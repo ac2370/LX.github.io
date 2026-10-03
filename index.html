@@ -827,27 +827,16 @@
     </div>
   </div>
 
-  <!-- 角色面板 -->
-  <div class="role-panel-modal" id="rolePanelModal">
-    <div class="role-panel">
-      <div class="role-panel-header">
-        <span class="role-panel-title">角色面板</span>
-        <button class="role-panel-close" id="rolePanelCloseBtn">关闭</button>
-      </div>
-      <div class="role-new-box">
-        <div class="role-new-avatar-wrap" id="roleNewAvatarWrap">
-          <img class="role-new-avatar" id="roleNewAvatarPreview" src="https://picsum.photos/100/100?random=1" alt="新角色头像">
-          <div class="role-new-avatar-label">头像</div>
-          <input type="file" id="roleNewAvatarFileInput" class="hidden-file-input" accept="image/*">
-        </div>
-        <input type="text" class="role-new-input" id="roleNewNameInput" placeholder="输入角色姓名...">
-        <button class="role-new-save" id="roleNewSaveBtn">保存</button>
-      </div>
-      <div class="role-list-divider"></div>
-      <div class="role-list-title">已有角色档案</div>
-      <div id="roleListContainer"></div>
+ <!-- 角色面板 -->
+<div class="role-panel-modal" id="rolePanelModal">
+  <div class="role-panel">
+    <div class="role-panel-header">
+      <span class="role-panel-title">角色面板</span>
+      <!-- 顶部"关闭"按钮已移至面板底部，这里不再放 -->
     </div>
+    <div id="roleListContainer"></div>
   </div>
+</div>
 
   <!-- 回复设定 -->
   <div class="reply-settings-modal" id="replySettingsModal">
