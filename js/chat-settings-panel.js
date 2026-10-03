@@ -524,6 +524,19 @@
   }
   function persistContactCardsMap() { persist(STORE_KEY_CONTACT_CARDS, contactCardsMap); }
 
+    // 兼容旧格式：数组 → { reply: [...], pat: [...] }
+  function normalizeContactEntry(entry) {
+    if (!entry) return { reply: [], pat: [] };
+    if (Array.isArray(entry)) return { reply: entry.slice(), pat: [] };
+    if (typeof entry === 'object') {
+      return {
+        reply: Array.isArray(entry.reply) ? entry.reply.slice() : [],
+        pat: Array.isArray(entry.pat) ? entry.pat.slice() : []
+      };
+    }
+    return { reply: [], pat: [] };
+  }
+  
   function getCurrentContact() {
     try {
       var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
@@ -574,18 +587,24 @@
     renderContactGroupList();
   }
 
-  function renderContactGroupList() {
+   function renderContactGroupList() {
     var listBox = document.getElementById('contactCardsList');
     if (!listBox) return;
 
-    var groups = (typeof window.getGroups === 'function') ? window.getGroups('reply') : [];
-    if (groups.length === 0) {
+    var replyGroups = (typeof window.getGroups === 'function') ? window.getGroups('reply') : [];
+    var patGroups   = (typeof window.getGroups === 'function') ? window.getGroups('pat') : [];
+
+    if (replyGroups.length === 0 && patGroups.length === 0) {
       listBox.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
       return;
     }
 
-    if (!contactCardsMap[currentContactId]) contactCardsMap[currentContactId] = [];
-    var selected = contactCardsMap[currentContactId];
+    if (!contactCardsMap[currentContactId]) {
+      contactCardsMap[currentContactId] = { reply: [], pat: [] };
+    } else {
+      contactCardsMap[currentContactId] = normalizeContactEntry(contactCardsMap[currentContactId]);
+    }
+    var entry = contactCardsMap[currentContactId];
 
     listBox.innerHTML = '';
 
@@ -597,68 +616,94 @@
     listBox.appendChild(bar);
 
     bar.querySelector('[data-act="all"]').addEventListener('click', function () {
-      contactCardsMap[currentContactId] = groups.slice();
+      entry.reply = replyGroups.slice();
+      entry.pat = patGroups.slice();
       persistContactCardsMap();
       renderContactGroupList();
     });
     bar.querySelector('[data-act="none"]').addEventListener('click', function () {
-      contactCardsMap[currentContactId] = [];
+      entry.reply = [];
+      entry.pat = [];
       persistContactCardsMap();
       renderContactGroupList();
     });
 
-    var groupListBox = document.createElement('div');
-    groupListBox.className = 'cs-contact-group-list';
+    function renderCategory(categoryLabel, categoryIcon, groups, categoryKey) {
+      if (!groups || groups.length === 0) return;
 
-    groups.forEach(function (name) {
-      var count = 0;
-      if (typeof window.getCardsInGroup === 'function') {
-        count = window.getCardsInGroup(name, 'reply').length;
-      }
-      var isChecked = selected.indexOf(name) >= 0;
-      var color = '#5C7CFA';
-      if (typeof window.getGroupColor === 'function') color = window.getGroupColor(name, 'reply');
+      var sectionTitle = document.createElement('div');
+      sectionTitle.className = 'cs-contact-category-title';
+      sectionTitle.innerHTML = '<i class="' + categoryIcon + '"></i> ' + categoryLabel;
+      listBox.appendChild(sectionTitle);
 
-      var item = document.createElement('div');
-      item.className = 'cs-contact-group-item' + (isChecked ? ' checked' : '');
-      item.innerHTML =
-        '<label class="cs-group-checkbox">' +
-        '  <input type="checkbox"' + (isChecked ? ' checked' : '') + '>' +
-        '  <span class="cs-group-check-mark"><i class="fa-solid fa-check"></i></span>' +
-        '</label>' +
-        '<span class="cs-group-color-dot" style="background:' + color + '"></span>' +
-        '<div class="cs-group-info">' +
-        '  <div class="cs-group-name">' + escapeHtml(name) + '</div>' +
-        '  <div class="cs-group-count">' + count + ' 条</div>' +
-        '</div>';
+      var groupListBox = document.createElement('div');
+      groupListBox.className = 'cs-contact-group-list';
 
-      var checkbox = item.querySelector('input[type="checkbox"]');
-      function toggle(checked) {
-        checkbox.checked = checked;
-        item.classList.toggle('checked', checked);
-        var arr = contactCardsMap[currentContactId] || [];
-        var idx = arr.indexOf(name);
-        if (checked && idx < 0) arr.push(name);
-        else if (!checked && idx >= 0) arr.splice(idx, 1);
-        contactCardsMap[currentContactId] = arr;
-        persistContactCardsMap();
-      }
-      checkbox.addEventListener('change', function () { toggle(checkbox.checked); });
-      item.addEventListener('click', function (e) {
-        if (e.target.closest('.cs-group-checkbox')) return;
-        toggle(!checkbox.checked);
+      var selectedArr = entry[categoryKey] || [];
+
+      groups.forEach(function (name) {
+        var count = 0;
+        if (typeof window.getCardsInGroup === 'function') {
+          count = window.getCardsInGroup(name, categoryKey).length;
+        }
+        var isChecked = selectedArr.indexOf(name) >= 0;
+        var color = '#5C7CFA';
+        if (typeof window.getGroupColor === 'function') color = window.getGroupColor(name, categoryKey);
+
+        var item = document.createElement('div');
+        item.className = 'cs-contact-group-item' + (isChecked ? ' checked' : '');
+        item.innerHTML =
+          '<label class="cs-group-checkbox">' +
+          '  <input type="checkbox"' + (isChecked ? ' checked' : '') + '>' +
+          '  <span class="cs-group-check-mark"><i class="fa-solid fa-check"></i></span>' +
+          '</label>' +
+          '<span class="cs-group-color-dot" style="background:' + color + '"></span>' +
+          '<div class="cs-group-info">' +
+          '  <div class="cs-group-name">' + escapeHtml(name) + '</div>' +
+          '  <div class="cs-group-count">' + count + ' 条</div>' +
+          '</div>';
+
+        var checkbox = item.querySelector('input[type="checkbox"]');
+        function toggle(checked) {
+          checkbox.checked = checked;
+          item.classList.toggle('checked', checked);
+          var arr = entry[categoryKey] || [];
+          var idx = arr.indexOf(name);
+          if (checked && idx < 0) arr.push(name);
+          else if (!checked && idx >= 0) arr.splice(idx, 1);
+          entry[categoryKey] = arr;
+          persistContactCardsMap();
+        }
+        checkbox.addEventListener('change', function () { toggle(checkbox.checked); });
+        item.addEventListener('click', function (e) {
+          if (e.target.closest('.cs-group-checkbox')) return;
+          toggle(!checkbox.checked);
+        });
+        groupListBox.appendChild(item);
       });
-      groupListBox.appendChild(item);
-    });
-    listBox.appendChild(groupListBox);
+      listBox.appendChild(groupListBox);
+    }
+
+    renderCategory('回复字卡', 'fa-solid fa-comment-dots', replyGroups, 'reply');
+    renderCategory('拍一拍字卡', 'fa-solid fa-hand', patGroups, 'pat');
   }
 
-  window.contactCards = {
+   window.contactCards = {
     getMap: function () { return contactCardsMap; },
-    getFor: function (contactId) { return (contactCardsMap[contactId] || []).slice(); },
+    // 返回 { reply: [...], pat: [...] }，兼容旧数据
+    getFor: function (contactId) {
+      return normalizeContactEntry(contactCardsMap[contactId]);
+    },
+    // 兼容旧调用：返回 reply 分组数组
+    getForReply: function (contactId) {
+      return normalizeContactEntry(contactCardsMap[contactId]).reply.slice();
+    },
+    getForPat: function (contactId) {
+      return normalizeContactEntry(contactCardsMap[contactId]).pat.slice();
+    },
     refresh: renderContactCardsPanel
   };
-
+  
   // ==================== 导出/导入 ====================
   function getKeyCategory(key) {
     if (!key) return null;
