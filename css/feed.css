@@ -1,5 +1,5 @@
 /* ============================================================
-   feed.css —— 朋友圈页面
+   feed.css —— 朋友圈页面（新版：白色背景 + 封面 + 换背景 + 顶部图标统一）
    风格对齐 companion.css / envelope.css
    ============================================================ */
 
@@ -32,8 +32,16 @@ body.theme-dark #pageFeed {
   justify-content: space-between;
   padding: 14px 18px 10px 18px;
 }
-.feed-back-btn,
-.feed-settings-btn {
+.feed-topbar-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 1px;
+}
+body.theme-dark .feed-topbar-title { color: var(--theme-text); }
+
+/* 左侧返回按钮 */
+.feed-back-btn {
   width: 36px;
   height: 36px;
   border-radius: 9999px;
@@ -48,25 +56,71 @@ body.theme-dark #pageFeed {
   align-items: center;
   justify-content: center;
   transition: background 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 8px rgba(150, 170, 190, 0.12);
 }
-.feed-back-btn:active,
-.feed-settings-btn:active {
+.feed-back-btn:active {
   background: rgba(240, 245, 250, 1);
   transform: scale(0.94);
 }
-body.theme-dark .feed-back-btn,
-body.theme-dark .feed-settings-btn {
+body.theme-dark .feed-back-btn {
   background: rgba(42, 48, 56, 0.85);
   border-color: var(--theme-card-border);
   color: var(--theme-text-soft);
 }
-.feed-topbar-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 1px;
+
+/* 右侧按钮组（铃铛 + 加号）同一样式 */
+.feed-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-body.theme-dark .feed-topbar-title { color: var(--theme-text); }
+.feed-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #55606b;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(150, 170, 190, 0.12);
+}
+.feed-icon-btn:active {
+  background: rgba(240, 245, 250, 1);
+  transform: scale(0.94);
+}
+body.theme-dark .feed-icon-btn {
+  background: rgba(42, 48, 56, 0.85);
+  border-color: var(--theme-card-border);
+  color: var(--theme-text-soft);
+}
+
+/* 铃铛上的未读数字红点 */
+.feed-notice-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #f57171;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(245, 113, 113, 0.5);
+  pointer-events: none;
+}
 
 /* ============ 主体滚动区 ============ */
 .feed-body {
@@ -79,26 +133,27 @@ body.theme-dark .feed-topbar-title { color: var(--theme-text); }
 }
 .feed-body::-webkit-scrollbar { display: none; }
 
-/* ============ 头部卡片 ============ */
+/* ============ 头部卡片（封面 + 换背景 + 下方头像/名字） ============ */
 .feed-header-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(240, 244, 248, 0.9);
   border-radius: 22px;
   box-shadow: 0 4px 14px rgba(150, 170, 190, 0.1);
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  position: relative;
 }
 body.theme-dark .feed-header-card {
   background: rgba(38, 44, 52, 0.85);
   border-color: var(--theme-card-border);
 }
 
-/* 封面：默认渐变，JS 可替换为图片 URL */
+/* 封面 */
 .feed-cover {
-  height: 110px;
-  background: linear-gradient(135deg, #d4e8fc 0%, #e0d4fc 100%);
+  height: 120px;
+  background: linear-gradient(135deg, #e8eef4 0%, #f5f0fa 100%);
   background-size: cover;
   background-position: center;
   position: relative;
@@ -107,18 +162,54 @@ body.theme-dark .feed-cover {
   background: linear-gradient(135deg, #2a3a4a 0%, #3a3050 100%);
 }
 
+/* 换背景按钮（毛玻璃小胶囊，左上角） */
+.feed-cover-change-btn {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #55606b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 8px rgba(150, 170, 190, 0.15);
+}
+.feed-cover-change-btn:active {
+  background: rgba(240, 245, 250, 1);
+  transform: scale(0.96);
+}
+.feed-cover-change-btn i {
+  font-size: 12px;
+  color: #6fa3cc;
+}
+body.theme-dark .feed-cover-change-btn {
+  background: rgba(42, 48, 56, 0.85);
+  border-color: var(--theme-card-border);
+  color: var(--theme-text-soft);
+}
+
+/* 封面下方：头像 + 名字（右下角叠在封面下沿） */
 .feed-header-info {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 0 16px 14px 16px;
-  margin-top: -22px;
+  margin-top: -26px;
   position: relative;
 }
 .feed-header-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 9999px;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
   object-fit: cover;
   border: 3px solid #ffffff;
   box-shadow: 0 4px 12px rgba(150, 180, 210, 0.25);
@@ -130,7 +221,7 @@ body.theme-dark .feed-header-avatar {
 }
 .feed-header-text {
   min-width: 0;
-  padding-top: 24px;
+  padding-top: 28px;
 }
 .feed-header-name {
   font-size: 15px;
@@ -145,59 +236,6 @@ body.theme-dark .feed-header-name { color: var(--theme-text); }
   font-size: 11px;
   color: #a8b4c0;
   margin-top: 2px;
-}
-
-/* ============ 发帖输入框 ============ */
-.feed-post-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
-  box-shadow: 0 4px 14px rgba(150, 170, 190, 0.1);
-  cursor: pointer;
-  margin-bottom: 14px;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.feed-post-bar:active {
-  background: rgba(252, 248, 250, 0.95);
-  transform: scale(0.99);
-}
-body.theme-dark .feed-post-bar {
-  background: rgba(38, 44, 52, 0.85);
-  border-color: var(--theme-card-border);
-}
-
-.feed-post-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 9999px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.feed-post-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.feed-post-input {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  color: #a8b4c0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.feed-post-icon {
-  flex-shrink: 0;
-  color: #f8b4b4;
-  font-size: 14px;
 }
 
 /* ============ 动态列表 ============ */
@@ -222,7 +260,7 @@ body.theme-dark .feed-card {
   border-color: var(--theme-card-border);
 }
 
-/* 卡片头：头像 + 名字 + 时间 */
+/* 卡片头 */
 .feed-card-head {
   display: flex;
   align-items: center;
@@ -532,10 +570,8 @@ body.theme-dark .feed-post-btn-cancel {
   box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
 }
 
-/* 主页朋友圈入口的小红点 */
-#btnFeed {
-  position: relative;
-}
+/* 主页朋友圈入口红点 */
+#btnFeed { position: relative; }
 .feed-unread-dot {
   position: absolute;
   top: 6px;
@@ -556,9 +592,7 @@ body.theme-dark .feed-unread-dot {
   box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
 }
 
-/* ============================================================
-   评论"回复"按钮
-   ============================================================ */
+/* 评论"回复"按钮 */
 .feed-comment-reply-btn {
   margin-left: 6px;
   padding: 1px 8px;
@@ -577,16 +611,13 @@ body.theme-dark .feed-comment-reply-btn {
   color: #9cc3e8;
 }
 
-/* "回复 xxx" 提示 */
 .feed-comment-to {
   color: #8899a6;
   font-weight: 500;
   margin-right: 2px;
 }
 
-/* ============================================================
-   删除动态按钮（红色）
-   ============================================================ */
+/* 删除动态按钮 */
 .feed-action-del {
   color: #c0a8a8 !important;
   flex: 0 0 auto !important;
@@ -597,34 +628,7 @@ body.theme-dark .feed-comment-reply-btn {
   color: #e58b8b !important;
 }
 
-/* ============================================================
-   设置按钮的未读数字红点
-   ============================================================ */
-.feed-settings-btn {
-  position: relative;
-}
-.feed-notice-dot {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9999px;
-  background: #f57171;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(245, 113, 113, 0.5);
-  pointer-events: none;
-}
-
-/* ============================================================
-   通知弹窗
-   ============================================================ */
+/* ============ 通知弹窗 ============ */
 .feed-notice-modal {
   position: fixed;
   inset: 0;
@@ -744,23 +748,11 @@ body.theme-dark .feed-notice-item.new {
   flex-shrink: 0;
   font-size: 13px;
 }
-.feed-notice-icon.like {
-  background: #fdf0f0;
-  color: #e58b8b;
-}
-.feed-notice-icon.comment {
-  background: #eaf3fb;
-  color: #6fa3cc;
-}
-.feed-notice-icon.reply {
-  background: #f0faf5;
-  color: #3d9c74;
-}
+.feed-notice-icon.like { background: #fdf0f0; color: #e58b8b; }
+.feed-notice-icon.comment { background: #eaf3fb; color: #6fa3cc; }
+.feed-notice-icon.reply { background: #f0faf5; color: #3d9c74; }
 
-.feed-notice-main {
-  flex: 1;
-  min-width: 0;
-}
+.feed-notice-main { flex: 1; min-width: 0; }
 .feed-notice-line {
   font-size: 13px;
   color: #333;
@@ -768,10 +760,7 @@ body.theme-dark .feed-notice-item.new {
   word-break: break-word;
 }
 body.theme-dark .feed-notice-line { color: var(--theme-text); }
-.feed-notice-line b {
-  font-weight: 700;
-  color: #e58b8b;
-}
+.feed-notice-line b { font-weight: 700; color: #e58b8b; }
 .feed-notice-time {
   font-size: 11px;
   color: #a8b4c0;
@@ -819,19 +808,86 @@ body.theme-dark .feed-notice-clear {
   border-color: var(--theme-card-border);
 }
 
-/* 红点（主页入口） */
-#btnFeed { position: relative; }
-.feed-unread-dot {
-  position: absolute;
-  top: 6px;
-  right: 22px;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: #f57171;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-  pointer-events: none;
+/* ============ 换背景选项弹层 ============ */
+.feed-cover-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 480;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
-body.theme-dark .feed-unread-dot {
-  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+.feed-cover-modal.active { display: flex; }
+
+.feed-cover-panel {
+  width: 100%;
+  max-width: 430px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 28px 28px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+  padding: 20px 20px 24px 20px;
+  animation: feedSlideUp 0.25s ease;
 }
+body.theme-dark .feed-cover-panel {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border);
+}
+.feed-cover-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .feed-cover-title { color: var(--theme-text); }
+.feed-cover-option {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.feed-cover-option:active {
+  background: #f2f6fa;
+  transform: scale(0.98);
+}
+.feed-cover-option i {
+  color: #f8b4b4;
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+body.theme-dark .feed-cover-option {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text);
+  border-color: var(--theme-card-border);
+}
+.feed-cover-cancel {
+  width: 100%;
+  padding: 12px 0;
+  text-align: center;
+  color: #8899a6;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  margin-top: 4px;
+}
+.feed-cover-cancel:active { color: #55606b; }
