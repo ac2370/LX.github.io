@@ -403,6 +403,64 @@
     return randomPick(stickerArr);
   }
 
+    // ==================== 从 DOM 取最近 N 条我方消息文本 ====================
+  function getRecentSelfMessages(limit) {
+    var rows = chatMessages.querySelectorAll('.message-row.self');
+    var arr = [];
+    // 从后往前取，最多 limit 条
+    for (var i = rows.length - 1; i >= 0 && arr.length < (limit || 8); i--) {
+      var row = rows[i];
+      var bubble = row.querySelector('.message-bubble');
+      if (!bubble) continue;
+      var img = bubble.querySelector('img');
+      if (img && !bubble.textContent.trim()) continue; // 跳过纯图片
+      var text = bubble.textContent.trim();
+      if (text) arr.push(text);
+    }
+    return arr;
+  }
+
+  // ==================== 随机给我之前的消息贴表情反应 ====================
+  var REACTION_EMOJIS = ['❤️', '👍', '😂', '😍', '🤔', '😮', '🥰', '😢', '🔥', '👀'];
+
+  function tryAddReaction() {
+    // 概率：30%
+    if (Math.random() > 0.3) return;
+
+    // 找最近 8 条我方消息（排除已有反应的）
+    var rows = chatMessages.querySelectorAll('.message-row.self');
+    var candidates = [];
+    for (var i = rows.length - 1; i >= 0 && candidates.length < 8; i--) {
+      var row = rows[i];
+      if (row.dataset.reaction) continue;      // 已有反应跳过
+      if (!row.querySelector('.message-bubble')) continue;
+      candidates.push(row);
+    }
+    if (candidates.length === 0) return;
+
+    var targetRow = randomPick(candidates);
+    var emoji = randomPick(REACTION_EMOJIS);
+    if (!targetRow || !emoji) return;
+
+    // 标记到 dataset，防止重复贴
+    targetRow.dataset.reaction = emoji;
+
+    // 渲染反应气泡（挂到 message-body 上，跟时间戳同级）
+    var body = targetRow.querySelector('.message-body');
+    if (!body) return;
+
+    // 如果已经有 reaction 容器就不重复创建
+    var reactionEl = body.querySelector('.message-reaction');
+    if (!reactionEl) {
+      reactionEl = document.createElement('div');
+      reactionEl.className = 'message-reaction';
+      body.appendChild(reactionEl);
+    }
+    reactionEl.textContent = emoji;
+    reactionEl.classList.add('pop'); // 用于 CSS 动画
+    setTimeout(function () { reactionEl.classList.remove('pop'); }, 400);
+  }
+  
   // ==================== 创建消息行 ====================
   function createMessageRow(type, content) {
     const row = document.createElement('div');
@@ -570,11 +628,20 @@
             }
           }
 
-          if (settings.quote && lastUserMessage && Math.random() < 0.35) {
-            content = { quote: lastUserMessage, text: content };
+                   if (settings.quote) {
+            var quotePool = getRecentSelfMessages(8); // 最近 8 条我方消息
+            if (quotePool.length > 0 && Math.random() < 0.35) {
+              var pickedQuote = randomPick(quotePool);
+              content = { quote: pickedQuote, text: content };
+            }
           }
 
           replies.push({ type: 'text', content: content });
+        }
+
+                // 1.5 随机贴表情反应
+        if (settings.reaction) {
+          tryAddReaction();
         }
 
         // 2. 图片回复
