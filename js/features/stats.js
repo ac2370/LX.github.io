@@ -29,13 +29,6 @@
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  function formatDateFull(ts) {
-    if (!ts) return '';
-    var d = new Date(ts);
-    function pad(n) { return n < 10 ? '0' + n : '' + n; }
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-  }
-
   // ==================== 从 DOM 读消息 ====================
   function readAllMessages() {
     var chatMessages = document.getElementById('chatMessages');
@@ -45,7 +38,6 @@
     var result = [];
 
     rows.forEach(function (row) {
-      // 跳过正在输入的占位气泡
       if (row.id === 'typingRow') return;
 
       var sender = row.dataset.sender || (row.classList.contains('self') ? 'me' : 'partner');
@@ -53,9 +45,7 @@
       var time = Number(row.dataset.time) || 0;
       var favorited = row.dataset.favorited === 'true';
 
-      // 排除 system（拍一拍、电话记录等）
       if (type === 'system') return;
-      // 排除 system-call-event
       if (row.classList.contains('system-call-event')) return;
 
       var text = '';
@@ -121,7 +111,6 @@
       var view = document.getElementById('statsView' + name.charAt(0).toUpperCase() + name.slice(1));
       if (view) view.classList.add('active');
 
-      // 切换时刷新对应 tab 内容
       if (name === 'overview') renderOverview();
       if (name === 'favorites') renderFavorites();
       if (name === 'wordcloud') renderWordCloud();
@@ -136,7 +125,6 @@
     var myMsgs = msgs.filter(function (m) { return m.sender === 'me'; });
     var partnerMsgs = msgs.filter(function (m) { return m.sender === 'partner'; });
 
-    // 总览卡
     var cards = document.getElementById('statsOverviewCards');
     cards.innerHTML = '';
 
@@ -164,7 +152,6 @@
       cards.appendChild(div);
     });
 
-    // 高频消息
     renderRankList(currentRankView, msgs);
   }
 
@@ -178,7 +165,7 @@
     }).filter(function (m) { return m.text; });
 
     if (targetMsgs.length === 0) {
-      list.innerHTML = '<div class="stats-empty active" style="display:block;padding:30px 0;"><div>暂无数据</div></div>';
+      list.innerHTML = '<div style="text-align:center;padding:30px 0;color:#c0ccd6;font-size:13px;">暂无数据</div>';
       return;
     }
 
@@ -228,6 +215,10 @@
   });
 
   // ==================== Tab 2：搜索 ====================
+  function escapeReg(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   function runSearch() {
     var keyword = document.getElementById('statsSearchKeyword').value.trim();
     var fromStr = document.getElementById('statsSearchFrom').value;
@@ -288,10 +279,6 @@
     });
   }
 
-  function escapeReg(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
   document.getElementById('statsSearchBtn').addEventListener('click', runSearch);
 
   // ==================== Tab 3：收藏 ====================
@@ -335,10 +322,9 @@
       list.appendChild(div);
     });
   }
-
-  // ==================== Tab 4：词云 ====================
+    // ==================== Tab 4：词云 ====================
   var STOP_WORDS = {
-    '的':1,'了':1,'是':1,'我':1,'你':1,'他':1,'她':1,'它':1,'们':1,'在':1,'有':1,'和':1,'就':1,'都':1,'也':1,'还':1,'又':1,'再':1,'只':1,'被':1,'把':1,'让':1,'给':1,'对':1,'从':1,'向':1,'往':1,'和':1,'与':1,'或':1,'但':1,'但':1,'而':1,'且':1,'并':1,'等':1,'着':1,'过':1,'地':1,'得':1,'呢':1,'吧':1,'啊':1,'吗':1,'呀':1,'哦':1,'噢':1,'嗯':1,'嘛':1,'啦':1,'哟':1,'哈':1,'嘿':1,'嘿':1,'不':1,'没':1,'很':1,'太':1,'更':1,'最':1,'挺':1,'真':1,'好':1,'那':1,'这':1,'上':1,'下':1,'来':1,'去':1,'会':1,'能':1,'要':1,'想':1,'要':1,'个':1,'一':1,'二':1,'三':1,'点':1,'些':1,
+    '的':1,'了':1,'是':1,'我':1,'你':1,'他':1,'她':1,'它':1,'们':1,'在':1,'有':1,'和':1,'就':1,'都':1,'也':1,'还':1,'又':1,'再':1,'只':1,'被':1,'把':1,'让':1,'给':1,'对':1,'从':1,'向':1,'往':1,'与':1,'或':1,'但':1,'而':1,'且':1,'并':1,'等':1,'着':1,'过':1,'地':1,'得':1,'呢':1,'吧':1,'啊':1,'吗':1,'呀':1,'哦':1,'噢':1,'嗯':1,'嘛':1,'啦':1,'哟':1,'哈':1,'嘿':1,'不':1,'没':1,'很':1,'太':1,'更':1,'最':1,'挺':1,'真':1,'好':1,'那':1,'这':1,'上':1,'下':1,'来':1,'去':1,'会':1,'能':1,'要':1,'想':1,'个':1,'一':1,'二':1,'三':1,'点':1,'些':1,
     '图片':1,'表情':1,'语音':1,'撤回':1,'消息':1,'视频':1,'通话':1
   };
 
@@ -346,7 +332,6 @@
 
   function tokenize(text) {
     if (!text) return [];
-    // 清洗
     text = text.replace(/https?:\/\/\S+/g, ' ');
     text = text.replace(/\[[^\]]*\]/g, ' ');
     text = text.replace(/<[^>]+>/g, ' ');
@@ -354,39 +339,193 @@
 
     var tokens = [];
 
-    // 4字词
     for (var i = 0; i < text.length - 3; i++) {
       var w = text.substr(i, 4);
-      if (/^[\u4e00-\u9fa5]{4}$/.test(w)) {
-        tokens.push({ word: w, weight: 2.4 });
-      }
+      if (/^[\u4e00-\u9fa5]{4}$/.test(w)) tokens.push({ word: w, weight: 2.4 });
     }
-    // 3字词
     for (var j = 0; j < text.length - 2; j++) {
       var w3 = text.substr(j, 3);
-      if (/^[\u4e00-\u9fa5]{3}$/.test(w3)) {
-        tokens.push({ word: w3, weight: 1.8 });
-      }
+      if (/^[\u4e00-\u9fa5]{3}$/.test(w3)) tokens.push({ word: w3, weight: 1.8 });
     }
-    // 2字词
     for (var k = 0; k < text.length - 1; k += 2) {
       var w2 = text.substr(k, 2);
-      if (/^[\u4e00-\u9fa5]{2}$/.test(w2)) {
-        tokens.push({ word: w2, weight: 1.0 });
-      }
+      if (/^[\u4e00-\u9fa5]{2}$/.test(w2)) tokens.push({ word: w2, weight: 1.0 });
     }
-    // 英文
     var en = text.match(/[a-zA-Z]{3,}/g) || [];
     en.forEach(function (w) {
       tokens.push({ word: w.toLowerCase(), weight: 1.0 });
     });
 
-    return tokens.filter(function (t) {
-      return !STOP_WORDS[t.word];
-    });
+    return tokens.filter(function (t) { return !STOP_WORDS[t.word]; });
   }
 
   function renderWordCloud() {
     var msgs = readAllMessages().filter(function (m) { return m.text; });
     if (currentWCView === 'partner') {
-     
+      msgs = msgs.filter(function (m) { return m.sender === 'partner'; });
+    } else if (currentWCView === 'me') {
+      msgs = msgs.filter(function (m) { return m.sender === 'me'; });
+    }
+
+    var freq = {};
+    msgs.forEach(function (m) {
+      var tokens = tokenize(m.text);
+      tokens.forEach(function (t) {
+        freq[t.word] = (freq[t.word] || 0) + t.weight;
+      });
+    });
+
+    var arr = Object.keys(freq).map(function (w) {
+      return { word: w, freq: freq[w] };
+    });
+    arr.sort(function (a, b) { return b.freq - a.freq; });
+    var top = arr.slice(0, 60);
+
+    var canvas = document.getElementById('statsWCCanvas');
+    var emptyEl = document.getElementById('statsWCEmpty');
+
+    if (top.length === 0) {
+      canvas.style.display = 'none';
+      emptyEl.classList.add('active');
+      return;
+    }
+    canvas.style.display = 'block';
+    emptyEl.classList.remove('active');
+
+    // 用 Canvas 绘制
+    drawWordCloud(canvas, top);
+  }
+
+  function drawWordCloud(canvas, words) {
+    var parent = canvas.parentElement;
+    var W = parent.clientWidth;
+    var H = parent.clientHeight;
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    var maxFreq = words[0].freq;
+    var minFreq = words[words.length - 1].freq;
+    var placedRects = [];
+
+    var palette = ['#f8b4b4', '#7ED3A8', '#6FB1E8', '#B78BEA', '#F5A623', '#F06292', '#4DD0E1'];
+
+    function overlaps(x, y, w, h) {
+      for (var i = 0; i < placedRects.length; i++) {
+        var r = placedRects[i];
+        if (Math.abs(x - r.x) < (w + r.w) / 2 &&
+            Math.abs(y - r.y) < (h + r.h) / 2) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    words.forEach(function (item, idx) {
+      var norm = (item.freq - minFreq) / (maxFreq - minFreq || 1);
+      var size = 11 + Math.log(1 + norm * 9) / Math.log(10) * 43;
+      if (size < 11) size = 11;
+      if (size > 54) size = 54;
+
+      ctx.font = 'bold ' + size + 'px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+      var metrics = ctx.measureText(item.word);
+      var w = metrics.width + 6;
+      var h = size + 6;
+
+      var placed = false;
+      for (var attempt = 0; attempt < 300; attempt++) {
+        var x = Math.random() * (W - w) + w / 2;
+        var y = Math.random() * (H - h) + h / 2;
+        if (!overlaps(x, y, w, h)) {
+          ctx.save();
+          if (idx < 3) {
+            ctx.globalAlpha = idx === 0 ? 1 : (idx === 1 ? 0.82 : 0.64);
+          } else {
+            ctx.globalAlpha = 0.85;
+          }
+          var color = palette[idx % palette.length];
+          ctx.fillStyle = color;
+          ctx.fillText(item.word, x, y);
+          ctx.restore();
+          placedRects.push({ x: x, y: y, w: w, h: h });
+          placed = true;
+          break;
+        }
+      }
+    });
+  }
+
+  // 词云视图切换
+  document.getElementById('statsWCPartner').addEventListener('click', function () {
+    currentWCView = 'partner';
+    document.getElementById('statsWCPartner').classList.add('active');
+    document.getElementById('statsWCMe').classList.remove('active');
+    document.getElementById('statsWCAll').classList.remove('active');
+    renderWordCloud();
+  });
+  document.getElementById('statsWCMe').addEventListener('click', function () {
+    currentWCView = 'me';
+    document.getElementById('statsWCMe').classList.add('active');
+    document.getElementById('statsWCPartner').classList.remove('active');
+    document.getElementById('statsWCAll').classList.remove('active');
+    renderWordCloud();
+  });
+  document.getElementById('statsWCAll').addEventListener('click', function () {
+    currentWCView = 'all';
+    document.getElementById('statsWCAll').classList.add('active');
+    document.getElementById('statsWCMe').classList.remove('active');
+    document.getElementById('statsWCPartner').classList.remove('active');
+    renderWordCloud();
+  });
+  // ==================== 入口绑定 ====================
+  function openStatsPage() {
+    // 用 router 切页（如果有 showPage）
+    if (typeof window.showPage === 'function') {
+      window.showPage(pageStats);
+    } else {
+      // 兜底：手动切
+      document.querySelectorAll('.page').forEach(function (p) {
+        p.classList.remove('active');
+      });
+      pageStats.classList.add('active');
+    }
+    // 默认渲染统计 tab
+    document.querySelector('.stats-tab[data-tab="overview"]').click();
+  }
+
+  var btn = document.getElementById('btnWordCloud');
+  if (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      openStatsPage();
+    });
+  }
+
+  var backBtn = document.getElementById('statsBackBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function () {
+      if (typeof window.showPage === 'function') {
+        window.showPage(document.getElementById('pageHome'));
+      }
+    });
+  }
+
+  // 暴露给外部
+  window.stats = {
+    open: openStatsPage,
+    readAllMessages: readAllMessages,
+    renderOverview: renderOverview,
+    renderFavorites: renderFavorites,
+    renderWordCloud: renderWordCloud,
+    runSearch: runSearch
+  };
+
+})();
