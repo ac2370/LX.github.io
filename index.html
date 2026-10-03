@@ -669,17 +669,17 @@
 <div class="page" id="pageFeed">
   <div class="feed-container">
 
-    <!-- 顶部导航栏 -->
+       <!-- 顶部导航栏 -->
     <div class="feed-topbar">
       <button class="feed-back-btn" id="feedBackBtn">
         <i class="fa-solid fa-arrow-left"></i>
       </button>
       <span class="feed-topbar-title">朋友圈</span>
       <div class="feed-topbar-right">
-        <button class="feed-settings-btn" id="feedSettingsBtn" title="通知">
+        <button class="feed-icon-btn" id="feedSettingsBtn" title="通知">
           <i class="fa-solid fa-bell"></i>
         </button>
-        <button class="feed-add-btn" id="feedAddBtn" title="发一条">
+        <button class="feed-icon-btn" id="feedAddBtn" title="发一条">
           <i class="fa-solid fa-plus"></i>
         </button>
       </div>
@@ -688,14 +688,19 @@
     <!-- 主体滚动区 -->
     <div class="feed-body">
 
-      <!-- 头部卡片：头像 + 名字 + 封面 -->
+         <!-- 头部卡片：封面 + 换背景 + 右下角头像/名字 -->
       <div class="feed-header-card">
-        <div class="feed-cover" id="feedCover"></div>
+        <div class="feed-cover" id="feedCover">
+          <button class="feed-cover-change-btn" id="feedCoverChangeBtn" type="button">
+            <i class="fa-regular fa-image"></i>
+            <span>换背景</span>
+          </button>
+        </div>
         <div class="feed-header-info">
           <img class="feed-header-avatar" id="feedHeaderAvatar" src="https://picsum.photos/200/200?random=99" alt="">
           <div class="feed-header-text">
             <div class="feed-header-name" id="feedHeaderName">Ta</div>
-            <div class="feed-header-sub">我的朋友圈</div>
+            <div class="feed-header-sub">Ta 的朋友圈</div>
           </div>
         </div>
       </div>
