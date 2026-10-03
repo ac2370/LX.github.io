@@ -430,12 +430,16 @@
     pendingNewAvatarData = null;
   }
 
-  // ==================== 事件绑定 ====================
-  // 单击顶栏头像/昵称 → 打开角色面板
-  chatContactArea.addEventListener('click', function (e) {
-    e.preventDefault();
-    openRolePanel();
-  });
+   // ==================== 事件绑定 ====================
+  // 单击昵称 "Ta" → 打开角色面板
+  // （单击头像由 chat-extras.js 处理，弹出"拍一拍"）
+  if (chatName) {
+    chatName.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();   // 防止冒泡到 chatContactArea
+      openRolePanel();
+    });
+  }
 
   // 点击遮罩关闭
   rolePanelModal.addEventListener('click', function (e) {
