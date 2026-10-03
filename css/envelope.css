@@ -788,3 +788,161 @@ body.theme-dark .env-mail-toast-btn.later {
   color: var(--theme-text-soft);
   border-color: var(--theme-card-border);
 }
+
+/* ============================================================
+   Tab 角标
+   ============================================================ */
+.env-tab {
+  position: relative;
+}
+.env-tab-badge {
+  position: absolute;
+  top: -4px;
+  right: 8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #f8b4b4;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(248, 180, 180, 0.5);
+}
+
+/* ============================================================
+   阅读弹层：你的原信（带展开/收起）
+   ============================================================ */
+.env-read-original {
+  position: relative;
+}
+.env-read-original-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #a89878;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.env-read-original-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #8a7a5e;
+  font-style: italic;
+  word-break: break-word;
+}
+.env-read-original-toggle {
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(240, 234, 220, 0.9);
+  color: #8a7a5e;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.env-read-original-toggle:active {
+  background: #e8dcc8;
+}
+body.theme-dark .env-read-original-toggle {
+  background: rgba(50, 46, 40, 0.9);
+  color: #b8ac98;
+}
+
+/* ============================================================
+   阅读弹层：编辑态
+   ============================================================ */
+.env-read-editarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e8dcc8;
+  background: rgba(255, 253, 248, 0.95);
+  font-size: 14px;
+  color: #4a3e2e;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.9;
+  box-sizing: border-box;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+.env-read-editarea:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+body.theme-dark .env-read-editarea {
+  background: #2a2a26;
+  border-color: #3a3a34;
+  color: #e8dcc8;
+}
+
+/* ============================================================
+   底部浮层：回信提示
+   ============================================================ */
+.env-mail-toast-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 40px rgba(0, 20, 30, 0.25);
+}
+body.theme-dark .env-mail-toast-inner {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border);
+}
+
+.env-mail-toast-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  animation: envToastBounce 1.2s ease-in-out infinite;
+}
+@keyframes envToastBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.env-mail-toast-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-dark .env-mail-toast-text { color: var(--theme-text); }
+
+.env-mail-toast-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.env-mail-toast-btn {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+.env-mail-toast-btn:active { transform: scale(0.95); }
+.env-mail-toast-btn.now {
+  background: linear-gradient(135deg, #f8b4b4 0%, #f8a8c8 100%);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(248, 180, 180, 0.35);
+}
