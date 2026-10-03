@@ -1396,3 +1396,16 @@ body.theme-dark .ds-export-cancel {
   box-shadow: 0 4px 12px rgba(111, 177, 232, 0.35);
 }
 .ds-export-confirm:active { background: #4a86b0; }
+
+/* 专属字卡库分类标题 */
+.cs-contact-category-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a8a99;
+  margin: 14px 0 6px;
+  padding-left: 4px;
+}
+.cs-contact-category-title i {
+  margin-right: 4px;
+  color: #5C7CFA;
+}
