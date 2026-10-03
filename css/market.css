@@ -684,7 +684,7 @@ body.theme-dark .mkt-btn-wish {
 .mkt-record-claim:active { background: #e58b8b; }
 
 /* ============================================================
-   聊天礼物卡
+   聊天礼物卡（统一尺寸）
    ============================================================ */
 .chat-gift-card {
   display: flex;
@@ -694,7 +694,9 @@ body.theme-dark .mkt-btn-wish {
   border-radius: 16px;
   background: linear-gradient(135deg, #fff8f8 0%, #fef0f5 100%);
   border: 1px solid #f8d8d8;
-  max-width: 240px;
+  width: 200px;              /* ★ 固定宽度，统一 */
+  max-width: 200px;
+  box-sizing: border-box;
   box-shadow: 0 3px 10px rgba(248, 180, 180, 0.15);
 }
 body.theme-dark .chat-gift-card {
@@ -712,6 +714,9 @@ body.theme-dark .chat-gift-card {
   font-weight: 700;
   color: #333;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 body.theme-dark .chat-gift-name { color: var(--theme-text); }
 .chat-gift-price {
@@ -729,6 +734,8 @@ body.theme-dark .chat-gift-name { color: var(--theme-text); }
   background: rgba(255, 255, 255, 0.7);
   border-radius: 10px;
   word-break: break-word;
+  max-height: 60px;
+  overflow: hidden;
 }
 body.theme-dark .chat-gift-wish {
   background: rgba(42, 48, 56, 0.7);
