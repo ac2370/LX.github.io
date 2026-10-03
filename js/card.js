@@ -853,6 +853,156 @@
     );
 
     renderEmojiGrid();
+    renderBuiltinGroups();
+  }
+
+    // ==================== 内置字卡库（只读展示） ====================
+  function renderBuiltinGroups() {
+    // 找到「回复」面板里的容器
+    var container = document.getElementById('builtinGroupsList');
+    if (!container) return;
+
+    if (!window.publicCards || !window.publicCards.isReady || !window.publicCards.isReady()) {
+      container.innerHTML = '';
+      return;
+    }
+
+    var groups = window.publicCards.getBuiltinGroups('reply');
+    if (!groups || groups.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    // 按前缀分组显示：main / 颜文字· / emoji· / 存钱罐· / 词库·
+    var sections = {
+      'main': { title: '日常字卡', items: [] },
+      '颜文字·': { title: '颜文字', items: [] },
+      'emoji·': { title: 'emoji', items: [] },
+      '存钱罐·': { title: '存钱罐', items: [] },
+      '词库·': { title: '词库', items: [] }
+    };
+
+    groups.forEach(function (g) {
+      var name = g.name;
+      var key = 'main';
+      if (name.indexOf('颜文字·') === 0) key = '颜文字·';
+      else if (name.indexOf('emoji·') === 0) key = 'emoji·';
+      else if (name.indexOf('存钱罐·') === 0) key = '存钱罐·';
+      else if (name.indexOf('词库·') === 0) key = '词库·';
+      sections[key].items.push(g);
+    });
+
+    container.innerHTML = '';
+
+    // 顶部标题
+    var header = document.createElement('div');
+    header.className = 'builtin-groups-header';
+    header.innerHTML =
+      '<i class="fa-solid fa-book"></i>' +
+      '<span>内置字卡库</span>' +
+      '<span class="builtin-groups-count">' + groups.length + ' 组</span>';
+    container.appendChild(header);
+
+    var hint = document.createElement('div');
+    hint.className = 'builtin-groups-hint';
+    hint.textContent = '只读，去设置 → 聊天与字卡 可勾选是否参与抽卡';
+    container.appendChild(hint);
+
+    // 逐个 section 渲染
+    Object.keys(sections).forEach(function (key) {
+      var sec = sections[key];
+      if (sec.items.length === 0) return;
+
+      var secEl = document.createElement('div');
+      secEl.className = 'builtin-section';
+
+      var secTitle = document.createElement('div');
+      secTitle.className = 'builtin-section-title';
+      secTitle.textContent = sec.title + '（' + sec.items.length + ' 组）';
+      secEl.appendChild(secTitle);
+
+      sec.items.forEach(function (g) {
+        var row = document.createElement('div');
+        row.className = 'builtin-group-item';
+
+        var isChecked = window.publicCards.isSelected(g.name);
+        row.innerHTML =
+          '<span class="builtin-group-dot" style="background:' +
+            (isChecked ? '#7ED3A8' : '#d8dfe6') +
+          '"></span>' +
+          '<span class="builtin-group-name">' + escapeHtml(g.name) + '</span>' +
+          '<span class="builtin-group-count">' + g.count + ' 条</span>' +
+          '<span class="builtin-group-tag">' + (isChecked ? '已启用' : '未启用') + '</span>';
+
+        row.addEventListener('click', function () {
+          openBuiltinGroupViewer(g.name, g.count);
+        });
+
+        secEl.appendChild(row);
+      });
+
+      container.appendChild(secEl);
+    });
+  }
+
+  // 打开内置分组的只读查看器
+  function openBuiltinGroupViewer(groupName, count) {
+    var existing = document.getElementById('builtinViewer');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var cards = window.publicCards.getBuiltinCards(groupName, 'reply');
+
+    var modal = document.createElement('div');
+    modal.id = 'builtinViewer';
+    modal.className = 'builtin-viewer-modal';
+
+    var panel = document.createElement('div');
+    panel.className = 'builtin-viewer-panel';
+
+    var header = document.createElement('div');
+    header.className = 'builtin-viewer-header';
+    header.innerHTML =
+      '<span class="builtin-viewer-title">' + escapeHtml(groupName) + '</span>' +
+      '<span class="builtin-viewer-count">' + count + ' 条</span>' +
+      '<button class="builtin-viewer-close" type="button"><i class="fa-solid fa-xmark"></i></button>';
+
+    var body = document.createElement('div');
+    body.className = 'builtin-viewer-body';
+
+    if (cards.length === 0) {
+      body.innerHTML = '<div class="builtin-viewer-empty">暂无字卡</div>';
+    } else {
+      cards.forEach(function (text, idx) {
+        var item = document.createElement('div');
+        item.className = 'builtin-viewer-item';
+        item.innerHTML =
+          '<span class="builtin-viewer-num">' + (idx + 1) + '</span>' +
+          '<span class="builtin-viewer-text">' + escapeHtml(text) + '</span>';
+        body.appendChild(item);
+      });
+    }
+
+    var footer = document.createElement('div');
+    footer.className = 'builtin-viewer-footer';
+    footer.innerHTML =
+      '<button class="builtin-viewer-btn builtin-viewer-btn-close" type="button">关闭</button>';
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+    panel.appendChild(footer);
+    modal.appendChild(panel);
+    document.body.appendChild(modal);
+
+    // 事件
+    function close() {
+      if (modal.parentNode) modal.parentNode.removeChild(modal);
+    }
+
+    header.querySelector('.builtin-viewer-close').addEventListener('click', close);
+    footer.querySelector('.builtin-viewer-btn-close').addEventListener('click', close);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) close();
+    });
   }
 
   // ==================== 回复面板事件 ====================
