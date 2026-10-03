@@ -487,26 +487,14 @@
     var chatAvatar = document.getElementById('chatAvatar');
     if (!chatAvatar) return;
 
-    // ---------- 双击检测 ----------
-    // 单击不拦截（让 role-panel.js 打开角色面板）；
-    // 双击时阻止事件继续传播，避免触发两次单击。
-    var DBLCLICK_DELAY = 280;
-    var lastClickTime = 0;
-
+       // ---------- 单击头像 → 拍一拍 ----------
+    // （单击昵称由 role-panel.js 处理，弹出角色面板）
     chatAvatar.addEventListener('click', function (e) {
-      var now = Date.now();
-      if (now - lastClickTime < DBLCLICK_DELAY) {
-        // 双击 → 拍一拍
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        lastClickTime = 0;
-        openPatModal();
-      } else {
-        // 单击 → 不拦截，让 role-panel.js 处理（打开角色面板）
-        lastClickTime = now;
-      }
-    }, true /* 捕获阶段，先于 role-panel.js 的监听 */);
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      openPatModal();
+    }, true /* 捕获阶段，先于其它监听 */);
 
     // ---------- 弹窗 DOM ----------
     var modal = document.createElement('div');
