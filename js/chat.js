@@ -487,40 +487,86 @@
 
   // 在聊天记录里插入一张礼物卡
   // record: { id, giftId, name, price, emoji, wish, side, claimed, tm }
-  window.chatAddGift = function (record) {
-    if (!record || !chatMessages) return;
+window.chatAddGift = function (record) {
+  if (!record || !chatMessages) return;
 
-    // ---- 分支 A：Ta 给自己买的（side === 'self'）→ 方框卡片，无领取按钮 ----
-    if (record.side === 'self') {
-      var selfRow = document.createElement('div');
-      selfRow.className = 'message-row other';
-      selfRow.setAttribute('data-gift-id', record.id);
+  // ---- 分支 A：Ta 给自己买的 → 方框卡片，无领取按钮 ----
+  if (record.side === 'self') {
+    var selfRow = document.createElement('div');
+    selfRow.className = 'message-row other';
+    selfRow.setAttribute('data-gift-id', record.id);
 
-      var box = document.createElement('div');
-      box.className = 'chat-gift-box';
+    var box = document.createElement('div');
+    box.className = 'chat-gift-box';
 
-      var priceTextSelf = '¥' + ((record.price || 0) / 100);
+    var priceTextSelf = '¥' + ((record.price || 0) / 100);
 
-      box.innerHTML =
-        '<div class="chat-gift-box-head">' +
-          '<span class="chat-gift-box-bar"></span>' +
-          '<span class="chat-gift-box-title">Ta 给自己买了一件心意</span>' +
+    box.innerHTML =
+      '<div class="chat-gift-box-head">' +
+        '<span class="chat-gift-box-bar"></span>' +
+        '<span class="chat-gift-box-title">Ta 给自己买了一件心意</span>' +
+      '</div>' +
+      '<div class="chat-gift-box-body">' +
+        '<div class="chat-gift-box-emoji">' + (record.emoji || '🎁') + '</div>' +
+        '<div class="chat-gift-box-info">' +
+          '<div class="chat-gift-box-name">' + (record.name || '心意') + '</div>' +
+          '<div class="chat-gift-box-price">' + priceTextSelf + '</div>' +
         '</div>' +
-        '<div class="chat-gift-box-body">' +
-          '<div class="chat-gift-box-emoji">' + (record.emoji || '🎁') + '</div>' +
-          '<div class="chat-gift-box-info">' +
-            '<div class="chat-gift-box-name">' + (record.name || '心意') + '</div>' +
-            '<div class="chat-gift-box-price">' + priceTextSelf + '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="chat-gift-box-foot">收进了 Ta 的心意柜</div>';
+      '</div>' +
+      '<div class="chat-gift-box-foot">收进了 Ta 的心意柜</div>';
 
-      selfRow.appendChild(box);
-      chatMessages.appendChild(selfRow);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      return;
+    selfRow.appendChild(box);
+    chatMessages.appendChild(selfRow);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return;
+  }
+
+  // ---- 分支 B：礼物卡（我送的 out / Ta 送我的 in） ----
+  var row = document.createElement('div');
+  row.className = 'message-row ' + (record.side === 'in' ? 'other' : 'self');
+  row.setAttribute('data-gift-id', record.id);
+
+  var card = document.createElement('div');
+  card.className = 'chat-gift-card';
+
+  var priceText = '¥' + ((record.price || 0) / 100);
+
+  // 只有 side === 'in' 才显示领取按钮
+  var showClaimBtn = (record.side === 'in');
+  var btnHtml = '';
+  if (showClaimBtn) {
+    btnHtml = '<button class="chat-gift-btn' + (record.claimed ? ' claimed' : '') + '">' +
+      (record.claimed ? '已领取' : '领取') +
+      '</button>';
+  }
+
+  card.innerHTML =
+    '<div class="chat-gift-emoji">' + (record.emoji || '🎁') + '</div>' +
+    '<div class="chat-gift-name">' + (record.name || '心意') + '</div>' +
+    '<div class="chat-gift-price">' + priceText + '</div>' +
+    (record.wish ? '<div class="chat-gift-wish">' + record.wish + '</div>' : '') +
+    btnHtml;
+
+  if (showClaimBtn) {
+    var btn = card.querySelector('.chat-gift-btn');
+    if (btn && !record.claimed) {
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.classList.add('claimed');
+        btn.textContent = '已领取';
+        if (window.market && typeof window.market.claimGift === 'function') {
+          try { window.market.claimGift(record.id); } catch (e) {}
+        }
+      });
+    } else if (btn) {
+      btn.disabled = true;
     }
+  }
 
+  row.appendChild(card);
+  chatMessages.appendChild(row);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
     // ---- 分支 B：其他礼物（我送的 / Ta 送我的）→ 原礼物卡，带领取按钮 ----
     var row = document.createElement('div');
     row.className = 'message-row ' + (record.side === 'in' ? 'other' : 'self');
