@@ -4,6 +4,7 @@
  * - 颜文字：从 emojiGroups 抽取
  * - 表情包：从 stickerGroups 抽取
  * - 保持原有等待时间、连发、三点气泡、随机引用机制
+ * - 新增：每条消息 DOM 挂 dataset（sender/type/time/favorited）+ 渲染时间戳
  */
 
 (function () {
@@ -51,6 +52,19 @@
 
   let lastUserMessage = '';
 
+  // ==================== 时间戳显示开关 ====================
+  // 读取设置：show_message_time，默认开启
+  function applyTimeDisplaySetting() {
+    if (!chatMessages) return;
+    var show = true;
+    try {
+      var v = localStorage.getItem('show_message_time');
+      if (v === '0') show = false;
+    } catch (e) {}
+    chatMessages.classList.toggle('hide-message-time', !show);
+  }
+  applyTimeDisplaySetting();
+
   // ==================== 输入框监听 ====================
   function updateSendBtnState() {
     sendBtn.disabled = chatInput.value.trim().length === 0;
@@ -62,6 +76,37 @@
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
+  }
+
+  // ==================== 时间格式化 ====================
+  function formatTime(ts) {
+    if (!ts) return '';
+    var d = new Date(ts);
+    var h = d.getHours();
+    var m = d.getMinutes();
+    var s = d.getSeconds();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12;
+    if (h12 === 0) h12 = 12;
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return pad(h12) + ':' + pad(m) + ':' + pad(s) + ' ' + ampm;
+  }
+
+  // ==================== 给消息行挂 dataset + 时间戳 ====================
+  function decorateMessageRow(row, sender, type, time) {
+    if (!row) return;
+    row.dataset.sender = sender;                 // 'me' | 'partner'
+    row.dataset.type = type;                    // 'text' | 'image' | 'system' | 'pat'
+    row.dataset.time = String(time || Date.now());
+    if (!row.dataset.favorited) row.dataset.favorited = 'false';
+
+    // 时间戳元素
+    if (!row.querySelector('.message-time')) {
+      var timeEl = document.createElement('div');
+      timeEl.className = 'message-time';
+      timeEl.textContent = formatTime(Number(row.dataset.time));
+      row.appendChild(timeEl);
+    }
   }
 
   // ==================== 从 localforage 读取用户勾选的分组 ====================
@@ -263,9 +308,12 @@
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
 
+    var contentType = 'text';
+
     if (typeof content === 'string') {
       bubble.textContent = content;
     } else if (content && content.type === 'image') {
+      contentType = 'image';
       const img = document.createElement('img');
       img.src = content.url;
       img.alt = '表情包';
@@ -285,6 +333,11 @@
     }
 
     row.appendChild(bubble);
+
+    // 挂 dataset + 时间戳
+    var sender = (type === 'self') ? 'me' : 'partner';
+    decorateMessageRow(row, sender, contentType, Date.now());
+
     return row;
   }
 
@@ -474,6 +527,7 @@
       window.cardDatabase.reload();
     }
     loadGroupSelections();
+    applyTimeDisplaySetting();
   };
 
   window.triggerChatAutoReply = triggerAutoReply;
@@ -482,6 +536,8 @@
     triggerAutoReply();
   });
 
+  // 供设置面板调用，切换时间戳显隐
+  window.applyChatTimeDisplay = applyTimeDisplaySetting;
 
   updateSendBtnState();
   scrollToBottom();
