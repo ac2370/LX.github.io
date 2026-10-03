@@ -6,7 +6,9 @@
  * 4. 拍一拍：单击头像 → 从字卡库"拍一拍"分类选一条发送
  * 5. 对方拍一拍我：页面停留随机触发 / 发消息后随机触发
  *
- * 完全独立，不修改任何现有逻辑
+ * 修改点（本次）：
+ * - 新增 getPatPool()：合并「用户自己加的拍一拍字卡」与「公共字卡库勾选的拍一拍字卡」
+ * - 所有读拍一拍字卡的地方改为调用 getPatPool()
  */
 
 (function () {
@@ -41,6 +43,45 @@
     var h = d.getHours().toString().padStart(2, '0');
     var m = d.getMinutes().toString().padStart(2, '0');
     return h + ':' + m;
+  }
+
+  // ==================== 拍一拍字卡池（用户 + 公共） ====================
+  /**
+   * 合并两个来源：
+   * 1) 用户自己加的拍一拍字卡：window.getAllPatCards() 或 window.getPatCards()
+   * 2) 公共字卡库里勾选的拍一拍字卡：window.publicCards.getSelectedCards('pat')
+   * 结果去重
+   */
+  function getPatPool() {
+    var userPool = [];
+
+    if (typeof window.getAllPatCards === 'function') {
+      userPool = window.getAllPatCards() || [];
+    } else if (typeof window.getPatCards === 'function') {
+      userPool = window.getPatCards() || [];
+    }
+    if (!Array.isArray(userPool)) userPool = [];
+
+    var publicPool = [];
+    if (window.publicCards && typeof window.publicCards.isReady === 'function' && window.publicCards.isReady()) {
+      try {
+        publicPool = window.publicCards.getSelectedCards('pat') || [];
+      } catch (e) {
+        publicPool = [];
+      }
+    }
+    if (!Array.isArray(publicPool)) publicPool = [];
+
+    // 去重合并
+    var seen = Object.create(null);
+    var result = [];
+    userPool.concat(publicPool).forEach(function (t) {
+      if (!t) return;
+      if (seen[t]) return;
+      seen[t] = 1;
+      result.push(t);
+    });
+    return result;
   }
 
   // ==================== 获取我的头像 ====================
@@ -150,7 +191,6 @@
     if (typeof window.triggerChatAutoReply === 'function') {
       window.triggerChatAutoReply();
     } else {
-      // chat.js 暴露的自动回复函数（通过自定义事件触发）
       var event = new CustomEvent('chatAutoReply');
       window.dispatchEvent(event);
     }
@@ -160,20 +200,17 @@
   function createBurstUI() {
     if (document.getElementById('burstHint')) return;
 
-    // 提示框（输入框上方）
     var hint = document.createElement('div');
     hint.className = 'burst-hint';
     hint.id = 'burstHint';
     hint.innerHTML = '<i class="fa-solid fa-bolt"></i> [连发模式] 虚线暂存，发完点左侧 ☑ 发送';
     chatInputBar.parentNode.insertBefore(hint, chatInputBar);
 
-    // 暂存列表（在提示框和输入栏之间）
     var queueBox = document.createElement('div');
     queueBox.className = 'burst-queue';
     queueBox.id = 'burstQueue';
     chatInputBar.parentNode.insertBefore(queueBox, chatInputBar);
 
-    // 左侧按钮组（√ 和 X）—— 插到 input-left-icons 之前
     var actionGroup = document.createElement('div');
     actionGroup.className = 'burst-action-group';
     actionGroup.id = 'burstActionGroup';
@@ -187,7 +224,6 @@
       '</button>';
     chatInputBar.insertBefore(actionGroup, chatInputBar.firstChild);
 
-    // 绑定 √ 发送
     document.getElementById('burstConfirm').addEventListener('click', function () {
       if (burstQueue.length === 0) {
         alert('暂存列表为空');
@@ -202,7 +238,6 @@
       triggerAutoReply();
     });
 
-    // 绑定 X 取消（清空并退出）
     document.getElementById('burstCancel').addEventListener('click', function () {
       burstQueue = [];
       renderBurstQueue();
@@ -245,7 +280,6 @@
       queueBox.appendChild(chip);
     });
 
-    // 绑定单条删除
     queueBox.querySelectorAll('.burst-chip-del').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var idx = parseInt(btn.getAttribute('data-idx'), 10);
@@ -314,17 +348,13 @@
     var leftIcons = chatInputBar.querySelector('.input-left-icons');
     if (!leftIcons) return;
 
-    // 找到第一个图标（原来可能是"相册"）
     var firstIcon = leftIcons.querySelector('i');
     if (!firstIcon) return;
 
-    // 如果已经替换过，跳过
     if (firstIcon.id === 'burstModeBtn') return;
 
-    // 保留原 DOM（不删除），改为隐藏
     firstIcon.style.display = 'none';
 
-    // 新建连发按钮（插到原图标前面）
     var btn = document.createElement('i');
     btn.id = 'burstModeBtn';
     btn.className = 'fa-solid fa-bolt';
@@ -462,7 +492,6 @@
     var icons = leftIcons.querySelectorAll('i');
     icons.forEach(function (icon) {
       var title = icon.getAttribute('title') || '';
-      // 已经隐藏的原"相册"图标不处理
       if (icon.id === 'burstModeBtn') return;
 
       if (title === '图片') {
@@ -488,16 +517,13 @@
     var chatAvatar = document.getElementById('chatAvatar');
     if (!chatAvatar) return;
 
-    // ---------- 单击头像 → 拍一拍 ----------
-    // （单击昵称由 role-panel.js 处理，弹出角色面板）
     chatAvatar.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       openPatModal();
-    }, true /* 捕获阶段，先于其它监听 */);
+    }, true);
 
-    // ---------- 弹窗 DOM ----------
     var modal = document.createElement('div');
     modal.className = 'pat-modal';
     modal.id = 'patModal';
@@ -519,10 +545,9 @@
     var patClose  = modal.querySelector('#patClose');
     var patCancel = modal.querySelector('#patCancel');
 
-    // ---------- 打开 ----------
     function openPatModal() {
-      var cards = (typeof window.getPatCards === 'function') ? window.getPatCards() : [];
-      if (!Array.isArray(cards)) cards = [];
+      // 关键改动：从 getPatPool() 读，用户池 + 公共池合并
+      var cards = getPatPool();
 
       patTitle.textContent = '拍一拍 ' + getContactName();
 
@@ -556,7 +581,6 @@
       modal.classList.add('active');
     }
 
-    // ---------- 关闭 ----------
     function closePatModal() {
       modal.classList.remove('active');
     }
@@ -567,11 +591,9 @@
       if (e.target === modal) closePatModal();
     });
 
-    // ---------- 发送（我拍对方） ----------
     function sendPat(text) {
       var contactName = getContactName();
 
-      // 1) 居中系统提示气泡
       var sysRow = document.createElement('div');
       sysRow.className = 'message-row system-call-event';
       var sysBubble = document.createElement('div');
@@ -583,7 +605,6 @@
       chatMessages.appendChild(sysRow);
       scrollToBottom();
 
-      // 2) 延迟 2~5 秒，从"回复"分类抽 1 条，以对方气泡发送
       var delay = 2000 + Math.floor(Math.random() * 3000);
       setTimeout(function () {
         var replies = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
@@ -601,14 +622,12 @@
         chatMessages.appendChild(row);
         scrollToBottom();
 
-        // 通知模块联动
         if (window.chatNotify && typeof window.chatNotify.show === 'function') {
           try { window.chatNotify.show(contactName, replyText); } catch (e) {}
         }
       }, delay);
     }
 
-    // 暴露给外部（可选）
     window.openPatModal = openPatModal;
     window.closePatModal = closePatModal;
   }
@@ -618,13 +637,12 @@
      ============================================================ */
   var LS_PARTNER_PAT_TS = 'partner_pat_last_ts';
 
-  // 可调参数
   var PARTNER_PAT = {
-    idleCheckMin: 3 * 60 * 1000,   // 页面停留：最短 3 分钟
-    idleCheckMax: 5 * 60 * 1000,   // 页面停留：最长 5 分钟
-    idleProbability: 0.30,         // 页面停留触发概率 30%
-    afterSendProbability: 0.10,    // 发消息后触发概率 10%
-    minGapMs: 60 * 1000            // 两次触发最小间隔 60 秒
+    idleCheckMin: 3 * 60 * 1000,
+    idleCheckMax: 5 * 60 * 1000,
+    idleProbability: 0.30,
+    afterSendProbability: 0.10,
+    minGapMs: 60 * 1000
   };
 
   var partnerPatTimer = null;
@@ -647,29 +665,21 @@
   }
 
   function tryTriggerPartnerPat(source) {
-    // 只在传讯页激活时执行
     if (!isChatPageActive()) return;
 
-    // 距上次触发不足最小间隔 → 跳过
     var now = Date.now();
     if (now - getLastPartnerPatTs() < PARTNER_PAT.minGapMs) return;
 
-    // 概率判定
     var probability = source === 'afterSend'
       ? PARTNER_PAT.afterSendProbability
       : PARTNER_PAT.idleProbability;
 
     if (Math.random() > probability) return;
 
-    // 抽取"拍一拍"字卡
-    var pats = (typeof window.getPatCards === 'function') ? window.getPatCards() : [];
-    if (!Array.isArray(pats)) pats = [];
+    // 关键改动：从 getPatPool() 读，用户池 + 公共池合并
+    var pats = getPatPool();
+    var patText = pats.length > 0 ? randomPick(pats) : '轻轻拍了拍你';
 
-    var patText = pats.length > 0
-      ? randomPick(pats)
-      : '轻轻拍了拍你';   // 兜底文案
-
-    // 发送
     sendPartnerPat(patText);
     setLastPartnerPatTs(now);
   }
@@ -677,7 +687,6 @@
   function sendPartnerPat(text) {
     var contactName = getContactName();
 
-    // 1) 居中系统提示气泡
     var sysRow = document.createElement('div');
     sysRow.className = 'message-row system-call-event';
     var sysBubble = document.createElement('div');
@@ -689,7 +698,6 @@
     chatMessages.appendChild(sysRow);
     scrollToBottom();
 
-    // 2) 延迟 2~5 秒，从"回复"分类抽 1 条，以对方气泡发送
     var delay = 2000 + Math.floor(Math.random() * 3000);
     setTimeout(function () {
       var replies = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
@@ -713,7 +721,6 @@
     }, delay);
   }
 
-  // 页面停留：每 3~5 分钟检查一次
   function scheduleIdlePartnerPat() {
     if (partnerPatIdleScheduled) return;
     partnerPatIdleScheduled = true;
@@ -727,18 +734,15 @@
       partnerPatTimer = setTimeout(tick, next);
     }
 
-    // 首次延迟 3~5 分钟
     var firstDelay = PARTNER_PAT.idleCheckMin +
       Math.floor(Math.random() * (PARTNER_PAT.idleCheckMax - PARTNER_PAT.idleCheckMin));
     partnerPatTimer = setTimeout(tick, firstDelay);
   }
 
-  // 发消息后：10% 概率触发（挂在 sendBtn 和回车之后）
   function onUserSendMessage() {
     tryTriggerPartnerPat('afterSend');
   }
 
-  // 包装 sendOneMessage，让所有"我方发送"都触发一次判定
   var _origSendOneMessage = sendOneMessage;
   sendOneMessage = function (content) {
     _origSendOneMessage(content);
@@ -759,17 +763,16 @@
     init();
   }
 
-  // 稍后再执行一次，确保 chat.js 和 chat-avatars.js 已加载
   setTimeout(init, 200);
   setTimeout(init, 800);
 
-  // 暴露给外部
   window.chatExtras = {
     enterBurstMode: enterBurstMode,
     exitBurstMode: exitBurstMode,
     sendImage: sendImage,
     openStickerPanel: openStickerPanel,
-    triggerPartnerPat: function () { tryTriggerPartnerPat('manual'); }
+    triggerPartnerPat: function () { tryTriggerPartnerPat('manual'); },
+    getPatPool: getPatPool
   };
 
 })();
