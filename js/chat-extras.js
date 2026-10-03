@@ -3,7 +3,8 @@
  * 1. 连发模式：替换输入栏最左侧的现有图标，暂存消息一次性发送
  * 2. 图片发送：上传本地文件或粘贴 URL
  * 3. 表情包联动：从 cardDatabase.sticker 抽取
- * 4. 拍一拍：双击头像 → 从字卡库"拍一拍"分类选一条发送
+ * 4. 拍一拍：单击头像 → 从字卡库"拍一拍"分类选一条发送
+ * 5. 对方拍一拍我：页面停留随机触发 / 发消息后随机触发
  *
  * 完全独立，不修改任何现有逻辑
  */
@@ -481,13 +482,13 @@
   }
 
   /* ============================================================
-     4. 拍一拍（双击头像 → 从字卡库"拍一拍"分类选一条发送）
+     4. 拍一拍（单击头像 → 从字卡库"拍一拍"分类选一条发送）
      ============================================================ */
   function initPatFeature() {
     var chatAvatar = document.getElementById('chatAvatar');
     if (!chatAvatar) return;
 
-       // ---------- 单击头像 → 拍一拍 ----------
+    // ---------- 单击头像 → 拍一拍 ----------
     // （单击昵称由 role-panel.js 处理，弹出角色面板）
     chatAvatar.addEventListener('click', function (e) {
       e.preventDefault();
@@ -566,11 +567,11 @@
       if (e.target === modal) closePatModal();
     });
 
-    // ---------- 发送 ----------
+    // ---------- 发送（我拍对方） ----------
     function sendPat(text) {
       var contactName = getContactName();
 
-      // 1) 居中系统提示气泡（复用 .system-call-event + .call-record-bubble）
+      // 1) 居中系统提示气泡
       var sysRow = document.createElement('div');
       sysRow.className = 'message-row system-call-event';
       var sysBubble = document.createElement('div');
@@ -612,11 +613,144 @@
     window.closePatModal = closePatModal;
   }
 
+  /* ============================================================
+     5. 对方拍一拍我（随机触发）
+     ============================================================ */
+  var LS_PARTNER_PAT_TS = 'partner_pat_last_ts';
+
+  // 可调参数
+  var PARTNER_PAT = {
+    idleCheckMin: 3 * 60 * 1000,   // 页面停留：最短 3 分钟
+    idleCheckMax: 5 * 60 * 1000,   // 页面停留：最长 5 分钟
+    idleProbability: 0.30,         // 页面停留触发概率 30%
+    afterSendProbability: 0.10,    // 发消息后触发概率 10%
+    minGapMs: 60 * 1000            // 两次触发最小间隔 60 秒
+  };
+
+  var partnerPatTimer = null;
+  var partnerPatIdleScheduled = false;
+
+  function isChatPageActive() {
+    var pageChat = document.getElementById('pageChat');
+    return pageChat && pageChat.classList.contains('active');
+  }
+
+  function getLastPartnerPatTs() {
+    try {
+      var v = localStorage.getItem(LS_PARTNER_PAT_TS);
+      return v ? parseInt(v, 10) : 0;
+    } catch (e) { return 0; }
+  }
+
+  function setLastPartnerPatTs(ts) {
+    try { localStorage.setItem(LS_PARTNER_PAT_TS, String(ts)); } catch (e) {}
+  }
+
+  function tryTriggerPartnerPat(source) {
+    // 只在传讯页激活时执行
+    if (!isChatPageActive()) return;
+
+    // 距上次触发不足最小间隔 → 跳过
+    var now = Date.now();
+    if (now - getLastPartnerPatTs() < PARTNER_PAT.minGapMs) return;
+
+    // 概率判定
+    var probability = source === 'afterSend'
+      ? PARTNER_PAT.afterSendProbability
+      : PARTNER_PAT.idleProbability;
+
+    if (Math.random() > probability) return;
+
+    // 抽取"拍一拍"字卡
+    var pats = (typeof window.getPatCards === 'function') ? window.getPatCards() : [];
+    if (!Array.isArray(pats)) pats = [];
+
+    var patText = pats.length > 0
+      ? randomPick(pats)
+      : '轻轻拍了拍你';   // 兜底文案
+
+    // 发送
+    sendPartnerPat(patText);
+    setLastPartnerPatTs(now);
+  }
+
+  function sendPartnerPat(text) {
+    var contactName = getContactName();
+
+    // 1) 居中系统提示气泡
+    var sysRow = document.createElement('div');
+    sysRow.className = 'message-row system-call-event';
+    var sysBubble = document.createElement('div');
+    sysBubble.className = 'call-record-bubble';
+    sysBubble.innerHTML =
+      '<i class="fa-solid fa-hand"></i>' +
+      '<span>' + escapeHtml(contactName) + ' 拍了拍你：' + escapeHtml(text) + '</span>';
+    sysRow.appendChild(sysBubble);
+    chatMessages.appendChild(sysRow);
+    scrollToBottom();
+
+    // 2) 延迟 2~5 秒，从"回复"分类抽 1 条，以对方气泡发送
+    var delay = 2000 + Math.floor(Math.random() * 3000);
+    setTimeout(function () {
+      var replies = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
+      if (!Array.isArray(replies) || replies.length === 0) return;
+
+      var replyText = randomPick(replies);
+      if (!replyText) return;
+
+      var row = document.createElement('div');
+      row.className = 'message-row other';
+      var bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+      bubble.textContent = replyText;
+      row.appendChild(bubble);
+      chatMessages.appendChild(row);
+      scrollToBottom();
+
+      if (window.chatNotify && typeof window.chatNotify.show === 'function') {
+        try { window.chatNotify.show(contactName, replyText); } catch (e) {}
+      }
+    }, delay);
+  }
+
+  // 页面停留：每 3~5 分钟检查一次
+  function scheduleIdlePartnerPat() {
+    if (partnerPatIdleScheduled) return;
+    partnerPatIdleScheduled = true;
+
+    function tick() {
+      if (isChatPageActive()) {
+        tryTriggerPartnerPat('idle');
+      }
+      var next = PARTNER_PAT.idleCheckMin +
+        Math.floor(Math.random() * (PARTNER_PAT.idleCheckMax - PARTNER_PAT.idleCheckMin));
+      partnerPatTimer = setTimeout(tick, next);
+    }
+
+    // 首次延迟 3~5 分钟
+    var firstDelay = PARTNER_PAT.idleCheckMin +
+      Math.floor(Math.random() * (PARTNER_PAT.idleCheckMax - PARTNER_PAT.idleCheckMin));
+    partnerPatTimer = setTimeout(tick, firstDelay);
+  }
+
+  // 发消息后：10% 概率触发（挂在 sendBtn 和回车之后）
+  function onUserSendMessage() {
+    tryTriggerPartnerPat('afterSend');
+  }
+
+  // 包装 sendOneMessage，让所有"我方发送"都触发一次判定
+  var _origSendOneMessage = sendOneMessage;
+  sendOneMessage = function (content) {
+    _origSendOneMessage(content);
+    onUserSendMessage();
+  };
+
   // ==================== 初始化 ====================
   function init() {
     replaceLeftmostIcon();
     rebindLeftIcons();
     initPatFeature();
+    scheduleIdlePartnerPat();
   }
 
   if (document.readyState === 'loading') {
@@ -634,7 +768,8 @@
     enterBurstMode: enterBurstMode,
     exitBurstMode: exitBurstMode,
     sendImage: sendImage,
-    openStickerPanel: openStickerPanel
+    openStickerPanel: openStickerPanel,
+    triggerPartnerPat: function () { tryTriggerPartnerPat('manual'); }
   };
 
 })();
