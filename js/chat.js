@@ -4,7 +4,7 @@
  * - 颜文字：从 emojiGroups 抽取
  * - 表情包：从 stickerGroups 抽取
  * - 保持原有等待时间、连发、三点气泡、随机引用机制
- * - 新增：每条消息 DOM 挂 dataset（sender/type/time/favorited）+ 渲染时间戳
+ * - 每条消息 DOM 挂 dataset（sender/type/time/favorited）+ 渲染时间戳
  */
 
 (function () {
@@ -53,7 +53,6 @@
   let lastUserMessage = '';
 
   // ==================== 时间戳显示开关 ====================
-  // 读取设置：show_message_time，默认开启
   function applyTimeDisplaySetting() {
     if (!chatMessages) return;
     var show = true;
@@ -93,36 +92,32 @@
   }
 
   // ==================== 给消息行挂 dataset + 时间戳 ====================
-function decorateMessageRow(row, sender, type, time) {
-  if (!row) return;
-  row.dataset.sender = sender;
-  row.dataset.type = type;
-  row.dataset.time = String(time || Date.now());
-  if (!row.dataset.favorited) row.dataset.favorited = 'false';
+  function decorateMessageRow(row, sender, type, time) {
+    if (!row) return;
+    row.dataset.sender = sender;
+    row.dataset.type = type;
+    row.dataset.time = String(time || Date.now());
+    if (!row.dataset.favorited) row.dataset.favorited = 'false';
 
-  if (row.querySelector('.message-time')) return;
+    if (row.querySelector('.message-time')) return;
 
-  // 找到已有的气泡
-  var bubble = row.querySelector('.message-bubble');
+    var bubble = row.querySelector('.message-bubble');
 
-  // 用一个 message-body 把气泡+时间戳竖着包起来
-  var body = document.createElement('div');
-  body.className = 'message-body';
+    var body = document.createElement('div');
+    body.className = 'message-body';
 
-  if (bubble) {
-    // 把气泡挪进 body
-    row.insertBefore(body, bubble);
-    body.appendChild(bubble);
-  } else {
-    // 没有气泡就直接放 body（兜底）
-    row.appendChild(body);
+    if (bubble) {
+      row.insertBefore(body, bubble);
+      body.appendChild(bubble);
+    } else {
+      row.appendChild(body);
+    }
+
+    var timeEl = document.createElement('div');
+    timeEl.className = 'message-time';
+    timeEl.textContent = formatTime(Number(row.dataset.time));
+    body.appendChild(timeEl);
   }
-
-  var timeEl = document.createElement('div');
-  timeEl.className = 'message-time';
-  timeEl.textContent = formatTime(Number(row.dataset.time));
-  body.appendChild(timeEl);
-}
 
   // ==================== 从 localforage 读取用户勾选的分组 ====================
   var groupCache = {
@@ -239,6 +234,21 @@ function decorateMessageRow(row, sender, type, time) {
     return window.getGroups(category || 'reply');
   }
 
+  // ==================== 读「回复」分类下所有字卡（兜底用） ====================
+  function getAllReplyCards() {
+    var all = [];
+    var groups = getAllGroupsOfCategory('reply');
+    groups.forEach(function (g) {
+      var cards = window.getCardsInGroup ? window.getCardsInGroup(g, 'reply') : [];
+      if (Array.isArray(cards)) all = all.concat(cards);
+    });
+    if (all.length === 0 && typeof window.getReplyCards === 'function') {
+      var alt = window.getReplyCards();
+      if (Array.isArray(alt)) all = alt;
+    }
+    return all;
+  }
+
   // ==================== 抽取一条文字回复 ====================
   function pickOneTextReply() {
     var selections = getGroupSelections();
@@ -349,7 +359,6 @@ function decorateMessageRow(row, sender, type, time) {
 
     row.appendChild(bubble);
 
-    // 挂 dataset + 时间戳
     var sender = (type === 'self') ? 'me' : 'partner';
     decorateMessageRow(row, sender, contentType, Date.now());
 
@@ -402,15 +411,10 @@ function decorateMessageRow(row, sender, type, time) {
       return;
     }
 
-    var selections = getGroupSelections();
-    var hasAnyText = false;
-    var allGroups = getAllGroupsOfCategory('reply');
-    allGroups.forEach(function (g) {
-      var cards = window.getCardsInGroup(g, 'reply');
-      if (Array.isArray(cards) && cards.length > 0) hasAnyText = true;
-    });
+    // 关键改动：统一从「回复」分类的所有字卡里检查有没有内容
+    var allCards = getAllReplyCards();
 
-    if (!hasAnyText) {
+    if (!allCards || allCards.length === 0) {
       setTimeout(function () {
         const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~');
         chatMessages.appendChild(row);
@@ -452,6 +456,13 @@ function decorateMessageRow(row, sender, type, time) {
         // 1. 文字回复
         for (var i = 0; i < replyCount; i++) {
           var picked = pickOneTextReply();
+
+          // 兜底：如果分组选择读不到，直接从所有回复卡里随机
+          if (!picked) {
+            var fallbackText = randomPick(allCards);
+            if (fallbackText) picked = { text: fallbackText, source: 'fallback' };
+          }
+
           if (!picked) break;
           var content = picked.text;
 
@@ -479,9 +490,9 @@ function decorateMessageRow(row, sender, type, time) {
 
         // 3. 兜底
         if (replies.length === 0) {
-          var fallbackText = pickFromGroups(getAllGroupsOfCategory('reply'), 'reply');
-          if (fallbackText) {
-            replies.push({ type: 'text', content: fallbackText });
+          var fallbackText2 = randomPick(allCards);
+          if (fallbackText2) {
+            replies.push({ type: 'text', content: fallbackText2 });
           }
         }
 
@@ -551,8 +562,10 @@ function decorateMessageRow(row, sender, type, time) {
     triggerAutoReply();
   });
 
-  // 供设置面板调用，切换时间戳显隐
   window.applyChatTimeDisplay = applyTimeDisplaySetting;
+
+  // 兼容外部可能调用 window.getCards
+  window.getCards = getAllReplyCards;
 
   updateSendBtnState();
   scrollToBottom();
