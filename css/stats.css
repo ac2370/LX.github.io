@@ -355,15 +355,22 @@
   margin-bottom: 14px;
 }
 .stats-wc-canvas-wrap {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 0;
+  padding-bottom: 100%;   /* 100% 宽度 → 正方形 */
   background: #fafbfc;
   border: 1px solid #f0f3f6;
   border-radius: 16px;
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+}
+.stats-wc-canvas-wrap canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 .stats-wc-canvas-wrap canvas {
   width: 100%;
