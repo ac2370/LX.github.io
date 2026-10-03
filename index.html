@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="./css/companion.css">
   <link rel="stylesheet" href="./css/important-day.css">
   <link rel="stylesheet" href="./css/mood.css">
+  <link rel="stylesheet" href="./css/envelope.css">
 </head>
 <body>
 
@@ -111,10 +112,10 @@
             <div class="function-icon"><i class="fa-solid fa-book-open text-[#222] text-lg"></i></div>
             <span class="function-label">心晴手账</span>
           </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+          <a class="function-item" id="btnEnvelope" style="cursor: pointer;">
             <div class="function-icon"><i class="fa-solid fa-envelope text-[#222] text-lg"></i></div>
             <span class="function-label">信箱</span>
-          </a>
+          </a>   
           <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
             <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
             <span class="function-label">朋友圈</span>
@@ -563,6 +564,106 @@
     </div>
   </div>
 
+  <!-- ==================== 信箱 页面 ==================== -->
+<div class="page" id="pageEnvelope">
+  <div class="env-container">
+
+    <!-- 顶部导航栏 -->
+    <div class="env-topbar">
+      <button class="env-back-btn" id="envBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="env-topbar-title">信箱</span>
+      <div class="env-topbar-placeholder"></div>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="env-tabs">
+      <button class="env-tab active" data-tab="sent" id="envTabSent">
+        <i class="fa-solid fa-paper-plane"></i> 寄出的信
+      </button>
+      <button class="env-tab" data-tab="inbox" id="envTabInbox">
+        <i class="fa-solid fa-inbox"></i> 收到的信
+      </button>
+    </div>
+
+    <!-- 列表区 -->
+    <div class="env-body">
+
+      <!-- 寄出箱 -->
+      <div class="env-list-view active" id="envViewSent">
+        <div class="env-list" id="envSentList"></div>
+        <div class="env-empty" id="envSentEmpty">
+          <i class="fa-regular fa-envelope-open"></i>
+          <div class="env-empty-text">还没有寄出信件</div>
+          <div class="env-empty-hint">点下方"提笔写信"开始吧</div>
+        </div>
+      </div>
+
+      <!-- 收件箱 -->
+      <div class="env-list-view" id="envViewInbox">
+        <div class="env-list" id="envInboxList"></div>
+        <div class="env-empty" id="envInboxEmpty">
+          <i class="fa-regular fa-envelope"></i>
+          <div class="env-empty-text">还没有收到信件</div>
+          <div class="env-empty-hint">耐心等待 Ta 的回信…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="env-footer">
+      <button class="env-write-btn" id="envWriteBtn">
+        <i class="fa-solid fa-pen-nib"></i> 提笔写信
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== 信箱 - 写信弹层 ==================== -->
+<div class="env-write-modal" id="envWriteModal">
+  <div class="env-write-panel">
+    <div class="env-write-header">
+      <span class="env-write-title">写一封信</span>
+      <button class="env-write-close" id="envWriteClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="env-write-body">
+      <textarea class="env-write-textarea" id="envWriteText" placeholder="亲爱的，今天想跟你说..."></textarea>
+      <label class="env-write-check">
+        <input type="checkbox" id="envWriteSyncChat">
+        <span class="env-check-mark"><i class="fa-solid fa-check"></i></span>
+        <span class="env-check-label">同时发送到聊天记录</span>
+      </label>
+    </div>
+    <div class="env-write-footer">
+      <button class="env-write-btn-cancel" id="envWriteCancel">取消</button>
+      <button class="env-write-btn-send" id="envWriteSend">封 · 寄出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 信箱 - 阅读弹层 ==================== -->
+<div class="env-read-modal" id="envReadModal">
+  <div class="env-read-panel">
+    <div class="env-read-header">
+      <span class="env-read-title" id="envReadTitle">信件</span>
+      <button class="env-read-close" id="envReadClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="env-read-body" id="envReadBody">
+      <!-- 内容由 JS 填充 -->
+    </div>
+    <div class="env-read-footer" id="envReadFooter">
+      <!-- 按钮由 JS 填充 -->
+    </div>
+  </div>
+</div>
+  
   <!-- ==================== 心晴手账 页面 ==================== -->
 <div class="page" id="pageMood">
   <div class="mood-container">
@@ -1119,5 +1220,6 @@
   <script src="./js/companion.js"></script>
   <script src="./js/important-day.js"></script>
   <script src="./js/mood.js"></script>
+  <script src="./js/features/envelope.js"></script>
 </body>
 </html>
