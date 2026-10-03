@@ -39,17 +39,30 @@
   var tabs       = document.querySelectorAll('.env-tab');
   var viewSent   = document.getElementById('envViewSent');
   var viewInbox  = document.getElementById('envViewInbox');
+  var envFooter  = document.querySelector('#pageEnvelope .env-footer');
+
+  function applyTabUI(name) {
+    // 列表切换
+    if (viewSent)  viewSent.classList.toggle('active',  name === 'sent');
+    if (viewInbox) viewInbox.classList.toggle('active', name === 'inbox');
+
+    // 底部"提笔写信"按钮：只在"寄出的信"时显示
+    if (envFooter) {
+      envFooter.style.display = (name === 'sent') ? '' : 'none';
+    }
+  }
 
   tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
       var name = tab.getAttribute('data-tab');
       tabs.forEach(function (t) { t.classList.remove('active'); });
       tab.classList.add('active');
-
-      if (viewSent)  viewSent.classList.toggle('active',  name === 'sent');
-      if (viewInbox) viewInbox.classList.toggle('active', name === 'inbox');
+      applyTabUI(name);
     });
   });
+
+  // 初始状态：默认"寄出的信" → 显示按钮
+  applyTabUI('sent');
 
   // ==================== 写信 / 阅读 弹层占位 ====================
   var writeModal = document.getElementById('envWriteModal');
