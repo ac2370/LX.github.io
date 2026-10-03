@@ -757,3 +757,18 @@ body.theme-dark .chat-gift-btn.claimed {
   background: rgba(61, 156, 116, 0.2);
   color: #8fd1a3;
 }
+
+/* ============================================================
+   设置弹窗
+   ============================================================ */
+.mkt-setting-row {
+  margin-bottom: 12px;
+}
+.mkt-setting-label {
+  display: block;
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
