@@ -690,11 +690,11 @@
 
          <!-- 头部卡片：封面 + 换背景 + 右下角头像/名字 -->
       <div class="feed-header-card">
-        <div class="feed-cover" id="feedCover">
-          <button class="feed-cover-change-btn" id="feedCoverChangeBtn" type="button">
-            <i class="fa-regular fa-image"></i>
-            <span>换背景</span>
-          </button>
+                <div class="feed-cover" id="feedCover">
+          <!-- 点击封面可更换背景；右下角仅一个低调的相机提示图标 -->
+          <span class="feed-cover-hint" aria-hidden="true">
+            <i class="fa-solid fa-camera"></i>
+          </span>
         </div>
         <div class="feed-header-info">
           <img class="feed-header-avatar" id="feedHeaderAvatar" src="https://picsum.photos/200/200?random=99" alt="">
