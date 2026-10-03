@@ -1,837 +1,1015 @@
 /* ============================================================
-   feed.css —— 朋友圈页面
-   风格对齐 companion.css / envelope.css
+   feed.js —— 朋友圈（完整版）
+   数据：localforage 键 'feedData'
+     { [contactId]: { posts: [] } }
+     单条动态：{ id, role, authorName, authorAvatar, content, ts, likes, comments, favorites }
+     评论：{ id, authorName, content, ts, replies: [] }
+     楼中楼：{ id, authorName, content, ts, to }
+   通知：localforage 键 'feedNotices'
+     [{ id, type: 'like'|'comment'|'reply', postId, content, ts, isNew: true }]
+   功能：
+     - 你发动态 / TA 自动发动态 / TA 三件套反应
+     - 你评论 TA 的动态（TA 60% 概率回复）
+     - 你回复评论（TA 60% 概率回复）
+     - 通知列表（点铃铛按钮弹出）
+     - 删除自己的动态
+     - 顶部 ➕ 按钮触发发帖弹层
+   依赖：
+     - window.showPage / window.pageFeed / window.pageHome
+     - window.getReplyCards（card.js）
+     - localStorage: my_contacts / my_current_contact
    ============================================================ */
+(function () {
+  'use strict';
 
-/* ============ 页面容器 ============ */
-#pageEnvelope {
-  background: #ffffff;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-}
-body.theme-dark #pageEnvelope {
-  background: #1e242b;
-}
+  console.log('feed loaded');
 
-.feed-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  max-width: 430px;
-  margin: 0 auto;
-  width: 100%;
-}
+  // ==================== 常量 ====================
+  var STORE_KEY        = 'feedData';
+  var NOTICE_KEY       = 'feedNotices';
+  var LS_CONTACTS_KEY  = 'my_contacts';
+  var LS_CURRENT_KEY   = 'my_current_contact';
 
-/* ============ 顶部导航栏 ============ */
-.feed-topbar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px 10px 18px;
-}
-.feed-back-btn,
-.feed-settings-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  color: #55606b;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.feed-back-btn:active,
-.feed-settings-btn:active {
-  background: rgba(240, 245, 250, 1);
-  transform: scale(0.94);
-}
-body.theme-dark .feed-back-btn,
-body.theme-dark .feed-settings-btn {
-  background: rgba(42, 48, 56, 0.85);
-  border-color: var(--theme-card-border);
-  color: var(--theme-text-soft);
-}
-.feed-topbar-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 1px;
-}
-body.theme-dark .feed-topbar-title { color: var(--theme-text); }
+  var DEFAULT_CONTACT = {
+    id: 'default_ta',
+    name: 'Ta',
+    avatar: 'https://picsum.photos/200/200?random=99'
+  };
 
-/* ============ 主体滚动区 ============ */
-.feed-body {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0 16px 20px 16px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.feed-body::-webkit-scrollbar { display: none; }
+  // ★ 测试用
+  var TEST_REACTION_DELAY_MS      = 5 * 1000;   // 三件套反应延迟
+  var TEST_COMMENT_REPLY_DELAY_MS = 5 * 1000;   // TA 回复评论延迟
+  var TEST_AUTO_POST_MIN_MS       = 5 * 1000;
+  var TEST_AUTO_POST_MAX_MS       = 5 * 1000;
 
-/* ============ 头部卡片 ============ */
-.feed-header-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 22px;
-  box-shadow: 0 4px 14px rgba(150, 170, 190, 0.1);
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-body.theme-dark .feed-header-card {
-  background: rgba(38, 44, 52, 0.85);
-  border-color: var(--theme-card-border);
-}
+  // 概率
+  var AUTO_POST_PROBABILITY = 0.30;
+  var LIKE_PROBABILITY      = 0.60;
+  var COMMENT_PROBABILITY   = 0.70;
+  var FAVORITE_PROBABILITY  = 0.30;
+  var TA_REPLY_TO_MY_COMMENT_PROB = 0.60;  // TA 回复你的评论 / 回复
 
-/* 封面：默认渐变，JS 可替换为图片 URL */
-.feed-cover {
-  height: 110px;
-  background: linear-gradient(135deg, #d4e8fc 0%, #e0d4fc 100%);
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-body.theme-dark .feed-cover {
-  background: linear-gradient(135deg, #2a3a4a 0%, #3a3050 100%);
-}
+  // 主页入口红点
+  var LS_UNREAD_DOT_KEY = 'feed_unread_dot';
 
-.feed-header-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px 14px 16px;
-  margin-top: -22px;
-  position: relative;
-}
-.feed-header-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 3px solid #ffffff;
-  box-shadow: 0 4px 12px rgba(150, 180, 210, 0.25);
-  background: #f3f5f7;
-  flex-shrink: 0;
-}
-body.theme-dark .feed-header-avatar {
-  border-color: #262c34;
-}
-.feed-header-text {
-  min-width: 0;
-  padding-top: 24px;
-}
-.feed-header-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.theme-dark .feed-header-name { color: var(--theme-text); }
-.feed-header-sub {
-  font-size: 11px;
-  color: #a8b4c0;
-  margin-top: 2px;
-}
+  // ==================== DOM ====================
+  var btnFeed         = document.getElementById('btnFeed');
+  var feedBackBtn     = document.getElementById('feedBackBtn');
+  var feedSettingsBtn = document.getElementById('feedSettingsBtn');   // 现在是小铃铛
+  var feedAddBtn      = document.getElementById('feedAddBtn');        // 顶部 ➕ 按钮
 
-/* ============ 发帖输入框 ============ */
-.feed-post-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
-  box-shadow: 0 4px 14px rgba(150, 170, 190, 0.1);
-  cursor: pointer;
-  margin-bottom: 14px;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.feed-post-bar:active {
-  background: rgba(252, 248, 250, 0.95);
-  transform: scale(0.99);
-}
-body.theme-dark .feed-post-bar {
-  background: rgba(38, 44, 52, 0.85);
-  border-color: var(--theme-card-border);
-}
+  var feedHeaderAvatar = document.getElementById('feedHeaderAvatar');
+  var feedHeaderName   = document.getElementById('feedHeaderName');
 
-.feed-post-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 9999px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.feed-post-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+  var feedList  = document.getElementById('feedList');
+  var feedEmpty = document.getElementById('feedEmpty');
 
-.feed-post-input {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  color: #a8b4c0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.feed-post-icon {
-  flex-shrink: 0;
-  color: #f8b4b4;
-  font-size: 14px;
-}
+  // 发帖弹层
+  var postModal  = document.getElementById('feedPostModal');
+  var postClose  = document.getElementById('feedPostClose');
+  var postCancel = document.getElementById('feedPostCancel');
+  var postSubmit = document.getElementById('feedPostSubmit');
+  var postText   = document.getElementById('feedPostText');
 
-/* ============ 动态列表 ============ */
-.feed-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+  // ==================== 状态 ====================
+  var feedData    = {};
+  var feedNotices = [];
+  var dataReady   = false;
 
-/* 单条动态卡片 */
-.feed-card {
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
-  padding: 14px 16px 12px 16px;
-  box-shadow: 0 4px 14px rgba(150, 170, 190, 0.1);
-}
-body.theme-dark .feed-card {
-  background: rgba(38, 44, 52, 0.85);
-  border-color: var(--theme-card-border);
-}
+  var currentContactId = null;
+  var currentContact   = null;
 
-/* 卡片头：头像 + 名字 + 时间 */
-.feed-card-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.feed-card-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
-  background: #f3f5f7;
-  flex-shrink: 0;
-}
-body.theme-dark .feed-card-avatar { border-color: #262c34; }
-.feed-card-meta {
-  flex: 1;
-  min-width: 0;
-}
-.feed-card-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.theme-dark .feed-card-name { color: var(--theme-text); }
-.feed-card-time {
-  font-size: 11px;
-  color: #a8b4c0;
-  margin-top: 2px;
-}
+  var autoPostTimer     = null;
+  var autoPostScheduled = false;
 
-/* 正文 */
-.feed-card-content {
-  font-size: 14px;
-  color: #333;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-bottom: 10px;
-}
-body.theme-dark .feed-card-content { color: var(--theme-text); }
+  // ==================== 工具 ====================
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
 
-/* 操作按钮行 */
-.feed-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-top: 10px;
-  border-top: 1px dashed #eef1f4;
-}
-body.theme-dark .feed-card-actions {
-  border-top-color: var(--theme-card-border);
-}
-.feed-action-btn {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 10px;
-  background: transparent;
-  border: none;
-  color: #8899a6;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
-}
-.feed-action-btn i { font-size: 12px; }
-.feed-action-btn:active {
-  background: rgba(248, 240, 245, 0.7);
-  transform: scale(0.96);
-}
-.feed-action-btn.active {
-  color: #e58b8b;
-}
-.feed-action-btn.active i {
-  color: #e58b8b;
-}
+  function genId(prefix) {
+    return (prefix || 'id') + '_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  }
 
-/* 点赞列表 */
-.feed-likes {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
-  margin-top: 10px;
-  background: rgba(248, 240, 245, 0.6);
-  border-radius: 10px;
-  font-size: 12px;
-  color: #6a8ca8;
-  line-height: 1.5;
-  word-break: break-word;
-}
-.feed-likes i {
-  color: #f8b4b4;
-  font-size: 11px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-body.theme-dark .feed-likes {
-  background: rgba(56, 62, 72, 0.6);
-  color: #b8c2cc;
-}
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
 
-/* 评论区 */
-.feed-comments {
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: rgba(248, 250, 253, 0.7);
-  border-radius: 10px;
-}
-body.theme-dark .feed-comments {
-  background: rgba(50, 56, 66, 0.6);
-}
-.feed-comment-item {
-  font-size: 12px;
-  color: #333;
-  line-height: 1.6;
-  padding: 3px 0;
-  word-break: break-word;
-}
-body.theme-dark .feed-comment-item { color: var(--theme-text-soft); }
-.feed-comment-name {
-  color: #6fb1e8;
-  font-weight: 700;
-}
-.feed-comment-time {
-  font-size: 10px;
-  color: #a8b4c0;
-  margin-left: 6px;
-}
+  function randomPick(arr) {
+    if (!arr || arr.length === 0) return null;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
-/* ============ 空状态 ============ */
-.feed-empty {
-  text-align: center;
-  padding: 60px 20px 20px 20px;
-  color: #c0ccd6;
-}
-.feed-empty i {
-  font-size: 40px;
-  color: #dde6ee;
-  display: block;
-  margin-bottom: 14px;
-}
-.feed-empty-text {
-  font-size: 13px;
-  letter-spacing: 0.5px;
-}
-.feed-empty-hint {
-  font-size: 11px;
-  color: #b6c2cd;
-  margin-top: 6px;
-}
-body.theme-dark .feed-empty { color: var(--theme-text-faint); }
-body.theme-dark .feed-empty i { color: #4a5560; }
+  function formatRelativeTime(ts) {
+    var now = Date.now();
+    var diff = now - ts;
+    if (diff < 0) diff = 0;
+    var sec = Math.floor(diff / 1000);
+    if (sec < 60) return '刚刚';
+    var min = Math.floor(sec / 60);
+    if (min < 60) return min + ' 分钟前';
+    var hour = Math.floor(min / 60);
+    if (hour < 24) return hour + ' 小时前';
+    var day = Math.floor(hour / 24);
+    if (day < 7) return day + ' 天前';
+    var d = new Date(ts);
+    var y = d.getFullYear();
+    var m = (d.getMonth() + 1).toString().padStart(2, '0');
+    var dd = d.getDate().toString().padStart(2, '0');
+    var nowYear = new Date().getFullYear();
+    if (y === nowYear) return m + '-' + dd;
+    return y + '-' + m + '-' + dd;
+  }
 
-/* ============ 发帖弹层 ============ */
-.feed-post-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 470;
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(20, 30, 40, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.feed-post-modal.active { display: flex; }
+  function getReplyPool() {
+    if (typeof window.getReplyCards === 'function') {
+      var arr = window.getReplyCards();
+      if (Array.isArray(arr) && arr.length > 0) return arr.slice();
+    }
+    return [];
+  }
 
-.feed-post-panel {
-  width: 100%;
-  max-width: 430px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 28px 28px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: feedSlideUp 0.25s ease;
-}
-@keyframes feedSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-body.theme-dark .feed-post-panel {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border);
-}
+  // ==================== 联系人 ====================
+  function loadContacts() {
+    try {
+      var raw = localStorage.getItem(LS_CONTACTS_KEY);
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr) && arr.length > 0) {
+          return arr.filter(function (c) { return c && c.id; });
+        }
+      }
+    } catch (e) {}
+    return [Object.assign({}, DEFAULT_CONTACT)];
+  }
 
-.feed-post-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px 20px;
-  border-bottom: 1px solid #f0f3f6;
-}
-body.theme-dark .feed-post-header {
-  border-bottom-color: var(--theme-card-border);
-}
-.feed-post-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 0.5px;
-}
-body.theme-dark .feed-post-title { color: var(--theme-text); }
-.feed-post-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  background: #f5f6f8;
-  border: none;
-  color: #55606b;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-.feed-post-close:active { background: #e8ecf0; }
-body.theme-dark .feed-post-close {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-}
+  function resolveCurrentContact() {
+    var contacts = loadContacts();
+    var cid = null;
+    try { cid = localStorage.getItem(LS_CURRENT_KEY); } catch (e) {}
+    if (cid && contacts.some(function (c) { return c.id === cid; })) {
+      currentContactId = cid;
+    } else {
+      currentContactId = contacts[0].id;
+    }
+    currentContact = contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
+  }
 
-.feed-post-body {
-  flex: 1;
-  padding: 16px 20px 8px 20px;
-}
-.feed-post-textarea {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid #e2e8ee;
-  background: rgba(250, 251, 253, 0.9);
-  font-size: 14px;
-  color: #333;
-  outline: none;
-  resize: vertical;
-  min-height: 140px;
-  font-family: inherit;
-  line-height: 1.6;
-  box-sizing: border-box;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
-}
-.feed-post-textarea:focus {
-  border-color: #f8b4b4;
-  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-}
-.feed-post-textarea::placeholder { color: #b6c2cd; }
-body.theme-dark .feed-post-textarea {
-  background: var(--theme-input-bg);
-  border-color: var(--theme-input-border);
-  color: var(--theme-text);
-}
+  // ==================== 数据 ====================
+  function loadData() {
+    if (typeof localforage === 'undefined') {
+      dataReady = true;
+      return Promise.resolve();
+    }
+    return Promise.all([
+      localforage.getItem(STORE_KEY),
+      localforage.getItem(NOTICE_KEY)
+    ]).then(function (results) {
+      feedData = (results[0] && typeof results[0] === 'object') ? results[0] : {};
+      feedNotices = Array.isArray(results[1]) ? results[1] : [];
+      dataReady = true;
+    }).catch(function () {
+      feedData = {};
+      feedNotices = [];
+      dataReady = true;
+    });
+  }
 
-.feed-post-footer {
-  flex-shrink: 0;
-  display: flex;
-  gap: 12px;
-  padding: 12px 20px 20px 20px;
-  border-top: 1px solid #f0f3f6;
-}
-body.theme-dark .feed-post-footer {
-  border-top-color: var(--theme-card-border);
-}
-.feed-post-btn-cancel,
-.feed-post-btn-submit {
-  flex: 1;
-  padding: 12px 0;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-}
-.feed-post-btn-cancel:active,
-.feed-post-btn-submit:active { transform: scale(0.97); }
-.feed-post-btn-cancel {
-  background: #f5f6f8;
-  color: #55606b;
-  border: 1px solid #eef1f4;
-}
-body.theme-dark .feed-post-btn-cancel {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-  border-color: var(--theme-card-border);
-}
-.feed-post-btn-submit {
-  background: linear-gradient(135deg, #f8b4b4 0%, #f8a8c8 100%);
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
-}
+  function saveData() {
+    if (typeof localforage === 'undefined') return Promise.resolve();
+    return localforage.setItem(STORE_KEY, feedData).catch(function (e) {
+      console.warn('[feed] 保存失败', e);
+    });
+  }
 
-/* 主页朋友圈入口的小红点 */
-#btnFeed {
-  position: relative;
-}
-.feed-unread-dot {
-  position: absolute;
-  top: 6px;
-  right: 22px;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: #f57171;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-  animation: feedDotPulse 1.6s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes feedDotPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.25); opacity: 0.75; }
-}
-body.theme-dark .feed-unread-dot {
-  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
-}
+  function saveNotices() {
+    if (typeof localforage === 'undefined') return Promise.resolve();
+    return localforage.setItem(NOTICE_KEY, feedNotices).catch(function (e) {
+      console.warn('[feed] 通知保存失败', e);
+    });
+  }
 
-/* ============================================================
-   评论"回复"按钮
-   ============================================================ */
-.feed-comment-reply-btn {
-  margin-left: 6px;
-  padding: 1px 8px;
-  border-radius: 9999px;
-  background: rgba(230, 235, 245, 0.7);
-  border: none;
-  color: #6a8ca8;
-  font-size: 10px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.feed-comment-reply-btn:active { background: #dfe5ee; }
-body.theme-dark .feed-comment-reply-btn {
-  background: rgba(56, 62, 72, 0.8);
-  color: #9cc3e8;
-}
+  function getCurrentBucket() {
+    if (!currentContactId) return { posts: [] };
+    if (!feedData[currentContactId]) feedData[currentContactId] = { posts: [] };
+    if (!Array.isArray(feedData[currentContactId].posts)) feedData[currentContactId].posts = [];
+    return feedData[currentContactId];
+  }
 
-/* "回复 xxx" 提示 */
-.feed-comment-to {
-  color: #8899a6;
-  font-weight: 500;
-  margin-right: 2px;
-}
+  // ==================== 我的头像 / 名字 ====================
+  function getMyAvatar() {
+    var avatarImg = document.getElementById('avatarImg');
+    if (avatarImg && avatarImg.src) return avatarImg.src;
+    if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
+      return window.homeSettings.current.avatar;
+    }
+    try {
+      var raw = localStorage.getItem('home_custom_images');
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data && data.avatar) return data.avatar;
+      }
+    } catch (e) {}
+    return 'https://picsum.photos/100/100?random=1';
+  }
 
-/* ============================================================
-   删除动态按钮（红色）
-   ============================================================ */
-.feed-action-del {
-  color: #c0a8a8 !important;
-  flex: 0 0 auto !important;
-  padding: 6px 10px !important;
-}
-.feed-action-del:active {
-  background: rgba(253, 240, 240, 0.9) !important;
-  color: #e58b8b !important;
-}
+  function getMyName() {
+    try {
+      var raw = localStorage.getItem('home_custom_images');
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data && data.myName) return data.myName;
+      }
+    } catch (e) {}
+    return '我';
+  }
 
-/* ============================================================
-   设置按钮的未读数字红点
-   ============================================================ */
-.feed-settings-btn {
-  position: relative;
-}
-.feed-notice-dot {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9999px;
-  background: #f57171;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(245, 113, 113, 0.5);
-  pointer-events: none;
-}
+  function getTaName() {
+    return (currentContact && currentContact.name) || 'Ta';
+  }
+  function getTaAvatar() {
+    return (currentContact && currentContact.avatar) || DEFAULT_CONTACT.avatar;
+  }
 
-/* ============================================================
-   通知弹窗
-   ============================================================ */
-.feed-notice-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(20, 30, 40, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.feed-notice-modal.active { opacity: 1; }
+  // ==================== 头部 ====================
+  function updateHeader() {
+    if (feedHeaderAvatar) {
+      feedHeaderAvatar.src = getTaAvatar();
+      feedHeaderAvatar.alt = getTaName();
+    }
+    if (feedHeaderName) feedHeaderName.textContent = getTaName();
+  }
 
-.feed-notice-panel {
-  width: 100%;
-  max-width: 380px;
-  max-height: 80vh;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: feedPopIn 0.22s ease;
-}
-@keyframes feedPopIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
-}
-body.theme-dark .feed-notice-panel {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border);
-}
+  // ==================== 渲染 ====================
+  function renderList() {
+    if (!feedList) return;
+    var bucket = getCurrentBucket();
+    var posts = bucket.posts.slice().sort(function (a, b) {
+      return (b.ts || 0) - (a.ts || 0);
+    });
 
-.feed-notice-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px 20px;
-  border-bottom: 1px solid #f0f3f6;
-}
-body.theme-dark .feed-notice-header {
-  border-bottom-color: var(--theme-card-border);
-}
-.feed-notice-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 0.5px;
-}
-body.theme-dark .feed-notice-title { color: var(--theme-text); }
-.feed-notice-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  background: #f5f6f8;
-  border: none;
-  color: #55606b;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-.feed-notice-close:active { background: #e8ecf0; }
-body.theme-dark .feed-notice-close {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-}
+    if (posts.length === 0) {
+      feedList.innerHTML = '';
+      if (feedEmpty) feedEmpty.style.display = 'block';
+      return;
+    }
+    if (feedEmpty) feedEmpty.style.display = 'none';
 
-.feed-notice-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 16px 12px 16px;
-  scrollbar-width: none;
-}
-.feed-notice-body::-webkit-scrollbar { display: none; }
+    var html = '';
+    posts.forEach(function (post) {
+      html += renderPostCard(post);
+    });
+    feedList.innerHTML = html;
 
-.feed-notice-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 10px;
-  border-radius: 14px;
-  margin-bottom: 6px;
-  background: #fafbfc;
-  border: 1px solid #eef1f4;
-}
-.feed-notice-item.new {
-  background: #fdf5f5;
-  border-color: #f8d8d8;
-}
-body.theme-dark .feed-notice-item {
-  background: rgba(42, 48, 56, 0.6);
-  border-color: var(--theme-card-border);
-}
-body.theme-dark .feed-notice-item.new {
-  background: rgba(248, 180, 180, 0.12);
-  border-color: rgba(248, 180, 180, 0.3);
-}
+    bindPostEvents();
+  }
 
-.feed-notice-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 13px;
-}
-.feed-notice-icon.like {
-  background: #fdf0f0;
-  color: #e58b8b;
-}
-.feed-notice-icon.comment {
-  background: #eaf3fb;
-  color: #6fa3cc;
-}
-.feed-notice-icon.reply {
-  background: #f0faf5;
-  color: #3d9c74;
-}
+  function renderPostCard(post) {
+    var avatar = post.authorAvatar || (post.role === 'me' ? getMyAvatar() : getTaAvatar());
+    var name   = post.authorName || (post.role === 'me' ? getMyName() : getTaName());
+    var time   = formatRelativeTime(post.ts || Date.now());
 
-.feed-notice-main {
-  flex: 1;
-  min-width: 0;
-}
-.feed-notice-line {
-  font-size: 13px;
-  color: #333;
-  line-height: 1.5;
-  word-break: break-word;
-}
-body.theme-dark .feed-notice-line { color: var(--theme-text); }
-.feed-notice-line b {
-  font-weight: 700;
-  color: #e58b8b;
-}
-.feed-notice-time {
-  font-size: 11px;
-  color: #a8b4c0;
-  margin-top: 4px;
-}
-body.theme-dark .feed-notice-time { color: var(--theme-text-muted); }
+    var likes = Array.isArray(post.likes) ? post.likes : [];
+    var comments = Array.isArray(post.comments) ? post.comments : [];
+    var favorites = Array.isArray(post.favorites) ? post.favorites : [];
 
-.feed-notice-empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: #c0ccd6;
-  font-size: 13px;
-}
-.feed-notice-empty i {
-  font-size: 32px;
-  color: #dde6ee;
-  display: block;
-  margin-bottom: 12px;
-}
+    var liked = likes.indexOf('me') >= 0;
+    var favorited = favorites.indexOf('me') >= 0;
 
-.feed-notice-footer {
-  flex-shrink: 0;
-  padding: 10px 20px 16px 20px;
-  border-top: 1px solid #f0f3f6;
-}
-body.theme-dark .feed-notice-footer {
-  border-top-color: var(--theme-card-border);
-}
-.feed-notice-clear {
-  width: 100%;
-  padding: 11px 0;
-  border-radius: 14px;
-  background: #fafbfc;
-  border: 1px solid #eef1f4;
-  color: #8899a6;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.feed-notice-clear:active { background: #f2f6fa; }
-body.theme-dark .feed-notice-clear {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-  border-color: var(--theme-card-border);
-}
+    var html = '<div class="feed-card" data-id="' + escapeHtml(post.id) + '">';
 
-/* 红点（主页入口） */
-#btnFeed { position: relative; }
-.feed-unread-dot {
-  position: absolute;
-  top: 6px;
-  right: 22px;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: #f57171;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-  pointer-events: none;
-}
-body.theme-dark .feed-unread-dot {
-  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
-}
+    html += '<div class="feed-card-head">' +
+      '<img class="feed-card-avatar" src="' + escapeHtml(avatar) + '" alt="">' +
+      '<div class="feed-card-meta">' +
+        '<div class="feed-card-name">' + escapeHtml(name) + '</div>' +
+        '<div class="feed-card-time">' + escapeHtml(time) + '</div>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div class="feed-card-content">' + escapeHtml(post.content || '') + '</div>';
+
+    // 点赞列表
+    if (likes.length > 0) {
+      var likeNames = likes.map(function (l) {
+        if (l === 'me') return getMyName();
+        if (l === 'ta') return getTaName();
+        return String(l);
+      }).join('、');
+      html += '<div class="feed-likes">' +
+        '<i class="fa-solid fa-heart"></i>' +
+        '<span>' + escapeHtml(likeNames) + ' 觉得很赞</span>' +
+        '</div>';
+    }
+
+    // 评论区
+    if (comments.length > 0) {
+      html += '<div class="feed-comments">';
+      comments.forEach(function (c) {
+        html += renderComment(c, post.id);
+      });
+      html += '</div>';
+    }
+
+    // 操作按钮 + 删除
+    html += '<div class="feed-card-actions">' +
+      '<button class="feed-action-btn' + (liked ? ' active' : '') + '" data-act="like">' +
+        '<i class="fa-' + (liked ? 'solid' : 'regular') + ' fa-heart"></i>' +
+        '<span>' + (liked ? '已赞' : '点赞') + '</span>' +
+      '</button>' +
+      '<button class="feed-action-btn" data-act="comment">' +
+        '<i class="fa-regular fa-comment"></i>' +
+        '<span>评论</span>' +
+      '</button>' +
+      '<button class="feed-action-btn' + (favorited ? ' active' : '') + '" data-act="favorite">' +
+        '<i class="fa-' + (favorited ? 'solid' : 'regular') + ' fa-star"></i>' +
+        '<span>' + (favorited ? '已收藏' : '收藏') + '</span>' +
+      '</button>';
+
+    if (post.role === 'me') {
+      html += '<button class="feed-action-btn feed-action-del" data-act="delete">' +
+        '<i class="fa-solid fa-trash-can"></i>' +
+        '<span>删除</span>' +
+      '</button>';
+    }
+
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function renderComment(c, postId) {
+    var html = '<div class="feed-comment-item" data-cid="' + escapeHtml(c.id) + '">' +
+      '<span class="feed-comment-name">' + escapeHtml(c.authorName || '我') + '</span>' +
+      '：' + escapeHtml(c.content || '') +
+      '<span class="feed-comment-time">' + escapeHtml(formatRelativeTime(c.ts || Date.now())) + '</span>' +
+      '<button class="feed-comment-reply-btn" data-act="reply" data-cid="' + escapeHtml(c.id) + '" data-post="' + escapeHtml(postId) + '">回复</button>' +
+    '</div>';
+
+    if (Array.isArray(c.replies) && c.replies.length > 0) {
+      c.replies.forEach(function (r) {
+        var toHtml = r.to ? '<span class="feed-comment-to">回复 ' + escapeHtml(r.to) + '</span>' : '';
+        html += '<div class="feed-comment-item" style="padding-left:16px;" data-rid="' + escapeHtml(r.id) + '">' +
+          '<span class="feed-comment-name">' + escapeHtml(r.authorName || '我') + '</span>' +
+          '：' + toHtml + escapeHtml(r.content || '') +
+          '<span class="feed-comment-time">' + escapeHtml(formatRelativeTime(r.ts || Date.now())) + '</span>' +
+          '<button class="feed-comment-reply-btn" data-act="reply" data-cid="' + escapeHtml(c.id) + '" data-post="' + escapeHtml(postId) + '">回复</button>' +
+        '</div>';
+      });
+    }
+    return html;
+  }
+
+  // ==================== 事件绑定 ====================
+  function bindPostEvents() {
+    if (!feedList) return;
+    feedList.querySelectorAll('.feed-card').forEach(function (card) {
+      var postId = card.getAttribute('data-id');
+
+      card.querySelectorAll('.feed-action-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          handleAction(btn.getAttribute('data-act'), postId);
+        });
+      });
+
+      card.querySelectorAll('.feed-comment-reply-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var parentCid = btn.getAttribute('data-cid');
+          var pid = btn.getAttribute('data-post');
+          openCommentInput(pid, parentCid);
+        });
+      });
+    });
+  }
+
+  // ==================== 评论输入 ====================
+  function openCommentInput(postId, parentCommentId) {
+    var toName = '';
+    if (parentCommentId) {
+      var bucket = getCurrentBucket();
+      var post = bucket.posts.find(function (p) { return p.id === postId; });
+      if (post) {
+        var c = (post.comments || []).find(function (x) { return x.id === parentCommentId; });
+        if (c) toName = c.authorName || '';
+      }
+    }
+    var tip = toName ? ('回复 ' + toName + '：') : '写点什么：';
+    var text = prompt(tip);
+    if (text === null) return;
+    var t = text.trim();
+    if (!t) return;
+
+    var bucket = getCurrentBucket();
+    var post = bucket.posts.find(function (p) { return p.id === postId; });
+    if (!post) return;
+
+    if (!parentCommentId) {
+      if (!Array.isArray(post.comments)) post.comments = [];
+      post.comments.push({
+        id: genId('cmt'),
+        authorName: getMyName(),
+        content: t,
+        ts: Date.now(),
+        replies: []
+      });
+      saveData().then(function () {
+        renderList();
+        if (Math.random() < TA_REPLY_TO_MY_COMMENT_PROB) {
+          scheduleTaReplyToComment(postId, null, t);
+        }
+      });
+    } else {
+      var parent = (post.comments || []).find(function (x) { return x.id === parentCommentId; });
+      if (!parent) return;
+      if (!Array.isArray(parent.replies)) parent.replies = [];
+      parent.replies.push({
+        id: genId('rep'),
+        authorName: getMyName(),
+        content: t,
+        ts: Date.now(),
+        to: toName || ''
+      });
+      saveData().then(function () {
+        renderList();
+        if (Math.random() < TA_REPLY_TO_MY_COMMENT_PROB) {
+          scheduleTaReplyToComment(postId, parentCommentId, t);
+        }
+      });
+    }
+  }
+
+  // ==================== TA 回复评论 ====================
+  function scheduleTaReplyToComment(postId, parentCommentId) {
+    setTimeout(function () {
+      var pool = getReplyPool();
+      var replyText = pool.length > 0 ? String(randomPick(pool)).trim() : '嗯嗯~';
+
+      var bucket = getCurrentBucket();
+      var post = bucket.posts.find(function (p) { return p.id === postId; });
+      if (!post) return;
+
+      var taName = getTaName();
+
+      if (!parentCommentId) {
+        if (!Array.isArray(post.comments)) post.comments = [];
+        post.comments.push({
+          id: genId('cmt'),
+          authorName: taName,
+          content: replyText,
+          ts: Date.now(),
+          replies: []
+        });
+        addNotice('comment', postId, replyText);
+      } else {
+        var parent = (post.comments || []).find(function (x) { return x.id === parentCommentId; });
+        if (!parent) return;
+        if (!Array.isArray(parent.replies)) parent.replies = [];
+        parent.replies.push({
+          id: genId('rep'),
+          authorName: taName,
+          content: replyText,
+          ts: Date.now(),
+          to: getMyName()
+        });
+        addNotice('reply', postId, replyText);
+      }
+
+      saveData().then(function () {
+        if (document.getElementById('pageFeed') &&
+            document.getElementById('pageFeed').classList.contains('active')) {
+          renderList();
+        }
+        updateNoticeBadge();
+        showUnreadDot();
+      });
+    }, TEST_COMMENT_REPLY_DELAY_MS);
+  }
+
+  // ==================== 主操作分发 ====================
+  function handleAction(act, postId) {
+    if (act === 'delete') { deletePost(postId); return; }
+
+    var bucket = getCurrentBucket();
+    var post = bucket.posts.find(function (p) { return p.id === postId; });
+    if (!post) return;
+
+    if (act === 'like') {
+      if (!Array.isArray(post.likes)) post.likes = [];
+      var idx = post.likes.indexOf('me');
+      if (idx >= 0) post.likes.splice(idx, 1);
+      else post.likes.push('me');
+      saveData().then(renderList);
+    } else if (act === 'favorite') {
+      if (!Array.isArray(post.favorites)) post.favorites = [];
+      var fi = post.favorites.indexOf('me');
+      if (fi >= 0) post.favorites.splice(fi, 1);
+      else post.favorites.push('me');
+      saveData().then(renderList);
+    } else if (act === 'comment') {
+      openCommentInput(postId, null);
+    }
+  }
+
+  // ==================== 删除动态 ====================
+  function deletePost(postId) {
+    var bucket = getCurrentBucket();
+    var post = bucket.posts.find(function (p) { return p.id === postId; });
+    if (!post) return;
+    if (!confirm('确定删除这条动态吗？')) return;
+
+    bucket.posts = bucket.posts.filter(function (p) { return p.id !== postId; });
+    feedNotices = feedNotices.filter(function (n) { return n.postId !== postId; });
+    saveNotices();
+    saveData().then(function () {
+      renderList();
+      updateNoticeBadge();
+    });
+  }
+
+  // ==================== 通知 ====================
+  function addNotice(type, postId, content) {
+    feedNotices.unshift({
+      id: genId('ntc'),
+      type: type,
+      postId: postId,
+      content: content || '',
+      ts: Date.now(),
+      isNew: true
+    });
+    saveNotices();
+    updateNoticeBadge();
+    showUnreadDot();
+  }
+
+  function updateNoticeBadge() {
+    if (!feedSettingsBtn) return;
+    var unread = feedNotices.filter(function (n) { return n.isNew; }).length;
+
+    var dot = feedSettingsBtn.querySelector('.feed-notice-dot');
+    if (unread > 0) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'feed-notice-dot';
+        feedSettingsBtn.appendChild(dot);
+      }
+      dot.textContent = unread > 99 ? '99+' : unread;
+    } else {
+      if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+    }
+  }
+
+  function markAllNoticesRead() {
+    var changed = false;
+    feedNotices.forEach(function (n) {
+      if (n.isNew) { n.isNew = false; changed = true; }
+    });
+    if (changed) saveNotices();
+    updateNoticeBadge();
+  }
+
+  // ==================== 通知弹窗 ====================
+  function openNoticeModal() {
+    var old = document.getElementById('feedNoticeModal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var modal = document.createElement('div');
+    modal.id = 'feedNoticeModal';
+    modal.className = 'feed-notice-modal';
+    modal.innerHTML =
+      '<div class="feed-notice-panel">' +
+        '<div class="feed-notice-header">' +
+          '<span class="feed-notice-title">通知</span>' +
+          '<button class="feed-notice-close" id="feedNoticeClose"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>' +
+        '<div class="feed-notice-body" id="feedNoticeBody"></div>' +
+        '<div class="feed-notice-footer">' +
+          '<button class="feed-notice-clear" id="feedNoticeClear">清空全部</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(function () { modal.classList.add('active'); });
+
+    var body = document.getElementById('feedNoticeBody');
+
+    if (feedNotices.length === 0) {
+      body.innerHTML =
+        '<div class="feed-notice-empty">' +
+          '<i class="fa-regular fa-bell"></i>' +
+          '<div>暂无通知</div>' +
+        '</div>';
+    } else {
+      var html = '';
+      feedNotices.forEach(function (n) {
+        var typeText = n.type === 'like' ? '点赞了你的动态'
+                     : n.type === 'comment' ? '评论了你的动态'
+                     : '回复了你的评论';
+        var extra = n.content ? '：' + escapeHtml(n.content) : '';
+        html += '<div class="feed-notice-item' + (n.isNew ? ' new' : '') + '">' +
+          '<div class="feed-notice-icon ' + n.type + '"><i class="fa-solid fa-' +
+            (n.type === 'like' ? 'heart' : n.type === 'comment' ? 'comment' : 'reply') +
+          '"></i></div>' +
+          '<div class="feed-notice-main">' +
+            '<div class="feed-notice-line"><b>' + escapeHtml(getTaName()) + '</b> ' + typeText + extra + '</div>' +
+            '<div class="feed-notice-time">' + escapeHtml(formatRelativeTime(n.ts)) + '</div>' +
+          '</div>' +
+        '</div>';
+      });
+      body.innerHTML = html;
+    }
+
+    document.getElementById('feedNoticeClose').addEventListener('click', function () {
+      closeNoticeModal();
+    });
+    document.getElementById('feedNoticeClear').addEventListener('click', function () {
+      if (!confirm('清空所有通知？')) return;
+      feedNotices = [];
+      saveNotices();
+      updateNoticeBadge();
+      closeNoticeModal();
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeNoticeModal();
+    });
+
+    markAllNoticesRead();
+  }
+
+  function closeNoticeModal() {
+    var modal = document.getElementById('feedNoticeModal');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(function () {
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+      }, 250);
+    }
+  }
+
+  // ==================== 红点（主页入口） ====================
+  function showUnreadDot() {
+    try { localStorage.setItem(LS_UNREAD_DOT_KEY, '1'); } catch (e) {}
+    applyUnreadDot();
+  }
+  function clearUnreadDot() {
+    try { localStorage.removeItem(LS_UNREAD_DOT_KEY); } catch (e) {}
+    applyUnreadDot();
+  }
+  function applyUnreadDot() {
+    if (!btnFeed) return;
+    var has = false;
+    try { has = localStorage.getItem(LS_UNREAD_DOT_KEY) === '1'; } catch (e) {}
+    var dot = btnFeed.querySelector('.feed-unread-dot');
+    if (has) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'feed-unread-dot';
+        btnFeed.appendChild(dot);
+      }
+    } else {
+      if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+    }
+  }
+
+  // ==================== 传讯页系统消息 ====================
+  function pushChatSystemMessage(text) {
+    var chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    var row = document.createElement('div');
+    row.className = 'message-row system-call-event';
+    var bubble = document.createElement('div');
+    bubble.className = 'call-record-bubble';
+    bubble.innerHTML = '<i class="fa-solid fa-users"></i><span>' + escapeHtml(text) + '</span>';
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    requestAnimationFrame(function () {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+  }
+
+  // ==================== TA 自动发动态 ====================
+  function maybeAutoPostFor(contactId) {
+    if (!contactId) return;
+    if (!feedData[contactId]) feedData[contactId] = { posts: [] };
+    if (!Array.isArray(feedData[contactId].posts)) feedData[contactId].posts = [];
+
+    if (Math.random() > AUTO_POST_PROBABILITY) return;
+
+    var pool = getReplyPool();
+    if (pool.length === 0) return;
+
+    var count = randomInt(1, 3);
+    if (count > pool.length) count = pool.length;
+
+    var picked = [];
+    var usedIdx = {};
+    for (var i = 0; i < count; i++) {
+      var idx, tries = 0;
+      do {
+        idx = Math.floor(Math.random() * pool.length);
+        tries++;
+      } while (usedIdx[idx] && tries < 20);
+      usedIdx[idx] = true;
+      picked.push(String(pool[idx]).trim());
+    }
+    var content = picked.join(' ');
+
+    var contacts = loadContacts();
+    var c = contacts.find(function (x) { return x.id === contactId; }) || contacts[0];
+    var name = (c && c.name) || 'Ta';
+    var avatar = (c && c.avatar) || DEFAULT_CONTACT.avatar;
+
+    feedData[contactId].posts.push({
+      id: genId('post'),
+      role: 'ta',
+      authorName: name,
+      authorAvatar: avatar,
+      content: content,
+      ts: Date.now(),
+      likes: [],
+      comments: [],
+      favorites: []
+    });
+
+    saveData().then(function () {
+      if (currentContactId === contactId &&
+          document.getElementById('pageFeed') &&
+          document.getElementById('pageFeed').classList.contains('active')) {
+        renderList();
+      }
+      showUnreadDot();
+      pushChatSystemMessage(name + ' 发布了一条朋友圈动态');
+    });
+  }
+
+  function scheduleAutoPost() {
+    if (autoPostScheduled) return;
+    autoPostScheduled = true;
+
+    function tick() {
+      resolveCurrentContact();
+      maybeAutoPostFor(currentContactId);
+      var next = randomInt(TEST_AUTO_POST_MIN_MS, TEST_AUTO_POST_MAX_MS);
+      autoPostTimer = setTimeout(tick, next);
+    }
+
+    var first = randomInt(TEST_AUTO_POST_MIN_MS, TEST_AUTO_POST_MAX_MS);
+    autoPostTimer = setTimeout(tick, first);
+  }
+
+  // ==================== TA 三件套反应 ====================
+  function reactToMyPost(postId) {
+    if (!currentContactId) return;
+    var bucket = getCurrentBucket();
+    var post = bucket.posts.find(function (p) { return p.id === postId; });
+    if (!post) return;
+
+    var taName = getTaName();
+
+    // 1) 点赞
+    if (Math.random() < LIKE_PROBABILITY) {
+      setTimeout(function () {
+        var b = getCurrentBucket();
+        var p = b.posts.find(function (x) { return x.id === postId; });
+        if (!p) return;
+        if (!Array.isArray(p.likes)) p.likes = [];
+        if (p.likes.indexOf('ta') < 0) {
+          p.likes.push('ta');
+          addNotice('like', postId, '');
+          saveData().then(function () {
+            if (document.getElementById('pageFeed') &&
+                document.getElementById('pageFeed').classList.contains('active')) {
+              renderList();
+            }
+          });
+        }
+      }, TEST_REACTION_DELAY_MS);
+    }
+
+    // 2) 评论
+    if (Math.random() < COMMENT_PROBABILITY) {
+      setTimeout(function () {
+        var pool = getReplyPool();
+        var commentText = pool.length > 0 ? String(randomPick(pool)).trim() : '真不错~';
+
+        var b = getCurrentBucket();
+        var p = b.posts.find(function (x) { return x.id === postId; });
+        if (!p) return;
+        if (!Array.isArray(p.comments)) p.comments = [];
+        p.comments.push({
+          id: genId('cmt'),
+          authorName: taName,
+          content: commentText,
+          ts: Date.now(),
+          replies: []
+        });
+        addNotice('comment', postId, commentText);
+        saveData().then(function () {
+          if (document.getElementById('pageFeed') &&
+              document.getElementById('pageFeed').classList.contains('active')) {
+            renderList();
+          }
+        });
+      }, TEST_REACTION_DELAY_MS);
+    }
+
+    // 3) 收藏
+    if (Math.random() < FAVORITE_PROBABILITY) {
+      setTimeout(function () {
+        var b = getCurrentBucket();
+        var p = b.posts.find(function (x) { return x.id === postId; });
+        if (!p) return;
+        if (!Array.isArray(p.favorites)) p.favorites = [];
+        if (p.favorites.indexOf('ta') < 0) {
+          p.favorites.push('ta');
+          saveData().then(function () {
+            if (document.getElementById('pageFeed') &&
+                document.getElementById('pageFeed').classList.contains('active')) {
+              renderList();
+            }
+          });
+        }
+      }, TEST_REACTION_DELAY_MS);
+    }
+  }
+
+  // ==================== 页面切换 ====================
+  function enterFeed() {
+    resolveCurrentContact();
+    updateHeader();
+    clearUnreadDot();
+    updateNoticeBadge();
+    if (dataReady) {
+      renderList();
+    } else {
+      loadData().then(renderList);
+    }
+  }
+
+  if (btnFeed) {
+    btnFeed.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (window.showPage && window.pageFeed) {
+        window.showPage(window.pageFeed);
+      } else if (window.showPage) {
+        var p = document.getElementById('pageFeed');
+        if (p) window.showPage(p);
+      }
+      enterFeed();
+    });
+  }
+
+  if (feedBackBtn) {
+    feedBackBtn.addEventListener('click', function () {
+      if (window.showPage && window.pageHome) {
+        window.showPage(window.pageHome);
+      }
+    });
+  }
+
+  // 顶部铃铛 → 通知弹窗
+  if (feedSettingsBtn) {
+    feedSettingsBtn.addEventListener('click', function () {
+      openNoticeModal();
+    });
+  }
+
+  // 顶部 ➕ → 发帖弹层
+  if (feedAddBtn) {
+    feedAddBtn.addEventListener('click', function () {
+      openPostModal();
+    });
+  }
+
+  // ==================== 发帖 ====================
+  function openPostModal() {
+    if (postText) postText.value = '';
+    if (postModal) postModal.classList.add('active');
+    setTimeout(function () { if (postText) postText.focus(); }, 100);
+  }
+  function closePostModal() {
+    if (postModal) postModal.classList.remove('active');
+  }
+
+  if (postClose)   postClose.addEventListener('click', closePostModal);
+  if (postCancel)  postCancel.addEventListener('click', closePostModal);
+  if (postModal) {
+    postModal.addEventListener('click', function (e) {
+      if (e.target === postModal) closePostModal();
+    });
+  }
+
+  if (postSubmit) {
+    postSubmit.addEventListener('click', function () {
+      var text = postText ? postText.value.trim() : '';
+      if (!text) { alert('请输入内容'); return; }
+      if (!currentContactId) { alert('请先选择一个联系人'); return; }
+
+      var postId = genId('post');
+      var bucket = getCurrentBucket();
+      bucket.posts.push({
+        id: postId,
+        role: 'me',
+        authorName: getMyName(),
+        authorAvatar: getMyAvatar(),
+        content: text,
+        ts: Date.now(),
+        likes: [],
+        comments: [],
+        favorites: []
+      });
+
+      saveData().then(function () {
+        closePostModal();
+        renderList();
+        var body = document.querySelector('#pageFeed .feed-body');
+        if (body) body.scrollTop = 0;
+        reactToMyPost(postId);
+      });
+    });
+  }
+
+  // ==================== 联系人切换监听 ====================
+  window.addEventListener('storage', function (e) {
+    if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY) {
+      var pageFeed = document.getElementById('pageFeed');
+      if (pageFeed && pageFeed.classList.contains('active')) {
+        enterFeed();
+      }
+    }
+  });
+
+  // ==================== 初始化 ====================
+  function init() {
+    resolveCurrentContact();
+    updateHeader();
+    applyUnreadDot();
+    loadData().then(function () {
+      renderList();
+      updateNoticeBadge();
+      scheduleAutoPost();
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // ==================== 暴露接口 ====================
+  window.feed = {
+    enter: enterFeed,
+    refresh: function () {
+      resolveCurrentContact();
+      updateHeader();
+      renderList();
+      updateNoticeBadge();
+    },
+    getData: function () { return feedData; },
+    getNotices: function () { return feedNotices; },
+    forceAutoPost: function () {
+      resolveCurrentContact();
+      var pool = getReplyPool();
+      if (pool.length === 0) { console.warn('[feed] 没有回复字卡'); return; }
+      var count = randomInt(1, 3);
+      if (count > pool.length) count = pool.length;
+      var picked = [];
+      var usedIdx = {};
+      for (var i = 0; i < count; i++) {
+        var idx, tries = 0;
+        do {
+          idx = Math.floor(Math.random() * pool.length);
+          tries++;
+        } while (usedIdx[idx] && tries < 20);
+        usedIdx[idx] = true;
+        picked.push(String(pool[idx]).trim());
+      }
+      var content = picked.join(' ');
+      if (!feedData[currentContactId]) feedData[currentContactId] = { posts: [] };
+      feedData[currentContactId].posts.push({
+        id: genId('post'),
+        role: 'ta',
+        authorName: getTaName(),
+        authorAvatar: getTaAvatar(),
+        content: content,
+        ts: Date.now(),
+        likes: [],
+        comments: [],
+        favorites: []
+      });
+      saveData().then(function () {
+        if (document.getElementById('pageFeed') &&
+            document.getElementById('pageFeed').classList.contains('active')) {
+          renderList();
+        }
+        showUnreadDot();
+        pushChatSystemMessage(getTaName() + ' 发布了一条朋友圈动态');
+      });
+    }
+  };
+
+})();
