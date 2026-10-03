@@ -342,15 +342,21 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       var quote = item.originalContent
         ? '<div class="env-card-quote">原信: ' + escapeHtml(truncate(item.originalContent, 30)) + '</div>'
         : '';
+          // 状态行：绿色"他的来信…"，可带"新"标签
       var newTag = item.isNew
         ? '<span class="env-card-new">新</span>'
         : '';
+      var statusHtml =
+        '<span class="env-card-status replied">' +
+          '<i class="fa-solid fa-envelope-open-text"></i> 他的来信…' +
+        '</span>';
+
       html += '<div class="env-card" data-id="' + escapeHtml(item.id) + '" data-type="inbox">' +
         '<div class="env-card-date">收到 · ' + formatDate(item.receivedTime) + '</div>' +
         quote +
         '<div class="env-card-text">' + escapeHtml(truncate(item.content, PREVIEW_LEN)) + '</div>' +
         '<div class="env-card-foot">' +
-          newTag +
+          '<div class="env-card-foot-left">' + statusHtml + newTag + '</div>' +
           '<button class="env-card-del" data-del="' + escapeHtml(item.id) + '" data-deltype="inbox"><i class="fa-solid fa-xmark"></i></button>' +
         '</div>' +
         '</div>';
