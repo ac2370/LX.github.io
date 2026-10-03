@@ -488,9 +488,13 @@
   // 在聊天记录里插入一张礼物卡
   // record: { id, giftId, name, price, emoji, wish, side, claimed, tm }
 window.chatAddGift = function (record) {
-  if (!record || !chatMessages) return;
+  if (!record) return;
 
-  // ---- 分支 A：Ta 给自己买的 → 方框卡片，无领取按钮 ----
+  // 兜底：每次实时查一次 #chatMessages，避免 chat.js 初次执行时节点还不存在
+  var chatMessages = document.getElementById('chatMessages');
+  if (!chatMessages) return;
+
+  // ---- 分支 A：Ta 给自己买 → 方框卡片，无领取按钮 ----
   if (record.side === 'self') {
     var selfRow = document.createElement('div');
     selfRow.className = 'message-row other';
@@ -521,7 +525,7 @@ window.chatAddGift = function (record) {
     return;
   }
 
-  // ---- 分支 B：礼物卡（我送的 out / Ta 送我的 in） ----
+  // ---- 分支 B：普通礼物卡（side 是 'in' 或 'out' 都走这里，都会渲染） ----
   var row = document.createElement('div');
   row.className = 'message-row ' + (record.side === 'in' ? 'other' : 'self');
   row.setAttribute('data-gift-id', record.id);
@@ -531,13 +535,16 @@ window.chatAddGift = function (record) {
 
   var priceText = '¥' + ((record.price || 0) / 100);
 
-  // 只有 side === 'in' 才显示领取按钮
+  // 领取按钮：只有 Ta 送我的（side === 'in'）才显示
   var showClaimBtn = (record.side === 'in');
   var btnHtml = '';
   if (showClaimBtn) {
     btnHtml = '<button class="chat-gift-btn' + (record.claimed ? ' claimed' : '') + '">' +
       (record.claimed ? '已领取' : '领取') +
       '</button>';
+  } else {
+    // 我送出的：只显示一个状态提示（不可点）
+    btnHtml = '<div class="chat-gift-sent">已送出</div>';
   }
 
   card.innerHTML =
@@ -567,43 +574,6 @@ window.chatAddGift = function (record) {
   chatMessages.appendChild(row);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 };
-    // ---- 分支 B：其他礼物（我送的 / Ta 送我的）→ 原礼物卡，带领取按钮 ----
-    var row = document.createElement('div');
-    row.className = 'message-row ' + (record.side === 'in' ? 'other' : 'self');
-    row.setAttribute('data-gift-id', record.id);
-
-    var card = document.createElement('div');
-    card.className = 'chat-gift-card';
-
-    var priceText = '¥' + ((record.price || 0) / 100);
-
-    card.innerHTML =
-      '<div class="chat-gift-emoji">' + (record.emoji || '🎁') + '</div>' +
-      '<div class="chat-gift-name">' + (record.name || '心意') + '</div>' +
-      '<div class="chat-gift-price">' + priceText + '</div>' +
-      (record.wish ? '<div class="chat-gift-wish">' + record.wish + '</div>' : '') +
-      '<button class="chat-gift-btn' + (record.claimed ? ' claimed' : '') + '">' +
-        (record.claimed ? '已领取' : '领取') +
-      '</button>';
-
-    var btn = card.querySelector('.chat-gift-btn');
-    if (!record.claimed) {
-      btn.addEventListener('click', function () {
-        btn.disabled = true;
-        btn.classList.add('claimed');
-        btn.textContent = '已领取';
-        if (window.market && typeof window.market.claimGift === 'function') {
-          try { window.market.claimGift(record.id); } catch (e) {}
-        }
-      });
-    } else {
-      btn.disabled = true;
-    }
-
-    row.appendChild(card);
-    chatMessages.appendChild(row);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  };
 
   // 追加一条普通文本消息（供 market 让 TA 回复用）
   window.chatAddTextMessage = function (type, text) {
