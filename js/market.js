@@ -726,6 +726,18 @@
     },
     formatPrice: formatPrice,
     getBoxItems: function () { return boxItems; },
+         claimGift: function (giftRecordId) {
+      var it = boxItems.find(function (x) { return x.id === giftRecordId; });
+      if (!it) return;
+      if (it.claimed) return;
+      it.claimed = true;
+      saveBox().then(function () {
+        renderBox();
+        if (typeof window.chatMarkGiftClaimed === 'function') {
+          try { window.chatMarkGiftClaimed(giftRecordId); } catch (e) {}
+        }
+      });
+    },
     // 供测试：模拟 TA 送我一个礼物
     simulateIncoming: function (giftId, wish) {
       var gift = DEFAULT_GIFTS.find(function (g) { return g.id === giftId; }) || DEFAULT_GIFTS[0];
