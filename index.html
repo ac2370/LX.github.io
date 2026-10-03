@@ -675,11 +675,16 @@
         <i class="fa-solid fa-arrow-left"></i>
       </button>
       <span class="feed-topbar-title">朋友圈</span>
-      <button class="feed-settings-btn" id="feedSettingsBtn">
-        <i class="fa-solid fa-gear"></i>
-      </button>
+      <div class="feed-topbar-right">
+        <button class="feed-settings-btn" id="feedSettingsBtn" title="通知">
+          <i class="fa-solid fa-bell"></i>
+        </button>
+        <button class="feed-add-btn" id="feedAddBtn" title="发一条">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
     </div>
-
+    
     <!-- 主体滚动区 -->
     <div class="feed-body">
 
@@ -695,14 +700,6 @@
         </div>
       </div>
 
-      <!-- 发帖输入框 -->
-      <div class="feed-post-bar" id="feedPostBar">
-        <div class="feed-post-avatar">
-          <img id="feedPostAvatar" src="https://picsum.photos/100/100?random=1" alt="">
-        </div>
-        <div class="feed-post-input">今天想记录什么？</div>
-        <i class="fa-solid fa-pen-to-square feed-post-icon"></i>
-      </div>
 
       <!-- 动态列表 -->
       <div class="feed-list" id="feedList"></div>
