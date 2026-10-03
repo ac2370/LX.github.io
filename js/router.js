@@ -15,6 +15,7 @@
   var pageCompanionActive = document.getElementById('pageCompanionActive');
   var pageImportantDay    = document.getElementById('pageImportantDay');
   var pageMood            = document.getElementById('pageMood');
+  var pageEnvelope        = document.getElementById('pageEnvelope');
 
   // 所有需要参与切换的页面集合（自动收集所有 .page）
   var allPages = Array.prototype.slice.call(document.querySelectorAll('.page'));
@@ -112,5 +113,6 @@
   window.pageCompanionActive = pageCompanionActive;
   window.pageImportantDay    = pageImportantDay;
   window.pageMood            = pageMood;
+  window.pageEnvelope        = pageEnvelope;
 
 })();
