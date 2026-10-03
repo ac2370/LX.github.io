@@ -662,24 +662,35 @@
       emoji: gift.emoji,
       wish: wish || '',
       side: 'out',
-      claimed: true,        // ★ 我送出的礼物直接标记为已领取（心意柜不再显示待领取角标）
+      claimed: true,
       tm: Date.now()
     };
     boxItems.push(record);
 
-    return Promise.all([saveWallet(), saveBox()]).then(function () {
+    // ★ 关键：先同步渲染聊天礼物卡（不依赖 Promise），再保存
+    try {
       if (typeof window.chatAddGift === 'function') {
-        try { window.chatAddGift(record); } catch (e) {}
+        window.chatAddGift(record);
+      } else {
+        console.warn('[market] chatAddGift 未定义，跳过聊天渲染');
       }
-      scheduleTaReplyToGift('out');
-      renderBox();
+    } catch (e) {
+      console.warn('[market] chatAddGift 调用失败', e);
+    }
 
-      // ★ 弹出"礼物已送出"浮层 + 亮红点
-      showGiftToast('礼物已送出，Ta 会收到的');
-      showGiftUnreadDot();
+    // 再保存 + 刷新心意柜
+    saveWallet();
+    saveBox();
+    renderBox();
 
-      return true;
-    });
+    // TA 回复
+    scheduleTaReplyToGift('out');
+
+    // 浮层 + 红点
+    showGiftToast('礼物已送出，Ta 会收到的');
+    showGiftUnreadDot();
+
+    return Promise.resolve(true);
   }
 
   // ==================== TA 回复 ====================
@@ -944,22 +955,34 @@
       specialText = '我的心愿被你实现啦！';
     }
 
-    Promise.all([saveBox(), saveWallet()]).then(function () {
+       // ★ 关键：先同步渲染聊天礼物卡（不依赖 Promise）
+    try {
       if (typeof window.chatAddGift === 'function') {
-        try { window.chatAddGift(record); } catch (e) {}
-      }
-      scheduleTaReplyToGift(side, specialText || null);
-      renderBox();
-      updateWalletUI();
-      bumpAutoGiftDay();
-
-      // ★ 根据分支弹不同文案
-      if (side === 'self') {
-        showGiftToast('Ta 给自己买了一件心意');
+        window.chatAddGift(record);
       } else {
-        showGiftToast('收到了一份来自 Ta 的心意');
+        console.warn('[market] chatAddGift 未定义，跳过聊天渲染');
       }
-      showGiftUnreadDot();
+    } catch (e) {
+      console.warn('[market] chatAddGift 调用失败', e);
+    }
+
+    // 再保存 + 刷新 UI
+    saveBox();
+    saveWallet();
+    renderBox();
+    updateWalletUI();
+    bumpAutoGiftDay();
+
+    // TA 回复
+    scheduleTaReplyToGift(side, specialText || null);
+
+    // ★ 根据分支弹不同文案
+    if (side === 'self') {
+      showGiftToast('Ta 给自己买了一件心意');
+    } else {
+      showGiftToast('收到了一份来自 Ta 的心意');
+    }
+    showGiftUnreadDot();
     });
   }
 
