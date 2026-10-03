@@ -1756,7 +1756,24 @@ body.theme-dark .pat-cancel {
   border-color: var(--theme-card-border);
 }
 
-/* ============ 消息时间戳 ============ */
+/* ============ 消息体：气泡 + 时间戳 竖排 ============ */
+.message-body {
+  display: flex;
+  flex-direction: column;
+  max-width: 72%;
+}
+
+/* 我发的：整体靠右 */
+.message-row.self .message-body {
+  align-items: flex-end;
+}
+
+/* 对方发的：整体靠左 */
+.message-row.other .message-body {
+  align-items: flex-start;
+}
+
+/* 时间戳 */
 .message-time {
   font-size: 11px;
   color: #b6c2cd;
@@ -1764,16 +1781,6 @@ body.theme-dark .pat-cancel {
   padding: 0 4px;
   letter-spacing: 0.3px;
   user-select: none;
-}
-
-/* 我的消息：时间戳右对齐 */
-.message-row.self .message-time {
-  text-align: right;
-}
-
-/* 对方消息：时间戳左对齐 */
-.message-row.other .message-time {
-  text-align: left;
 }
 
 /* 关闭时间戳显示 */
