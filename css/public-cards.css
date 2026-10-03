@@ -257,24 +257,3 @@
   font-size: 13px;
   padding: 40px 0;
 }
-.builtin-viewer-footer {
-  flex-shrink: 0;
-  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)) 18px;
-  border-top: 1px solid #f0f3f6;
-}
-.builtin-viewer-btn {
-  width: 100%;
-  padding: 11px 0;
-  border-radius: 14px;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.builtin-viewer-btn-close {
-  background: #f5f6f8;
-  color: #55606b;
-}
-.builtin-viewer-btn-close:active {
-  background: #e8ecf0;
-}
