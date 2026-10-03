@@ -5,6 +5,10 @@
  * - 兼容旧颜文字：cardDatabase.emoji → cardDatabase.pat 自动迁移
  * - 使用 localforage 持久化
  * - 保持字卡收纳盒现有 UI 和功能完全不变
+ *
+ * 修复：
+ * - refreshCardUI 不再重复 migrateOldData，避免每次切回字卡页覆盖新数据
+ * - init 只执行一次，避免 cardDatabaseReady 重复触发迁移
  */
 
 (function () {
@@ -107,12 +111,6 @@
   };
 
   // ==================== 分组数据结构 ====================
-  // groupsMeta: {
-  //   reply:   { "默认分组": { color: "#5C7CFA" }, ... },
-  //   pat:     { "默认分组": { color: "#F8B4B4" }, ... },
-  //   place:   { ... },
-  //   mood:    { ... }
-  // }
   var groupsMeta = {
     reply: {},
     pat: {},
@@ -120,7 +118,6 @@
     mood: {}
   };
 
-  // 默认颜色池
   const DEFAULT_COLORS = [
     '#5C7CFA', '#F8B4B4', '#6FB1E8', '#7ED3A8', '#F5A623',
     '#B78BEA', '#F06292', '#4DD0E1', '#FF8A65', '#9CCC65',
@@ -154,7 +151,6 @@
   }
 
   // ==================== 兼容旧数据结构 ====================
-  // 把一维数组转换为分组对象
   function migrateToGroups(arr) {
     if (Array.isArray(arr)) {
       return { '默认分组': arr.slice() };
@@ -218,7 +214,6 @@
   function getGroupObject(category) {
     if (!window.cardDatabase) return { '默认分组': [] };
 
-    // 分类映射：'place' 对应 cardDatabase 的 'location'；'kaomoji' 兼容为 'pat'
     var dbKey = category;
     if (category === 'place') dbKey = 'location';
     else if (category === 'kaomoji') dbKey = 'pat';
@@ -227,7 +222,6 @@
       window.cardDatabase[dbKey] = { '默认分组': [] };
     }
     var obj = window.cardDatabase[dbKey];
-    // 迁移旧数组
     if (Array.isArray(obj)) {
       var migrated = { '默认分组': obj.slice() };
       window.cardDatabase[dbKey] = migrated;
@@ -241,20 +235,17 @@
     return window.cardDatabase[dbKey];
   }
 
-  // ==================== 全局 API（挂在 window 上） ====================
+  // ==================== 全局 API ====================
 
-  // 获取指定分类的所有分组名
   function getGroupsOf(category) {
     var obj = getGroupObject(category);
     return Object.keys(obj);
   }
 
-  // 兼容默认：返回 reply 分类的分组
   window.getGroups = function (category) {
     return getGroupsOf(category || 'reply');
   };
 
-  // 获取某分类某分组的字卡数组
   function getCardsInGroupOf(category, groupName) {
     var obj = getGroupObject(category);
     return obj[groupName] || [];
@@ -264,7 +255,6 @@
     return getCardsInGroupOf(category || 'reply', groupName);
   };
 
-  // 获取某分组的颜色
   window.getGroupColor = function (groupName, category) {
     var cat = category || 'reply';
     if (cat === 'kaomoji') cat = 'pat';
@@ -272,7 +262,6 @@
     return (meta[groupName] && meta[groupName].color) || DEFAULT_COLORS[0];
   };
 
-  // 新建分组
   window.addGroup = function (name, color, category) {
     if (!name || typeof name !== 'string') return false;
     var cat = category || 'reply';
@@ -291,7 +280,6 @@
     return true;
   };
 
-  // 重命名分组
   window.renameGroup = function (oldName, newName, category) {
     if (!oldName || !newName) return false;
     var cat = category || 'reply';
@@ -300,7 +288,6 @@
     if (!obj[oldName]) return false;
     if (obj[newName]) return false;
 
-    // 重建对象以保持顺序
     var newObj = {};
     Object.keys(obj).forEach(function (key) {
       if (key === oldName) {
@@ -310,18 +297,15 @@
       }
     });
 
-    // 迁移颜色
     if (groupsMeta[cat] && groupsMeta[cat][oldName]) {
       groupsMeta[cat][newName] = groupsMeta[cat][oldName];
       delete groupsMeta[cat][oldName];
     }
 
-    // 迁移当前选中
     if (currentGroupMap[cat] === oldName) {
       currentGroupMap[cat] = newName;
     }
 
-    // 写回
     var dbKey = cat;
     if (cat === 'place') dbKey = 'location';
     window.cardDatabase[dbKey] = newObj;
@@ -330,7 +314,6 @@
     return true;
   };
 
-  // 删除分组
   window.deleteGroup = function (name, category) {
     if (!name) return false;
     var cat = category || 'reply';
@@ -342,7 +325,6 @@
     delete obj[name];
     if (groupsMeta[cat]) delete groupsMeta[cat][name];
 
-    // 如果删除的是当前分组，切回第一个
     if (currentGroupMap[cat] === name) {
       var remaining = Object.keys(obj);
       currentGroupMap[cat] = remaining[0] || '默认分组';
@@ -355,7 +337,6 @@
     return true;
   };
 
-  // 向指定分组添加字卡
   window.addCardToGroup = function (groupName, text, category) {
     if (!groupName || !text) return false;
     var cat = category || 'reply';
@@ -372,7 +353,6 @@
     return true;
   };
 
-  // 从指定分组删除字卡
   window.removeCardFromGroup = function (groupName, text, category) {
     if (!groupName || !text) return false;
     var cat = category || 'reply';
@@ -390,7 +370,6 @@
     return true;
   };
 
-  // 获取/设置当前分组
   window.getCurrentGroup = function (category) {
     var cat = category || 'reply';
     if (cat === 'kaomoji') cat = 'pat';
@@ -409,11 +388,9 @@
   };
 
   // ==================== 兼容旧 card.js 的接口 ====================
-  // getDB(category) 供 UI 渲染使用
   function getDB(category) {
     if (!window.cardDatabase || !window.cardDatabase.ready) return [];
     if (category === 'emoji' || category === 'status') {
-      // 这两个分类还是普通数组（图片/状态），暂不分组
       return window.cardDatabase.get(category) || [];
     }
     var cat = category === 'kaomoji' ? 'pat' : category;
@@ -421,7 +398,9 @@
   }
 
   // ==================== 兼容旧数据迁移 ====================
+  var migratedOnce = false;
   function migrateOldData() {
+    if (migratedOnce) return;
     if (!window.cardDatabase || !window.cardDatabase.ready) return;
 
     // 1. 把旧的 reply 数组迁移为分组对象
@@ -431,9 +410,7 @@
       window.cardDatabase.reply = { '默认分组': [] };
     }
 
-    // 2. 拍一拍（pat）：
-    //    a) 如果已有 cardDatabase.pat，走正常迁移
-    //    b) 如果只有 cardDatabase.emoji（旧颜文字容器），迁移到 cardDatabase.pat
+    // 2. 拍一拍
     if (window.cardDatabase.pat) {
       if (Array.isArray(window.cardDatabase.pat)) {
         window.cardDatabase.pat = { '默认分组': window.cardDatabase.pat.slice() };
@@ -441,7 +418,6 @@
         window.cardDatabase.pat = { '默认分组': [] };
       }
     } else if (window.cardDatabase.emoji) {
-      // 旧颜文字容器：迁移到 pat
       var oldEmoji = window.cardDatabase.emoji;
       if (Array.isArray(oldEmoji)) {
         window.cardDatabase.pat = { '默认分组': oldEmoji.slice() };
@@ -454,20 +430,17 @@
       window.cardDatabase.pat = { '默认分组': [] };
     }
 
-    // 3. place（地点） / mood（心情）：localStorage 里的旧数组迁移
+    // 3. place / mood
     ['place', 'mood'].forEach(function (cat) {
       var key = cat === 'place' ? KEY_PLACE : KEY_MOOD;
       var dbKey = (cat === 'place') ? 'location' : cat;
-      // 确保 cardDatabase[dbKey] 存在
       if (!window.cardDatabase[dbKey]) {
-        // 尝试从 localStorage 读旧数据
         try {
           var raw = localStorage.getItem(key);
           if (raw) {
             var data = JSON.parse(raw);
             if (Array.isArray(data)) {
               window.cardDatabase[dbKey] = { '默认分组': data.slice() };
-              // 清除旧数据，避免二次迁移
               localStorage.removeItem(key);
             }
           }
@@ -480,7 +453,7 @@
       }
     });
 
-    // 4. 初始化每个分类的默认分组颜色
+    // 4. 默认分组颜色
     ['reply', 'pat', 'place', 'mood'].forEach(function (cat) {
       if (!groupsMeta[cat]) groupsMeta[cat] = {};
       var obj = getGroupObject(cat);
@@ -493,6 +466,8 @@
 
     if (window.cardDatabase.persist) window.cardDatabase.persist();
     persistAll();
+
+    migratedOnce = true;
   }
 
   // ==================== 分类切换 ====================
@@ -526,7 +501,6 @@
     simpleModalInput.placeholder = placeholder || '输入内容...';
     simpleModal.classList.add('active');
     setTimeout(function () { simpleModalInput.focus(); }, 100);
-    // 显示分组选择器
     showGroupSelectorInModal(simpleModalCategory);
   }
   function closeSimpleModal() { simpleModal.classList.remove('active'); }
@@ -545,15 +519,12 @@
     var cat = category === 'kaomoji' ? 'pat' : category;
 
     if (cat === 'reply' || cat === 'pat' || cat === 'place' || cat === 'mood') {
-      // 这些分类支持分组
       var target = groupName || currentGroupMap[cat] || '默认分组';
       texts.forEach(function (t) {
         window.addCardToGroup(target, t, cat);
       });
-      // 更新当前分组
       currentGroupMap[cat] = target;
     } else if (cat === 'emoji') {
-      // 表情包（图片）暂不分组，直接存 sticker
       window.cardDatabase.addMany('sticker', texts, autoDedup);
     } else if (cat === 'status') {
       if (!window.cardDatabase.status) window.cardDatabase.status = [];
@@ -569,7 +540,6 @@
   function showGroupSelectorInModal(category) {
     var cat = category === 'kaomoji' ? 'pat' : category;
 
-    // 分类为 emoji/status 时不显示分组选择器
     if (cat === 'emoji' || cat === 'status') {
       var existing = document.getElementById('modalGroupSelector');
       if (existing) existing.style.display = 'none';
@@ -578,14 +548,12 @@
 
     var container = document.getElementById('modalGroupSelector');
     if (!container) {
-      // 动态创建
       container = document.createElement('div');
       container.id = 'modalGroupSelector';
       container.className = 'modal-group-selector';
 
       var simplePanel = document.querySelector('#simpleModal .simple-panel');
       if (simplePanel) {
-        // 插到按钮组之前
         var actions = simplePanel.querySelector('.simple-actions');
         if (actions) {
           simplePanel.insertBefore(container, actions);
@@ -598,13 +566,11 @@
     container.style.display = 'block';
     container.innerHTML = '';
 
-    // 标签
     var label = document.createElement('div');
     label.className = 'modal-group-label';
     label.textContent = '添加到分组';
     container.appendChild(label);
 
-    // 下拉框
     var selectWrap = document.createElement('div');
     selectWrap.className = 'modal-group-select-wrap';
 
@@ -623,13 +589,11 @@
 
     selectWrap.appendChild(selectBtn);
 
-    // 分组列表面板
     var dropdown = document.createElement('div');
     dropdown.className = 'modal-group-dropdown';
     dropdown.id = 'modalGroupDropdown';
 
     var groups = window.getGroups(cat);
-    // 第一项：不分组
     var noGroupItem = document.createElement('div');
     noGroupItem.className = 'modal-group-item' + (currentGroupName === '默认分组' ? ' active' : '');
     noGroupItem.setAttribute('data-group', '默认分组');
@@ -638,7 +602,6 @@
       '<span class="modal-group-name-text">不分组（默认分组）</span>';
     dropdown.appendChild(noGroupItem);
 
-    // 其他分组
     groups.forEach(function (g) {
       if (g === '默认分组') return;
       var item = document.createElement('div');
@@ -653,13 +616,11 @@
     selectWrap.appendChild(dropdown);
     container.appendChild(selectWrap);
 
-    // 绑定下拉展开/收起
     selectBtn.addEventListener('click', function (e) {
       e.stopPropagation();
       dropdown.classList.toggle('active');
     });
 
-    // 绑定分组选择
     dropdown.querySelectorAll('.modal-group-item').forEach(function (item) {
       item.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -676,7 +637,6 @@
       });
     });
 
-    // 点击外部关闭下拉
     if (!container.dataset.bound) {
       container.dataset.bound = '1';
       document.addEventListener('click', function () {
@@ -798,7 +758,6 @@
   function updateGroupSelect() {
     if (!groupSelect) return;
 
-    // 只处理 reply 分类（其他分类的 select 用各自的处理）
     var cat = 'reply';
     var groups = window.getGroups(cat);
 
@@ -828,7 +787,6 @@
   function updateAllUI() {
     if (!window.cardDatabase) return;
 
-    // 1. 统计各分类的总数
     var replyGroups = getGroupObject('reply');
     var patGroups = getGroupObject('pat');
     var placeGroups = getGroupObject('place');
@@ -843,7 +801,6 @@
     var stickerTotal = (window.cardDatabase.get('sticker') || []).length;
     var statusTotal = (window.cardDatabase.status || []).length;
 
-    // 2. 徽章
     if (badges.reply) badges.reply.textContent = replyTotal;
     if (badges.pat) badges.pat.textContent = patTotal;
     if (badges.place) badges.place.textContent = placeTotal;
@@ -851,7 +808,6 @@
     if (badges.emoji) badges.emoji.textContent = stickerTotal;
     if (badges.status) badges.status.textContent = statusTotal;
 
-    // 3. 状态栏
     if (cardStatusCounts) {
       cardStatusCounts.textContent = replyTotal + ' 条回复 · ' +
         stickerTotal + ' 个表情 · ' +
@@ -859,10 +815,8 @@
         moodTotal + ' 种心情';
     }
 
-    // 4. 更新分组下拉（reply）
     updateGroupSelect();
 
-    // 5. 渲染回复列表
     var replyCurrentGroup = currentGroupMap.reply || '默认分组';
     renderTextList(
       cardList, cardListPlaceholder,
@@ -870,7 +824,6 @@
       cardSearchInput, 'reply', replyCurrentGroup
     );
 
-    // 6. 渲染拍一拍
     var patCurrentGroup = currentGroupMap.pat || '默认分组';
     renderTextList(
       patList, patPlaceholder,
@@ -878,7 +831,6 @@
       patSearchInput, 'pat', patCurrentGroup
     );
 
-    // 7. 渲染地点
     var placeCurrentGroup = currentGroupMap.place || '默认分组';
     renderTextList(
       placeList, placePlaceholder,
@@ -886,7 +838,6 @@
       placeSearchInput, 'place', placeCurrentGroup
     );
 
-    // 8. 渲染心情
     var moodCurrentGroup = currentGroupMap.mood || '默认分组';
     renderTextList(
       moodList, moodPlaceholder,
@@ -894,13 +845,11 @@
       moodSearchInput, 'mood', moodCurrentGroup
     );
 
-    // 9. 渲染状态
     renderTextList(statusList, statusPlaceholder,
       (window.cardDatabase.status || []),
       statusSearchInput, 'status', null
     );
 
-    // 10. 渲染表情包
     renderEmojiGrid();
   }
 
@@ -945,7 +894,7 @@
   }
   if (cardSearchInput) cardSearchInput.addEventListener('input', updateAllUI);
 
-  // ==================== 拍一拍/地点/心情/状态 操作栏（补全） ====================
+  // ==================== 拍一拍/地点/心情/状态 操作栏 ====================
   function bindCategoryButtons(cat, prefix) {
     var addBtn = document.getElementById(prefix + 'AddBtn');
     var importBtn = document.getElementById(prefix + 'ImportBtn');
@@ -1105,7 +1054,6 @@
 
       document.body.appendChild(newGroupModal);
 
-      // 初始化颜色池
       var colorsContainer = newGroupModal.querySelector('#newGroupColors');
       var initialColor = '#5C7CFA';
       DEFAULT_COLORS.forEach(function (color, idx) {
@@ -1125,7 +1073,6 @@
         colorsContainer.appendChild(btn);
       });
 
-      // 颜色选择器
       var picker = newGroupModal.querySelector('#newGroupColorPicker');
       var hexInput = newGroupModal.querySelector('#newGroupHexInput');
       picker.addEventListener('input', function () {
@@ -1141,14 +1088,12 @@
         }
       });
 
-      // 预览按钮
       newGroupModal.querySelector('#newGroupPreviewBtn').addEventListener('click', function () {
         var v = hexInput.value.trim();
         if (!/^#[0-9A-Fa-f]{6}$/.test(v)) { alert('请输入有效的 HEX 颜色，如 #5C7CFA'); return; }
         picker.value = v;
       });
 
-      // 取消
       newGroupModal.querySelector('#newGroupCancel').addEventListener('click', function () {
         newGroupModal.classList.remove('active');
       });
@@ -1156,7 +1101,6 @@
         if (e.target === newGroupModal) newGroupModal.classList.remove('active');
       });
 
-      // 保存
       newGroupModal.querySelector('#newGroupConfirm').addEventListener('click', function () {
         var name = newGroupModal.querySelector('#newGroupName').value.trim();
         if (!name) { alert('请输入分组名称'); return; }
@@ -1171,14 +1115,12 @@
         newGroupModal.classList.remove('active');
         updateAllUI();
 
-        // 触发设置面板刷新
         if (window.chatSettingsPanel && window.chatSettingsPanel.refreshGroupCheckboxes) {
           window.chatSettingsPanel.refreshGroupCheckboxes();
         }
       });
     }
 
-    // 重置
     newGroupModal.querySelector('#newGroupName').value = '';
     newGroupModal.querySelector('#newGroupColorPicker').value = '#5C7CFA';
     newGroupModal.querySelector('#newGroupHexInput').value = '#5C7CFA';
@@ -1190,7 +1132,6 @@
     newGroupModal.classList.add('active');
   }
 
-  // 绑定"新建分组"按钮（reply / pat / place / mood）
   function bindNewGroupButton(btnId, category) {
     var btn = document.getElementById(btnId);
     if (btn) {
@@ -1206,7 +1147,6 @@
   bindNewGroupButton('placeNewGroupBtn', 'place');
   bindNewGroupButton('moodNewGroupBtn', 'mood');
 
-  // 绑定"重命名"按钮
   function bindRenameButton(btnId, category) {
     var btn = document.getElementById(btnId);
     if (!btn) return;
@@ -1238,7 +1178,6 @@
 
   // ==================== 暴露给外部 ====================
   window.getReplyCards = function () {
-    // 兼容：返回所有分组的字卡合并（供 chat.js 抽卡）
     var obj = getGroupObject('reply');
     var all = [];
     Object.keys(obj).forEach(function (g) {
@@ -1254,30 +1193,34 @@
     });
     return all;
   };
-  // 兼容旧接口
   window.getKaomojiCards = window.getPatCards;
   window.getEmojiCards = function () {
     return window.cardDatabase.get('sticker') || [];
   };
 
+  // 关键修复：不再重复跑迁移，只刷新 UI
   window.refreshCardUI = function () {
     if (!window.cardDatabase || !window.cardDatabase.ready) {
       window.addEventListener('cardDatabaseReady', function () {
-        migrateOldData();
         updateAllUI();
       });
       return;
     }
-    migrateOldData();
     updateAllUI();
   };
 
   // ==================== 初始化 ====================
+  var inited = false;
   function init() {
+    if (inited) return;
+    inited = true;
+
     if (!window.cardDatabase) {
       window.addEventListener('cardDatabaseReady', function () {
-        migrateOldData();
-        updateAllUI();
+        loadGroupsMeta(function () {
+          migrateOldData();
+          updateAllUI();
+        });
       });
       return;
     }
@@ -1299,7 +1242,9 @@
   init();
 
   window.addEventListener('cardDatabaseReady', function () {
+    if (!inited) return;
     loadGroupsMeta(function () {
+      // 迁移只跑一次，由 migratedOnce 控制
       migrateOldData();
       updateAllUI();
     });
@@ -1309,27 +1254,23 @@
 
 /* ============================================================
    card.js 追加块 —— 分类切换 / 整理模式 / 分组弹窗
-   （已把 kaomoji 相关全部改为 pat，与主逻辑保持一致）
    ============================================================ */
 (function () {
   'use strict';
 
-  // ==================== 存储 Key ====================
   var KEY_MAP = {
     reply: 'my_word_cards',
-    pat: 'my_kaomoji_cards',   // 沿用旧 key
+    pat: 'my_kaomoji_cards',
     place: 'my_place_cards',
     mood: 'my_mood_cards',
     emoji: 'my_emoji_cards',
     status: 'my_status_cards'
   };
 
-  // ==================== 状态 ====================
   var currentCat = 'reply';
   var organizeMode = false;
-  var selectedSet = new Set(); // 存放选中的文字或 URL
+  var selectedSet = new Set();
 
-  // ==================== 工具 ====================
   function getList(cat) {
     if (window.getReplyCards && cat === 'reply') return window.getReplyCards();
     if (window.getPatCards && cat === 'pat') return window.getPatCards();
@@ -1351,7 +1292,6 @@
     if (window.refreshCardUI) window.refreshCardUI();
   }
 
-  // ==================== 分类按钮点击 ====================
   document.querySelectorAll('.cat-grid-item').forEach(function (item) {
     item.addEventListener('click', function () {
       var cat = item.getAttribute('data-cat');
@@ -1363,7 +1303,6 @@
     });
   });
 
-  // ==================== 搜索框占位符区分 ====================
   function updateSearchPlaceholder() {
     var map = {
       reply: '找一句话、一种心情...',
@@ -1380,7 +1319,6 @@
     });
   }
 
-  // ==================== 整理模式切换 ====================
   function toggleOrganize(cat) {
     if (organizeMode && currentCat === cat) {
       organizeMode = false;
@@ -1393,21 +1331,16 @@
   }
 
   function updateOrganizeUI() {
-    // 移除所有整理栏的 active
     document.querySelectorAll('.organize-bar').forEach(function (b) { b.classList.remove('active'); });
-    // 移除所有卡片的 organizing / selected
     document.querySelectorAll('.word-card-item, .emoji-grid-item').forEach(function (c) {
       c.classList.remove('organizing', 'selected');
     });
 
     if (!organizeMode) return;
 
-    // 显示当前分类的整理栏
     var bar = document.getElementById('organizeBar-' + currentCat);
     if (bar) bar.classList.add('active');
 
-    // 给当前分类的卡片加 organizing
-    var listEl = document.getElementById('cardList');
     var emojiGridEl = document.getElementById('emojiGrid');
     if (currentCat === 'emoji') {
       if (emojiGridEl) emojiGridEl.querySelectorAll('.emoji-grid-item').forEach(function (c) { c.classList.add('organizing'); });
@@ -1431,12 +1364,10 @@
     if (countEl) countEl.textContent = '已选 ' + selectedSet.size + ' 条';
   }
 
-  // ==================== 整理栏 DOM 动态注入 ====================
-  // 在初始化时，为每个分类注入整理栏
   function injectOrganizeBars() {
     var cats = ['reply', 'pat', 'place', 'mood', 'emoji', 'status'];
     cats.forEach(function (cat) {
-      if (document.getElementById('organizeBar-' + cat)) return; // 已存在
+      if (document.getElementById('organizeBar-' + cat)) return;
 
       var bar = document.createElement('div');
       bar.className = 'organize-bar';
@@ -1448,14 +1379,12 @@
         '<button class="organize-btn" data-act="deleteGroup">删除此分组</button>' +
         '<button class="organize-btn" data-act="exit">退出整理</button>';
 
-      // 插入到面板最前面（分类网格之后）
       var panel = document.getElementById('panel-' + cat);
       if (panel) {
         panel.insertBefore(bar, panel.firstChild);
       }
     });
 
-    // 绑定整理栏按钮事件
     document.querySelectorAll('.organize-bar').forEach(function (bar) {
       bar.addEventListener('click', function (e) {
         var btn = e.target.closest('.organize-btn');
@@ -1472,7 +1401,6 @@
             list.forEach(function (item) { selectedSet.add(item); });
           }
           updateOrganizeUI();
-          // 重新给卡片加 selected
           applySelectedState();
         } else if (act === 'deleteSelected') {
           if (selectedSet.size === 0) { alert('请先选择要删除的内容'); return; }
@@ -1505,7 +1433,6 @@
   function applySelectedState() {
     if (!organizeMode) return;
 
-    // 文字类
     var listMap = {
       reply: 'cardList',
       pat: 'patList',
@@ -1523,7 +1450,6 @@
       });
     }
 
-    // 表情包
     if (currentCat === 'emoji') {
       var grid = document.getElementById('emojiGrid');
       if (grid) {
@@ -1536,19 +1462,15 @@
     }
   }
 
-  // ==================== 给卡片注入勾选圆圈 + 点击事件 ====================
   function rebindCardEvents() {
-    // 给所有文字卡片注入勾选圆圈
     document.querySelectorAll('.word-card-item').forEach(function (card) {
       if (card.querySelector('.select-circle')) return;
       var circle = document.createElement('div');
       circle.className = 'select-circle';
       card.insertBefore(circle, card.firstChild);
 
-      // 点击圆圈或卡片本身（在整理模式下）切换选中
       card.addEventListener('click', function (e) {
         if (!organizeMode) return;
-        // 避免点到删除按钮
         if (e.target.closest('.word-card-delete')) return;
         var textEl = card.querySelector('.word-card-text');
         if (!textEl) return;
@@ -1564,7 +1486,6 @@
       });
     });
 
-    // 给表情包卡片注入勾选圆圈
     document.querySelectorAll('.emoji-grid-item').forEach(function (item) {
       if (item.querySelector('.emoji-select-circle')) return;
       var circle = document.createElement('div');
@@ -1589,7 +1510,6 @@
     });
   }
 
-  // ==================== 分组弹窗（旧 demo，保留但不再是主流程） ====================
   function createGroupModal() {
     if (document.getElementById('groupModal')) return;
     var modal = document.createElement('div');
@@ -1633,18 +1553,7 @@
     if (modal) modal.classList.remove('active');
   }
 
-  // ==================== 绑定按钮 ====================
   function bindButtons() {
-    // 回复面板的导入/导出/添加（保留原逻辑，由 card.js 处理，这里只处理"添加"的多行提示）
-    var btnAddCard = document.getElementById('btnAddCard');
-    if (btnAddCard && !btnAddCard.dataset.bound) {
-      btnAddCard.dataset.bound = '1';
-      // 不覆盖原有逻辑，只修改 placeholder
-      var origClick = btnAddCard.onclick;
-      // 原 card.js 中已处理，这里不重复绑定
-    }
-
-    // 新建分组
     var btnNewGroup = document.getElementById('btnNewGroup');
     if (btnNewGroup && !btnNewGroup.dataset.bound) {
       btnNewGroup.dataset.bound = '1';
@@ -1654,7 +1563,6 @@
       }, true);
     }
 
-    // 重命名
     var btnRenameGroup = document.getElementById('btnRenameGroup');
     if (btnRenameGroup && !btnRenameGroup.dataset.bound) {
       btnRenameGroup.dataset.bound = '1';
@@ -1664,7 +1572,6 @@
       }, true);
     }
 
-    // 各分类的"整理"按钮
     var organizeMap = {
       btnOrganizeGroup: 'reply',
       patOrganizeBtn: 'pat',
@@ -1686,10 +1593,8 @@
     });
   }
 
-  // ==================== 监听分类切换后重新绑定 ====================
   var observer = new MutationObserver(function () {
     rebindCardEvents();
-    // 如果处于整理模式，重新应用选中状态
     if (organizeMode) {
       updateOrganizeUI();
       applySelectedState();
@@ -1697,7 +1602,6 @@
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // ==================== 初始化 ====================
   function init() {
     injectOrganizeBars();
     bindButtons();
@@ -1705,14 +1609,12 @@
     rebindCardEvents();
   }
 
-  // DOM 就绪后执行
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  // 暴露给外部
   window.rebindCardEvents = rebindCardEvents;
 
 })();
