@@ -2,6 +2,7 @@
  * 传讯聊天逻辑
  * - 自动回复：从 publicGroups / privateGroups 抽取文字
  * - 公共字卡库：合并 window.publicCards 的勾选字卡
+ * - 专属字卡库：当前联系人勾选的分组（window.contactCards）优先
  * - 颜文字：从 emojiGroups 抽取
  * - 表情包：从 stickerGroups 抽取
  * - 保持原有等待时间、连发、三点气泡、随机引用机制
@@ -264,6 +265,36 @@
     }
   }
 
+  // ==================== 读专属字卡（当前联系人勾选的分组） ====================
+  function getExclusiveReplyCards() {
+    try {
+      if (!window.contactCards || typeof window.contactCards.getFor !== 'function') return [];
+      var contactId = null;
+      try { contactId = localStorage.getItem('my_current_contact'); } catch (e) {}
+      if (!contactId) return [];
+
+      var groups = window.contactCards.getFor(contactId);
+      if (!Array.isArray(groups) || groups.length === 0) return [];
+      if (typeof window.getCardsInGroup !== 'function') return [];
+
+      var pool = [];
+      groups.forEach(function (g) {
+        try {
+          var cards = window.getCardsInGroup(g, 'reply');
+          if (Array.isArray(cards) && cards.length > 0) {
+            pool = pool.concat(cards);
+          }
+        } catch (e) {
+          console.warn('[chat] 读取专属字卡分组失败:', g, e);
+        }
+      });
+      return pool;
+    } catch (e) {
+      console.warn('[chat] 读取专属字卡失败', e);
+      return [];
+    }
+  }
+
   // ==================== 抽取一条文字回复 ====================
   function pickOneTextReply() {
     var selections = getGroupSelections();
@@ -277,6 +308,12 @@
         var cards = window.getCardsInGroup(g, 'reply');
         return Array.isArray(cards) && cards.length > 0;
       });
+    }
+
+    // ---------- 0) 专属字卡（当前联系人）优先 ----------
+    var exclusive = getExclusiveReplyCards();
+    if (exclusive.length > 0) {
+      return { text: randomPick(exclusive), source: 'exclusive' };
     }
 
     var validPublic = filterValid(publicGroups);
@@ -457,11 +494,16 @@
       return;
     }
 
-    // 检查是否有可用字卡（用户字卡 + 公共字卡）
+    // 检查是否有可用字卡（用户字卡 + 公共字卡 + 专属字卡）
     var allCards = getAllReplyCards();
     var publicCards = getPublicReplyCards();
+    var exclusiveCards = getExclusiveReplyCards();
 
-    if ((!allCards || allCards.length === 0) && (!publicCards || publicCards.length === 0)) {
+    if (
+      (!allCards || allCards.length === 0) &&
+      (!publicCards || publicCards.length === 0) &&
+      (!exclusiveCards || exclusiveCards.length === 0)
+    ) {
       setTimeout(function () {
         const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~');
         chatMessages.appendChild(row);
@@ -504,9 +546,9 @@
         for (var i = 0; i < replyCount; i++) {
           var picked = pickOneTextReply();
 
-          // 兜底：如果分组逻辑读不到，直接从用户字卡 + 公共字卡里随机
+          // 兜底：如果分组逻辑读不到，直接从用户字卡 + 公共字卡 + 专属字卡里随机
           if (!picked) {
-            var fallbackPool = allCards.concat(publicCards);
+            var fallbackPool = allCards.concat(publicCards, getExclusiveReplyCards());
             var fb = randomPick(fallbackPool);
             if (fb) picked = { text: fb, source: 'fallback' };
           }
@@ -538,7 +580,7 @@
 
         // 3. 兜底
         if (replies.length === 0) {
-          var fallbackPool2 = allCards.concat(publicCards);
+          var fallbackPool2 = allCards.concat(publicCards, getExclusiveReplyCards());
           var fb2 = randomPick(fallbackPool2);
           if (fb2) {
             replies.push({ type: 'text', content: fb2 });
@@ -775,7 +817,7 @@
   // ---------- 滚动 / 改变窗口时关闭菜单 ----------
   chatMessages.addEventListener('scroll', closeMsgMenu, true);
   window.addEventListener('resize', closeMsgMenu);
-  
+
   updateSendBtnState();
   scrollToBottom();
 
