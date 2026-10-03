@@ -7,6 +7,7 @@
      楼中楼：{ id, authorName, content, ts, to }
    通知：localforage 键 'feedNotices'
      [{ id, type: 'like'|'comment'|'reply', postId, content, ts, isNew: true }]
+   封面背景：localStorage 键 'feedCoverBg_<contactId>'
    功能：
      - 你发动态 / TA 自动发动态 / TA 三件套反应
      - 你评论 TA 的动态（TA 60% 概率回复）
@@ -14,6 +15,7 @@
      - 通知列表（点铃铛按钮弹出）
      - 删除自己的动态
      - 顶部 ➕ 按钮触发发帖弹层
+     - 换背景（上传本地图片 / 粘贴 URL）
    依赖：
      - window.showPage / window.pageFeed / window.pageHome
      - window.getReplyCards（card.js）
@@ -47,7 +49,7 @@
   var LIKE_PROBABILITY      = 0.60;
   var COMMENT_PROBABILITY   = 0.70;
   var FAVORITE_PROBABILITY  = 0.30;
-  var TA_REPLY_TO_MY_COMMENT_PROB = 0.60;  // TA 回复你的评论 / 回复
+  var TA_REPLY_TO_MY_COMMENT_PROB = 0.60;
 
   // 主页入口红点
   var LS_UNREAD_DOT_KEY = 'feed_unread_dot';
@@ -55,8 +57,11 @@
   // ==================== DOM ====================
   var btnFeed         = document.getElementById('btnFeed');
   var feedBackBtn     = document.getElementById('feedBackBtn');
-  var feedSettingsBtn = document.getElementById('feedSettingsBtn');   // 现在是小铃铛
-  var feedAddBtn      = document.getElementById('feedAddBtn');        // 顶部 ➕ 按钮
+  var feedSettingsBtn = document.getElementById('feedSettingsBtn');   // 铃铛
+  var feedAddBtn      = document.getElementById('feedAddBtn');        // ➕
+
+  var feedCover         = document.getElementById('feedCover');
+  var feedCoverChangeBtn = document.getElementById('feedCoverChangeBtn');
 
   var feedHeaderAvatar = document.getElementById('feedHeaderAvatar');
   var feedHeaderName   = document.getElementById('feedHeaderName');
@@ -234,6 +239,107 @@
     return (currentContact && currentContact.avatar) || DEFAULT_CONTACT.avatar;
   }
 
+  // ==================== 封面背景 ====================
+  function coverKey(contactId) {
+    return 'feedCoverBg_' + (contactId || 'default');
+  }
+
+  function loadCoverBg(contactId) {
+    var url = '';
+    try {
+      if (contactId) {
+        var v = localStorage.getItem(coverKey(contactId));
+        if (v) url = v;
+      }
+    } catch (e) {}
+    return url;
+  }
+
+  function saveCoverBg(contactId, url) {
+    try {
+      if (contactId) {
+        localStorage.setItem(coverKey(contactId), url);
+      }
+    } catch (e) {}
+  }
+
+  function applyCoverBg() {
+    if (!feedCover || !currentContactId) return;
+    var url = loadCoverBg(currentContactId);
+    if (url) {
+      feedCover.style.backgroundImage = 'url("' + url + '")';
+    } else {
+      feedCover.style.backgroundImage = '';
+    }
+  }
+
+  function openCoverModal() {
+    var old = document.getElementById('feedCoverModal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var modal = document.createElement('div');
+    modal.id = 'feedCoverModal';
+    modal.className = 'feed-cover-modal';
+    modal.innerHTML =
+      '<div class="feed-cover-panel">' +
+        '<div class="feed-cover-title">换朋友圈背景</div>' +
+        '<button class="feed-cover-option" id="feedCoverUpload">' +
+          '<i class="fa-solid fa-upload"></i> 上传本地图片' +
+        '</button>' +
+        '<button class="feed-cover-option" id="feedCoverUrl">' +
+          '<i class="fa-solid fa-link"></i> 粘贴图片 URL' +
+        '</button>' +
+        '<button class="feed-cover-cancel" id="feedCoverCancel">取消</button>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(function () { modal.classList.add('active'); });
+
+    function closeModal() {
+      modal.classList.remove('active');
+      setTimeout(function () {
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+      }, 250);
+    }
+
+    document.getElementById('feedCoverUpload').addEventListener('click', function () {
+      closeModal();
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        if (!file) { document.body.removeChild(input); return; }
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var dataUrl = ev.target.result;
+          saveCoverBg(currentContactId, dataUrl);
+          applyCoverBg();
+          document.body.removeChild(input);
+        };
+        reader.readAsDataURL(file);
+      });
+      input.click();
+    });
+
+    document.getElementById('feedCoverUrl').addEventListener('click', function () {
+      closeModal();
+      var url = prompt('请输入图片 URL：');
+      if (!url) return;
+      url = url.trim();
+      if (!url) return;
+      saveCoverBg(currentContactId, url);
+      applyCoverBg();
+    });
+
+    document.getElementById('feedCoverCancel').addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
+    });
+  }
+
   // ==================== 头部 ====================
   function updateHeader() {
     if (feedHeaderAvatar) {
@@ -241,6 +347,7 @@
       feedHeaderAvatar.alt = getTaName();
     }
     if (feedHeaderName) feedHeaderName.textContent = getTaName();
+    applyCoverBg();
   }
 
   // ==================== 渲染 ====================
@@ -291,7 +398,6 @@
 
     html += '<div class="feed-card-content">' + escapeHtml(post.content || '') + '</div>';
 
-    // 点赞列表
     if (likes.length > 0) {
       var likeNames = likes.map(function (l) {
         if (l === 'me') return getMyName();
@@ -304,7 +410,6 @@
         '</div>';
     }
 
-    // 评论区
     if (comments.length > 0) {
       html += '<div class="feed-comments">';
       comments.forEach(function (c) {
@@ -313,7 +418,6 @@
       html += '</div>';
     }
 
-    // 操作按钮 + 删除
     html += '<div class="feed-card-actions">' +
       '<button class="feed-action-btn' + (liked ? ' active' : '') + '" data-act="like">' +
         '<i class="fa-' + (liked ? 'solid' : 'regular') + ' fa-heart"></i>' +
@@ -419,7 +523,7 @@
       saveData().then(function () {
         renderList();
         if (Math.random() < TA_REPLY_TO_MY_COMMENT_PROB) {
-          scheduleTaReplyToComment(postId, null, t);
+          scheduleTaReplyToComment(postId, null);
         }
       });
     } else {
@@ -436,7 +540,7 @@
       saveData().then(function () {
         renderList();
         if (Math.random() < TA_REPLY_TO_MY_COMMENT_PROB) {
-          scheduleTaReplyToComment(postId, parentCommentId, t);
+          scheduleTaReplyToComment(postId, parentCommentId);
         }
       });
     }
@@ -881,6 +985,13 @@
   if (feedAddBtn) {
     feedAddBtn.addEventListener('click', function () {
       openPostModal();
+    });
+  }
+
+  // 换背景按钮
+  if (feedCoverChangeBtn) {
+    feedCoverChangeBtn.addEventListener('click', function () {
+      openCoverModal();
     });
   }
 
