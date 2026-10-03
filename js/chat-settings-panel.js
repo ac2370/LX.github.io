@@ -1,11 +1,8 @@
 /**
  * 传讯页面 - 设置面板（独立模块）
- * 本版追加：有消息，轻轻告诉你 —— 通知/保活逻辑
- * - 允许手机系统通知（Notification API）
- * - 站内消息横幅开关（持久化）
- * - 显示消息内容开关（持久化）
- * - 允许他随机来电（持久化，video-call.js 读取）
- * - 后台保活 · 静音循环（AudioContext 循环静音）
+ * - 通知/保活逻辑
+ * - 公共字卡库 + 专属字卡库（按联系人）
+ * - 外观 / 字体 / 气泡 / 数据与工具
  */
 
 (function () {
@@ -16,18 +13,14 @@
   var STORE_KEY_THEME = 'chat_settings_theme';
   var STORE_KEY_FONT = 'chat_settings_font';
   var STORE_KEY_BUBBLE = 'chat_settings_bubble';
-  var STORE_KEY_CARD_MODE = 'chat_card_mode';
-  var STORE_KEY_PUBLIC_GROUPS = 'chat_public_groups';
-  var STORE_KEY_PRIVATE_GROUPS = 'chat_private_groups';
-  var STORE_KEY_EMOJI_GROUPS = 'chat_emoji_groups';
-  var STORE_KEY_STICKER_GROUPS = 'chat_sticker_groups';
 
-  // 通知 & 保活
   var STORE_KEY_BANNER_ENABLED = 'chat_notify_banner_enabled';
   var STORE_KEY_SHOW_CONTENT = 'chat_notify_show_content';
   var STORE_KEY_RANDOM_CALL = 'chat_notify_random_call';
   var STORE_KEY_SILENT_LOOP = 'chat_notify_silent_loop';
   var STORE_KEY_NOTIFY_GRANTED = 'chat_notify_permission_granted';
+
+  var STORE_KEY_CONTACT_CARDS = 'contact_exclusive_cards';
 
   var CUSTOM_CSS_STYLE_ID = 'user-custom-bubble-css';
 
@@ -36,23 +29,20 @@
   var theme = { accentColor: '#6fb1e8' };
   var font = { size: 14, family: 'system', customUrl: '' };
   var bubble = { style: 'standard', customCss: '' };
-  var cardMode = 'all';
-  var publicGroups = [];
-  var privateGroups = [];
-  var emojiGroups = [];
-  var stickerGroups = [];
   var settingsTrigger = null;
 
-  // 通知 & 保活状态
   var notifyState = {
-    bannerEnabled: true,      // 站内消息横幅
-    showContent: true,        // 显示消息内容
-    randomCall: false,        // 允许他随机来电
-    silentLoop: false,        // 后台保活
-    permissionGranted: false  // 系统通知权限
+    bannerEnabled: true,
+    showContent: true,
+    randomCall: false,
+    silentLoop: false,
+    permissionGranted: false
   };
 
-  var silentLoopNodes = null; // 静音循环的 AudioContext 节点
+  var silentLoopNodes = null;
+
+  var contactCardsMap = {};
+  var currentContactId = null;
 
   // ==================== 持久化 ====================
   function persist(key, value) {
@@ -117,47 +107,7 @@
       cb();
     });
   }
-  function persistCardMode() {
-    persist(STORE_KEY_CARD_MODE, cardMode);
-    window.chatCardMode = cardMode;
-  }
-  function loadCardMode(cb) {
-    loadValue(STORE_KEY_CARD_MODE, function (v) { if (v) cardMode = v; cb(); });
-  }
-  function persistGroupSelections() {
-    persist(STORE_KEY_PUBLIC_GROUPS, publicGroups);
-    persist(STORE_KEY_PRIVATE_GROUPS, privateGroups);
-    persist(STORE_KEY_EMOJI_GROUPS, emojiGroups);
-    persist(STORE_KEY_STICKER_GROUPS, stickerGroups);
-    window.chatPublicGroups = publicGroups.slice();
-    window.chatPrivateGroups = privateGroups.slice();
-    window.chatEmojiGroups = emojiGroups.slice();
-    window.chatStickerGroups = stickerGroups.slice();
-  }
-  function loadGroupSelections(cb) {
-    var keys = [
-      { store: STORE_KEY_PUBLIC_GROUPS, assign: function (d) { if (Array.isArray(d)) publicGroups = d; } },
-      { store: STORE_KEY_PRIVATE_GROUPS, assign: function (d) { if (Array.isArray(d)) privateGroups = d; } },
-      { store: STORE_KEY_EMOJI_GROUPS, assign: function (d) { if (Array.isArray(d)) emojiGroups = d; } },
-      { store: STORE_KEY_STICKER_GROUPS, assign: function (d) { if (Array.isArray(d)) stickerGroups = d; } }
-    ];
-    var remaining = keys.length;
-    function done() {
-      remaining--;
-      if (remaining <= 0) {
-        window.chatPublicGroups = publicGroups.slice();
-        window.chatPrivateGroups = privateGroups.slice();
-        window.chatEmojiGroups = emojiGroups.slice();
-        window.chatStickerGroups = stickerGroups.slice();
-        cb();
-      }
-    }
-    keys.forEach(function (k) {
-      loadValue(k.store, function (d) { k.assign(d); done(); });
-    });
-  }
 
-  // ==================== 通知/保活 持久化 ====================
   function persistNotifyState() {
     persist(STORE_KEY_BANNER_ENABLED, notifyState.bannerEnabled);
     persist(STORE_KEY_SHOW_CONTENT, notifyState.showContent);
@@ -165,7 +115,6 @@
     persist(STORE_KEY_SILENT_LOOP, notifyState.silentLoop);
     persist(STORE_KEY_NOTIFY_GRANTED, notifyState.permissionGranted);
 
-    // 同步到 window，供其他模块读取
     window.chatNotifyState = {
       bannerEnabled: notifyState.bannerEnabled,
       showContent: notifyState.showContent,
@@ -200,34 +149,20 @@
   // ==================== 静音循环 ====================
   function startSilentLoop() {
     if (silentLoopNodes) return true;
-
     try {
       var AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return false;
-
       var ctx = new AudioContext();
       var oscillator = ctx.createOscillator();
       var gainNode = ctx.createGain();
-
       oscillator.type = 'sine';
-      oscillator.frequency.value = 0; // 0Hz 等于无声
+      oscillator.frequency.value = 0;
       gainNode.gain.value = 0;
-
       oscillator.connect(gainNode);
       gainNode.connect(ctx.destination);
-
       oscillator.start();
-
-      // 某些浏览器需要 resume
-      if (ctx.state === 'suspended') {
-        ctx.resume().catch(function () {});
-      }
-
-      silentLoopNodes = {
-        ctx: ctx,
-        oscillator: oscillator,
-        gainNode: gainNode
-      };
+      if (ctx.state === 'suspended') ctx.resume().catch(function () {});
+      silentLoopNodes = { ctx: ctx, oscillator: oscillator, gainNode: gainNode };
       console.log('[静音循环] 已开启');
       return true;
     } catch (e) {
@@ -252,90 +187,53 @@
 
   // ==================== 通知权限 ====================
   function requestNotificationPermission() {
-    if (!('Notification' in window)) {
-      alert('当前浏览器不支持系统通知');
-      return;
-    }
-
+    if (!('Notification' in window)) { alert('当前浏览器不支持系统通知'); return; }
     if (Notification.permission === 'granted') {
-      notifyState.permissionGranted = true;
-      persistNotifyState();
-      updateNotifyUI();
-      alert('系统通知已开启');
-      return;
+      notifyState.permissionGranted = true; persistNotifyState(); updateNotifyUI(); alert('系统通知已开启'); return;
     }
-
     if (Notification.permission === 'denied') {
-      alert('系统通知已被拒绝。\n请前往 手机设置 → 浏览器 → 通知，手动开启。');
-      return;
+      alert('系统通知已被拒绝。\n请前往 手机设置 → 浏览器 → 通知，手动开启。'); return;
     }
-
     Notification.requestPermission().then(function (permission) {
       if (permission === 'granted') {
-        notifyState.permissionGranted = true;
-        persistNotifyState();
-        updateNotifyUI();
-        alert('系统通知已开启');
+        notifyState.permissionGranted = true; persistNotifyState(); updateNotifyUI(); alert('系统通知已开启');
       } else {
-        notifyState.permissionGranted = false;
-        persistNotifyState();
-        updateNotifyUI();
+        notifyState.permissionGranted = false; persistNotifyState(); updateNotifyUI();
         alert('未开启系统通知。\n如需开启，请前往 手机设置 → 浏览器 → 通知。');
       }
-    }).catch(function () {
-      alert('无法请求通知权限');
-    });
+    }).catch(function () { alert('无法请求通知权限'); });
   }
 
-  // ==================== 通知 UI 状态刷新 ====================
   function updateNotifyUI() {
-    // 系统通知按钮
     var btn = document.getElementById('dsAllowNotifyBtn');
     if (btn) {
       if (notifyState.permissionGranted || (('Notification' in window) && Notification.permission === 'granted')) {
         btn.innerHTML = '<i class="fa-solid fa-bell"></i> 已开启系统通知';
-        btn.style.background = '#e6f5ed';
-        btn.style.color = '#4CAF7D';
-        btn.style.borderColor = '#c6e8d5';
-        btn.disabled = true;
+        btn.style.background = '#e6f5ed'; btn.style.color = '#4CAF7D';
+        btn.style.borderColor = '#c6e8d5'; btn.disabled = true;
       } else {
         btn.innerHTML = '<i class="fa-solid fa-bell"></i> 允许手机系统通知';
-        btn.style.background = '';
-        btn.style.color = '';
-        btn.style.borderColor = '';
-        btn.disabled = false;
+        btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = ''; btn.disabled = false;
       }
     }
-
-    // 三个 Toggle
     var bannerToggle = document.getElementById('dsBannerToggle');
     if (bannerToggle) bannerToggle.checked = notifyState.bannerEnabled;
-
     var showContentToggle = document.getElementById('dsShowContentToggle');
     if (showContentToggle) showContentToggle.checked = notifyState.showContent;
-
     var randomCallToggle = document.getElementById('dsRandomCallToggle');
     if (randomCallToggle) randomCallToggle.checked = notifyState.randomCall;
-
-    // 静音循环按钮和状态
     var loopBtn = document.getElementById('dsSilentLoopBtn');
     var loopDesc = document.getElementById('dsSilentLoopDesc');
     if (loopBtn) {
       if (notifyState.silentLoop) {
         loopBtn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> 关闭静音循环';
-        loopBtn.style.background = '#e6f5ed';
-        loopBtn.style.color = '#4CAF7D';
-        loopBtn.style.borderColor = '#c6e8d5';
+        loopBtn.style.background = '#e6f5ed'; loopBtn.style.color = '#4CAF7D'; loopBtn.style.borderColor = '#c6e8d5';
       } else {
         loopBtn.innerHTML = '<i class="fa-solid fa-circle-play"></i> 开启静音循环';
-        loopBtn.style.background = '';
-        loopBtn.style.color = '';
-        loopBtn.style.borderColor = '';
+        loopBtn.style.background = ''; loopBtn.style.color = ''; loopBtn.style.borderColor = '';
       }
     }
-    if (loopDesc) {
-      loopDesc.textContent = notifyState.silentLoop ? '静音循环已开启' : '静音循环未开启';
-    }
+    if (loopDesc) loopDesc.textContent = notifyState.silentLoop ? '静音循环已开启' : '静音循环未开启';
   }
 
   // ==================== 颜色工具 ====================
@@ -381,7 +279,6 @@
       styleEl.id = styleId;
       document.head.appendChild(styleEl);
     }
-
     styleEl.textContent = [
       '#pageHome .play-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
       '#pageHome .tab-btn.active i, #pageHome .tab-btn.active span { color: ' + color + ' !important; }',
@@ -400,9 +297,6 @@
       '#pageChat .message-row.self .message-bubble { background: ' + colorSoft + ' !important; }',
       '#chatSettingsPanel .chat-settings-tab.active { background: ' + colorLight + ' !important; color: ' + colorDark + ' !important; }',
       '#chatSettingsPanel .chat-settings-title i { color: ' + color + ' !important; }',
-      '#chatSettingsPanel .cs-mode-btn.active { color: ' + colorDark + ' !important; }',
-      '#chatSettingsPanel .cs-words-btn i { color: ' + color + ' !important; }',
-      '#chatSettingsPanel .cs-group-checkbox input:checked + .cs-group-check-mark { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-css-apply { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-font-url-apply { background: ' + colorDark + ' !important; }',
       '.home-settings-btn i, .floating-settings i { color: ' + color + ' !important; }'
@@ -411,7 +305,6 @@
     document.querySelectorAll('.tab-btn.active i, .tab-btn.active span').forEach(function (el) {
       el.style.color = color;
     });
-
     var sendBtn = document.getElementById('sendBtn');
     if (sendBtn) {
       sendBtn.style.background = color;
@@ -433,9 +326,7 @@
       styleEl.id = styleId;
       document.head.appendChild(styleEl);
     }
-
     var uiSize = Math.min(size, 16);
-
     styleEl.textContent = [
       '#pageChat .message-bubble, #pageChat .message-text { font-size: ' + size + 'px !important; }',
       '#pageChat .call-record-bubble { font-size: ' + Math.max(10, size - 3) + 'px !important; }',
@@ -456,18 +347,7 @@
       '#pageCard .card-status-counts { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
       '#chatSettingsPanel .chat-settings-title span { font-size: ' + (uiSize + 2) + 'px !important; }',
       '#chatSettingsPanel .chat-settings-tab span { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
-      '#chatSettingsPanel .chat-settings-section-title { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }',
-      '#chatSettingsPanel .cs-group-name { font-size: ' + uiSize + 'px !important; }',
-      '#chatSettingsPanel .cs-group-count { font-size: ' + Math.max(10, uiSize - 3) + 'px !important; }',
-      '.fa, .fas, .far, .fal, .fad, .fab,',
-      '.fa-solid, .fa-regular, .fa-light, .fa-thin, .fa-duotone, .fa-brands,',
-      '[class*="fa-"],',
-      'i[class*="fa"] {',
-      '  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "FontAwesome" !important;',
-      '}',
-      '.fa-solid, .fas { font-weight: 900 !important; }',
-      '.fa-regular, .far { font-weight: 400 !important; }',
-      '.fa-brands, .fab { font-family: "Font Awesome 6 Brands", "FontAwesome" !important; font-weight: 400 !important; }'
+      '#chatSettingsPanel .chat-settings-section-title { font-size: ' + Math.max(10, uiSize - 2) + 'px !important; }'
     ].join('\n');
 
     document.querySelectorAll('#pageChat .message-bubble, #pageChat .message-text').forEach(function (el) {
@@ -489,7 +369,6 @@
 
     if (fontFamily) {
       document.body.style.fontFamily = fontFamily;
-
       var fontStyleId = 'global-font-family';
       var fontStyleEl = document.getElementById(fontStyleId);
       if (!fontStyleEl) {
@@ -497,7 +376,6 @@
         fontStyleEl.id = fontStyleId;
         document.head.appendChild(fontStyleEl);
       }
-
       fontStyleEl.textContent = [
         'body { font-family: ' + fontFamily + ' !important; }',
         'h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label {',
@@ -511,13 +389,11 @@
     }
   }
 
-  // ==================== 字体 URL ====================
   function applyFontUrl() {
     var linkId = 'custom-font-link';
     var existing = document.getElementById(linkId);
     if (existing) existing.remove();
     if (!font.customUrl) return;
-
     var link = document.createElement('link');
     link.id = linkId;
     link.rel = 'stylesheet';
@@ -543,7 +419,6 @@
     ];
     var fontFamily = commonNames.join(', ') + ', "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif';
     document.body.style.fontFamily = fontFamily;
-
     var fontStyleId = 'global-font-family';
     var fontStyleEl = document.getElementById(fontStyleId);
     if (!fontStyleEl) {
@@ -562,7 +437,6 @@
     ].join('\n');
   }
 
-  // ==================== 气泡样式 ====================
   function applyBubble() {
     var root = document.documentElement;
     var radius = '18px';
@@ -571,7 +445,6 @@
     else if (bubble.style === 'large') radius = '24px';
     else if (bubble.style === 'square') radius = '4px';
     root.style.setProperty('--bubble-radius', radius);
-
     var styleId = 'bubble-radius-style';
     var styleEl = document.getElementById(styleId);
     if (!styleEl) {
@@ -582,7 +455,6 @@
     styleEl.textContent = '#pageChat .message-bubble { border-radius: ' + radius + ' !important; }';
   }
 
-  // ==================== 自定义 CSS ====================
   function ensureCustomCssStyleTag() {
     var styleEl = document.getElementById(CUSTOM_CSS_STYLE_ID);
     if (!styleEl) {
@@ -593,32 +465,21 @@
     }
     return styleEl;
   }
-
   function applyCustomCss() {
     var cssText = (bubble.customCss || '').trim();
     var styleEl = ensureCustomCssStyleTag();
     styleEl.innerHTML = cssText;
-    if (styleEl.parentNode !== document.head) {
-      document.head.appendChild(styleEl);
-    }
+    if (styleEl.parentNode !== document.head) document.head.appendChild(styleEl);
   }
-
   function clearCustomCss() {
     bubble.customCss = '';
     persistBubble();
-    var styleEl = ensureCustomCssStyleTag();
-    styleEl.innerHTML = '';
+    ensureCustomCssStyleTag().innerHTML = '';
   }
-
   function applyAll() {
-    applyTheme();
-    applyFont();
-    applyFontUrl();
-    applyBubble();
-    applyCustomCss();
+    applyTheme(); applyFont(); applyFontUrl(); applyBubble(); applyCustomCss();
   }
 
-  // ==================== 找到设置图标 ====================
   function findSettingsTrigger() {
     var pageChat = document.getElementById('pageChat');
     if (pageChat) {
@@ -631,7 +492,6 @@
     if (tabSettings) return tabSettings;
     return null;
   }
-
   function bindSettingsTrigger() {
     if (settingsTrigger && settingsTrigger.dataset.chatSettingsBound) return;
     settingsTrigger = findSettingsTrigger();
@@ -639,18 +499,172 @@
     if (settingsTrigger.dataset.chatSettingsBound) return;
     settingsTrigger.dataset.chatSettingsBound = '1';
     settingsTrigger.addEventListener('click', function (e) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      openPanel();
+      e.stopImmediatePropagation(); e.preventDefault(); openPanel();
     }, true);
   }
 
-  // ==================== 导出/导入（保留原有逻辑） ====================
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+  function escapeAttr(str) {
+    if (!str) return '';
+    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // ==================== 专属字卡库 ====================
+  function loadContactCardsMap(cb) {
+    loadValue(STORE_KEY_CONTACT_CARDS, function (v) {
+      if (v && typeof v === 'object') contactCardsMap = v;
+      else contactCardsMap = {};
+      if (cb) cb();
+    });
+  }
+  function persistContactCardsMap() { persist(STORE_KEY_CONTACT_CARDS, contactCardsMap); }
+
+  function getCurrentContact() {
+    try {
+      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+      var id = localStorage.getItem('my_current_contact');
+      if (Array.isArray(contacts) && contacts.length > 0) {
+        return contacts.find(function (c) { return c.id === id; }) || contacts[0];
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function renderContactCardsPanel() {
+    var pickerRow = document.getElementById('contactPickerRow');
+    var listBox = document.getElementById('contactCardsList');
+    var hint = document.getElementById('contactCardHint');
+    if (!pickerRow || !listBox) return;
+
+    var contacts = [];
+    try { contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]'); } catch (e) { contacts = []; }
+
+    if (!Array.isArray(contacts) || contacts.length === 0) {
+      pickerRow.innerHTML = '';
+      listBox.innerHTML = '<div class="cs-words-empty">还没有联系人，先去传讯页添加</div>';
+      if (hint) hint.textContent = '请先在传讯页添加联系人';
+      return;
+    }
+
+    var cur = getCurrentContact();
+    currentContactId = cur ? cur.id : contacts[0].id;
+
+    pickerRow.innerHTML = '';
+    var select = document.createElement('select');
+    select.className = 'cs-contact-select';
+    contacts.forEach(function (c) {
+      var opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name || '未命名';
+      if (c.id === currentContactId) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('change', function () {
+      currentContactId = select.value;
+      renderContactGroupList();
+    });
+    pickerRow.appendChild(select);
+
+    if (hint) hint.textContent = '勾选的字卡分组只对「' + (cur ? (cur.name || '未命名') : '当前联系人') + '」生效';
+    renderContactGroupList();
+  }
+
+  function renderContactGroupList() {
+    var listBox = document.getElementById('contactCardsList');
+    if (!listBox) return;
+
+    var groups = (typeof window.getGroups === 'function') ? window.getGroups('reply') : [];
+    if (groups.length === 0) {
+      listBox.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
+      return;
+    }
+
+    if (!contactCardsMap[currentContactId]) contactCardsMap[currentContactId] = [];
+    var selected = contactCardsMap[currentContactId];
+
+    listBox.innerHTML = '';
+
+    var bar = document.createElement('div');
+    bar.className = 'cs-words-toolbar';
+    bar.innerHTML =
+      '<button type="button" class="cs-words-btn" data-act="all">全选</button>' +
+      '<button type="button" class="cs-words-btn" data-act="none">全不选</button>';
+    listBox.appendChild(bar);
+
+    bar.querySelector('[data-act="all"]').addEventListener('click', function () {
+      contactCardsMap[currentContactId] = groups.slice();
+      persistContactCardsMap();
+      renderContactGroupList();
+    });
+    bar.querySelector('[data-act="none"]').addEventListener('click', function () {
+      contactCardsMap[currentContactId] = [];
+      persistContactCardsMap();
+      renderContactGroupList();
+    });
+
+    var groupListBox = document.createElement('div');
+    groupListBox.className = 'cs-contact-group-list';
+
+    groups.forEach(function (name) {
+      var count = 0;
+      if (typeof window.getCardsInGroup === 'function') {
+        count = window.getCardsInGroup(name, 'reply').length;
+      }
+      var isChecked = selected.indexOf(name) >= 0;
+      var color = '#5C7CFA';
+      if (typeof window.getGroupColor === 'function') color = window.getGroupColor(name, 'reply');
+
+      var item = document.createElement('div');
+      item.className = 'cs-contact-group-item' + (isChecked ? ' checked' : '');
+      item.innerHTML =
+        '<label class="cs-group-checkbox">' +
+        '  <input type="checkbox"' + (isChecked ? ' checked' : '') + '>' +
+        '  <span class="cs-group-check-mark"><i class="fa-solid fa-check"></i></span>' +
+        '</label>' +
+        '<span class="cs-group-color-dot" style="background:' + color + '"></span>' +
+        '<div class="cs-group-info">' +
+        '  <div class="cs-group-name">' + escapeHtml(name) + '</div>' +
+        '  <div class="cs-group-count">' + count + ' 条</div>' +
+        '</div>';
+
+      var checkbox = item.querySelector('input[type="checkbox"]');
+      function toggle(checked) {
+        checkbox.checked = checked;
+        item.classList.toggle('checked', checked);
+        var arr = contactCardsMap[currentContactId] || [];
+        var idx = arr.indexOf(name);
+        if (checked && idx < 0) arr.push(name);
+        else if (!checked && idx >= 0) arr.splice(idx, 1);
+        contactCardsMap[currentContactId] = arr;
+        persistContactCardsMap();
+      }
+      checkbox.addEventListener('change', function () { toggle(checkbox.checked); });
+      item.addEventListener('click', function (e) {
+        if (e.target.closest('.cs-group-checkbox')) return;
+        toggle(!checkbox.checked);
+      });
+      groupListBox.appendChild(item);
+    });
+    listBox.appendChild(groupListBox);
+  }
+
+  window.contactCards = {
+    getMap: function () { return contactCardsMap; },
+    getFor: function (contactId) { return (contactCardsMap[contactId] || []).slice(); },
+    refresh: renderContactCardsPanel
+  };
+
+  // ==================== 导出/导入 ====================
   function getKeyCategory(key) {
     if (!key) return null;
     var lower = String(key).toLowerCase();
     var chatKeys = ['chat', 'message', 'messages', 'my_contacts', 'my_current_contact', 'group_chat', 'call'];
-    var cardKeys = ['carddatabase', 'card', 'my_word_cards', 'my_kaomoji_cards', 'my_place_cards', 'my_mood_cards', 'my_emoji_cards', 'my_status_cards', 'my_card_groups'];
+    var cardKeys = ['carddatabase', 'card', 'my_word_cards', 'my_kaomoji_cards', 'my_place_cards', 'my_mood_cards', 'my_emoji_cards', 'my_status_cards', 'my_card_groups', 'contact_exclusive'];
     var mediaKeys = ['home_custom_images', 'avatar', 'piggy', 'piggy_bank'];
     var i;
     for (i = 0; i < chatKeys.length; i++) if (lower.indexOf(chatKeys[i]) >= 0) return 'chat';
@@ -664,17 +678,12 @@
       if (typeof localforage === 'undefined') {
         var keys = [];
         try { for (var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i)); } catch (e) {}
-        resolve(keys);
-        return;
+        resolve(keys); return;
       }
-      if (typeof localforage.keys === 'function') {
-        localforage.keys().then(resolve).catch(function () { resolve([]); });
-      } else {
-        resolve([]);
-      }
+      if (typeof localforage.keys === 'function') localforage.keys().then(resolve).catch(function () { resolve([]); });
+      else resolve([]);
     });
   }
-
   function getItem(key) {
     return new Promise(function (resolve) {
       if (typeof localforage === 'undefined') {
@@ -687,13 +696,11 @@
       localforage.getItem(key).then(resolve).catch(function () { resolve(null); });
     });
   }
-
   function setItem(key, value) {
     return new Promise(function (resolve) {
       if (typeof localforage === 'undefined') {
         try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); } catch (e) {}
-        resolve();
-        return;
+        resolve(); return;
       }
       localforage.setItem(key, value).then(resolve).catch(function () { resolve(); });
     });
@@ -702,7 +709,6 @@
   function openExportPanel() {
     var existing = document.getElementById('dsExportModal');
     if (existing) existing.parentNode.removeChild(existing);
-
     var modal = document.createElement('div');
     modal.id = 'dsExportModal';
     modal.className = 'ds-export-modal';
@@ -718,7 +724,7 @@
       '  <label class="ds-export-check">',
       '    <input type="checkbox" id="dsExportCards" checked>',
       '    <span class="ds-export-check-mark"><i class="fa-solid fa-check"></i></span>',
-      '    <span class="ds-export-check-label">字卡库（含分组 / 表情包）</span>',
+      '    <span class="ds-export-check-label">字卡库（含分组 / 表情包 / 拍一拍 / 专属）</span>',
       '  </label>',
       '  <label class="ds-export-check">',
       '    <input type="checkbox" id="dsExportMedia" checked>',
@@ -731,23 +737,15 @@
       '  </div>',
       '</div>'
     ].join('');
-
     document.body.appendChild(modal);
 
-    document.getElementById('dsExportCancel').addEventListener('click', function () {
-      modal.parentNode.removeChild(modal);
-    });
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) modal.parentNode.removeChild(modal);
-    });
+    document.getElementById('dsExportCancel').addEventListener('click', function () { modal.parentNode.removeChild(modal); });
+    modal.addEventListener('click', function (e) { if (e.target === modal) modal.parentNode.removeChild(modal); });
     document.getElementById('dsExportConfirm').addEventListener('click', function () {
       var includeChat = document.getElementById('dsExportChat').checked;
       var includeCards = document.getElementById('dsExportCards').checked;
       var includeMedia = document.getElementById('dsExportMedia').checked;
-      if (!includeChat && !includeCards && !includeMedia) {
-        alert('请至少勾选一项');
-        return;
-      }
+      if (!includeChat && !includeCards && !includeMedia) { alert('请至少勾选一项'); return; }
       doExport(includeChat, includeCards, includeMedia);
       modal.parentNode.removeChild(modal);
     });
@@ -757,9 +755,7 @@
     getAllKeys().then(function (keys) {
       var result = {
         _meta: {
-          app: 'ac2370.github.io',
-          type: 'localforage-backup',
-          version: 1,
+          app: 'ac2370.github.io', type: 'localforage-backup', version: 1,
           exportedAt: new Date().toISOString(),
           include: { chat: includeChat, cards: includeCards, media: includeMedia }
         },
@@ -800,7 +796,6 @@
     input.accept = '.json,application/json';
     input.style.display = 'none';
     document.body.appendChild(input);
-
     input.addEventListener('change', function () {
       var file = input.files && input.files[0];
       if (!file) { document.body.removeChild(input); return; }
@@ -827,7 +822,6 @@
       };
       reader.readAsText(file);
     });
-
     input.click();
   }
 
@@ -863,7 +857,7 @@
 
       '  <div class="chat-settings-body">',
 
-      // Tab 1
+      // ========== Tab 1：外观与界面 ==========
       '    <div class="chat-settings-tab-panel" data-panel="appearance">',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">全局主题配色</div>',
@@ -916,35 +910,27 @@
       '      </div>',
       '    </div>',
 
-      // Tab 2
+      // ========== Tab 2：聊天与字卡 ==========
       '    <div class="chat-settings-tab-panel" data-panel="chat">',
-      '      <div class="chat-settings-section">',
-      '        <div class="chat-settings-section-title">当前字卡模式</div>',
-      '        <div class="cs-mode-switch" id="csModeSwitch">',
-      '          <button class="cs-mode-btn active" data-mode="all"><i class="fa-solid fa-layer-group"></i><span>全部字卡</span></button>',
-      '          <button class="cs-mode-btn" data-mode="public-only"><i class="fa-solid fa-globe"></i><span>仅公共</span></button>',
-      '          <button class="cs-mode-btn" data-mode="private-only"><i class="fa-solid fa-lock"></i><span>仅专属</span></button>',
-      '        </div>',
-      '        <div class="cs-mode-hint" id="csModeHint">自动回复时 50% 从公共字卡抽取，50% 从专属字卡抽取</div>',
-      '      </div>',
-      '      <div class="chat-settings-section">',
-      '        <div class="cs-words-header"><div class="chat-settings-section-title" style="margin:0;"><i class="fa-solid fa-globe" style="color:#6fb1e8;margin-right:4px;"></i>公共字卡分组<span class="cs-words-count" id="csPublicCount">0</span></div></div>',
-      '        <div class="cs-words-hint">勾选的分组视为"公共字卡"，所有联系人都能抽取</div>',
-      '        <div class="cs-group-list" id="csPublicGroupList"></div>',
-      '      </div>',
-'      <div class="chat-settings-section">',
-'        <div class="cs-words-header"><div class="chat-settings-section-title" style="margin:0;"><i class="fa-regular fa-image" style="color:#B78BEA;margin-right:4px;"></i>表情包字卡<span class="cs-words-count" id="csStickerGroupCount" style="background:#f0eaf9;color:#8b6bd1;">0</span></div></div>',
-'        <div class="cs-words-hint">勾选的字卡分组会加入自动回复的表情包池</div>',
-'        <div class="cs-group-list" id="csStickerGroupList"></div>',
-'      </div>',
-'      <div class="chat-settings-section">',
-'        <div class="chat-settings-section-title"><i class="fa-solid fa-book" style="color:#5C7CFA;margin-right:4px;"></i>公共字卡库</div>',
-'        <div class="cs-words-hint">内置字卡分组，勾选后参与自动回复抽卡</div>',
-'        <div id="publicCardsList"></div>',
-'      </div>',
-'    </div>',
 
-      // Tab 3
+      // 公共字卡库
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title"><i class="fa-solid fa-book" style="color:#5C7CFA;margin-right:4px;"></i>公共字卡库</div>',
+      '        <div class="cs-words-hint">内置字卡分组，勾选后参与自动回复抽卡</div>',
+      '        <div id="publicCardsList"></div>',
+      '      </div>',
+
+      // 专属字卡库
+      '      <div class="chat-settings-section">',
+      '        <div class="chat-settings-section-title"><i class="fa-solid fa-user-lock" style="color:#f8b4b4;margin-right:4px;"></i>专属字卡库</div>',
+      '        <div class="cs-words-hint" id="contactCardHint">选择联系人后，从字卡库勾选专属分组</div>',
+      '        <div class="cs-contact-picker" id="contactPickerRow"></div>',
+      '        <div id="contactCardsList"></div>',
+      '      </div>',
+
+      '    </div>',
+
+      // ========== Tab 3：数据与工具 ==========
       '    <div class="chat-settings-tab-panel" data-panel="data">',
 
       // 区块一：本机存储
@@ -987,7 +973,7 @@
       '          <i class="fa-solid fa-rotate-left"></i> 恢复默认字卡库',
       '        </button>',
       '        <div class="ds-footer-hint">',
-      '          「导出数据」里可以分别勾选字卡（含分组 / 表情包 / 拍一拍）和聊天记录（单人 / 群聊），也可以一键全部导出。',
+      '          「导出数据」里可以分别勾选字卡（含分组 / 表情包 / 拍一拍 / 专属）和聊天记录（单人 / 群聊），也可以一键全部导出。',
       '        </div>',
       '      </div>',
 
@@ -1083,8 +1069,7 @@
       btn.title = c.name;
       if (c.value === '#FFFFFF') btn.style.border = '1px solid #e2e8ee';
       btn.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         theme.accentColor = c.value;
         persistTheme();
         applyTheme();
@@ -1116,10 +1101,7 @@
 
     var slider = document.getElementById('csFontSizeSlider');
     var sizeVal = document.getElementById('csFontSizeValue');
-    if (slider) {
-      slider.value = font.size;
-      if (sizeVal) sizeVal.textContent = font.size + 'px';
-    }
+    if (slider) { slider.value = font.size; if (sizeVal) sizeVal.textContent = font.size + 'px'; }
     var fontSelect = document.getElementById('csFontSelect');
     if (fontSelect) fontSelect.value = font.family;
     var fontUrlInput = document.getElementById('csFontUrlInput');
@@ -1229,8 +1211,7 @@
 
     if (cssApply && cssInput) {
       cssApply.addEventListener('click', function () {
-        var cssText = cssInput.value || '';
-        bubble.customCss = cssText;
+        bubble.customCss = cssInput.value || '';
         persistBubble();
         applyCustomCss();
       });
@@ -1253,68 +1234,46 @@
       });
     }
 
-    // ============ 数据与工具：导出/导入 ============
+    // ============ 数据与工具 ============
     var exportBtn = document.getElementById('dsExportDataBtn');
-    if (exportBtn) {
-      exportBtn.addEventListener('click', function () { openExportPanel(); });
-    }
+    if (exportBtn) exportBtn.addEventListener('click', function () { openExportPanel(); });
     var importBtn = document.getElementById('dsImportDataBtn');
-    if (importBtn) {
-      importBtn.addEventListener('click', function () { doImport(); });
-    }
+    if (importBtn) importBtn.addEventListener('click', function () { doImport(); });
 
-    // ============ 数据与工具：通知/保活 ============
-
-    // 1. 允许手机系统通知
+    // ============ 通知/保活 ============
     var allowNotifyBtn = document.getElementById('dsAllowNotifyBtn');
-    if (allowNotifyBtn) {
-      allowNotifyBtn.addEventListener('click', function () {
-        requestNotificationPermission();
-      });
-    }
+    if (allowNotifyBtn) allowNotifyBtn.addEventListener('click', function () { requestNotificationPermission(); });
 
-    // 2. 站内消息横幅开关
     var bannerToggle = document.getElementById('dsBannerToggle');
     if (bannerToggle) {
       bannerToggle.addEventListener('change', function () {
         notifyState.bannerEnabled = bannerToggle.checked;
         persistNotifyState();
-        console.log('[通知] 站内消息横幅:', notifyState.bannerEnabled ? '开启' : '关闭');
       });
     }
-
-    // 3. 显示消息内容开关
     var showContentToggle = document.getElementById('dsShowContentToggle');
     if (showContentToggle) {
       showContentToggle.addEventListener('change', function () {
         notifyState.showContent = showContentToggle.checked;
         persistNotifyState();
-        console.log('[通知] 显示消息内容:', notifyState.showContent ? '开启' : '关闭');
       });
     }
-
-    // 4. 允许他随机来电开关
     var randomCallToggle = document.getElementById('dsRandomCallToggle');
     if (randomCallToggle) {
       randomCallToggle.addEventListener('change', function () {
         notifyState.randomCall = randomCallToggle.checked;
         persistNotifyState();
-        console.log('[来电] 允许他随机来电:', notifyState.randomCall ? '开启' : '关闭');
       });
     }
-
-    // 5. 静音循环开关
     var silentLoopBtn = document.getElementById('dsSilentLoopBtn');
     if (silentLoopBtn) {
       silentLoopBtn.addEventListener('click', function () {
         if (notifyState.silentLoop) {
-          // 关闭
           stopSilentLoop();
           notifyState.silentLoop = false;
           persistNotifyState();
           updateNotifyUI();
         } else {
-          // 开启
           var ok = startSilentLoop();
           if (ok) {
             notifyState.silentLoop = true;
@@ -1326,183 +1285,6 @@
         }
       });
     }
-
-    bindChatTabEvents();
-  }
-
-  function bindModeSwitch() {
-    var switchEl = document.getElementById('csModeSwitch');
-    if (!switchEl) return;
-    if (switchEl.dataset.bound) return;
-    switchEl.dataset.bound = '1';
-    switchEl.addEventListener('click', function (e) {
-      var btn = e.target.closest('.cs-mode-btn');
-      if (!btn) return;
-      var mode = btn.getAttribute('data-mode');
-      if (!mode) return;
-      cardMode = mode;
-      persistCardMode();
-      switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-mode') === mode);
-      });
-      updateModeHint();
-    });
-  }
-
-  function updateModeHint() {
-    var hintEl = document.getElementById('csModeHint');
-    if (!hintEl) return;
-    if (cardMode === 'public-only') hintEl.textContent = '自动回复时只从勾选为公共的分组中抽取';
-    else if (cardMode === 'private-only') hintEl.textContent = '自动回复时只从勾选为专属的分组中抽取';
-    else hintEl.textContent = '自动回复时 50% 从公共分组抽取，50% 从专属分组抽取';
-  }
-
-  function restoreModeSwitch() {
-    var switchEl = document.getElementById('csModeSwitch');
-    if (!switchEl) return;
-    switchEl.querySelectorAll('.cs-mode-btn').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-mode') === cardMode);
-    });
-    updateModeHint();
-  }
-
-  function renderAllGroupLists() {
-    renderReplyGroupLists();
-    renderEmojiGroupList();
-    renderStickerGroupList();
-    updateAllGroupCounts();
-  }
-
-  function renderReplyGroupLists() {
-    var publicList = document.getElementById('csPublicGroupList');
-    var privateList = document.getElementById('csPrivateGroupList');
-    if (!publicList || !privateList) return;
-    var groups = (typeof window.getGroups === 'function') ? window.getGroups('reply') : [];
-    if (groups.length === 0) {
-      publicList.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
-      privateList.innerHTML = '<div class="cs-words-empty">还没有字卡分组，先去字卡收纳盒创建吧~</div>';
-      return;
-    }
-    publicList.innerHTML = '';
-    privateList.innerHTML = '';
-    groups.forEach(function (name) {
-      publicList.appendChild(createGroupCheckboxItem(name, 'reply', 'public'));
-      privateList.appendChild(createGroupCheckboxItem(name, 'reply', 'private'));
-    });
-  }
-
-  function renderEmojiGroupList() {
-    var list = document.getElementById('csEmojiGroupList');
-    if (!list) return;
-    var groups = (typeof window.getGroups === 'function') ? window.getGroups('kaomoji') : [];
-    if (groups.length === 0) {
-      list.innerHTML = '<div class="cs-words-empty">还没有颜文字分组，先去字卡收纳盒创建吧~</div>';
-      return;
-    }
-    list.innerHTML = '';
-    groups.forEach(function (name) {
-      list.appendChild(createGroupCheckboxItem(name, 'kaomoji', 'emoji'));
-    });
-  }
-
-  function renderStickerGroupList() {
-    var list = document.getElementById('csStickerGroupList');
-    if (!list) return;
-    var stickerArr = (window.cardDatabase && window.cardDatabase.get)
-      ? (window.cardDatabase.get('sticker') || []) : [];
-    if (stickerArr.length === 0) {
-      list.innerHTML = '<div class="cs-words-empty">还没有表情包，先去字卡收纳盒添加吧~</div>';
-      return;
-    }
-    list.innerHTML = '';
-    list.appendChild(createGroupCheckboxItem('表情包（全部）', 'sticker', 'sticker'));
-  }
-
-  function createGroupCheckboxItem(groupName, category, type) {
-    var item = document.createElement('div');
-    item.className = 'cs-group-item';
-    var isChecked = false;
-    if (type === 'public') isChecked = publicGroups.indexOf(groupName) >= 0;
-    else if (type === 'private') isChecked = privateGroups.indexOf(groupName) >= 0;
-    else if (type === 'emoji') isChecked = emojiGroups.indexOf(groupName) >= 0;
-    else if (type === 'sticker') isChecked = stickerGroups.indexOf(groupName) >= 0;
-    if (isChecked) item.classList.add('checked');
-
-    var color = '#5C7CFA';
-    if (typeof window.getGroupColor === 'function') color = window.getGroupColor(groupName, category);
-
-    var count = 0;
-    if (category === 'sticker') {
-      count = (window.cardDatabase && window.cardDatabase.get)
-        ? (window.cardDatabase.get('sticker') || []).length : 0;
-    } else {
-      if (typeof window.getCardsInGroup === 'function') {
-        count = window.getCardsInGroup(groupName, category).length;
-      }
-    }
-
-    item.innerHTML =
-      '<label class="cs-group-checkbox">' +
-      '  <input type="checkbox" data-group="' + escapeAttr(groupName) + '" data-type="' + type + '" data-cat="' + category + '"' + (isChecked ? ' checked' : '') + '>' +
-      '  <span class="cs-group-check-mark"><i class="fa-solid fa-check"></i></span>' +
-      '</label>' +
-      '<span class="cs-group-color-dot" style="background:' + color + '"></span>' +
-      '<div class="cs-group-info">' +
-      '  <div class="cs-group-name">' + escapeHtml(groupName) + '</div>' +
-      '  <div class="cs-group-count">' + count + ' 条</div>' +
-      '</div>';
-
-    var checkbox = item.querySelector('input[type="checkbox"]');
-    checkbox.addEventListener('change', function () {
-      handleGroupCheckboxChange(groupName, type, checkbox.checked, item);
-    });
-    item.addEventListener('click', function (e) {
-      if (e.target.closest('.cs-group-checkbox')) return;
-      checkbox.checked = !checkbox.checked;
-      handleGroupCheckboxChange(groupName, type, checkbox.checked, item);
-    });
-    return item;
-  }
-
-  function handleGroupCheckboxChange(groupName, type, checked, itemEl) {
-    var targetArr = null;
-    if (type === 'public') targetArr = publicGroups;
-    else if (type === 'private') targetArr = privateGroups;
-    else if (type === 'emoji') targetArr = emojiGroups;
-    else if (type === 'sticker') targetArr = stickerGroups;
-    if (!targetArr) return;
-
-    var idx = targetArr.indexOf(groupName);
-    if (checked && idx < 0) targetArr.push(groupName);
-    else if (!checked && idx >= 0) targetArr.splice(idx, 1);
-    if (itemEl) itemEl.classList.toggle('checked', checked);
-    persistGroupSelections();
-    updateAllGroupCounts();
-    if (typeof window.refreshCardUI === 'function') window.refreshCardUI();
-  }
-
-  function updateAllGroupCounts() {
-    var pubCount = document.getElementById('csPublicCount');
-    var priCount = document.getElementById('csPrivateCount');
-    var emoCount = document.getElementById('csEmojiGroupCount');
-    var stiCount = document.getElementById('csStickerGroupCount');
-    if (pubCount) pubCount.textContent = publicGroups.length;
-    if (priCount) priCount.textContent = privateGroups.length;
-    if (emoCount) emoCount.textContent = emojiGroups.length;
-    if (stiCount) stiCount.textContent = stickerGroups.length;
-  }
-
-  function bindChatTabEvents() { bindModeSwitch(); }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function (m) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
-    });
-  }
-  function escapeAttr(str) {
-    if (!str) return '';
-    return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   function switchTab(tabName) {
@@ -1519,7 +1301,12 @@
       p.classList.toggle('active', p.getAttribute('data-panel') === tabName);
     });
     if (tabName === 'appearance') fillPanelValues();
-    if (tabName === 'chat') { restoreModeSwitch(); renderAllGroupLists(); }
+    if (tabName === 'chat') {
+      if (window.publicCardsPanel && typeof window.publicCardsPanel.refresh === 'function') {
+        window.publicCardsPanel.refresh();
+      }
+      renderContactCardsPanel();
+    }
     if (tabName === 'data') updateNotifyUI();
   }
 
@@ -1546,29 +1333,25 @@
       loadTheme(function () {
         loadFont(function () {
           loadBubble(function () {
-            loadCardMode(function () {
-              window.chatCardMode = cardMode;
-              loadGroupSelections(function () {
-                loadNotifyState(function () {
-                  applyTheme();
-                  applyFont();
-                  applyFontUrl();
-                  applyBubble();
-                  if (bubble.customCss) applyCustomCss();
-                  fillPanelValues();
-                  updateNotifyUI();
-                  switchTab(activeTab);
+            loadContactCardsMap(function () {
+              loadNotifyState(function () {
+                applyTheme();
+                applyFont();
+                applyFontUrl();
+                applyBubble();
+                if (bubble.customCss) applyCustomCss();
+                fillPanelValues();
+                updateNotifyUI();
+                switchTab(activeTab);
 
-                  // 如果之前开启了静音循环，自动恢复
-                  if (notifyState.silentLoop) {
-                    var ok = startSilentLoop();
-                    if (!ok) {
-                      notifyState.silentLoop = false;
-                      persistNotifyState();
-                      updateNotifyUI();
-                    }
+                if (notifyState.silentLoop) {
+                  var ok = startSilentLoop();
+                  if (!ok) {
+                    notifyState.silentLoop = false;
+                    persistNotifyState();
+                    updateNotifyUI();
                   }
-                });
+                }
               });
             });
           });
@@ -1601,11 +1384,8 @@
     clearCustomCss: clearCustomCss,
     ensureCustomCssStyleTag: ensureCustomCssStyleTag,
     applyAll: applyAll,
-    refreshGroupCheckboxes: renderAllGroupLists,
-    refreshGroupLists: renderAllGroupLists,
     exportData: openExportPanel,
     importData: doImport,
-    // 暴露通知状态
     getNotifyState: function () { return notifyState; },
     requestNotification: requestNotificationPermission,
     startSilentLoop: startSilentLoop,
@@ -1620,26 +1400,22 @@
   };
 
   /* ============ 消息时间戳开关 ============ */
-(function () {
-  var toggle = document.getElementById('toggleShowMessageTime');
-  if (!toggle) return;
+  (function () {
+    var toggle = document.getElementById('toggleShowMessageTime');
+    if (!toggle) return;
+    var show = true;
+    try {
+      var v = localStorage.getItem('show_message_time');
+      if (v === '0') show = false;
+    } catch (e) {}
+    toggle.checked = show;
+    toggle.addEventListener('change', function () {
+      var val = toggle.checked ? '1' : '0';
+      try { localStorage.setItem('show_message_time', val); } catch (e) {}
+      if (typeof window.applyChatTimeDisplay === 'function') {
+        window.applyChatTimeDisplay();
+      }
+    });
+  })();
 
-  // 初始化状态
-  var show = true;
-  try {
-    var v = localStorage.getItem('show_message_time');
-    if (v === '0') show = false;
-  } catch (e) {}
-  toggle.checked = show;
-
-  // 切换
-  toggle.addEventListener('change', function () {
-    var val = toggle.checked ? '1' : '0';
-    try { localStorage.setItem('show_message_time', val); } catch (e) {}
-    if (typeof window.applyChatTimeDisplay === 'function') {
-      window.applyChatTimeDisplay();
-    }
-  });
-})();
-  
 })();
