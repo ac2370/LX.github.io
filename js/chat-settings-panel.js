@@ -1624,4 +1624,27 @@
     return '已注入，长度 ' + (cssText || '').length;
   };
 
+  /* ============ 消息时间戳开关 ============ */
+(function () {
+  var toggle = document.getElementById('toggleShowMessageTime');
+  if (!toggle) return;
+
+  // 初始化状态
+  var show = true;
+  try {
+    var v = localStorage.getItem('show_message_time');
+    if (v === '0') show = false;
+  } catch (e) {}
+  toggle.checked = show;
+
+  // 切换
+  toggle.addEventListener('change', function () {
+    var val = toggle.checked ? '1' : '0';
+    try { localStorage.setItem('show_message_time', val); } catch (e) {}
+    if (typeof window.applyChatTimeDisplay === 'function') {
+      window.applyChatTimeDisplay();
+    }
+  });
+})();
+  
 })();
