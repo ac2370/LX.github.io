@@ -93,21 +93,36 @@
   }
 
   // ==================== 给消息行挂 dataset + 时间戳 ====================
-  function decorateMessageRow(row, sender, type, time) {
-    if (!row) return;
-    row.dataset.sender = sender;                 // 'me' | 'partner'
-    row.dataset.type = type;                    // 'text' | 'image' | 'system' | 'pat'
-    row.dataset.time = String(time || Date.now());
-    if (!row.dataset.favorited) row.dataset.favorited = 'false';
+function decorateMessageRow(row, sender, type, time) {
+  if (!row) return;
+  row.dataset.sender = sender;
+  row.dataset.type = type;
+  row.dataset.time = String(time || Date.now());
+  if (!row.dataset.favorited) row.dataset.favorited = 'false';
 
-    // 时间戳元素
-    if (!row.querySelector('.message-time')) {
-      var timeEl = document.createElement('div');
-      timeEl.className = 'message-time';
-      timeEl.textContent = formatTime(Number(row.dataset.time));
-      row.appendChild(timeEl);
-    }
+  if (row.querySelector('.message-time')) return;
+
+  // 找到已有的气泡
+  var bubble = row.querySelector('.message-bubble');
+
+  // 用一个 message-body 把气泡+时间戳竖着包起来
+  var body = document.createElement('div');
+  body.className = 'message-body';
+
+  if (bubble) {
+    // 把气泡挪进 body
+    row.insertBefore(body, bubble);
+    body.appendChild(bubble);
+  } else {
+    // 没有气泡就直接放 body（兜底）
+    row.appendChild(body);
   }
+
+  var timeEl = document.createElement('div');
+  timeEl.className = 'message-time';
+  timeEl.textContent = formatTime(Number(row.dataset.time));
+  body.appendChild(timeEl);
+}
 
   // ==================== 从 localforage 读取用户勾选的分组 ====================
   var groupCache = {
