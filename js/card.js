@@ -1,7 +1,8 @@
 /**
  * 字卡管理逻辑（分组 + 颜色 + 多分类支持）
- * - cardDatabase.reply / emoji / mood / location 均为分组对象结构
+ * - cardDatabase.reply / pat / mood / location 均为分组对象结构
  * - 兼容旧数据：一维数组自动迁移为 { "默认分组": [...] }
+ * - 兼容旧颜文字：cardDatabase.emoji → cardDatabase.pat 自动迁移
  * - 使用 localforage 持久化
  * - 保持字卡收纳盒现有 UI 和功能完全不变
  */
@@ -11,7 +12,7 @@
 
   // ==================== 存储 Key ====================
   const KEY_REPLY = 'my_word_cards';
-  const KEY_KAOMOJI = 'my_kaomoji_cards';
+  const KEY_PAT = 'my_kaomoji_cards';   // 沿用旧 key，避免数据丢失
   const KEY_PLACE = 'my_place_cards';
   const KEY_MOOD = 'my_mood_cards';
   const KEY_EMOJI = 'my_emoji_cards';
@@ -24,7 +25,7 @@
   const catItems = document.querySelectorAll('.cat-grid-item');
   const panels = {
     reply: document.getElementById('panel-reply'),
-    kaomoji: document.getElementById('panel-kaomoji'),
+    pat: document.getElementById('panel-pat'),
     place: document.getElementById('panel-place'),
     mood: document.getElementById('panel-mood'),
     emoji: document.getElementById('panel-emoji'),
@@ -33,7 +34,7 @@
 
   const badges = {
     reply: document.getElementById('badgeReply'),
-    kaomoji: document.getElementById('badgeKaomoji'),
+    pat: document.getElementById('badgePat'),
     place: document.getElementById('badgePlace'),
     mood: document.getElementById('badgeMood'),
     emoji: document.getElementById('badgeEmoji'),
@@ -59,9 +60,9 @@
   const dedupCheckbox = document.getElementById('dedupCheckbox');
   const cardSearchInput = document.getElementById('cardSearchInput');
 
-  const kaomojiList = document.getElementById('kaomojiList');
-  const kaomojiPlaceholder = document.getElementById('kaomojiPlaceholder');
-  const kaomojiSearchInput = document.getElementById('kaomojiSearchInput');
+  const patList = document.getElementById('patList');
+  const patPlaceholder = document.getElementById('patPlaceholder');
+  const patSearchInput = document.getElementById('patSearchInput');
 
   const placeList = document.getElementById('placeList');
   const placePlaceholder = document.getElementById('placePlaceholder');
@@ -100,21 +101,21 @@
   // 每个分类的当前选中分组
   const currentGroupMap = {
     reply: '默认分组',
-    kaomoji: '默认分组',
+    pat: '默认分组',
     place: '默认分组',
     mood: '默认分组'
   };
 
   // ==================== 分组数据结构 ====================
   // groupsMeta: {
-  //   reply:    { "默认分组": { color: "#5C7CFA" }, ... },
-  //   kaomoji:  { "默认分组": { color: "#F8B4B4" }, ... },
-  //   place:    { ... },
-  //   mood:     { ... }
+  //   reply:   { "默认分组": { color: "#5C7CFA" }, ... },
+  //   pat:     { "默认分组": { color: "#F8B4B4" }, ... },
+  //   place:   { ... },
+  //   mood:    { ... }
   // }
   var groupsMeta = {
     reply: {},
-    kaomoji: {},
+    pat: {},
     place: {},
     mood: {}
   };
@@ -164,7 +165,7 @@
 
   // ==================== 持久化 ====================
   function persistAll() {
-    // 1. 保存分组数据（cardDatabase.reply / emoji / mood / location）
+    // 1. 保存分组数据（cardDatabase.reply / pat / mood / location）
     if (window.cardDatabase && window.cardDatabase.persist) {
       window.cardDatabase.persist();
     }
@@ -186,14 +187,14 @@
     function apply(data) {
       if (data && typeof data === 'object') {
         if (data.groupsMeta) {
-          ['reply', 'kaomoji', 'place', 'mood'].forEach(function (k) {
+          ['reply', 'pat', 'place', 'mood'].forEach(function (k) {
             if (data.groupsMeta[k] && typeof data.groupsMeta[k] === 'object') {
               groupsMeta[k] = data.groupsMeta[k];
             }
           });
         }
         if (data.currentGroupMap) {
-          ['reply', 'kaomoji', 'place', 'mood'].forEach(function (k) {
+          ['reply', 'pat', 'place', 'mood'].forEach(function (k) {
             if (data.currentGroupMap[k]) {
               currentGroupMap[k] = data.currentGroupMap[k];
             }
@@ -217,8 +218,11 @@
   function getGroupObject(category) {
     if (!window.cardDatabase) return { '默认分组': [] };
 
-    // 分类映射：'place' 对应 cardDatabase 的 'location'（因为 card.js 里叫 place）
-    var dbKey = (category === 'place') ? 'location' : category;
+    // 分类映射：'place' 对应 cardDatabase 的 'location'；'kaomoji' 兼容为 'pat'
+    var dbKey = category;
+    if (category === 'place') dbKey = 'location';
+    else if (category === 'kaomoji') dbKey = 'pat';
+
     if (!window.cardDatabase[dbKey]) {
       window.cardDatabase[dbKey] = { '默认分组': [] };
     }
@@ -263,6 +267,7 @@
   // 获取某分组的颜色
   window.getGroupColor = function (groupName, category) {
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var meta = groupsMeta[cat] || {};
     return (meta[groupName] && meta[groupName].color) || DEFAULT_COLORS[0];
   };
@@ -271,6 +276,7 @@
   window.addGroup = function (name, color, category) {
     if (!name || typeof name !== 'string') return false;
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var obj = getGroupObject(cat);
     if (obj[name]) return false;
 
@@ -289,6 +295,7 @@
   window.renameGroup = function (oldName, newName, category) {
     if (!oldName || !newName) return false;
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var obj = getGroupObject(cat);
     if (!obj[oldName]) return false;
     if (obj[newName]) return false;
@@ -315,7 +322,8 @@
     }
 
     // 写回
-    var dbKey = (cat === 'place') ? 'location' : cat;
+    var dbKey = cat;
+    if (cat === 'place') dbKey = 'location';
     window.cardDatabase[dbKey] = newObj;
     if (window.cardDatabase.persist) window.cardDatabase.persist();
     persistAll();
@@ -326,6 +334,7 @@
   window.deleteGroup = function (name, category) {
     if (!name) return false;
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var obj = getGroupObject(cat);
     if (!obj[name]) return false;
     if (Object.keys(obj).length <= 1) return false;
@@ -350,6 +359,7 @@
   window.addCardToGroup = function (groupName, text, category) {
     if (!groupName || !text) return false;
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var obj = getGroupObject(cat);
     if (!obj[groupName]) obj[groupName] = [];
     if (autoDedup && obj[groupName].indexOf(text) >= 0) return false;
@@ -366,6 +376,7 @@
   window.removeCardFromGroup = function (groupName, text, category) {
     if (!groupName || !text) return false;
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var obj = getGroupObject(cat);
     if (!obj[groupName]) return false;
     var idx = obj[groupName].indexOf(text);
@@ -381,10 +392,13 @@
 
   // 获取/设置当前分组
   window.getCurrentGroup = function (category) {
-    return currentGroupMap[category || 'reply'] || '默认分组';
+    var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
+    return currentGroupMap[cat] || '默认分组';
   };
   window.setCurrentGroup = function (groupName, category) {
     var cat = category || 'reply';
+    if (cat === 'kaomoji') cat = 'pat';
     var obj = getGroupObject(cat);
     if (obj[groupName]) {
       currentGroupMap[cat] = groupName;
@@ -402,8 +416,8 @@
       // 这两个分类还是普通数组（图片/状态），暂不分组
       return window.cardDatabase.get(category) || [];
     }
-    // reply / kaomoji / place / mood 返回当前分组的字卡
-    return getCardsInGroupOf(category, currentGroupMap[category] || '默认分组');
+    var cat = category === 'kaomoji' ? 'pat' : category;
+    return getCardsInGroupOf(cat, currentGroupMap[cat] || '默认分组');
   }
 
   // ==================== 兼容旧数据迁移 ====================
@@ -417,14 +431,27 @@
       window.cardDatabase.reply = { '默认分组': [] };
     }
 
-    // 2. 把旧的 kaomoji 数组迁移为分组对象（cardDatabase 里叫 emoji，但分类不同）
-    // 注意：cardDatabase.emoji 现在存放颜文字，cardDatabase.sticker 存放表情包
-    // 颜文字要支持分组，所以我们要为颜文字单独建一个分组结构
-    // 兼容：如果 cardDatabase.emoji 是数组，迁移为分组对象
-    if (Array.isArray(window.cardDatabase.emoji)) {
-      window.cardDatabase.emoji = { '默认分组': window.cardDatabase.emoji.slice() };
-    } else if (!isGroupObject(window.cardDatabase.emoji)) {
-      window.cardDatabase.emoji = { '默认分组': [] };
+    // 2. 拍一拍（pat）：
+    //    a) 如果已有 cardDatabase.pat，走正常迁移
+    //    b) 如果只有 cardDatabase.emoji（旧颜文字容器），迁移到 cardDatabase.pat
+    if (window.cardDatabase.pat) {
+      if (Array.isArray(window.cardDatabase.pat)) {
+        window.cardDatabase.pat = { '默认分组': window.cardDatabase.pat.slice() };
+      } else if (!isGroupObject(window.cardDatabase.pat)) {
+        window.cardDatabase.pat = { '默认分组': [] };
+      }
+    } else if (window.cardDatabase.emoji) {
+      // 旧颜文字容器：迁移到 pat
+      var oldEmoji = window.cardDatabase.emoji;
+      if (Array.isArray(oldEmoji)) {
+        window.cardDatabase.pat = { '默认分组': oldEmoji.slice() };
+      } else if (isGroupObject(oldEmoji)) {
+        window.cardDatabase.pat = JSON.parse(JSON.stringify(oldEmoji));
+      } else {
+        window.cardDatabase.pat = { '默认分组': [] };
+      }
+    } else {
+      window.cardDatabase.pat = { '默认分组': [] };
     }
 
     // 3. place（地点） / mood（心情）：localStorage 里的旧数组迁移
@@ -454,7 +481,7 @@
     });
 
     // 4. 初始化每个分类的默认分组颜色
-    ['reply', 'kaomoji', 'place', 'mood'].forEach(function (cat) {
+    ['reply', 'pat', 'place', 'mood'].forEach(function (cat) {
       if (!groupsMeta[cat]) groupsMeta[cat] = {};
       var obj = getGroupObject(cat);
       Object.keys(obj).forEach(function (g, idx) {
@@ -515,18 +542,20 @@
   function addTextToCategory(category, texts, groupName) {
     if (!window.cardDatabase || !window.cardDatabase.ready) return;
 
-    if (category === 'reply' || category === 'kaomoji' || category === 'place' || category === 'mood') {
+    var cat = category === 'kaomoji' ? 'pat' : category;
+
+    if (cat === 'reply' || cat === 'pat' || cat === 'place' || cat === 'mood') {
       // 这些分类支持分组
-      var target = groupName || currentGroupMap[category] || '默认分组';
+      var target = groupName || currentGroupMap[cat] || '默认分组';
       texts.forEach(function (t) {
-        window.addCardToGroup(target, t, category);
+        window.addCardToGroup(target, t, cat);
       });
       // 更新当前分组
-      currentGroupMap[category] = target;
-    } else if (category === 'emoji') {
+      currentGroupMap[cat] = target;
+    } else if (cat === 'emoji') {
       // 表情包（图片）暂不分组，直接存 sticker
       window.cardDatabase.addMany('sticker', texts, autoDedup);
-    } else if (category === 'status') {
+    } else if (cat === 'status') {
       if (!window.cardDatabase.status) window.cardDatabase.status = [];
       texts.forEach(function (t) {
         if (autoDedup && window.cardDatabase.status.indexOf(t) >= 0) return;
@@ -538,8 +567,10 @@
 
   // ==================== 弹窗内的分组选择器 ====================
   function showGroupSelectorInModal(category) {
+    var cat = category === 'kaomoji' ? 'pat' : category;
+
     // 分类为 emoji/status 时不显示分组选择器
-    if (category === 'emoji' || category === 'status') {
+    if (cat === 'emoji' || cat === 'status') {
       var existing = document.getElementById('modalGroupSelector');
       if (existing) existing.style.display = 'none';
       return;
@@ -582,8 +613,8 @@
     selectBtn.className = 'modal-group-select-btn';
     selectBtn.id = 'modalGroupSelectBtn';
 
-    var currentGroupName = currentGroupMap[category] || '默认分组';
-    var currentColor = window.getGroupColor(currentGroupName, category);
+    var currentGroupName = currentGroupMap[cat] || '默认分组';
+    var currentColor = window.getGroupColor(currentGroupName, cat);
 
     selectBtn.innerHTML =
       '<span class="modal-group-color-dot" style="background:' + currentColor + '"></span>' +
@@ -597,13 +628,13 @@
     dropdown.className = 'modal-group-dropdown';
     dropdown.id = 'modalGroupDropdown';
 
-    var groups = window.getGroups(category);
+    var groups = window.getGroups(cat);
     // 第一项：不分组
     var noGroupItem = document.createElement('div');
     noGroupItem.className = 'modal-group-item' + (currentGroupName === '默认分组' ? ' active' : '');
     noGroupItem.setAttribute('data-group', '默认分组');
     noGroupItem.innerHTML =
-      '<span class="modal-group-color-dot" style="background:' + window.getGroupColor('默认分组', category) + '"></span>' +
+      '<span class="modal-group-color-dot" style="background:' + window.getGroupColor('默认分组', cat) + '"></span>' +
       '<span class="modal-group-name-text">不分组（默认分组）</span>';
     dropdown.appendChild(noGroupItem);
 
@@ -614,7 +645,7 @@
       item.className = 'modal-group-item' + (currentGroupName === g ? ' active' : '');
       item.setAttribute('data-group', escapeAttr(g));
       item.innerHTML =
-        '<span class="modal-group-color-dot" style="background:' + window.getGroupColor(g, category) + '"></span>' +
+        '<span class="modal-group-color-dot" style="background:' + window.getGroupColor(g, cat) + '"></span>' +
         '<span class="modal-group-name-text">' + escapeHtml(g) + '</span>';
       dropdown.appendChild(item);
     });
@@ -633,10 +664,10 @@
       item.addEventListener('click', function (e) {
         e.stopPropagation();
         var name = item.getAttribute('data-group');
-        currentGroupMap[category] = name;
+        currentGroupMap[cat] = name;
         selectBtn.querySelector('#modalGroupNameText').textContent = name;
         var colorDot = selectBtn.querySelector('.modal-group-color-dot');
-        if (colorDot) colorDot.style.background = window.getGroupColor(name, category);
+        if (colorDot) colorDot.style.background = window.getGroupColor(name, cat);
         dropdown.querySelectorAll('.modal-group-item').forEach(function (i) {
           i.classList.remove('active');
         });
@@ -705,7 +736,8 @@
       del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
       del.addEventListener('click', function () {
         if (!confirm('确定删除这条内容吗？')) return;
-        window.removeCardFromGroup(groupName, text, category);
+        var cat = category === 'kaomoji' ? 'pat' : category;
+        window.removeCardFromGroup(groupName, text, cat);
         updateAllUI();
       });
       item.appendChild(textEl);
@@ -798,13 +830,13 @@
 
     // 1. 统计各分类的总数
     var replyGroups = getGroupObject('reply');
-    var kaomojiGroups = getGroupObject('kaomoji');
+    var patGroups = getGroupObject('pat');
     var placeGroups = getGroupObject('place');
     var moodGroups = getGroupObject('mood');
 
-    var replyTotal = 0, kaomojiTotal = 0, placeTotal = 0, moodTotal = 0;
+    var replyTotal = 0, patTotal = 0, placeTotal = 0, moodTotal = 0;
     Object.keys(replyGroups).forEach(function (g) { replyTotal += replyGroups[g].length; });
-    Object.keys(kaomojiGroups).forEach(function (g) { kaomojiTotal += kaomojiGroups[g].length; });
+    Object.keys(patGroups).forEach(function (g) { patTotal += patGroups[g].length; });
     Object.keys(placeGroups).forEach(function (g) { placeTotal += placeGroups[g].length; });
     Object.keys(moodGroups).forEach(function (g) { moodTotal += moodGroups[g].length; });
 
@@ -813,7 +845,7 @@
 
     // 2. 徽章
     if (badges.reply) badges.reply.textContent = replyTotal;
-    if (badges.kaomoji) badges.kaomoji.textContent = kaomojiTotal;
+    if (badges.pat) badges.pat.textContent = patTotal;
     if (badges.place) badges.place.textContent = placeTotal;
     if (badges.mood) badges.mood.textContent = moodTotal;
     if (badges.emoji) badges.emoji.textContent = stickerTotal;
@@ -838,12 +870,12 @@
       cardSearchInput, 'reply', replyCurrentGroup
     );
 
-    // 6. 渲染颜文字
-    var kaomojiCurrentGroup = currentGroupMap.kaomoji || '默认分组';
+    // 6. 渲染拍一拍
+    var patCurrentGroup = currentGroupMap.pat || '默认分组';
     renderTextList(
-      kaomojiList, kaomojiPlaceholder,
-      window.getCardsInGroup(kaomojiCurrentGroup, 'kaomoji'),
-      kaomojiSearchInput, 'kaomoji', kaomojiCurrentGroup
+      patList, patPlaceholder,
+      window.getCardsInGroup(patCurrentGroup, 'pat'),
+      patSearchInput, 'pat', patCurrentGroup
     );
 
     // 7. 渲染地点
@@ -913,7 +945,7 @@
   }
   if (cardSearchInput) cardSearchInput.addEventListener('input', updateAllUI);
 
-  // ==================== 颜文字/地点/心情/状态 操作栏（补全） ====================
+  // ==================== 拍一拍/地点/心情/状态 操作栏（补全） ====================
   function bindCategoryButtons(cat, prefix) {
     var addBtn = document.getElementById(prefix + 'AddBtn');
     var importBtn = document.getElementById(prefix + 'ImportBtn');
@@ -941,16 +973,16 @@
   }
 
   function categoryTitle(cat) {
-    var map = { reply: '回复', kaomoji: '颜文字', place: '地点', mood: '心情', emoji: '表情包', status: '状态' };
+    var map = { reply: '回复', pat: '拍一拍', place: '地点', mood: '心情', emoji: '表情包', status: '状态' };
     return map[cat] || cat;
   }
 
-  bindCategoryButtons('kaomoji', 'kaomoji');
+  bindCategoryButtons('pat', 'pat');
   bindCategoryButtons('place', 'place');
   bindCategoryButtons('mood', 'mood');
 
   // ==================== 搜索框 ====================
-  if (kaomojiSearchInput) kaomojiSearchInput.addEventListener('input', updateAllUI);
+  if (patSearchInput) patSearchInput.addEventListener('input', updateAllUI);
   if (placeSearchInput) placeSearchInput.addEventListener('input', updateAllUI);
   if (moodSearchInput) moodSearchInput.addEventListener('input', updateAllUI);
   if (statusSearchInput) statusSearchInput.addEventListener('input', updateAllUI);
@@ -1042,6 +1074,7 @@
 
   function openNewGroupModal(category) {
     newGroupCategory = category || 'reply';
+    if (newGroupCategory === 'kaomoji') newGroupCategory = 'pat';
 
     if (!newGroupModal) {
       newGroupModal = document.createElement('div');
@@ -1157,7 +1190,7 @@
     newGroupModal.classList.add('active');
   }
 
-  // 绑定"新建分组"按钮（reply / kaomoji / place / mood）
+  // 绑定"新建分组"按钮（reply / pat / place / mood）
   function bindNewGroupButton(btnId, category) {
     var btn = document.getElementById(btnId);
     if (btn) {
@@ -1169,7 +1202,7 @@
   }
 
   bindNewGroupButton('btnNewGroup', 'reply');
-  bindNewGroupButton('kaomojiNewGroupBtn', 'kaomoji');
+  bindNewGroupButton('patNewGroupBtn', 'pat');
   bindNewGroupButton('placeNewGroupBtn', 'place');
   bindNewGroupButton('moodNewGroupBtn', 'mood');
 
@@ -1199,7 +1232,7 @@
   }
 
   bindRenameButton('btnRenameGroup', 'reply');
-  bindRenameButton('kaomojiRenameGroupBtn', 'kaomoji');
+  bindRenameButton('patRenameGroupBtn', 'pat');
   bindRenameButton('placeRenameGroupBtn', 'place');
   bindRenameButton('moodRenameGroupBtn', 'mood');
 
@@ -1213,14 +1246,16 @@
     });
     return all;
   };
-  window.getKaomojiCards = function () {
-    var obj = getGroupObject('kaomoji');
+  window.getPatCards = function () {
+    var obj = getGroupObject('pat');
     var all = [];
     Object.keys(obj).forEach(function (g) {
       all = all.concat(obj[g] || []);
     });
     return all;
   };
+  // 兼容旧接口
+  window.getKaomojiCards = window.getPatCards;
   window.getEmojiCards = function () {
     return window.cardDatabase.get('sticker') || [];
   };
@@ -1274,7 +1309,7 @@
 
 /* ============================================================
    card.js 追加块 —— 分类切换 / 整理模式 / 分组弹窗
-   （由原 index.html 内联脚本原样迁移，未改动内部逻辑）
+   （已把 kaomoji 相关全部改为 pat，与主逻辑保持一致）
    ============================================================ */
 (function () {
   'use strict';
@@ -1282,7 +1317,7 @@
   // ==================== 存储 Key ====================
   var KEY_MAP = {
     reply: 'my_word_cards',
-    kaomoji: 'my_kaomoji_cards',
+    pat: 'my_kaomoji_cards',   // 沿用旧 key
     place: 'my_place_cards',
     mood: 'my_mood_cards',
     emoji: 'my_emoji_cards',
@@ -1297,6 +1332,7 @@
   // ==================== 工具 ====================
   function getList(cat) {
     if (window.getReplyCards && cat === 'reply') return window.getReplyCards();
+    if (window.getPatCards && cat === 'pat') return window.getPatCards();
     try {
       var raw = localStorage.getItem(KEY_MAP[cat]);
       if (!raw) return [];
@@ -1331,13 +1367,13 @@
   function updateSearchPlaceholder() {
     var map = {
       reply: '找一句话、一种心情...',
-      kaomoji: '找一个表情...',
+      pat: '找一句拍一拍...',
       place: '找一个熟悉的地方...',
       mood: '找一句话、一种心情...',
       emoji: '搜索图片名称',
       status: '搜索状态...'
     };
-    var inputs = ['cardSearchInput', 'kaomojiSearchInput', 'placeSearchInput', 'moodSearchInput', 'emojiSearchInput', 'statusSearchInput'];
+    var inputs = ['cardSearchInput', 'patSearchInput', 'placeSearchInput', 'moodSearchInput', 'emojiSearchInput', 'statusSearchInput'];
     inputs.forEach(function (id) {
       var el = document.getElementById(id);
       if (el && map[currentCat]) el.placeholder = map[currentCat];
@@ -1378,7 +1414,7 @@
     } else {
       var listMap = {
         reply: 'cardList',
-        kaomoji: 'kaomojiList',
+        pat: 'patList',
         place: 'placeList',
         mood: 'moodList',
         status: 'statusList'
@@ -1398,7 +1434,7 @@
   // ==================== 整理栏 DOM 动态注入 ====================
   // 在初始化时，为每个分类注入整理栏
   function injectOrganizeBars() {
-    var cats = ['reply', 'kaomoji', 'place', 'mood', 'emoji', 'status'];
+    var cats = ['reply', 'pat', 'place', 'mood', 'emoji', 'status'];
     cats.forEach(function (cat) {
       if (document.getElementById('organizeBar-' + cat)) return; // 已存在
 
@@ -1472,7 +1508,7 @@
     // 文字类
     var listMap = {
       reply: 'cardList',
-      kaomoji: 'kaomojiList',
+      pat: 'patList',
       place: 'placeList',
       mood: 'moodList',
       status: 'statusList'
@@ -1553,7 +1589,7 @@
     });
   }
 
-  // ==================== 分组弹窗 ====================
+  // ==================== 分组弹窗（旧 demo，保留但不再是主流程） ====================
   function createGroupModal() {
     if (document.getElementById('groupModal')) return;
     var modal = document.createElement('div');
@@ -1631,7 +1667,7 @@
     // 各分类的"整理"按钮
     var organizeMap = {
       btnOrganizeGroup: 'reply',
-      kaomojiOrganizeBtn: 'kaomoji',
+      patOrganizeBtn: 'pat',
       placeOrganizeBtn: 'place',
       moodOrganizeBtn: 'mood',
       emojiOrganizeBtn: 'emoji',
