@@ -35,9 +35,9 @@
   //     reactionDelay = randomInt(1000, 60000);      // 1~60 秒
   //     autoPostCheckMin = 15 * 60 * 1000;            // 15 分钟
   //     autoPostCheckMax = 60 * 60 * 1000;            // 60 分钟
-  var TEST_REACTION_DELAY_MS   = 5 * 1000;
-  var TEST_AUTO_POST_MIN_MS    = 5 * 1000;   // 测试版：5 秒触发一次检查
-  var TEST_AUTO_POST_MAX_MS    = 5 * 1000;
+  var TEST_REACTION_DELAY_MS   = randomInt(1000, 60000)
+  var TEST_AUTO_POST_MIN_MS    = 15 * 60 * 1000
+  var TEST_AUTO_POST_MAX_MS    = 60 * 60 * 1000
   var AUTO_POST_PROBABILITY    = 0.30;
 
   // 三件套概率
