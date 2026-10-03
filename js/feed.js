@@ -60,8 +60,8 @@
   var feedSettingsBtn = document.getElementById('feedSettingsBtn');   // 铃铛
   var feedAddBtn      = document.getElementById('feedAddBtn');        // ➕
 
-  var feedCover         = document.getElementById('feedCover');
-  var feedCoverChangeBtn = document.getElementById('feedCoverChangeBtn');
+  var feedCover = document.getElementById('feedCover');
+  // 注意：#feedCoverChangeBtn 已删除，改为点击 #feedCover 触发
 
   var feedHeaderAvatar = document.getElementById('feedHeaderAvatar');
   var feedHeaderName   = document.getElementById('feedHeaderName');
@@ -263,13 +263,19 @@
     } catch (e) {}
   }
 
-  function applyCoverBg() {
+   function applyCoverBg() {
     if (!feedCover || !currentContactId) return;
     var url = loadCoverBg(currentContactId);
     if (url) {
       feedCover.style.backgroundImage = 'url("' + url + '")';
+      feedCover.style.backgroundSize = 'cover';
+      feedCover.style.backgroundPosition = 'center';
+      feedCover.style.backgroundRepeat = 'no-repeat';
     } else {
       feedCover.style.backgroundImage = '';
+      feedCover.style.backgroundSize = '';
+      feedCover.style.backgroundPosition = '';
+      feedCover.style.backgroundRepeat = '';
     }
   }
 
@@ -988,9 +994,10 @@
     });
   }
 
-  // 换背景按钮
-  if (feedCoverChangeBtn) {
-    feedCoverChangeBtn.addEventListener('click', function () {
+   // 点击封面 → 打开"更换封面"选项面板
+  if (feedCover) {
+    feedCover.addEventListener('click', function (e) {
+      e.preventDefault();
       openCoverModal();
     });
   }
