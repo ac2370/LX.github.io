@@ -150,51 +150,49 @@ body.theme-dark .feed-header-card {
   border-color: var(--theme-card-border);
 }
 
-/* 封面 */
+/* 封面（点击可更换背景） */
 .feed-cover {
   height: 120px;
   background: linear-gradient(135deg, #e8eef4 0%, #f5f0fa 100%);
   background-size: cover;
   background-position: center;
   position: relative;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.feed-cover:active {
+  filter: brightness(0.96);
 }
 body.theme-dark .feed-cover {
   background: linear-gradient(135deg, #2a3a4a 0%, #3a3050 100%);
 }
 
-/* 换背景按钮（毛玻璃小胶囊，左上角） */
-.feed-cover-change-btn {
+/* 封面右下角低调提示图标 */
+.feed-cover-hint {
   position: absolute;
-  top: 10px;
-  left: 12px;
+  right: 10px;
+  bottom: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  color: #55606b;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-  box-shadow: 0 2px 8px rgba(150, 170, 190, 0.15);
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;   /* 让点击穿透到 .feed-cover */
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
 }
-.feed-cover-change-btn:active {
-  background: rgba(240, 245, 250, 1);
-  transform: scale(0.96);
+.feed-cover:hover .feed-cover-hint {
+  opacity: 1;
 }
-.feed-cover-change-btn i {
-  font-size: 12px;
-  color: #6fa3cc;
-}
-body.theme-dark .feed-cover-change-btn {
-  background: rgba(42, 48, 56, 0.85);
-  border-color: var(--theme-card-border);
-  color: var(--theme-text-soft);
+body.theme-dark .feed-cover-hint {
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* 封面下方：头像 + 名字（右下角叠在封面下沿） */
