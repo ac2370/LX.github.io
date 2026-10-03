@@ -4,8 +4,14 @@
      { [contactId]: { posts: [] } }
      单条动态：{ id, role, authorName, authorAvatar, content, ts, likes, comments, favorites }
      评论：{ id, authorName, content, ts, replies: [] }
+   功能：
+     - 你发动态
+     - TA 自动发动态（15~60 分钟检查一次，30% 概率）
+     - TA 对你动态做三件套反应（点赞 / 评论 / 收藏）
+     - 主页"朋友圈"入口红点提醒
    依赖：
      - window.showPage / window.pageFeed / window.pageHome（router.js）
+     - window.getReplyCards（card.js）
      - localStorage: my_contacts / my_current_contact
    ============================================================ */
 (function () {
@@ -24,12 +30,29 @@
     avatar: 'https://picsum.photos/200/200?random=99'
   };
 
+  // ★ 测试用：所有互动延迟 = 5 秒
+  //   正式版：
+  //     reactionDelay = randomInt(1000, 60000);      // 1~60 秒
+  //     autoPostCheckMin = 15 * 60 * 1000;            // 15 分钟
+  //     autoPostCheckMax = 60 * 60 * 1000;            // 60 分钟
+  var TEST_REACTION_DELAY_MS   = 5 * 1000;
+  var TEST_AUTO_POST_MIN_MS    = 5 * 1000;   // 测试版：5 秒触发一次检查
+  var TEST_AUTO_POST_MAX_MS    = 5 * 1000;
+  var AUTO_POST_PROBABILITY    = 0.30;
+
+  // 三件套概率
+  var LIKE_PROBABILITY     = 0.60;
+  var COMMENT_PROBABILITY  = 0.70;
+  var FAVORITE_PROBABILITY = 0.30;
+
+  // 红点标记键
+  var LS_UNREAD_DOT_KEY = 'feed_unread_dot';
+
   // ==================== DOM ====================
-  var btnFeed        = document.getElementById('btnFeed');
-  var feedBackBtn    = document.getElementById('feedBackBtn');
+  var btnFeed         = document.getElementById('btnFeed');
+  var feedBackBtn     = document.getElementById('feedBackBtn');
   var feedSettingsBtn = document.getElementById('feedSettingsBtn');
 
-  var feedCover        = document.getElementById('feedCover');
   var feedHeaderAvatar = document.getElementById('feedHeaderAvatar');
   var feedHeaderName   = document.getElementById('feedHeaderName');
 
@@ -47,10 +70,13 @@
   var postText   = document.getElementById('feedPostText');
 
   // ==================== 状态 ====================
-  var feedData = {};             // { [contactId]: { posts: [] } }
+  var feedData = {};
   var dataReady = false;
   var currentContactId = null;
   var currentContact   = null;
+
+  var autoPostTimer = null;
+  var autoPostScheduled = false;
 
   // ==================== 工具 ====================
   function escapeHtml(str) {
@@ -64,7 +90,15 @@
     return (prefix || 'id') + '_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
   }
 
-  // 相对时间
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function randomPick(arr) {
+    if (!arr || arr.length === 0) return null;
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
   function formatRelativeTime(ts) {
     var now = Date.now();
     var diff = now - ts;
@@ -89,6 +123,15 @@
     var nowYear = new Date().getFullYear();
     if (y === nowYear) return m + '-' + dd;
     return y + '-' + m + '-' + dd;
+  }
+
+  // 回复字卡池
+  function getReplyPool() {
+    if (typeof window.getReplyCards === 'function') {
+      var arr = window.getReplyCards();
+      if (Array.isArray(arr) && arr.length > 0) return arr.slice();
+    }
+    return [];
   }
 
   // ==================== 联系人 ====================
@@ -124,11 +167,7 @@
       return Promise.resolve();
     }
     return localforage.getItem(STORE_KEY).then(function (data) {
-      if (data && typeof data === 'object') {
-        feedData = data;
-      } else {
-        feedData = {};
-      }
+      feedData = (data && typeof data === 'object') ? data : {};
       dataReady = true;
     }).catch(function () {
       feedData = {};
@@ -154,12 +193,10 @@
     return feedData[currentContactId];
   }
 
-  // ==================== 我的头像 ====================
+  // ==================== 我的头像 / 名字 ====================
   function getMyAvatar() {
-    // 优先从主页头像读取
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
-    // 从 homeSettings 读取
     if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
       return window.homeSettings.current.avatar;
     }
@@ -174,7 +211,6 @@
   }
 
   function getMyName() {
-    // 尝试从 home settings 读；找不到就用"我"
     try {
       var raw = localStorage.getItem('home_custom_images');
       if (raw) {
@@ -185,14 +221,21 @@
     return '我';
   }
 
+  function getTaName() {
+    return (currentContact && currentContact.name) || 'Ta';
+  }
+  function getTaAvatar() {
+    return (currentContact && currentContact.avatar) || DEFAULT_CONTACT.avatar;
+  }
+
   // ==================== 更新头部 ====================
   function updateHeader() {
     if (feedHeaderAvatar) {
-      feedHeaderAvatar.src = (currentContact && currentContact.avatar) || DEFAULT_CONTACT.avatar;
-      feedHeaderAvatar.alt = (currentContact && currentContact.name) || 'Ta';
+      feedHeaderAvatar.src = getTaAvatar();
+      feedHeaderAvatar.alt = getTaName();
     }
     if (feedHeaderName) {
-      feedHeaderName.textContent = (currentContact && currentContact.name) || 'Ta';
+      feedHeaderName.textContent = getTaName();
     }
     if (feedPostAvatar) {
       feedPostAvatar.src = getMyAvatar();
@@ -224,21 +267,19 @@
   }
 
   function renderPostCard(post) {
-    var avatar = post.authorAvatar || (post.role === 'me' ? getMyAvatar() : (currentContact && currentContact.avatar) || DEFAULT_CONTACT.avatar);
-    var name   = post.authorName || (post.role === 'me' ? getMyName() : (currentContact && currentContact.name) || 'Ta');
+    var avatar = post.authorAvatar || (post.role === 'me' ? getMyAvatar() : getTaAvatar());
+    var name   = post.authorName || (post.role === 'me' ? getMyName() : getTaName());
     var time   = formatRelativeTime(post.ts || Date.now());
 
     var likes = Array.isArray(post.likes) ? post.likes : [];
     var comments = Array.isArray(post.comments) ? post.comments : [];
     var favorites = Array.isArray(post.favorites) ? post.favorites : [];
 
-    // 是否已点赞 / 已收藏（用 "me" 判断）
     var liked = likes.indexOf('me') >= 0;
     var favorited = favorites.indexOf('me') >= 0;
 
     var html = '<div class="feed-card" data-id="' + escapeHtml(post.id) + '">';
 
-    // 头
     html += '<div class="feed-card-head">' +
       '<img class="feed-card-avatar" src="' + escapeHtml(avatar) + '" alt="">' +
       '<div class="feed-card-meta">' +
@@ -247,13 +288,14 @@
       '</div>' +
     '</div>';
 
-    // 正文
     html += '<div class="feed-card-content">' + escapeHtml(post.content || '') + '</div>';
 
     // 点赞列表
     if (likes.length > 0) {
       var likeNames = likes.map(function (l) {
-        return l === 'me' ? getMyName() : ((currentContact && currentContact.name) || 'Ta');
+        if (l === 'me') return getMyName();
+        if (l === 'ta') return getTaName();
+        return String(l);
       }).join('、');
       html += '<div class="feed-likes">' +
         '<i class="fa-solid fa-heart"></i>' +
@@ -297,7 +339,6 @@
       '<span class="feed-comment-time">' + escapeHtml(formatRelativeTime(c.ts || Date.now())) + '</span>' +
     '</div>';
 
-    // 楼中楼（简单支持）
     if (Array.isArray(c.replies) && c.replies.length > 0) {
       c.replies.forEach(function (r) {
         html += '<div class="feed-comment-item" style="padding-left:16px;">' +
@@ -333,23 +374,16 @@
     if (act === 'like') {
       if (!Array.isArray(post.likes)) post.likes = [];
       var idx = post.likes.indexOf('me');
-      if (idx >= 0) {
-        post.likes.splice(idx, 1);
-      } else {
-        post.likes.push('me');
-      }
+      if (idx >= 0) post.likes.splice(idx, 1);
+      else post.likes.push('me');
       saveData().then(renderList);
     } else if (act === 'favorite') {
       if (!Array.isArray(post.favorites)) post.favorites = [];
       var fi = post.favorites.indexOf('me');
-      if (fi >= 0) {
-        post.favorites.splice(fi, 1);
-      } else {
-        post.favorites.push('me');
-      }
+      if (fi >= 0) post.favorites.splice(fi, 1);
+      else post.favorites.push('me');
       saveData().then(renderList);
     } else if (act === 'comment') {
-      // 评论功能下一步实现，先占位
       var txt = prompt('写点什么：');
       if (!txt) return;
       var t = txt.trim();
@@ -366,11 +400,206 @@
     }
   }
 
+  // ==================== 红点 ====================
+  function showUnreadDot() {
+    try { localStorage.setItem(LS_UNREAD_DOT_KEY, '1'); } catch (e) {}
+    applyUnreadDot();
+  }
+  function clearUnreadDot() {
+    try { localStorage.removeItem(LS_UNREAD_DOT_KEY); } catch (e) {}
+    applyUnreadDot();
+  }
+  function applyUnreadDot() {
+    if (!btnFeed) return;
+    var has = false;
+    try { has = localStorage.getItem(LS_UNREAD_DOT_KEY) === '1'; } catch (e) {}
+
+    // 找/建红点元素
+    var dot = btnFeed.querySelector('.feed-unread-dot');
+    if (has) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'feed-unread-dot';
+        btnFeed.appendChild(dot);
+      }
+    } else {
+      if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+    }
+  }
+
+  // ==================== 传讯页系统消息 ====================
+  function pushChatSystemMessage(text) {
+    var chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    var row = document.createElement('div');
+    row.className = 'message-row system-call-event';
+    var bubble = document.createElement('div');
+    bubble.className = 'call-record-bubble';
+    bubble.innerHTML = '<i class="fa-solid fa-users"></i><span>' + escapeHtml(text) + '</span>';
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    requestAnimationFrame(function () {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+  }
+
+  // ==================== TA 自动发动态 ====================
+  function maybeAutoPostFor(contactId) {
+    if (!contactId) return;
+    if (!feedData[contactId]) feedData[contactId] = { posts: [] };
+    if (!Array.isArray(feedData[contactId].posts)) feedData[contactId].posts = [];
+
+    // 30% 概率触发
+    if (Math.random() > AUTO_POST_PROBABILITY) return;
+
+    var pool = getReplyPool();
+    if (pool.length === 0) return;
+
+    // 抽 1~3 句
+    var count = randomInt(1, 3);
+    if (count > pool.length) count = pool.length;
+
+    var picked = [];
+    var usedIdx = {};
+    for (var i = 0; i < count; i++) {
+      var idx;
+      var tries = 0;
+      do {
+        idx = Math.floor(Math.random() * pool.length);
+        tries++;
+      } while (usedIdx[idx] && tries < 20);
+      usedIdx[idx] = true;
+      picked.push(String(pool[idx]).trim());
+    }
+    var content = picked.join(' ');
+
+    // 用该联系人的名字/头像
+    var contacts = loadContacts();
+    var c = contacts.find(function (x) { return x.id === contactId; }) || contacts[0];
+    var name = (c && c.name) || 'Ta';
+    var avatar = (c && c.avatar) || DEFAULT_CONTACT.avatar;
+
+    feedData[contactId].posts.push({
+      id: genId('post'),
+      role: 'ta',
+      authorName: name,
+      authorAvatar: avatar,
+      content: content,
+      ts: Date.now(),
+      likes: [],
+      comments: [],
+      favorites: []
+    });
+
+    saveData().then(function () {
+      // 若当前就在该联系人朋友圈，直接刷新
+      if (currentContactId === contactId) {
+        renderList();
+      }
+      // 红点
+      showUnreadDot();
+      // 传讯页系统消息
+      pushChatSystemMessage(name + ' 发布了一条朋友圈动态');
+    });
+  }
+
+  function scheduleAutoPost() {
+    if (autoPostScheduled) return;
+    autoPostScheduled = true;
+
+    function tick() {
+      // 对当前联系人做一次判断
+      resolveCurrentContact();
+      maybeAutoPostFor(currentContactId);
+
+      var next = randomInt(TEST_AUTO_POST_MIN_MS, TEST_AUTO_POST_MAX_MS);
+      autoPostTimer = setTimeout(tick, next);
+    }
+
+    var firstDelay = randomInt(TEST_AUTO_POST_MIN_MS, TEST_AUTO_POST_MAX_MS);
+    autoPostTimer = setTimeout(tick, firstDelay);
+  }
+
+  // ==================== TA 三件套反应 ====================
+  function reactToMyPost(postId) {
+    if (!currentContactId) return;
+    var bucket = getCurrentBucket();
+    var post = bucket.posts.find(function (p) { return p.id === postId; });
+    if (!post) return;
+
+    var taName = getTaName();
+
+    // 1) 点赞 60%
+    if (Math.random() < LIKE_PROBABILITY) {
+      setTimeout(function () {
+        var b = getCurrentBucket();
+        var p = b.posts.find(function (x) { return x.id === postId; });
+        if (!p) return;
+        if (!Array.isArray(p.likes)) p.likes = [];
+        if (p.likes.indexOf('ta') < 0) {
+          p.likes.push('ta');
+          saveData().then(function () {
+            if (currentContactId && document.getElementById('pageFeed') && document.getElementById('pageFeed').classList.contains('active')) {
+              renderList();
+            }
+            showUnreadDot();
+          });
+        }
+      }, TEST_REACTION_DELAY_MS);
+    }
+
+    // 2) 评论 70%
+    if (Math.random() < COMMENT_PROBABILITY) {
+      setTimeout(function () {
+        var pool = getReplyPool();
+        var commentText = pool.length > 0 ? String(randomPick(pool)).trim() : '真不错~';
+
+        var b = getCurrentBucket();
+        var p = b.posts.find(function (x) { return x.id === postId; });
+        if (!p) return;
+        if (!Array.isArray(p.comments)) p.comments = [];
+        p.comments.push({
+          id: genId('cmt'),
+          authorName: taName,
+          content: commentText,
+          ts: Date.now(),
+          replies: []
+        });
+        saveData().then(function () {
+          if (currentContactId && document.getElementById('pageFeed') && document.getElementById('pageFeed').classList.contains('active')) {
+            renderList();
+          }
+          showUnreadDot();
+        });
+      }, TEST_REACTION_DELAY_MS);
+    }
+
+    // 3) 收藏 30%
+    if (Math.random() < FAVORITE_PROBABILITY) {
+      setTimeout(function () {
+        var b = getCurrentBucket();
+        var p = b.posts.find(function (x) { return x.id === postId; });
+        if (!p) return;
+        if (!Array.isArray(p.favorites)) p.favorites = [];
+        if (p.favorites.indexOf('ta') < 0) {
+          p.favorites.push('ta');
+          saveData().then(function () {
+            if (currentContactId && document.getElementById('pageFeed') && document.getElementById('pageFeed').classList.contains('active')) {
+              renderList();
+            }
+            showUnreadDot();
+          });
+        }
+      }, TEST_REACTION_DELAY_MS);
+    }
+  }
+
   // ==================== 页面切换 ====================
   function enterFeed() {
     resolveCurrentContact();
     updateHeader();
-    // 数据加载完成后再渲染
+    // 进页面清除红点
+    clearUnreadDot();
     if (dataReady) {
       renderList();
     } else {
@@ -401,7 +630,6 @@
 
   if (feedSettingsBtn) {
     feedSettingsBtn.addEventListener('click', function () {
-      // 设置功能下一步实现
       alert('朋友圈设置开发中');
     });
   }
@@ -429,18 +657,13 @@
   if (postSubmit) {
     postSubmit.addEventListener('click', function () {
       var text = postText ? postText.value.trim() : '';
-      if (!text) {
-        alert('请输入内容');
-        return;
-      }
-      if (!currentContactId) {
-        alert('请先选择一个联系人');
-        return;
-      }
+      if (!text) { alert('请输入内容'); return; }
+      if (!currentContactId) { alert('请先选择一个联系人'); return; }
 
+      var postId = genId('post');
       var bucket = getCurrentBucket();
       bucket.posts.push({
-        id: genId('post'),
+        id: postId,
         role: 'me',
         authorName: getMyName(),
         authorAvatar: getMyAvatar(),
@@ -454,15 +677,15 @@
       saveData().then(function () {
         closePostModal();
         renderList();
-        // 滚到底部（刚发的在最上面，所以其实滚到顶）
         var body = document.querySelector('#pageFeed .feed-body');
         if (body) body.scrollTop = 0;
+        // 触发 TA 三件套反应
+        reactToMyPost(postId);
       });
     });
   }
 
   // ==================== 监听联系人切换 ====================
-  // 同标签页切联系人不会触发 storage 事件；进入页面时会重新读
   window.addEventListener('storage', function (e) {
     if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY) {
       var pageFeed = document.getElementById('pageFeed');
@@ -476,8 +699,11 @@
   function init() {
     resolveCurrentContact();
     updateHeader();
+    applyUnreadDot();
     loadData().then(function () {
       renderList();
+      // 启动 TA 自动发动态的定时器
+      scheduleAutoPost();
     });
   }
 
@@ -495,7 +721,55 @@
       updateHeader();
       renderList();
     },
-    getData: function () { return feedData; }
+    getData: function () { return feedData; },
+    // 测试用：立刻让 TA 发一条动态
+    forceAutoPost: function () {
+      resolveCurrentContact();
+      var old = AUTO_POST_PROBABILITY;
+      // 直接调用核心逻辑，跳过概率（相当于必发）
+      var pool = getReplyPool();
+      if (pool.length === 0) {
+        console.warn('[feed] 没有回复字卡，无法自动发帖');
+        return;
+      }
+      var count = randomInt(1, 3);
+      if (count > pool.length) count = pool.length;
+      var picked = [];
+      var usedIdx = {};
+      for (var i = 0; i < count; i++) {
+        var idx;
+        var tries = 0;
+        do {
+          idx = Math.floor(Math.random() * pool.length);
+          tries++;
+        } while (usedIdx[idx] && tries < 20);
+        usedIdx[idx] = true;
+        picked.push(String(pool[idx]).trim());
+      }
+      var content = picked.join(' ');
+
+      if (!feedData[currentContactId]) feedData[currentContactId] = { posts: [] };
+      feedData[currentContactId].posts.push({
+        id: genId('post'),
+        role: 'ta',
+        authorName: getTaName(),
+        authorAvatar: getTaAvatar(),
+        content: content,
+        ts: Date.now(),
+        likes: [],
+        comments: [],
+        favorites: []
+      });
+      saveData().then(function () {
+        if (document.getElementById('pageFeed') && document.getElementById('pageFeed').classList.contains('active')) {
+          renderList();
+        }
+        showUnreadDot();
+        pushChatSystemMessage(getTaName() + ' 发布了一条朋友圈动态');
+      });
+      // 恢复
+      AUTO_POST_PROBABILITY = old;
+    }
   };
 
 })();
