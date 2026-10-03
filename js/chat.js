@@ -518,6 +518,78 @@
     triggerAutoReply();
   });
 
+    // ==================== 聊天礼物卡（供心意市集调用） ====================
+
+  // 在聊天记录里插入一张礼物卡
+  // record: { id, giftId, name, price, emoji, wish, side, claimed, tm }
+  window.chatAddGift = function (record) {
+    if (!record || !chatMessages) return;
+
+    var row = document.createElement('div');
+    row.className = 'message-row ' + (record.side === 'in' ? 'other' : 'self');
+    row.setAttribute('data-gift-id', record.id);
+
+    var card = document.createElement('div');
+    card.className = 'chat-gift-card';
+
+    var priceText = '¥' + ((record.price || 0) / 100);
+
+    card.innerHTML =
+      '<div class="chat-gift-emoji">' + (record.emoji || '🎁') + '</div>' +
+      '<div class="chat-gift-name">' + (record.name || '心意') + '</div>' +
+      '<div class="chat-gift-price">' + priceText + '</div>' +
+      (record.wish ? '<div class="chat-gift-wish">' + record.wish + '</div>' : '') +
+      '<button class="chat-gift-btn' + (record.claimed ? ' claimed' : '') + '">' +
+        (record.claimed ? '已领取' : '领取') +
+      '</button>';
+
+    var btn = card.querySelector('.chat-gift-btn');
+    if (!record.claimed) {
+      btn.addEventListener('click', function () {
+        btn.disabled = true;
+        btn.classList.add('claimed');
+        btn.textContent = '已领取';
+
+        // 通知 market 标记该记录为已领取
+        if (window.market && typeof window.market.claimGift === 'function') {
+          try { window.market.claimGift(record.id); } catch (e) {}
+        }
+      });
+    } else {
+      btn.disabled = true;
+    }
+
+    row.appendChild(card);
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  };
+
+  // 追加一条普通文本消息（供 market 让 TA 回复用）
+  window.chatAddTextMessage = function (type, text) {
+    if (!chatMessages) return;
+    var row = document.createElement('div');
+    row.className = 'message-row ' + (type || 'other');
+    var bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  };
+
+  // 让 market 能够同步"礼物已领取"到聊天礼物卡
+  window.chatMarkGiftClaimed = function (giftRecordId) {
+    if (!chatMessages) return;
+    var row = chatMessages.querySelector('[data-gift-id="' + giftRecordId + '"]');
+    if (!row) return;
+    var btn = row.querySelector('.chat-gift-btn');
+    if (btn && !btn.classList.contains('claimed')) {
+      btn.classList.add('claimed');
+      btn.textContent = '已领取';
+      btn.disabled = true;
+    }
+  };
+  
   updateSendBtnState();
   scrollToBottom();
 
