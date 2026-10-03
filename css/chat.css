@@ -1801,3 +1801,102 @@ body.theme-dark .pat-cancel {
   color: var(--theme-text-soft);
   border-color: var(--theme-card-border);
 }
+
+/* ============================================================
+   Ta 给自己买：方框卡片
+   ============================================================ */
+.chat-gift-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(250, 251, 253, 0.9);
+  border: 1px solid #eef1f4;
+  width: 200px;
+  max-width: 200px;
+  box-sizing: border-box;
+  box-shadow: 0 3px 10px rgba(150, 170, 190, 0.08);
+}
+body.theme-dark .chat-gift-box {
+  background: rgba(42, 48, 56, 0.7);
+  border-color: var(--theme-card-border);
+}
+
+/* 顶部：竖线 + 标题 */
+.chat-gift-box-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chat-gift-box-bar {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: #f8b4b4;
+  flex-shrink: 0;
+}
+.chat-gift-box-title {
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-dark .chat-gift-box-title { color: var(--theme-text-muted); }
+
+/* 中间：emoji + 名字 + 价格 */
+.chat-gift-box-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chat-gift-box-emoji {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(248, 240, 245, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+body.theme-dark .chat-gift-box-emoji {
+  background: rgba(56, 62, 72, 0.6);
+}
+.chat-gift-box-info {
+  flex: 1;
+  min-width: 0;
+}
+.chat-gift-box-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-dark .chat-gift-box-name { color: var(--theme-text); }
+.chat-gift-box-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e58b8b;
+  margin-top: 2px;
+}
+
+/* 底部：小字 */
+.chat-gift-box-foot {
+  font-size: 10px;
+  color: #a8b4c0;
+  letter-spacing: 0.3px;
+  padding-top: 4px;
+  border-top: 1px dashed #eef1f4;
+}
+body.theme-dark .chat-gift-box-foot {
+  color: var(--theme-text-faint);
+  border-top-color: var(--theme-card-border);
+}
