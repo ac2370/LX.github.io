@@ -18,9 +18,10 @@
   var STORE_KEY = 'envelopeData';
   var LEGACY_KEY = 'pending_envelope';
 
-  // ★ 测试用：回信时间 = now + 30 秒
-  //   正式版改成：10 * 60 * 60 * 1000 ~ 24 * 60 * 60 * 1000
-  var TEST_REPLY_DELAY_MS = 30 * 1000;
+  // 回信时间 
+var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
+// 或想要 10~24 小时随机：
+// var TEST_REPLY_DELAY_MS = randomInt(10 * 60 * 60 * 1000, 24 * 60 * 60 * 1000);
 
   // 回信正文：抽 8~12 句
   var REPLY_SENT_MIN = 8;
@@ -720,7 +721,7 @@
       }
 
       var now = Date.now();
-      var replyTime = now + TEST_REPLY_DELAY_MS;   // ★ 测试用 30 秒
+     var replyTime = now + randomInt(10 * 60 * 60 * 1000, 24 * 60 * 60 * 1000);
 
       envelopeData.outbox.push({
         id: genId('out'),
