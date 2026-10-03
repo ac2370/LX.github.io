@@ -1,6 +1,7 @@
 /**
  * 传讯聊天逻辑
  * - 自动回复：从 publicGroups / privateGroups 抽取文字
+ * - 公共字卡库：合并 window.publicCards 的勾选字卡
  * - 颜文字：从 emojiGroups 抽取
  * - 表情包：从 stickerGroups 抽取
  * - 保持原有等待时间、连发、三点气泡、随机引用机制
@@ -249,6 +250,20 @@
     return all;
   }
 
+  // ==================== 读公共字卡库（勾选的内置字卡） ====================
+  function getPublicReplyCards() {
+    if (!window.publicCards) return [];
+    if (typeof window.publicCards.isReady === 'function' && !window.publicCards.isReady()) return [];
+    if (typeof window.publicCards.getSelectedCards !== 'function') return [];
+    try {
+      var arr = window.publicCards.getSelectedCards('reply');
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      console.warn('[chat] 读取公共字卡库失败', e);
+      return [];
+    }
+  }
+
   // ==================== 抽取一条文字回复 ====================
   function pickOneTextReply() {
     var selections = getGroupSelections();
@@ -267,22 +282,37 @@
     var validPublic = filterValid(publicGroups);
     var validPrivate = filterValid(privateGroups);
 
+    // 用户自己勾选的分组都没内容时，优先从公共字卡库抽
     if (validPublic.length === 0 && validPrivate.length === 0) {
+      // 1) 公共字卡库（勾选的内置字卡）
+      var publicCards = getPublicReplyCards();
+      if (publicCards.length > 0) {
+        return { text: randomPick(publicCards), source: 'publicCards' };
+      }
+
+      // 2) 兜底：用户所有分组
       var allGroups = getAllGroupsOfCategory('reply');
       var fallback = pickFromGroups(allGroups, 'reply');
       if (fallback) return { text: fallback, source: 'fallback' };
+
       return null;
     }
 
+    // 以下保持原有逻辑
     if (validPublic.length === 0) {
       var privateText = pickFromGroups(validPrivate, 'reply');
       if (privateText) return { text: privateText, source: 'private' };
+      // 用户私聊组没内容，试试公共字卡库
+      var pub1 = getPublicReplyCards();
+      if (pub1.length > 0) return { text: randomPick(pub1), source: 'publicCards' };
       return null;
     }
 
     if (validPrivate.length === 0) {
       var publicText = pickFromGroups(validPublic, 'reply');
       if (publicText) return { text: publicText, source: 'public' };
+      var pub2 = getPublicReplyCards();
+      if (pub2.length > 0) return { text: randomPick(pub2), source: 'publicCards' };
       return null;
     }
 
@@ -291,11 +321,15 @@
       if (pt) return { text: pt, source: 'public' };
       var pt2 = pickFromGroups(validPrivate, 'reply');
       if (pt2) return { text: pt2, source: 'private' };
+      var pub3 = getPublicReplyCards();
+      if (pub3.length > 0) return { text: randomPick(pub3), source: 'publicCards' };
     } else {
       var pv = pickFromGroups(validPrivate, 'reply');
       if (pv) return { text: pv, source: 'private' };
       var pv2 = pickFromGroups(validPublic, 'reply');
       if (pv2) return { text: pv2, source: 'public' };
+      var pub4 = getPublicReplyCards();
+      if (pub4.length > 0) return { text: randomPick(pub4), source: 'publicCards' };
     }
 
     return null;
@@ -411,10 +445,11 @@
       return;
     }
 
-    // 关键改动：统一从「回复」分类的所有字卡里检查有没有内容
+    // 检查是否有可用字卡（用户字卡 + 公共字卡）
     var allCards = getAllReplyCards();
+    var publicCards = getPublicReplyCards();
 
-    if (!allCards || allCards.length === 0) {
+    if ((!allCards || allCards.length === 0) && (!publicCards || publicCards.length === 0)) {
       setTimeout(function () {
         const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~');
         chatMessages.appendChild(row);
@@ -457,10 +492,11 @@
         for (var i = 0; i < replyCount; i++) {
           var picked = pickOneTextReply();
 
-          // 兜底：如果分组选择读不到，直接从所有回复卡里随机
+          // 兜底：如果分组逻辑读不到，直接从用户字卡 + 公共字卡里随机
           if (!picked) {
-            var fallbackText = randomPick(allCards);
-            if (fallbackText) picked = { text: fallbackText, source: 'fallback' };
+            var fallbackPool = allCards.concat(publicCards);
+            var fb = randomPick(fallbackPool);
+            if (fb) picked = { text: fb, source: 'fallback' };
           }
 
           if (!picked) break;
@@ -490,9 +526,10 @@
 
         // 3. 兜底
         if (replies.length === 0) {
-          var fallbackText2 = randomPick(allCards);
-          if (fallbackText2) {
-            replies.push({ type: 'text', content: fallbackText2 });
+          var fallbackPool2 = allCards.concat(publicCards);
+          var fb2 = randomPick(fallbackPool2);
+          if (fb2) {
+            replies.push({ type: 'text', content: fb2 });
           }
         }
 
