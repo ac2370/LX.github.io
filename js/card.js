@@ -647,27 +647,29 @@
   }
 
   // ==================== 确认添加 ====================
-  if (simpleModalConfirm) {
-    simpleModalConfirm.addEventListener('click', function () {
-      const text = simpleModalInput.value.trim();
-      if (!text) { alert('请输入内容'); return; }
+ if (simpleModalConfirm) {
+  simpleModalConfirm.addEventListener('click', function () {
+    const raw = simpleModalInput.value;
+    if (!raw || !raw.trim()) { alert('请输入内容'); return; }
 
-      if (simpleModalCategory === 'emoji') {
-        const lines = text.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
-        addTextToCategory('emoji', lines);
-      } else {
-        if (simpleModalMode === 'add') {
-          addTextToCategory(simpleModalCategory, [text]);
-        } else {
-          const lines = text.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
-          addTextToCategory(simpleModalCategory, lines);
-        }
-      }
-      closeSimpleModal();
-      updateAllUI();
-    });
-  }
+    // 无论 add 还是 import，都按换行切分
+    const lines = raw.split('\n')
+      .map(function (l) { return l.trim(); })
+      .filter(function (l) { return l; });
 
+    if (lines.length === 0) { alert('没有有效内容'); return; }
+
+    if (simpleModalCategory === 'emoji') {
+      addTextToCategory('emoji', lines);
+    } else {
+      addTextToCategory(simpleModalCategory, lines);
+    }
+
+    closeSimpleModal();
+    updateAllUI();
+  });
+}
+  
   // ==================== 渲染通用卡片 ====================
   function renderTextList(container, placeholderEl, arr, searchInput, category, groupName) {
     if (!container) return;
