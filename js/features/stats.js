@@ -392,25 +392,36 @@
     canvas.style.display = 'block';
     emptyEl.classList.remove('active');
 
-    // 用 Canvas 绘制
-    drawWordCloud(canvas, top);
+      // 用 Canvas 绘制
+    // 延迟一帧，等布局完成后再测量宽度
+    requestAnimationFrame(function () {
+      drawWordCloud(canvas, top);
+    });
   }
+  
+function drawWordCloud(canvas, words) {
+  var parent = canvas.parentElement;
+  // 用 getBoundingClientRect 更可靠
+  var rect = parent.getBoundingClientRect();
+  var W = rect.width;
+  var H = rect.height;
 
-  function drawWordCloud(canvas, words) {
-    var parent = canvas.parentElement;
-    var W = parent.clientWidth;
-    var H = parent.clientHeight;
-    var dpr = window.devicePixelRatio || 1;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
+  // 兜底：如果还是 0，用窗口宽度估算
+  if (!W || W < 50) W = Math.min(window.innerWidth - 36, 400);
+  if (!H || H < 50) H = W;
 
-    var ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, W, H);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+
+  var ctx = canvas.getContext('2d');
+  ctx.setTransform(1, 0, 0, 1, 0, 0);   // 先重置
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
     var maxFreq = words[0].freq;
     var minFreq = words[words.length - 1].freq;
