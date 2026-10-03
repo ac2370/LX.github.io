@@ -1,10 +1,12 @@
 /* ============================================================
-   role-panel.js —— 角色面板（多角色管理）
+   role-panel.js —— 角色面板（多角色管理）· 新版
    功能：
      - 单击 #chatContactArea（头像+昵称区域）→ 打开角色面板
-     - 面板分两块：
+     - 面板结构（自上而下）：
          · 「当前角色」编辑区（常驻）：改昵称、上传头像、粘贴 URL
-         · 「其它角色」列表：点击切换、删除、新建
+         · 「所有角色」列表：点击切换、删除
+         · 「+ 添加好友」按钮（虚线）→ 展开新建角色区
+         · 「关闭」按钮（满宽）
      - 数据存 localStorage：
          · my_contacts        [{id, name, avatar}]
          · my_current_contact 当前 id
@@ -26,23 +28,15 @@
   };
 
   // ==================== DOM ====================
-  var chatContactArea  = document.getElementById('chatContactArea');
-  var chatAvatar       = document.getElementById('chatAvatar');
-  var chatName         = document.getElementById('chatName');
+  var chatContactArea   = document.getElementById('chatContactArea');
+  var chatAvatar        = document.getElementById('chatAvatar');
+  var chatName          = document.getElementById('chatName');
 
-  var rolePanelModal   = document.getElementById('rolePanelModal');
-  var rolePanelClose   = document.getElementById('rolePanelCloseBtn');
+  var rolePanelModal    = document.getElementById('rolePanelModal');
   var roleListContainer = document.getElementById('roleListContainer');
 
   // 旧的"编辑资料"弹窗（保留 DOM 但不再触发）
-  var editProfileModal = document.getElementById('editProfileModal');
-
-  // 新角色区（原 HTML 里已有的）
-  var roleNewAvatarWrap    = document.getElementById('roleNewAvatarWrap');
-  var roleNewAvatarPreview = document.getElementById('roleNewAvatarPreview');
-  var roleNewAvatarFile    = document.getElementById('roleNewAvatarFileInput');
-  var roleNewNameInput     = document.getElementById('roleNewNameInput');
-  var roleNewSaveBtn       = document.getElementById('roleNewSaveBtn');
+  var editProfileModal  = document.getElementById('editProfileModal');
 
   if (!chatContactArea || !rolePanelModal || !roleListContainer) return;
 
@@ -113,15 +107,12 @@
 
   // ==================== 切换角色后的广播 ====================
   function broadcastContactChanged() {
-    // 通知消息头像模块刷新
     if (typeof window.refreshChatAvatars === 'function') {
       try { window.refreshChatAvatars(); } catch (e) {}
     }
-    // 通知心晴手账刷新（如果当前在手账页）
     if (typeof window.refreshMoodPage === 'function') {
       try { window.refreshMoodPage(); } catch (e) {}
     }
-    // 广播自定义事件（供未来扩展）
     try {
       window.dispatchEvent(new CustomEvent('contactChanged', {
         detail: { contactId: currentContactId }
@@ -129,7 +120,7 @@
     } catch (e) {}
   }
 
-  // ==================== 图片选择（新建/编辑共用） ====================
+  // ==================== 图片选择 ====================
   function pickImage(callback) {
     var input = document.createElement('input');
     input.type = 'file';
@@ -146,17 +137,15 @@
 
   // ==================== 渲染面板 ====================
   function renderRolePanel() {
-    // 顶栏同步
     applyCurrentContact();
 
-    // -------- 当前角色编辑区 --------
     var cur = getCurrentContact();
     var isEditingCur = editingContactId === cur.id;
     var editAvatar = isEditingCur && editingAvatarData ? editingAvatarData : cur.avatar;
 
     var html = '';
 
-    // 当前角色块（如果不在编辑态，显示"点击编辑"提示）
+    // ---------- 当前角色编辑区 ----------
     html += '<div class="rp-current-block">';
     html += '<div class="rp-current-title">当前角色</div>';
     html += '<div class="rp-edit-row">';
@@ -173,7 +162,7 @@
     html += '<button class="rp-edit-save" data-action="save-current">保存修改</button>';
     html += '</div>';
 
-    // -------- 其它角色列表 --------
+    // ---------- 所有角色列表 ----------
     html += '<div class="rp-list-title">所有角色</div>';
     html += '<div class="rp-list">';
 
@@ -198,26 +187,36 @@
 
     html += '</div>';
 
-    // -------- 新建角色区（折叠式） --------
-    html += '<div class="rp-new-block">';
+    // ---------- 底部：添加好友 + 新建区 + 关闭 ----------
+    html += '<div class="rp-bottom-actions">';
+
+    // 添加好友按钮
     html += '<button class="rp-new-toggle" data-action="toggle-new">';
-    html += '<i class="fa-solid fa-plus"></i> 新建角色';
+    html += '<i class="fa-solid fa-plus"></i> 添加好友';
     html += '</button>';
+
+    // 新建区（默认收起）
     html += '<div class="rp-new-body" style="display:none;">';
     html += '<div class="rp-edit-row">';
     html += '<div class="rp-edit-avatar-wrap" data-action="new-avatar">';
-    var newAvatarSrc = pendingNewAvatarData || roleNewAvatarPreview && roleNewAvatarPreview.src || DEFAULT_CONTACT.avatar;
+    var newAvatarSrc = pendingNewAvatarData || DEFAULT_CONTACT.avatar;
     html += '<img class="rp-edit-avatar" src="' + escapeHtml(newAvatarSrc) + '" alt="">';
     html += '<div class="rp-edit-avatar-badge"><i class="fa-solid fa-camera"></i></div>';
     html += '</div>';
-    html += '<input class="rp-edit-name" type="text" placeholder="输入角色姓名..." data-role="new-name">';
+    html += '<input class="rp-edit-name" type="text" placeholder="输入好友姓名..." data-role="new-name">';
     html += '</div>';
     html += '<div class="rp-edit-url-row">';
     html += '<input class="rp-edit-url" type="text" placeholder="或粘贴图片 URL" data-role="new-url">';
     html += '<button class="rp-edit-apply-url" data-action="new-apply-url">应用</button>';
     html += '</div>';
-    html += '<button class="rp-edit-save" data-action="create-new">创建角色</button>';
+    html += '<button class="rp-edit-save" data-action="create-new">创建好友</button>';
     html += '</div>';
+
+    // 关闭按钮（满宽）
+    html += '<button class="rp-close-full" data-action="close">';
+    html += '<i class="fa-solid fa-xmark"></i> 关闭';
+    html += '</button>';
+
     html += '</div>';
 
     roleListContainer.innerHTML = html;
@@ -227,7 +226,7 @@
 
   // ==================== 面板内事件绑定 ====================
   function bindPanelEvents() {
-    // 头像（当前角色）
+    // ---- 当前角色：头像上传 ----
     var curAvatarWrap = roleListContainer.querySelector('[data-action="edit-avatar"]');
     if (curAvatarWrap) {
       curAvatarWrap.addEventListener('click', function () {
@@ -240,7 +239,7 @@
       });
     }
 
-    // URL 应用（当前角色）
+    // ---- 当前角色：URL 应用 ----
     var curApplyBtn = roleListContainer.querySelector('[data-action="apply-url"]');
     if (curApplyBtn) {
       curApplyBtn.addEventListener('click', function () {
@@ -254,7 +253,7 @@
       });
     }
 
-    // 保存当前角色
+    // ---- 当前角色：保存 ----
     var saveCurBtn = roleListContainer.querySelector('[data-action="save-current"]');
     if (saveCurBtn) {
       saveCurBtn.addEventListener('click', function () {
@@ -270,18 +269,16 @@
         }
         saveContacts();
 
-        // 同步 UI
         applyCurrentContact();
         broadcastContactChanged();
 
-        // 重置编辑态
         editingContactId = null;
         editingAvatarData = null;
         renderRolePanel();
       });
     }
 
-    // 列表项点击
+    // ---- 列表项：点击切换 ----
     roleListContainer.querySelectorAll('.rp-item').forEach(function (item) {
       item.addEventListener('click', function (e) {
         if (e.target.closest('[data-action]')) return;
@@ -291,7 +288,7 @@
       });
     });
 
-    // 切换按钮
+    // ---- 列表项：切换按钮 ----
     roleListContainer.querySelectorAll('[data-action="switch"]').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -303,7 +300,7 @@
       });
     });
 
-    // 删除按钮
+    // ---- 列表项：删除 ----
     roleListContainer.querySelectorAll('[data-action="delete"]').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -317,7 +314,7 @@
       });
     });
 
-    // 展开新建区
+    // ---- 添加好友：展开/收起 ----
     var toggleNewBtn = roleListContainer.querySelector('[data-action="toggle-new"]');
     if (toggleNewBtn) {
       toggleNewBtn.addEventListener('click', function () {
@@ -325,10 +322,14 @@
         if (!body) return;
         var isOpen = body.style.display !== 'none';
         body.style.display = isOpen ? 'none' : 'block';
+        // 收起时清空暂存
+        if (isOpen) {
+          pendingNewAvatarData = null;
+        }
       });
     }
 
-    // 新建头像
+    // ---- 新角色：头像上传 ----
     var newAvatarWrap = roleListContainer.querySelector('[data-action="new-avatar"]');
     if (newAvatarWrap) {
       newAvatarWrap.addEventListener('click', function () {
@@ -340,7 +341,7 @@
       });
     }
 
-    // 新建 URL
+    // ---- 新角色：URL 应用 ----
     var newApplyBtn = roleListContainer.querySelector('[data-action="new-apply-url"]');
     if (newApplyBtn) {
       newApplyBtn.addEventListener('click', function () {
@@ -353,13 +354,13 @@
       });
     }
 
-    // 创建新角色
+    // ---- 新角色：创建 ----
     var createBtn = roleListContainer.querySelector('[data-action="create-new"]');
     if (createBtn) {
       createBtn.addEventListener('click', function () {
         var nameInput = roleListContainer.querySelector('[data-role="new-name"]');
         var newName = nameInput ? nameInput.value.trim() : '';
-        if (!newName) { alert('请输入角色姓名'); return; }
+        if (!newName) { alert('请输入好友姓名'); return; }
 
         var newContact = {
           id: genId(),
@@ -369,7 +370,6 @@
         contacts.push(newContact);
         saveContacts();
 
-        // 自动切到新角色
         currentContactId = newContact.id;
         saveCurrentId();
 
@@ -377,9 +377,14 @@
         applyCurrentContact();
         broadcastContactChanged();
 
-        // 重新渲染（新角色自动成为"当前"，新建区收起）
         renderRolePanel();
       });
+    }
+
+    // ---- 关闭按钮 ----
+    var closeBtn = roleListContainer.querySelector('[data-action="close"]');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeRolePanel);
     }
   }
 
@@ -420,7 +425,6 @@
 
   function closeRolePanel() {
     rolePanelModal.classList.remove('active');
-    // 清理未保存的编辑态
     editingContactId = null;
     editingAvatarData = null;
     pendingNewAvatarData = null;
@@ -433,15 +437,12 @@
     openRolePanel();
   });
 
-  // 关闭
-  if (rolePanelClose) {
-    rolePanelClose.addEventListener('click', closeRolePanel);
-  }
+  // 点击遮罩关闭
   rolePanelModal.addEventListener('click', function (e) {
     if (e.target === rolePanelModal) closeRolePanel();
   });
 
-  // 兜底：如果旧的"编辑资料"弹窗被打开，也允许关闭（不影响本模块）
+  // 兜底：旧"编辑资料"弹窗（若打开）允许关闭
   if (editProfileModal) {
     var editCancel = document.getElementById('editCancelBtn');
     if (editCancel) {
@@ -463,7 +464,7 @@
     init();
   }
 
-  // 暴露给外部（供未来扩展）
+  // 暴露给外部
   window.rolePanel = {
     open: openRolePanel,
     close: closeRolePanel,
