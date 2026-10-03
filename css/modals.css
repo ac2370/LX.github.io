@@ -924,3 +924,46 @@ body.theme-dark .rp-new-toggle {
 body.theme-dark .rp-edit-apply-url {
   background: #4a5a6a;
 }
+
+/* ============================================================
+   角色面板 - 底部满宽"关闭"按钮（新增）
+   ============================================================ */
+.rp-close-full {
+  width: 100%;
+  padding: 12px 0;
+  margin-top: 10px;
+  border-radius: 14px;
+  background: #f5f6f8;
+  border: 1px solid #eef1f4;
+  color: #55606b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.rp-close-full:active {
+  background: #e8ecf0;
+  transform: scale(0.98);
+}
+.rp-close-full i {
+  font-size: 12px;
+  color: #8899a6;
+}
+
+body.theme-dark .rp-close-full {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .rp-close-full:active {
+  background: rgba(52, 58, 66, 0.9);
+}
+
+/* 角色面板：底部"添加好友"+ 关闭 的容器（让间距更好看） */
+.rp-bottom-actions {
+  margin-top: 14px;
+}
