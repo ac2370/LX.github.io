@@ -982,14 +982,8 @@
       });
     }
 
-    var footer = document.createElement('div');
-    footer.className = 'builtin-viewer-footer';
-    footer.innerHTML =
-      '<button class="builtin-viewer-btn builtin-viewer-btn-close" type="button">关闭</button>';
-
     panel.appendChild(header);
     panel.appendChild(body);
-    panel.appendChild(footer);
     modal.appendChild(panel);
     document.body.appendChild(modal);
 
@@ -999,11 +993,9 @@
     }
 
     header.querySelector('.builtin-viewer-close').addEventListener('click', close);
-    footer.querySelector('.builtin-viewer-btn-close').addEventListener('click', close);
     modal.addEventListener('click', function (e) {
       if (e.target === modal) close();
     });
-  }
 
   // ==================== 回复面板事件 ====================
   if (btnAddCard) btnAddCard.addEventListener('click', function () {
