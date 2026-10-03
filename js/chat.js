@@ -604,6 +604,166 @@
   // 兼容外部可能调用 window.getCards
   window.getCards = getAllReplyCards;
 
+    // ==================== 消息操作菜单 ====================
+  var currentMenu = null;       // 当前弹出的菜单 DOM
+  var currentMenuRow = null;    // 当前操作的消息行
+
+  // 引用状态：null 或 { text: '被引用的文字' }
+  var currentQuote = null;
+
+  function closeMsgMenu() {
+    if (currentMenu && currentMenu.parentNode) {
+      currentMenu.parentNode.removeChild(currentMenu);
+    }
+    currentMenu = null;
+    currentMenuRow = null;
+  }
+
+  function getMessageText(row) {
+    var bubble = row.querySelector('.message-bubble');
+    if (!bubble) return '';
+    // 排除图片
+    var img = bubble.querySelector('img');
+    if (img && !bubble.textContent.trim()) return '[图片]';
+    return bubble.textContent.trim();
+  }
+
+  function openMsgMenu(row, x, y) {
+    closeMsgMenu();
+    currentMenuRow = row;
+
+    var menu = document.createElement('div');
+    menu.className = 'msg-action-menu';
+
+    var isFav = row.dataset.favorited === 'true';
+
+    menu.innerHTML =
+      '<button class="msg-action-btn" data-act="quote" title="引用"><i class="fa-solid fa-reply"></i></button>' +
+      '<button class="msg-action-btn' + (isFav ? ' active' : '') + '" data-act="fav" title="收藏">' +
+        '<i class="fa-' + (isFav ? 'solid' : 'regular') + ' fa-star"></i>' +
+      '</button>' +
+      '<button class="msg-action-btn" data-act="withdraw" title="撤回"><i class="fa-solid fa-trash-can"></i></button>';
+
+    document.body.appendChild(menu);
+    currentMenu = menu;
+
+    // 定位：浮在消息旁边
+    var rect = menu.getBoundingClientRect();
+    var mw = rect.width;
+    var mh = rect.height;
+
+    var left = x - mw / 2;
+    var top = y - mh - 8;
+
+    // 边界处理
+    if (left < 8) left = 8;
+    if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+    if (top < 8) {
+      // 上方不够，放下面
+      top = y + 8;
+    }
+    if (top + mh > window.innerHeight - 8) {
+      top = window.innerHeight - mh - 8;
+    }
+
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+
+    // 按钮事件
+    menu.querySelectorAll('.msg-action-btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var act = btn.getAttribute('data-act');
+        if (act === 'quote') doQuote(row);
+        else if (act === 'fav') doFav(row, btn);
+        else if (act === 'withdraw') doWithdraw(row);
+        // 引用和撤回后关闭菜单；收藏不关闭，让用户看到变化
+        if (act !== 'fav') closeMsgMenu();
+      });
+    });
+  }
+
+  // ---------- 引用 ----------
+  function doQuote(row) {
+    var text = getMessageText(row);
+    if (!text) return;
+    currentQuote = { text: text };
+
+    var bar = document.getElementById('quotePreviewBar');
+    var textEl = document.getElementById('quotePreviewText');
+    if (bar && textEl) {
+      textEl.textContent = text;
+      bar.style.display = 'block';
+    }
+    // 聚焦输入框
+    chatInput.focus();
+  }
+
+  // ---------- 收藏 ----------
+  function doFav(row, btn) {
+    var isFav = row.dataset.favorited === 'true';
+    var next = !isFav;
+    row.dataset.favorited = next ? 'true' : 'false';
+
+    // 更新按钮图标
+    var icon = btn.querySelector('i');
+    if (icon) {
+      icon.className = 'fa-' + (next ? 'solid' : 'regular') + ' fa-star';
+    }
+    btn.classList.toggle('active', next);
+  }
+
+  // ---------- 撤回 ----------
+  function doWithdraw(row) {
+    if (!row.parentNode) return;
+    // 直接从 DOM 移除
+    row.parentNode.removeChild(row);
+  }
+
+  // ---------- 引用预览条关闭 ----------
+  var quoteClose = document.getElementById('quotePreviewClose');
+  if (quoteClose) {
+    quoteClose.addEventListener('click', function () {
+      currentQuote = null;
+      var bar = document.getElementById('quotePreviewBar');
+      if (bar) bar.style.display = 'none';
+    });
+  }
+
+  // ---------- 消息点击 → 弹菜单 ----------
+  chatMessages.addEventListener('click', function (e) {
+    // 点在菜单上，不处理
+    if (e.target.closest('.msg-action-menu')) return;
+    // 点在引用预览条或输入栏，不处理
+    if (e.target.closest('.quote-preview-bar')) return;
+    if (e.target.closest('.chat-input-bar')) return;
+    // 点在 typing 气泡上，不处理
+    if (e.target.closest('#typingRow')) return;
+
+    var row = e.target.closest('.message-row');
+    if (!row) {
+      // 点空白处，关闭菜单
+      closeMsgMenu();
+      return;
+    }
+
+    // 点消息，弹菜单
+    e.stopPropagation();
+    openMsgMenu(row, e.clientX, e.clientY);
+  }, true);
+
+  // ---------- 点其他地方关闭菜单 ----------
+  document.addEventListener('click', function (e) {
+    if (!currentMenu) return;
+    if (e.target.closest('.msg-action-menu')) return;
+    if (currentMenuRow && currentMenuRow.contains(e.target)) return;
+    closeMsgMenu();
+  });
+
+  // ---------- 滚动 / 改变窗口时关闭菜单 ----------
+  chatMessages.addEventListener('scroll', closeMsgMenu, true);
+  window.addEventListener('resize', closeMsgMenu);
+  
   updateSendBtnState();
   scrollToBottom();
 
