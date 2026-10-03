@@ -1931,3 +1931,23 @@ body.theme-dark .chat-gift-box-foot {
   color: var(--theme-text-faint);
   border-top-color: var(--theme-card-border);
 }
+
+/* ============================================================
+   礼物卡：我送出的"已送出"状态（不可点击）
+   ============================================================ */
+.chat-gift-sent {
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 12px;
+  background: #f0f3f6;
+  color: #8899a6;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5px;
+  box-sizing: border-box;
+}
+body.theme-dark .chat-gift-sent {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-muted);
+}
