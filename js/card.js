@@ -1253,45 +1253,61 @@
 })();
 
 /* ============================================================
-   card.js 追加块 —— 分类切换 / 整理模式 / 分组弹窗
+   card.js 追加块 —— 分类切换 / 整理模式
+   （统一走主块的 cardDatabase 接口，不再单独读写 localStorage）
    ============================================================ */
 (function () {
   'use strict';
-
-  var KEY_MAP = {
-    reply: 'my_word_cards',
-    pat: 'my_kaomoji_cards',
-    place: 'my_place_cards',
-    mood: 'my_mood_cards',
-    emoji: 'my_emoji_cards',
-    status: 'my_status_cards'
-  };
 
   var currentCat = 'reply';
   var organizeMode = false;
   var selectedSet = new Set();
 
+  // ==================== 统一从主块接口读数据 ====================
   function getList(cat) {
-    if (window.getReplyCards && cat === 'reply') return window.getReplyCards();
-    if (window.getPatCards && cat === 'pat') return window.getPatCards();
-    try {
-      var raw = localStorage.getItem(KEY_MAP[cat]);
-      if (!raw) return [];
-      var data = JSON.parse(raw);
-      if (!Array.isArray(data)) return [];
-      return data.map(function (item) {
-        if (typeof item === 'string') return item;
-        if (item && typeof item === 'object' && item.text) return item.text;
-        return null;
-      }).filter(function (t) { return t; });
-    } catch (e) { return []; }
+    if (typeof window.getGroups !== 'function' || typeof window.getCardsInGroup !== 'function') {
+      return [];
+    }
+    var realCat = cat === 'kaomoji' ? 'pat' : cat;
+    var groups = window.getGroups(realCat) || [];
+    var all = [];
+    groups.forEach(function (g) {
+      var arr = window.getCardsInGroup(g, realCat) || [];
+      all = all.concat(arr);
+    });
+    return all;
   }
 
-  function saveList(cat, arr) {
-    try { localStorage.setItem(KEY_MAP[cat], JSON.stringify(arr)); } catch (e) {}
-    if (window.refreshCardUI) window.refreshCardUI();
+  // ==================== 删除指定文本（统一走主块） ====================
+  function removeTexts(cat, textsToRemove) {
+    var realCat = cat === 'kaomoji' ? 'pat' : cat;
+    var set = new Set(textsToRemove);
+    if (typeof window.getGroups !== 'function') return;
+
+    var groups = window.getGroups(realCat) || [];
+    groups.forEach(function (g) {
+      var arr = window.getCardsInGroup(g, realCat) || [];
+      // 倒序删除，避免 index 错位
+      for (var i = arr.length - 1; i >= 0; i--) {
+        if (set.has(arr[i])) {
+          window.removeCardFromGroup(g, arr[i], realCat);
+        }
+      }
+    });
   }
 
+  // ==================== 清空整个分组 ====================
+  function clearCurrentGroup(cat) {
+    var realCat = cat === 'kaomoji' ? 'pat' : cat;
+    var currentGroup = window.getCurrentGroup(realCat) || '默认分组';
+    var arr = window.getCardsInGroup(currentGroup, realCat) || [];
+    // 倒序删
+    for (var i = arr.length - 1; i >= 0; i--) {
+      window.removeCardFromGroup(currentGroup, arr[i], realCat);
+    }
+  }
+
+  // ==================== 分类按钮点击 ====================
   document.querySelectorAll('.cat-grid-item').forEach(function (item) {
     item.addEventListener('click', function () {
       var cat = item.getAttribute('data-cat');
@@ -1303,6 +1319,7 @@
     });
   });
 
+  // ==================== 搜索框占位符 ====================
   function updateSearchPlaceholder() {
     var map = {
       reply: '找一句话、一种心情...',
@@ -1319,6 +1336,7 @@
     });
   }
 
+  // ==================== 整理模式 ====================
   function toggleOrganize(cat) {
     if (organizeMode && currentCat === cat) {
       organizeMode = false;
@@ -1328,6 +1346,7 @@
     }
     selectedSet.clear();
     updateOrganizeUI();
+    rebindCardEvents();
   }
 
   function updateOrganizeUI() {
@@ -1355,7 +1374,6 @@
       var el = document.getElementById(listMap[currentCat]);
       if (el) el.querySelectorAll('.word-card-item').forEach(function (c) { c.classList.add('organizing'); });
     }
-
     updateOrganizeCount();
   }
 
@@ -1364,6 +1382,7 @@
     if (countEl) countEl.textContent = '已选 ' + selectedSet.size + ' 条';
   }
 
+  // ==================== 整理栏注入 ====================
   function injectOrganizeBars() {
     var cats = ['reply', 'pat', 'place', 'mood', 'emoji', 'status'];
     cats.forEach(function (cat) {
@@ -1380,9 +1399,7 @@
         '<button class="organize-btn" data-act="exit">退出整理</button>';
 
       var panel = document.getElementById('panel-' + cat);
-      if (panel) {
-        panel.insertBefore(bar, panel.firstChild);
-      }
+      if (panel) panel.insertBefore(bar, panel.firstChild);
     });
 
     document.querySelectorAll('.organize-bar').forEach(function (bar) {
@@ -1402,25 +1419,26 @@
           }
           updateOrganizeUI();
           applySelectedState();
+
         } else if (act === 'deleteSelected') {
           if (selectedSet.size === 0) { alert('请先选择要删除的内容'); return; }
           if (!confirm('确定删除选中的 ' + selectedSet.size + ' 条内容吗？')) return;
-          var list2 = getList(cat);
-          var filtered = list2.filter(function (item) { return !selectedSet.has(item); });
-          saveList(cat, filtered);
+          removeTexts(cat, Array.from(selectedSet));
           selectedSet.clear();
           organizeMode = false;
           updateOrganizeUI();
           if (window.refreshCardUI) window.refreshCardUI();
-          setTimeout(function () { rebindCardEvents(); }, 100);
+          setTimeout(rebindCardEvents, 100);
+
         } else if (act === 'deleteGroup') {
           if (!confirm('确定删除当前分组的所有内容吗？')) return;
-          saveList(cat, []);
+          clearCurrentGroup(cat);
           selectedSet.clear();
           organizeMode = false;
           updateOrganizeUI();
           if (window.refreshCardUI) window.refreshCardUI();
-          setTimeout(function () { rebindCardEvents(); }, 100);
+          setTimeout(rebindCardEvents, 100);
+
         } else if (act === 'exit') {
           organizeMode = false;
           selectedSet.clear();
@@ -1445,8 +1463,7 @@
       listEl.querySelectorAll('.word-card-item').forEach(function (card) {
         var textEl = card.querySelector('.word-card-text');
         if (!textEl) return;
-        var text = textEl.textContent;
-        card.classList.toggle('selected', selectedSet.has(text));
+        card.classList.toggle('selected', selectedSet.has(textEl.textContent));
       });
     }
 
@@ -1462,6 +1479,7 @@
     }
   }
 
+  // ==================== 给卡片注入勾选圆圈 ====================
   function rebindCardEvents() {
     document.querySelectorAll('.word-card-item').forEach(function (card) {
       if (card.querySelector('.select-circle')) return;
@@ -1510,68 +1528,8 @@
     });
   }
 
-  function createGroupModal() {
-    if (document.getElementById('groupModal')) return;
-    var modal = document.createElement('div');
-    modal.className = 'group-modal';
-    modal.id = 'groupModal';
-    modal.innerHTML =
-      '<div class="group-modal-panel">' +
-        '<div class="group-modal-title" id="groupModalTitle">新建分组</div>' +
-        '<input type="text" class="group-modal-input" id="groupModalInput" placeholder="输入分组名称...">' +
-        '<div class="group-modal-actions">' +
-          '<button class="group-modal-btn group-modal-cancel" id="groupModalCancel">取消</button>' +
-          '<button class="group-modal-btn group-modal-confirm" id="groupModalConfirm">保存</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(modal);
-
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) closeGroupModal();
-    });
-    document.getElementById('groupModalCancel').addEventListener('click', closeGroupModal);
-    document.getElementById('groupModalConfirm').addEventListener('click', function () {
-      var name = document.getElementById('groupModalInput').value.trim();
-      if (!name) { alert('请输入分组名称'); return; }
-      alert('分组「' + name + '」已保存（演示功能）');
-      closeGroupModal();
-    });
-  }
-
-  function openGroupModal(title) {
-    createGroupModal();
-    document.getElementById('groupModalTitle').textContent = title;
-    document.getElementById('groupModalInput').value = '';
-    document.getElementById('groupModal').classList.add('active');
-    setTimeout(function () {
-      document.getElementById('groupModalInput').focus();
-    }, 100);
-  }
-
-  function closeGroupModal() {
-    var modal = document.getElementById('groupModal');
-    if (modal) modal.classList.remove('active');
-  }
-
-  function bindButtons() {
-    var btnNewGroup = document.getElementById('btnNewGroup');
-    if (btnNewGroup && !btnNewGroup.dataset.bound) {
-      btnNewGroup.dataset.bound = '1';
-      btnNewGroup.addEventListener('click', function (e) {
-        e.stopImmediatePropagation();
-        openGroupModal('新建分组');
-      }, true);
-    }
-
-    var btnRenameGroup = document.getElementById('btnRenameGroup');
-    if (btnRenameGroup && !btnRenameGroup.dataset.bound) {
-      btnRenameGroup.dataset.bound = '1';
-      btnRenameGroup.addEventListener('click', function (e) {
-        e.stopImmediatePropagation();
-        openGroupModal('重命名分组');
-      }, true);
-    }
-
+  // ==================== 绑定「整理」按钮 ====================
+  function bindOrganizeButtons() {
     var organizeMap = {
       btnOrganizeGroup: 'reply',
       patOrganizeBtn: 'pat',
@@ -1587,12 +1545,12 @@
         btn.addEventListener('click', function (e) {
           e.stopImmediatePropagation();
           toggleOrganize(organizeMap[id]);
-          rebindCardEvents();
         }, true);
       }
     });
   }
 
+  // ==================== MutationObserver：只重绑勾选事件，不再重跑迁移 ====================
   var observer = new MutationObserver(function () {
     rebindCardEvents();
     if (organizeMode) {
@@ -1602,9 +1560,10 @@
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // ==================== 初始化 ====================
   function init() {
     injectOrganizeBars();
-    bindButtons();
+    bindOrganizeButtons();
     updateSearchPlaceholder();
     rebindCardEvents();
   }
