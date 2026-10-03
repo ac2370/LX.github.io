@@ -1435,13 +1435,21 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 #pageChat .message-row.self { justify-content: flex-end; }
 #pageChat .message-row.other { justify-content: flex-start; }
 #pageChat .message-bubble {
-  max-width: 72%;
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+
   padding: 10px 14px;
   border-radius: 18px;
   font-size: 14px;
   line-height: 1.45;
+
+  writing-mode: horizontal-tb;
   word-wrap: break-word;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: break-word;
   white-space: pre-wrap;
 }
 #pageChat .message-row.self .message-bubble {
@@ -1761,6 +1769,8 @@ body.theme-dark .pat-cancel {
   display: flex;
   flex-direction: column;
   max-width: 72%;
+  /* 关键：让内部元素按内容宽度对齐，不被拉伸 */
+  align-items: flex-start;
 }
 
 /* 我发的：整体靠右 */
