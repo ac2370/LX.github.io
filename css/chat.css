@@ -1599,3 +1599,205 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
   box-shadow: none;
   cursor: default;
 }
+
+/* ============================================================
+   拍一拍弹窗（chat-extras.js 使用）
+   ============================================================ */
+.pat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 520;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.pat-modal.active {
+  display: flex;
+  animation: patFadeIn 0.18s ease;
+}
+@keyframes patFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.pat-panel {
+  width: 100%;
+  max-width: 430px;
+  max-height: 72vh;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 28px 28px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: patSlideUp 0.25s ease;
+}
+@keyframes patSlideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+body.theme-dark .pat-panel {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border);
+}
+
+/* 头部 */
+.pat-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 20px;
+  border-bottom: 1px solid #f0f3f6;
+}
+body.theme-dark .pat-header {
+  border-bottom-color: var(--theme-card-border);
+}
+.pat-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .pat-title { color: var(--theme-text); }
+
+.pat-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #f5f6f8;
+  border: none;
+  color: #55606b;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.pat-close:active {
+  background: #e8ecf0;
+  transform: scale(0.92);
+}
+body.theme-dark .pat-close {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+}
+
+/* 内容区 */
+.pat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 16px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.pat-body::-webkit-scrollbar { display: none; }
+
+/* 空状态 */
+.pat-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #c0ccd6;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.pat-empty i {
+  font-size: 32px;
+  color: #dde6ee;
+  display: block;
+  margin-bottom: 12px;
+}
+.pat-empty-hint {
+  font-size: 11px;
+  color: #b6c2cd;
+  margin-top: 4px;
+}
+body.theme-dark .pat-empty { color: var(--theme-text-faint); }
+body.theme-dark .pat-empty i { color: #4a5560; }
+
+/* 单条拍一拍 */
+.pat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-radius: 14px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.pat-item:active {
+  background: #f2f6fa;
+  transform: scale(0.98);
+}
+.pat-item:hover {
+  border-color: #f8d8d8;
+  background: #fffafa;
+}
+body.theme-dark .pat-item {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .pat-item:active {
+  background: rgba(52, 58, 66, 0.9);
+}
+body.theme-dark .pat-item:hover {
+  border-color: rgba(248, 180, 180, 0.35);
+}
+
+.pat-item-icon {
+  flex-shrink: 0;
+  color: #f8b4b4;
+  font-size: 13px;
+}
+.pat-item-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+  word-break: break-word;
+}
+body.theme-dark .pat-item-text { color: var(--theme-text); }
+
+/* 底部 */
+.pat-footer {
+  flex-shrink: 0;
+  padding: 10px 20px 20px 20px;
+  border-top: 1px solid #f0f3f6;
+}
+body.theme-dark .pat-footer {
+  border-top-color: var(--theme-card-border);
+}
+.pat-btn {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.pat-btn:active { transform: scale(0.97); }
+.pat-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+body.theme-dark .pat-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
