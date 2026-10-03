@@ -10,9 +10,7 @@
 
   function buildPanel() {
     var container = document.getElementById('publicCardsList');
-    if (!container) {
-      return;
-    }
+    if (!container) return;
 
     if (!window.publicCards || !window.publicCards.isReady()) {
       window.publicCards && window.publicCards.onReady(buildPanel);
@@ -20,8 +18,6 @@
     }
 
     container.innerHTML = '';
-    // ...
-  }
 
     // 顶部操作栏
     var bar = document.createElement('div');
@@ -119,6 +115,11 @@
       });
     }
   }
+
+  // 暴露给外部（供 chat-settings-panel.js 调 refresh）
+  window.publicCardsPanel = {
+    refresh: buildPanel
+  };
 
   // 等待 publicCards 就绪 + DOM 就绪
   function init() {
