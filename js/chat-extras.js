@@ -9,6 +9,7 @@
  * 修改点（本次）：
  * - 新增 getPatPool()：合并「用户自己加的拍一拍字卡」与「公共字卡库勾选的拍一拍字卡」
  * - 所有读拍一拍字卡的地方改为调用 getPatPool()
+ * - 新增「专属拍一拍字卡」：当前联系人在设置面板勾选的 pat 分组，三合一一起抽
  */
 
 (function () {
@@ -45,11 +46,12 @@
     return h + ':' + m;
   }
 
-  // ==================== 拍一拍字卡池（用户 + 公共） ====================
+  // ==================== 拍一拍字卡池（用户 + 公共 + 专属） ====================
   /**
-   * 合并两个来源：
+   * 合并三个来源（B 方案：三合一一起抽）：
    * 1) 用户自己加的拍一拍字卡：window.getAllPatCards() 或 window.getPatCards()
    * 2) 公共字卡库里勾选的拍一拍字卡：window.publicCards.getSelectedCards('pat')
+   * 3) 当前联系人的专属拍一拍字卡：window.contactCards.getForPat(contactId)
    * 结果去重
    */
   function getPatPool() {
@@ -72,10 +74,45 @@
     }
     if (!Array.isArray(publicPool)) publicPool = [];
 
-    // 去重合并
+    // 专属 pat：当前联系人勾选的 pat 分组
+    var exclusivePool = [];
+    try {
+      if (window.contactCards) {
+        var contactId = null;
+        try { contactId = localStorage.getItem('my_current_contact'); } catch (e) {}
+        if (contactId) {
+          var patGroups = [];
+          if (typeof window.contactCards.getForPat === 'function') {
+            patGroups = window.contactCards.getForPat(contactId) || [];
+          } else if (typeof window.contactCards.getFor === 'function') {
+            var entry = window.contactCards.getFor(contactId);
+            if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+              patGroups = Array.isArray(entry.pat) ? entry.pat : [];
+            }
+          }
+          if (Array.isArray(patGroups) && patGroups.length > 0 && typeof window.getCardsInGroup === 'function') {
+            patGroups.forEach(function (g) {
+              try {
+                var cards = window.getCardsInGroup(g, 'pat');
+                if (Array.isArray(cards) && cards.length > 0) {
+                  exclusivePool = exclusivePool.concat(cards);
+                }
+              } catch (e) {
+                console.warn('[chat-extras] 读取专属 pat 分组失败:', g, e);
+              }
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[chat-extras] 读取专属 pat 失败', e);
+      exclusivePool = [];
+    }
+
+    // B 方案：三合一一起去重，抽卡时各池机会均等
     var seen = Object.create(null);
     var result = [];
-    userPool.concat(publicPool).forEach(function (t) {
+    exclusivePool.concat(userPool, publicPool).forEach(function (t) {
       if (!t) return;
       if (seen[t]) return;
       seen[t] = 1;
