@@ -1,0 +1,73 @@
+/* ============ 公共字卡库 ============ */
+.public-cards-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  margin-bottom: 8px;
+}
+.public-cards-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #55606b;
+}
+.public-cards-actions {
+  display: flex;
+  gap: 8px;
+}
+.public-cards-btn {
+  font-size: 11px;
+  color: #6fa3cc;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.public-cards-btn:active { background: #f2f6fa; }
+
+.public-cards-section {
+  margin-bottom: 12px;
+}
+.public-cards-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8899a6;
+  padding: 6px 4px;
+  letter-spacing: 0.5px;
+}
+.public-cards-group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.public-cards-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: #fafbfc;
+  border: 1px solid #f0f3f6;
+  cursor: pointer;
+  font-size: 12px;
+  color: #55606b;
+}
+.public-cards-item.checked {
+  background: #eef6ff;
+  border-color: #cfe2f5;
+}
+.public-cards-item input[type="checkbox"] {
+  accent-color: #f8b4b4;
+}
+.public-cards-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.public-cards-item-count {
+  font-size: 10px;
+  color: #a8b4c0;
+}
