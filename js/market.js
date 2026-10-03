@@ -1,5 +1,5 @@
 /* ============================================================
-   market.js —— 心意市集（钱包 + 商品库 + 购买送礼 + 心意柜 + 心愿单 + TA 自动送礼）
+   market.js —— 心意市集（钱包 + 商品库 + 购买送礼 + 心意柜 + 心愿单 + TA 自动送礼 + 礼物浮层）
    数据：
      - localforage 键 'giftWallet'
        { myBalance: 52000, systemBalance: 52000 }   // 单位：分
@@ -28,6 +28,7 @@
   var LS_CONTACTS_KEY  = 'my_contacts';
   var LS_CURRENT_KEY   = 'my_current_contact';
   var LS_AUTO_GIFT_DAY = 'marketAutoGiftDay';
+  var LS_GIFT_UNREAD_DOT = 'market_gift_unread_dot';
 
   var DEFAULT_WALLET = {
     myBalance: 52000,
@@ -237,6 +238,69 @@
     return y + '.' + m + '.' + dd + ' ' + hh + ':' + mm;
   }
 
+  // ==================== 未读礼物红点 ====================
+  function showGiftUnreadDot() {
+    try { localStorage.setItem(LS_GIFT_UNREAD_DOT, '1'); } catch (e) {}
+    applyGiftUnreadDot();
+  }
+  function clearGiftUnreadDot() {
+    try { localStorage.removeItem(LS_GIFT_UNREAD_DOT); } catch (e) {}
+    applyGiftUnreadDot();
+  }
+  function applyGiftUnreadDot() {
+    if (!btnMarket) return;
+    var has = false;
+    try { has = localStorage.getItem(LS_GIFT_UNREAD_DOT) === '1'; } catch (e) {}
+    var dot = btnMarket.querySelector('.market-unread-dot');
+    if (has) {
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'market-unread-dot';
+        btnMarket.appendChild(dot);
+      }
+    } else {
+      if (dot && dot.parentNode) dot.parentNode.removeChild(dot);
+    }
+  }
+
+  // ==================== 礼物浮层提示 ====================
+  function showGiftToast(text) {
+    var old = document.getElementById('marketGiftToast');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var toast = document.createElement('div');
+    toast.id = 'marketGiftToast';
+    toast.innerHTML =
+      '<div class="market-gift-toast-inner">' +
+        '<div class="market-gift-toast-icon">🎁</div>' +
+        '<div class="market-gift-toast-text">' + escapeHtml(text) + '</div>' +
+      '</div>';
+
+    toast.style.cssText =
+      'position:fixed;left:50%;bottom:-200px;transform:translateX(-50%);' +
+      'z-index:600;width:calc(100% - 32px);max-width:400px;' +
+      'transition:bottom 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);' +
+      'cursor:pointer;';
+
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(function () {
+      toast.style.bottom = '24px';
+    });
+
+    var autoTimer = setTimeout(function () { removeToast(); }, 8000);
+
+    function removeToast() {
+      clearTimeout(autoTimer);
+      toast.style.bottom = '-200px';
+      setTimeout(function () {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 400);
+    }
+
+    toast.addEventListener('click', removeToast);
+  }
+
   // ==================== 联系人 ====================
   function loadContacts() {
     try {
@@ -360,10 +424,9 @@
     ]).then(function (results) {
       myWishes = Array.isArray(results[0]) ? results[0] : [];
       taWishes = Array.isArray(results[1]) ? results[1] : [];
-      var taInited = results[2] === true;   // 严格判断是否初始化过
+      var taInited = results[2] === true;
 
       if (!taInited) {
-        // 首次：生成 Ta 的心愿单
         taWishes = generateRandomTaWishes();
         return Promise.all([
           localforage.setItem(wishlistKey(), myWishes),
@@ -371,7 +434,6 @@
           localforage.setItem(wishlistTaInitedKey(), true)
         ]);
       }
-      // 已初始化过：即使 taWishes 为空也保持为空
     }).then(function () {
       wishesReady = true;
     }).catch(function () {
@@ -389,7 +451,6 @@
     });
   }
 
-  // 生成 Ta 心愿单：tm 用过去 1~30 天的随机时间
   function generateRandomTaWishes() {
     var arr = [];
     var count = randomInt(3, 6);
@@ -398,7 +459,7 @@
     for (var i = 0; i < count; i++) {
       var g = randomPick(DEFAULT_GIFTS);
       if (!g) continue;
-      var offset = Math.floor(Math.random() * THIRTY_DAYS);   // 0 ~ 30 天前
+      var offset = Math.floor(Math.random() * THIRTY_DAYS);
       arr.push({
         id: genId('wishTa'),
         giftId: g.id,
@@ -601,7 +662,7 @@
       emoji: gift.emoji,
       wish: wish || '',
       side: 'out',
-      claimed: false,
+      claimed: true,        // ★ 我送出的礼物直接标记为已领取（心意柜不再显示待领取角标）
       tm: Date.now()
     };
     boxItems.push(record);
@@ -612,6 +673,11 @@
       }
       scheduleTaReplyToGift('out');
       renderBox();
+
+      // ★ 弹出"礼物已送出"浮层 + 亮红点
+      showGiftToast('礼物已送出，Ta 会收到的');
+      showGiftUnreadDot();
+
       return true;
     });
   }
@@ -709,6 +775,7 @@
     var html = '';
     arr.forEach(function (it) {
       var claimTag = '';
+      // 只有 Ta 送我的（side: 'in'）且未领取时才显示"待领取"角标
       if (it.side === 'in' && !it.claimed) {
         claimTag = '<span class="mkt-record-claim" data-claim="' + escapeHtml(it.id) + '">待领取</span>';
       }
@@ -885,6 +952,14 @@
       renderBox();
       updateWalletUI();
       bumpAutoGiftDay();
+
+      // ★ 根据分支弹不同文案
+      if (side === 'self') {
+        showGiftToast('Ta 给自己买了一件心意');
+      } else {
+        showGiftToast('收到了一份来自 Ta 的心意');
+      }
+      showGiftUnreadDot();
     });
   }
 
@@ -1007,6 +1082,7 @@
       renderGoods();
       renderBox();
       renderWishes();
+      clearGiftUnreadDot();     // ★ 进入市集清除"未读礼物"红点
     });
   }
 
@@ -1048,6 +1124,7 @@
       renderGoods();
       renderBox();
       renderWishes();
+      applyGiftUnreadDot();     // ★ 初始化时应用红点状态
       scheduleAutoGift();
     });
   }
@@ -1105,6 +1182,8 @@
         if (typeof window.chatAddGift === 'function') {
           try { window.chatAddGift(rec); } catch (e) {}
         }
+        showGiftToast('收到了一份来自 Ta 的心意');
+        showGiftUnreadDot();
       });
     },
 
@@ -1127,7 +1206,11 @@
     addMyWish: function (giftId) {
       var gift = DEFAULT_GIFTS.find(function (g) { return g.id === giftId; });
       if (gift) addWishFromGift(gift);
-    }
+    },
+
+    // 测试：手动弹出礼物浮层
+    showGiftToast: showGiftToast,
+    clearGiftUnreadDot: clearGiftUnreadDot
   };
 
 })();
