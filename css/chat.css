@@ -1755,3 +1755,28 @@ body.theme-dark .pat-cancel {
   color: var(--theme-text-soft);
   border-color: var(--theme-card-border);
 }
+
+/* ============ 消息时间戳 ============ */
+.message-time {
+  font-size: 11px;
+  color: #b6c2cd;
+  margin-top: 4px;
+  padding: 0 4px;
+  letter-spacing: 0.3px;
+  user-select: none;
+}
+
+/* 我的消息：时间戳右对齐 */
+.message-row.self .message-time {
+  text-align: right;
+}
+
+/* 对方消息：时间戳左对齐 */
+.message-row.other .message-time {
+  text-align: left;
+}
+
+/* 关闭时间戳显示 */
+#chatMessages.hide-message-time .message-time {
+  display: none;
+}
