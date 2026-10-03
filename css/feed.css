@@ -531,3 +531,27 @@ body.theme-dark .feed-post-btn-cancel {
   color: #fff;
   box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
 }
+
+/* 主页朋友圈入口的小红点 */
+#btnFeed {
+  position: relative;
+}
+.feed-unread-dot {
+  position: absolute;
+  top: 6px;
+  right: 22px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #f57171;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  animation: feedDotPulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes feedDotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.75; }
+}
+body.theme-dark .feed-unread-dot {
+  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+}
