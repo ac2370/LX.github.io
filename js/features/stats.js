@@ -359,7 +359,7 @@
     return tokens.filter(function (t) { return !STOP_WORDS[t.word]; });
   }
 
-  function renderWordCloud() {
+    function renderWordCloud() {
     var msgs = readAllMessages().filter(function (m) { return m.text; });
     if (currentWCView === 'partner') {
       msgs = msgs.filter(function (m) { return m.sender === 'partner'; });
@@ -384,16 +384,31 @@
     var canvas = document.getElementById('statsWCCanvas');
     var emptyEl = document.getElementById('statsWCEmpty');
 
-    if (top.length === 0) {
-      canvas.style.display = 'none';
-      emptyEl.classList.add('active');
-      return;
-    }
+    // 不管有没有词，canvas 都显示（容器固定高度）
     canvas.style.display = 'block';
     emptyEl.classList.remove('active');
 
-      // 用 Canvas 绘制
-    // 延迟一帧，等布局完成后再测量宽度
+    // 清空画布（即使没词也要清）
+    var parent = canvas.parentElement;
+    var rect = parent.getBoundingClientRect();
+    var W = rect.width || parent.offsetWidth || Math.min(window.innerWidth - 36, 400);
+    var H = rect.height || parent.offsetHeight || W;
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+
+    // 没有词就直接清空返回（不再弹「暂无数据」）
+    if (top.length === 0) {
+      return;
+    }
+
+    // 用 Canvas 绘制
     requestAnimationFrame(function () {
       drawWordCloud(canvas, top);
     });
