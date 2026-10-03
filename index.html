@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="./css/envelope.css">
   <link rel="stylesheet" href="./css/feed.css">
   <link rel="stylesheet" href="./css/public-cards.css">
+  <link rel="stylesheet" href="./css/stats.css">
 </head>
 <body>
 
@@ -741,7 +742,100 @@
     </div>
   </div>
 </div>
-  
+
+  <!-- ==================== 词云（消息统计 & 收藏） 页面 ==================== -->
+<div class="page" id="pageStats">
+  <div class="stats-container">
+
+    <!-- 顶部导航 -->
+    <div class="stats-topbar">
+      <button class="stats-back-btn" id="statsBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="stats-topbar-title">消息统计 &amp; 收藏</span>
+      <div class="stats-topbar-placeholder"></div>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="stats-tabs">
+      <button class="stats-tab active" data-tab="overview" id="statsTabOverview">
+        <i class="fa-solid fa-chart-simple"></i> 统计
+      </button>
+      <button class="stats-tab" data-tab="search" id="statsTabSearch">
+        <i class="fa-solid fa-magnifying-glass"></i> 搜索
+      </button>
+      <button class="stats-tab" data-tab="favorites" id="statsTabFavorites">
+        <i class="fa-solid fa-star"></i> 收藏
+      </button>
+      <button class="stats-tab" data-tab="wordcloud" id="statsTabWordCloud">
+        <i class="fa-solid fa-cloud"></i> 词云
+      </button>
+    </div>
+
+    <!-- 主体 -->
+    <div class="stats-body">
+
+      <!-- 1) 统计 -->
+      <div class="stats-view active" id="statsViewOverview">
+        <div class="stats-overview-cards" id="statsOverviewCards"></div>
+        <div class="stats-section">
+          <div class="stats-section-header">
+            <div class="stats-section-title">高频消息 TOP5</div>
+            <div class="stats-view-toggle">
+              <button class="stats-view-btn active" data-view="partner" id="statsViewPartner">对方</button>
+              <button class="stats-view-btn" data-view="me" id="statsViewMe">我方</button>
+            </div>
+          </div>
+          <div class="stats-rank-list" id="statsRankList"></div>
+        </div>
+      </div>
+
+      <!-- 2) 搜索 -->
+      <div class="stats-view" id="statsViewSearch">
+        <div class="stats-search-form">
+          <input type="text" class="stats-search-input" id="statsSearchKeyword" placeholder="输入关键词...">
+          <div class="stats-search-dates">
+            <input type="date" class="stats-search-date" id="statsSearchFrom">
+            <span class="stats-search-date-sep">至</span>
+            <input type="date" class="stats-search-date" id="statsSearchTo">
+          </div>
+          <button class="stats-search-btn" id="statsSearchBtn">
+            <i class="fa-solid fa-magnifying-glass"></i> 搜索
+          </button>
+        </div>
+        <div class="stats-search-results" id="statsSearchResults"></div>
+      </div>
+
+      <!-- 3) 收藏 -->
+      <div class="stats-view" id="statsViewFavorites">
+        <div class="stats-fav-list" id="statsFavList"></div>
+        <div class="stats-empty" id="statsFavEmpty">
+          <i class="fa-regular fa-star"></i>
+          <div>收藏夹空空如也</div>
+          <div class="stats-empty-hint">点击消息旁的 ☆ 星标即可收藏</div>
+        </div>
+      </div>
+
+      <!-- 4) 词云 -->
+      <div class="stats-view" id="statsViewWordCloud">
+        <div class="stats-wc-toggle">
+          <button class="stats-view-btn" data-view="partner" id="statsWCPartner">对方</button>
+          <button class="stats-view-btn" data-view="me" id="statsWCMe">我方</button>
+          <button class="stats-view-btn active" data-view="all" id="statsWCAll">全部</button>
+        </div>
+        <div class="stats-wc-canvas-wrap">
+          <canvas id="statsWCCanvas"></canvas>
+        </div>
+        <div class="stats-empty" id="statsWCEmpty">
+          <i class="fa-solid fa-cloud"></i>
+          <div>暂无数据</div>
+          <div class="stats-empty-hint">多聊几句再来看看吧</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
   
   <!-- ==================== 心晴手账 页面 ==================== -->
 <div class="page" id="pageMood">
@@ -1304,5 +1398,6 @@
   <script src="./js/mood.js"></script>
   <script src="./js/features/envelope.js"></script>
   <script src="./js/feed.js"></script>
+  <script src="./js/features/stats.js"></script>
 </body>
 </html>
