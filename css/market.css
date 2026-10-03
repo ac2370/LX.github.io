@@ -577,3 +577,183 @@ body.theme-dark .mkt-btn-cancel {
   color: var(--theme-text-soft);
   border-color: var(--theme-card-border);
 }
+
+/* ============================================================
+   购买弹窗
+   ============================================================ */
+.mkt-buy-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(250, 240, 245, 0.6);
+  border-radius: 16px;
+  margin-bottom: 14px;
+}
+body.theme-dark .mkt-buy-preview {
+  background: rgba(56, 62, 72, 0.5);
+}
+.mkt-buy-emoji {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+}
+body.theme-dark .mkt-buy-emoji { background: rgba(42, 48, 56, 0.9); }
+.mkt-buy-info { flex: 1; min-width: 0; }
+.mkt-buy-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 4px;
+}
+body.theme-dark .mkt-buy-name { color: var(--theme-text); }
+.mkt-buy-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e58b8b;
+}
+
+.mkt-buy-wish {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8ee;
+  background: rgba(250, 251, 253, 0.9);
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.6;
+  box-sizing: border-box;
+  margin-bottom: 14px;
+}
+.mkt-buy-wish:focus {
+  border-color: #f8b4b4;
+  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
+}
+body.theme-dark .mkt-buy-wish {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
+
+.mkt-buy-actions {
+  display: flex;
+  gap: 8px;
+}
+.mkt-buy-actions .mkt-btn {
+  flex: 1;
+  font-size: 13px;
+  padding: 12px 0;
+}
+.mkt-btn-wish {
+  background: #ffffff;
+  border: 1px solid #f8d8d8;
+  color: #e58b8b;
+}
+body.theme-dark .mkt-btn-wish {
+  background: rgba(42, 48, 56, 0.9);
+  border-color: rgba(248, 180, 180, 0.35);
+  color: #f8b4b4;
+}
+
+/* ============================================================
+   心意柜：待领取角标
+   ============================================================ */
+.mkt-record-claim {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  background: #f8b4b4;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 0.15s ease;
+}
+.mkt-record-claim:active { background: #e58b8b; }
+
+/* ============================================================
+   聊天礼物卡
+   ============================================================ */
+.chat-gift-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff8f8 0%, #fef0f5 100%);
+  border: 1px solid #f8d8d8;
+  max-width: 240px;
+  box-shadow: 0 3px 10px rgba(248, 180, 180, 0.15);
+}
+body.theme-dark .chat-gift-card {
+  background: linear-gradient(135deg, #2a2028 0%, #2a2a30 100%);
+  border-color: rgba(248, 180, 180, 0.25);
+}
+
+.chat-gift-emoji {
+  font-size: 30px;
+  line-height: 1;
+  text-align: center;
+}
+.chat-gift-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+}
+body.theme-dark .chat-gift-name { color: var(--theme-text); }
+.chat-gift-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e58b8b;
+  text-align: center;
+}
+.chat-gift-wish {
+  font-size: 12px;
+  color: #8899a6;
+  line-height: 1.5;
+  text-align: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  word-break: break-word;
+}
+body.theme-dark .chat-gift-wish {
+  background: rgba(42, 48, 56, 0.7);
+  color: var(--theme-text-muted);
+}
+.chat-gift-btn {
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8b4b4 0%, #f8a8c8 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.chat-gift-btn:active { transform: scale(0.96); }
+.chat-gift-btn.claimed {
+  background: #eaf6f0;
+  color: #3d9c74;
+  cursor: default;
+  box-shadow: none;
+}
+body.theme-dark .chat-gift-btn.claimed {
+  background: rgba(61, 156, 116, 0.2);
+  color: #8fd1a3;
+}
