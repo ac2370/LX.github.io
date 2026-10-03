@@ -8,6 +8,8 @@
      - 布局修复（防止传讯顶栏溢出）
      - 站内消息横幅
      - 视频通话弹窗 + 通话记录气泡 + 主动来电横幅
+     - 拍一拍弹窗
+     - 聊天礼物卡（统一 200px）+ Ta 给自己买方框卡片
    ============================================================ */
 
 /* ============ 聊天消息头像 ============ */
@@ -31,7 +33,6 @@
 #pageChat .message-row.self .chat-msg-avatar {
   margin-left: 8px;
 }
-/* 消息气泡保持原有最大宽度 72%，头像占用空间后自动适应 */
 #pageChat .message-row .message-bubble {
   max-width: 62%;
 }
@@ -280,9 +281,7 @@
   font-weight: 600;
   animation: fadeIn 0.2s ease;
 }
-.burst-hint i {
-  color: #f8b4b4;
-}
+.burst-hint i { color: #f8b4b4; }
 
 /* ============ 连发暂存列表 ============ */
 .burst-queue {
@@ -478,9 +477,7 @@
 .chat-option-cancel:active { color: #55606b; }
 
 /* 表情包面板 */
-.chat-sticker-inner {
-  padding-bottom: 18px;
-}
+.chat-sticker-inner { padding-bottom: 18px; }
 .sticker-grid {
   flex: 1;
   overflow-y: auto;
@@ -503,9 +500,7 @@
   transition: transform 0.15s ease;
   border: 1px solid #eef1f4;
 }
-.sticker-item:active {
-  transform: scale(0.94);
-}
+.sticker-item:active { transform: scale(0.94); }
 .sticker-item img {
   width: 100%;
   height: 100%;
@@ -703,9 +698,7 @@ body.theme-dark .group-member-url {
   color: var(--theme-text);
 }
 .group-member-name:focus,
-.group-member-url:focus {
-  border-color: #f8b4b4;
-}
+.group-member-url:focus { border-color: #f8b4b4; }
 .group-member-name::placeholder,
 .group-member-url::placeholder { color: #b6c2cd; }
 
@@ -919,10 +912,8 @@ body.theme-dark .exit-group-btn {
 /* ============================================================
    布局修复：防止传讯顶栏图标溢出到底部
    ============================================================ */
-
-/* 1. 强制 #pageChat 使用 flex 列布局，顶栏不溢出 */
 #pageChat {
-  display: none; /* 默认隐藏（原有 .page 逻辑） */
+  display: none;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
@@ -932,41 +923,29 @@ body.theme-dark .exit-group-btn {
 #pageChat.active {
   display: flex;
 }
-
-/* 2. 顶栏固定不溢出 */
 #pageChat .chat-header {
   flex-shrink: 0;
   position: relative;
   z-index: 10;
   overflow: visible;
 }
-
-/* 3. 聊天消息区正确滚动 */
 #pageChat .chat-messages {
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
-
-/* 4. 输入栏固定底部，不溢出 */
 #pageChat .chat-input-bar {
   flex-shrink: 0;
   position: relative;
   z-index: 10;
 }
-
-/* 5. 关键修复：确保 .chat-actions 只在顶栏内显示 */
 #pageChat > .chat-actions {
   display: none !important;
 }
-
-/* 6. 保险：任何出现在 .chat-input-bar 之后的 .chat-actions 都隐藏 */
 #pageChat .chat-input-bar ~ .chat-actions {
   display: none !important;
 }
-
-/* 7. 保险：如果 .chat-actions 出现在 .chat-messages 内部（错误位置），隐藏它 */
 #pageChat .chat-messages .chat-actions {
   display: none !important;
 }
@@ -996,9 +975,7 @@ body.theme-dark .exit-group-btn {
   transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
 }
-.chat-notify-banner.active {
-  top: 12px;
-}
+.chat-notify-banner.active { top: 12px; }
 body.theme-dark .chat-notify-banner {
   background: rgba(38, 44, 52, 0.97);
   border-color: var(--theme-card-border, #333a42);
@@ -1075,9 +1052,7 @@ body.theme-dark .video-call-panel {
   border-color: var(--theme-card-border);
 }
 
-.video-call-avatar-wrap {
-  margin-bottom: 16px;
-}
+.video-call-avatar-wrap { margin-bottom: 16px; }
 .video-call-avatar {
   width: 96px;
   height: 96px;
@@ -1247,9 +1222,7 @@ body.theme-dark .incoming-banner {
   background: rgba(38, 44, 52, 0.97);
   border-color: var(--theme-card-border);
 }
-.incoming-banner.active {
-  top: 16px;
-}
+.incoming-banner.active { top: 16px; }
 
 .incoming-banner-avatar {
   width: 46px;
@@ -1264,10 +1237,7 @@ body.theme-dark .incoming-banner-avatar {
   border-color: var(--theme-card-border);
 }
 
-.incoming-banner-info {
-  flex: 1;
-  min-width: 0;
-}
+.incoming-banner-info { flex: 1; min-width: 0; }
 .incoming-banner-name {
   font-size: 14px;
   font-weight: 700;
@@ -1327,9 +1297,8 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 }
 
 /* ============================================================
-   以下为传讯页面基础样式（从 index.html 大 <style> 块拆出）
+   传讯页面基础样式
    ============================================================ */
-
 #pageChat {
   background: #ffffff;
   height: 100vh;
@@ -1370,7 +1339,6 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 }
 #pageChat .chat-name:active { background: #f0f4f8; }
 
-/* 顶栏图标：水平居中，等距排列 */
 #pageChat .chat-actions {
   display: flex;
   align-items: center;
@@ -1405,12 +1373,8 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 }
 #pageChat .chat-messages::-webkit-scrollbar { display: none; }
 
-/* 隐藏的"我的头像"（用于消息气泡左侧/右侧显示） */
-#myAvatarForChat {
-  display: none;
-}
+#myAvatarForChat { display: none; }
 
-/* 原急救按钮样式（保留，但通过新增类隐藏） */
 #pageChat .sos-btn {
   position: fixed;
   right: 16px;
@@ -1437,12 +1401,8 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
   transform: translateY(-50%) scale(0.94);
   background: rgba(255, 245, 245, 1);
 }
-#pageChat .sos-btn i {
-  font-size: 14px;
-  margin-bottom: 1px;
-}
+#pageChat .sos-btn i { font-size: 14px; margin-bottom: 1px; }
 
-/* 返回主页按钮（新增，与 sos-btn 位置一致但样式不同） */
 #pageChat .home-return-btn {
   position: fixed;
   right: 16px;
@@ -1601,7 +1561,7 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 }
 
 /* ============================================================
-   拍一拍弹窗（chat-extras.js 使用）
+   拍一拍弹窗
    ============================================================ */
 .pat-modal {
   position: fixed;
@@ -1648,7 +1608,6 @@ body.theme-dark .pat-panel {
   border-color: var(--theme-card-border);
 }
 
-/* 头部 */
 .pat-header {
   flex-shrink: 0;
   display: flex;
@@ -1691,7 +1650,6 @@ body.theme-dark .pat-close {
   color: var(--theme-text-soft);
 }
 
-/* 内容区 */
 .pat-body {
   flex: 1;
   overflow-y: auto;
@@ -1701,7 +1659,6 @@ body.theme-dark .pat-close {
 }
 .pat-body::-webkit-scrollbar { display: none; }
 
-/* 空状态 */
 .pat-empty {
   text-align: center;
   padding: 40px 20px;
@@ -1723,7 +1680,6 @@ body.theme-dark .pat-close {
 body.theme-dark .pat-empty { color: var(--theme-text-faint); }
 body.theme-dark .pat-empty i { color: #4a5560; }
 
-/* 单条拍一拍 */
 .pat-item {
   display: flex;
   align-items: center;
@@ -1770,7 +1726,6 @@ body.theme-dark .pat-item:hover {
 }
 body.theme-dark .pat-item-text { color: var(--theme-text); }
 
-/* 底部 */
 .pat-footer {
   flex-shrink: 0;
   padding: 10px 20px 20px 20px;
@@ -1803,6 +1758,88 @@ body.theme-dark .pat-cancel {
 }
 
 /* ============================================================
+   聊天礼物卡（统一 200px）
+   ============================================================ */
+.chat-gift-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff8f8 0%, #fef0f5 100%);
+  border: 1px solid #f8d8d8;
+  width: 200px;
+  max-width: 200px;
+  box-sizing: border-box;
+  box-shadow: 0 3px 10px rgba(248, 180, 180, 0.15);
+}
+body.theme-dark .chat-gift-card {
+  background: linear-gradient(135deg, #2a2028 0%, #2a2a30 100%);
+  border-color: rgba(248, 180, 180, 0.25);
+}
+
+.chat-gift-emoji {
+  font-size: 30px;
+  line-height: 1;
+  text-align: center;
+}
+.chat-gift-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+body.theme-dark .chat-gift-name { color: var(--theme-text); }
+.chat-gift-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e58b8b;
+  text-align: center;
+}
+.chat-gift-wish {
+  font-size: 12px;
+  color: #8899a6;
+  line-height: 1.5;
+  text-align: center;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  word-break: break-word;
+  max-height: 60px;
+  overflow: hidden;
+}
+body.theme-dark .chat-gift-wish {
+  background: rgba(42, 48, 56, 0.7);
+  color: var(--theme-text-muted);
+}
+.chat-gift-btn {
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8b4b4 0%, #f8a8c8 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.chat-gift-btn:active { transform: scale(0.96); }
+.chat-gift-btn.claimed {
+  background: #eaf6f0;
+  color: #3d9c74;
+  cursor: default;
+  box-shadow: none;
+}
+body.theme-dark .chat-gift-btn.claimed {
+  background: rgba(61, 156, 116, 0.2);
+  color: #8fd1a3;
+}
+
+/* ============================================================
    Ta 给自己买：方框卡片
    ============================================================ */
 .chat-gift-box {
@@ -1823,7 +1860,6 @@ body.theme-dark .chat-gift-box {
   border-color: var(--theme-card-border);
 }
 
-/* 顶部：竖线 + 标题 */
 .chat-gift-box-head {
   display: flex;
   align-items: center;
@@ -1848,7 +1884,6 @@ body.theme-dark .chat-gift-box {
 }
 body.theme-dark .chat-gift-box-title { color: var(--theme-text-muted); }
 
-/* 中间：emoji + 名字 + 价格 */
 .chat-gift-box-body {
   display: flex;
   align-items: center;
@@ -1868,10 +1903,7 @@ body.theme-dark .chat-gift-box-title { color: var(--theme-text-muted); }
 body.theme-dark .chat-gift-box-emoji {
   background: rgba(56, 62, 72, 0.6);
 }
-.chat-gift-box-info {
-  flex: 1;
-  min-width: 0;
-}
+.chat-gift-box-info { flex: 1; min-width: 0; }
 .chat-gift-box-name {
   font-size: 13px;
   font-weight: 700;
@@ -1888,7 +1920,6 @@ body.theme-dark .chat-gift-box-name { color: var(--theme-text); }
   margin-top: 2px;
 }
 
-/* 底部：小字 */
 .chat-gift-box-foot {
   font-size: 10px;
   color: #a8b4c0;
