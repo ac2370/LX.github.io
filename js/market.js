@@ -1,14 +1,18 @@
 /* ============================================================
-   market.js —— 心意市集（钱包 + 商品库 + 购买送礼 + 心意柜 + 聊天礼物卡）
+   market.js —— 心意市集（钱包 + 商品库 + 购买送礼 + 心意柜 + 心愿单 + TA 自动送礼）
    数据：
      - localforage 键 'giftWallet'
        { myBalance: 52000, systemBalance: 52000 }   // 单位：分
      - localforage 键 'giftboxItems_<contactId>'
        [ { id, giftId, name, price, emoji, wish, side: 'in'|'out'|'self',
            claimed, tm } ]
+     - localforage 键 'giftWishlist_<contactId>'     // 我的心愿单
+     - localforage 键 'giftWishlistTa_<contactId>'   // TA 的心愿单
+     - localforage 键 'marketSettings'
+       { autoGiftProbability, dailyLimit, replyProbability }
    依赖：
      - window.showPage / window.pageMarket / window.pageHome
-     - window.chatAddGift（chat.js 提供）
+     - window.chatAddGift / window.chatAddTextMessage（chat.js 提供）
      - window.getReplyCards（card.js 提供）
      - localStorage: my_contacts / my_current_contact
    ============================================================ */
@@ -19,12 +23,20 @@
 
   // ==================== 常量 ====================
   var STORE_KEY_WALLET = 'giftWallet';
+  var STORE_KEY_SETTINGS = 'marketSettings';
   var LS_CONTACTS_KEY  = 'my_contacts';
   var LS_CURRENT_KEY   = 'my_current_contact';
+  var LS_AUTO_GIFT_DAY = 'marketAutoGiftDay';   // { date, count }
 
   var DEFAULT_WALLET = {
     myBalance: 52000,
     systemBalance: 52000
+  };
+
+  var DEFAULT_SETTINGS = {
+    autoGiftProbability: 0.30,   // 每次检查触发概率（用于二次随机，可调）
+    dailyLimit: 3,               // 每日上限
+    replyProbability: 0.7        // TA 送礼后回复概率
   };
 
   var DEFAULT_CONTACT = {
@@ -33,7 +45,17 @@
     avatar: 'https://picsum.photos/200/200?random=99'
   };
 
-  // 分类
+  // ★ 测试用：自动送礼间隔 30 秒
+  //   正式上线：var AUTO_GIFT_MIN = 30 * 60 * 1000; var AUTO_GIFT_MAX = 90 * 60 * 1000;
+  var AUTO_GIFT_MIN = 30 * 1000;
+  var AUTO_GIFT_MAX = 30 * 1000;
+
+  // 三种分支概率
+  var BRANCH_BUY_MY_WISH   = 0.20;
+  var BRANCH_BUY_SELF      = 0.10;
+  // 剩余概率走随机逛市集
+
+  // ==================== 分类 ====================
   var CATEGORIES = [
     { key: 'flower',  emoji: '💐', name: '花束' },
     { key: 'dessert', emoji: '🍰', name: '甜品' },
@@ -47,7 +69,7 @@
     { key: 'medicine',emoji: '💊', name: '药品' }
   ];
 
-  // 商品库（价格单位：分）
+  // ==================== 商品库 ====================
   var DEFAULT_GIFTS = [
     { id: 'flower_1', name: '一朵小花',       price: 1000,  emoji: '🌷', category: 'flower' },
     { id: 'flower_2', name: '满天星',         price: 3000,  emoji: '💐', category: 'flower' },
@@ -151,18 +173,32 @@
   var mktRecords      = document.getElementById('mktRecords');
   var mktRecordsEmpty = document.getElementById('mktRecordsEmpty');
 
+  var mktWishes      = document.getElementById('mktWishes');
+  var mktWishesEmpty = document.getElementById('mktWishesEmpty');
+
   // ==================== 状态 ====================
   var wallet = Object.assign({}, DEFAULT_WALLET);
   var walletReady = false;
 
+  var settings = Object.assign({}, DEFAULT_SETTINGS);
+  var settingsReady = false;
+
   var currentCategory = CATEGORIES[0].key;
-  var currentSubTab = 'fromTa';    // 心意柜子 tab
+  var currentSubTab = 'fromTa';        // 心意柜子 tab
+  var currentWishTab = 'myWish';       // 心愿单子 tab
 
   var currentContactId = null;
   var currentContact   = null;
 
-  var boxItems = [];               // 心意柜记录
+  var boxItems = [];                   // 心意柜记录
   var boxReady = false;
+
+  var myWishes = [];                   // 我的心愿单
+  var taWishes = [];                   // TA 的心愿单
+  var wishesReady = false;
+
+  var autoGiftTimer = null;
+  var autoGiftScheduled = false;
 
   // ==================== 工具 ====================
   function escapeHtml(str) {
@@ -228,9 +264,9 @@
     currentContact = contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
   }
 
-  function boxKey() {
-    return 'giftboxItems_' + (currentContactId || 'default');
-  }
+  function boxKey()         { return 'giftboxItems_' + (currentContactId || 'default'); }
+  function wishlistKey()    { return 'giftWishlist_' + (currentContactId || 'default'); }
+  function wishlistTaKey()  { return 'giftWishlistTa_' + (currentContactId || 'default'); }
 
   // ==================== 钱包 ====================
   function loadWallet() {
@@ -268,6 +304,27 @@
     }
   }
 
+  // ==================== 设置 ====================
+  function loadSettings() {
+    if (typeof localforage === 'undefined') {
+      settingsReady = true;
+      return Promise.resolve();
+    }
+    return localforage.getItem(STORE_KEY_SETTINGS).then(function (data) {
+      if (data && typeof data === 'object') {
+        settings = Object.assign({}, DEFAULT_SETTINGS, data);
+      }
+      settingsReady = true;
+    }).catch(function () {
+      settingsReady = true;
+    });
+  }
+
+  function saveSettings() {
+    if (typeof localforage === 'undefined') return Promise.resolve();
+    return localforage.setItem(STORE_KEY_SETTINGS, settings).catch(function () {});
+  }
+
   // ==================== 心意柜数据 ====================
   function loadBox() {
     if (typeof localforage === 'undefined') {
@@ -288,6 +345,62 @@
     return localforage.setItem(boxKey(), boxItems).catch(function (e) {
       console.warn('[market] 心意柜保存失败', e);
     });
+  }
+
+  // ==================== 心愿单数据 ====================
+  function loadWishes() {
+    if (typeof localforage === 'undefined') {
+      wishesReady = true;
+      return Promise.resolve();
+    }
+    return Promise.all([
+      localforage.getItem(wishlistKey()),
+      localforage.getItem(wishlistTaKey())
+    ]).then(function (results) {
+      myWishes = Array.isArray(results[0]) ? results[0] : [];
+      taWishes = Array.isArray(results[1]) ? results[1] : [];
+      // 如果 TA 心愿单为空，则初始化几条（用商品库随机）
+      if (taWishes.length === 0) {
+        taWishes = generateRandomTaWishes();
+        return Promise.all([
+          localforage.setItem(wishlistKey(), myWishes),
+          localforage.setItem(wishlistTaKey(), taWishes)
+        ]);
+      }
+    }).then(function () {
+      wishesReady = true;
+    }).catch(function () {
+      wishesReady = true;
+    });
+  }
+
+  function saveWishes() {
+    if (typeof localforage === 'undefined') return Promise.resolve();
+    return Promise.all([
+      localforage.setItem(wishlistKey(), myWishes),
+      localforage.setItem(wishlistTaKey(), taWishes)
+    ]).catch(function (e) {
+      console.warn('[market] 心愿单保存失败', e);
+    });
+  }
+
+  function generateRandomTaWishes() {
+    var arr = [];
+    var count = randomInt(3, 6);
+    for (var i = 0; i < count; i++) {
+      var g = randomPick(DEFAULT_GIFTS);
+      if (!g) continue;
+      arr.push({
+        id: genId('wishTa'),
+        giftId: g.id,
+        name: g.name,
+        price: g.price,
+        emoji: g.emoji,
+        wish: '',
+        tm: Date.now() - randomInt(0, 7 * 24 * 3600 * 1000)
+      });
+    }
+    return arr;
   }
 
   // ==================== 钱包修改弹窗 ====================
@@ -431,8 +544,7 @@
     document.getElementById('mktBuyCancel').addEventListener('click', closeModal);
 
     document.getElementById('mktBuyWishBtn').addEventListener('click', function () {
-      var wish = document.getElementById('mktBuyWish').value.trim();
-      addWishFromGift(gift, wish);
+      addWishFromGift(gift);
       closeModal();
     });
 
@@ -457,11 +569,9 @@
       return Promise.resolve(false);
     }
 
-    // 扣款
     wallet.myBalance -= gift.price;
     updateWalletUI();
 
-    // 生成记录
     var record = {
       id: genId('box'),
       giftId: gift.id,
@@ -476,32 +586,30 @@
     boxItems.push(record);
 
     return Promise.all([saveWallet(), saveBox()]).then(function () {
-      // 聊天礼物卡
       if (typeof window.chatAddGift === 'function') {
         try { window.chatAddGift(record); } catch (e) {}
       }
-
-      // TA 延迟回复
-      scheduleTaReplyToGift(gift);
-
-      // 刷新心意柜 UI
+      scheduleTaReplyToGift('out');
       renderBox();
-
       return true;
     });
   }
 
   // ==================== TA 回复 ====================
-  function scheduleTaReplyToGift(gift) {
+  function scheduleTaReplyToGift(kind, specialText) {
+    if (Math.random() > settings.replyProbability) return;
+
     var delay = 1000 + Math.floor(Math.random() * 2000);   // 1~3 秒
     setTimeout(function () {
-      if (Math.random() > 0.6) return;
       var pool = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
-      if (!Array.isArray(pool) || pool.length === 0) return;
-      var reply = randomPick(pool);
+      var reply;
+      if (specialText) {
+        reply = specialText;
+      } else if (Array.isArray(pool) && pool.length > 0) {
+        reply = randomPick(pool);
+      }
       if (!reply) return;
 
-      // 通过 chatAddGift 相同的接口往聊天里追加 TA 消息
       if (typeof window.chatAddTextMessage === 'function') {
         try { window.chatAddTextMessage('other', reply); } catch (e) {}
       } else {
@@ -521,27 +629,30 @@
   }
 
   // ==================== 加入心愿单 ====================
-  function addWishFromGift(gift, wish) {
-    // 简单存 localStorage，键 myWishlist_<contactId>
-    try {
-      var key = 'myWishlist_' + (currentContactId || 'default');
-      var raw = localStorage.getItem(key);
-      var arr = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(arr)) arr = [];
-      arr.push({
-        id: genId('wish'),
-        giftId: gift.id,
-        name: gift.name,
-        price: gift.price,
-        emoji: gift.emoji,
-        wish: wish || '',
-        tm: Date.now()
-      });
-      localStorage.setItem(key, JSON.stringify(arr));
-      alert('已加入心愿单');
-    } catch (e) {
-      alert('加入心愿单失败');
+  function addWishFromGift(gift) {
+    if (!gift) return;
+    if (myWishes.length >= 30) {
+      alert('我的心愿单最多 30 件');
+      return;
     }
+    // 去重
+    if (myWishes.some(function (w) { return w.giftId === gift.id; })) {
+      alert('这件礼物已经在你的心愿单里了');
+      return;
+    }
+    myWishes.push({
+      id: genId('wish'),
+      giftId: gift.id,
+      name: gift.name,
+      price: gift.price,
+      emoji: gift.emoji,
+      wish: '',
+      tm: Date.now()
+    });
+    saveWishes().then(function () {
+      renderWishes();
+      alert('已加入心愿单');
+    });
   }
 
   // ==================== 心意柜渲染 ====================
@@ -594,7 +705,6 @@
     });
     mktRecords.innerHTML = html;
 
-    // 领取
     mktRecords.querySelectorAll('[data-claim]').forEach(function (el) {
       el.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -602,16 +712,13 @@
         claimRecord(id);
       });
     });
-    // 删除
     mktRecords.querySelectorAll('[data-del]').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
         var id = btn.getAttribute('data-del');
         if (!confirm('删除这条记录吗？')) return;
         boxItems = boxItems.filter(function (it) { return it.id !== id; });
-        saveBox().then(function () {
-          renderBox();
-        });
+        saveBox().then(function () { renderBox(); });
       });
     });
   }
@@ -622,10 +729,236 @@
     it.claimed = true;
     saveBox().then(function () {
       renderBox();
-      // 同步聊天礼物卡状态
       if (typeof window.chatMarkGiftClaimed === 'function') {
         try { window.chatMarkGiftClaimed(id); } catch (e) {}
       }
+    });
+  }
+
+  // ==================== 心愿单渲染 ====================
+  function renderWishes() {
+    if (!mktWishes) return;
+    var list = currentWishTab === 'myWish' ? myWishes : taWishes;
+
+    if (!list || list.length === 0) {
+      mktWishes.innerHTML = '';
+      if (mktWishesEmpty) {
+        mktWishesEmpty.style.display = 'block';
+        mktWishesEmpty.querySelector('.mkt-empty-text').textContent =
+          currentWishTab === 'myWish' ? '我还没有心愿' : 'Ta 还没有心愿';
+      }
+      return;
+    }
+    if (mktWishesEmpty) mktWishesEmpty.style.display = 'none';
+
+    var html = '';
+    list.slice().sort(function (a, b) { return (b.tm || 0) - (a.tm || 0); }).forEach(function (w) {
+      var delBtn = '';
+      if (currentWishTab === 'myWish') {
+        delBtn = '<button class="mkt-wish-del" data-del="' + escapeHtml(w.id) + '"><i class="fa-solid fa-xmark"></i></button>';
+      }
+      html += '<div class="mkt-wish-card" data-id="' + escapeHtml(w.id) + '">' +
+        '<div class="mkt-wish-icon">' + escapeHtml(w.emoji) + '</div>' +
+        '<div class="mkt-wish-info">' +
+          '<div class="mkt-wish-name">' + escapeHtml(w.name) + '</div>' +
+          '<div class="mkt-wish-time">' + formatTime(w.tm) + '</div>' +
+        '</div>' +
+        '<div class="mkt-wish-price">' + formatPrice(w.price) + '</div>' +
+        delBtn +
+        '</div>';
+    });
+    mktWishes.innerHTML = html;
+
+    mktWishes.querySelectorAll('[data-del]').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var id = btn.getAttribute('data-del');
+        if (!confirm('从心愿单删除？')) return;
+        myWishes = myWishes.filter(function (w) { return w.id !== id; });
+        saveWishes().then(function () { renderWishes(); });
+      });
+    });
+  }
+
+  // ==================== TA 自动送礼 ====================
+  function getAutoGiftDay() {
+    var today = new Date().toISOString().slice(0, 10);
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(LS_AUTO_GIFT_DAY) || 'null'); } catch (e) {}
+    if (!raw || raw.date !== today) {
+      raw = { date: today, count: 0 };
+      try { localStorage.setItem(LS_AUTO_GIFT_DAY, JSON.stringify(raw)); } catch (e) {}
+    }
+    return raw;
+  }
+
+  function bumpAutoGiftDay() {
+    var d = getAutoGiftDay();
+    d.count += 1;
+    try { localStorage.setItem(LS_AUTO_GIFT_DAY, JSON.stringify(d)); } catch (e) {}
+  }
+
+  function maybeAutoGift() {
+    // 夜间不触发
+    var hour = new Date().getHours();
+    if (hour >= 0 && hour < 6) return;
+
+    // 每日上限
+    var day = getAutoGiftDay();
+    if (day.count >= (settings.dailyLimit || 3)) return;
+
+    // 概率
+    if (Math.random() > (settings.autoGiftProbability || 0.3)) return;
+
+    // TA 钱包不足则不发
+    if (wallet.systemBalance <= 0) return;
+
+    // 分支
+    var roll = Math.random();
+    var gift = null;
+    var fromMyWish = false;
+    var side = 'in';
+    var specialText = '';
+
+    if (roll < BRANCH_BUY_MY_WISH && myWishes.length > 0) {
+      // 分支 1：买我的心愿
+      var myWish = randomPick(myWishes);
+      gift = DEFAULT_GIFTS.find(function (g) { return g.id === myWish.giftId; });
+      if (!gift) {
+        gift = { id: myWish.giftId, name: myWish.name, price: myWish.price, emoji: myWish.emoji };
+      }
+      fromMyWish = true;
+    } else if (roll < BRANCH_BUY_MY_WISH + BRANCH_BUY_SELF) {
+      // 分支 2：给自己买
+      gift = randomPick(DEFAULT_GIFTS);
+      side = 'self';
+    } else {
+      // 分支 3：随机逛市集
+      gift = randomPick(DEFAULT_GIFTS);
+      side = 'in';
+    }
+
+    if (!gift) return;
+    if (gift.price > wallet.systemBalance) {
+      // 钱不够，就随机买一件便宜的
+      var affordable = DEFAULT_GIFTS.filter(function (g) { return g.price <= wallet.systemBalance; });
+      if (affordable.length === 0) return;
+      gift = randomPick(affordable);
+    }
+
+    // 扣 TA 钱包
+    wallet.systemBalance -= gift.price;
+    saveWallet();
+
+    // 记录
+    var record = {
+      id: genId('box'),
+      giftId: gift.id,
+      name: gift.name,
+      price: gift.price,
+      emoji: gift.emoji,
+      wish: fromMyWish ? '实现了你的心愿' : (side === 'self' ? 'Ta 给自己买的' : 'Ta 随机挑的'),
+      side: side,
+      claimed: false,
+      tm: Date.now()
+    };
+    boxItems.push(record);
+
+    // 特殊话术
+    if (fromMyWish) {
+      specialText = '我的心愿被你实现啦！';
+    }
+
+    Promise.all([saveBox(), saveWallets_()]).then(function () {
+      // 传聊天礼物卡
+      if (typeof window.chatAddGift === 'function') {
+        try { window.chatAddGift(record); } catch (e) {}
+      }
+      // TA 回复
+      scheduleTaReplyToGift(side, specialText || null);
+      // 刷新 UI
+      renderBox();
+      updateWalletUI();
+      // 计数
+      bumpAutoGiftDay();
+    });
+
+    function saveWallets_() { return saveWallet(); }
+  }
+
+  // 定时器
+  function scheduleAutoGift() {
+    if (autoGiftScheduled) return;
+    autoGiftScheduled = true;
+
+    function tick() {
+      resolveCurrentContact();
+      maybeAutoGift();
+      var next = randomInt(AUTO_GIFT_MIN, AUTO_GIFT_MAX);
+      autoGiftTimer = setTimeout(tick, next);
+    }
+
+    var first = randomInt(AUTO_GIFT_MIN, AUTO_GIFT_MAX);
+    autoGiftTimer = setTimeout(tick, first);
+  }
+
+  // ==================== 设置弹窗 ====================
+  function openSettingsModal() {
+    var old = document.getElementById('mktSettingsModal');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var modal = document.createElement('div');
+    modal.id = 'mktSettingsModal';
+    modal.className = 'mkt-modal';
+    modal.innerHTML =
+      '<div class="mkt-panel">' +
+        '<div class="mkt-panel-title">市集设置</div>' +
+        '<div class="mkt-setting-row">' +
+          '<label class="mkt-setting-label">自动送礼概率（0~1）</label>' +
+          '<input type="number" step="0.05" min="0" max="1" class="mkt-panel-input" id="mktSettingProb" value="' +
+            settings.autoGiftProbability + '">' +
+        '</div>' +
+        '<div class="mkt-setting-row">' +
+          '<label class="mkt-setting-label">每日上限</label>' +
+          '<input type="number" min="1" max="20" class="mkt-panel-input" id="mktSettingLimit" value="' +
+            settings.dailyLimit + '">' +
+        '</div>' +
+        '<div class="mkt-setting-row">' +
+          '<label class="mkt-setting-label">回复概率（0~1）</label>' +
+          '<input type="number" step="0.05" min="0" max="1" class="mkt-panel-input" id="mktSettingReply" value="' +
+            settings.replyProbability + '">' +
+        '</div>' +
+        '<div class="mkt-panel-actions">' +
+          '<button class="mkt-btn mkt-btn-cancel" id="mktSettingCancel">取消</button>' +
+          '<button class="mkt-btn mkt-btn-confirm" id="mktSettingSave">保存</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+    requestAnimationFrame(function () { modal.classList.add('active'); });
+
+    function closeModal() {
+      modal.classList.remove('active');
+      setTimeout(function () {
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+      }, 250);
+    }
+
+    document.getElementById('mktSettingCancel').addEventListener('click', closeModal);
+    document.getElementById('mktSettingSave').addEventListener('click', function () {
+      var p = parseFloat(document.getElementById('mktSettingProb').value);
+      var l = parseInt(document.getElementById('mktSettingLimit').value, 10);
+      var r = parseFloat(document.getElementById('mktSettingReply').value);
+      if (isNaN(p) || p < 0 || p > 1) { alert('自动送礼概率 0~1'); return; }
+      if (isNaN(l) || l < 1) { alert('每日上限 ≥1'); return; }
+      if (isNaN(r) || r < 0 || r > 1) { alert('回复概率 0~1'); return; }
+      settings.autoGiftProbability = p;
+      settings.dailyLimit = l;
+      settings.replyProbability = r;
+      saveSettings().then(closeModal);
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
     });
   }
 
@@ -639,6 +972,7 @@
         if (mktViews[k]) mktViews[k].classList.toggle('active', k === name);
       });
       if (name === 'cabinet') renderBox();
+      if (name === 'wishlist') renderWishes();
     });
   });
 
@@ -659,16 +993,19 @@
         b.classList.remove('active');
       });
       btn.classList.add('active');
+      currentWishTab = btn.getAttribute('data-sub');
+      renderWishes();
     });
   });
 
   // ==================== 页面进入 ====================
   function enterMarket() {
     resolveCurrentContact();
-    Promise.all([loadWallet(), loadBox()]).then(function () {
+    Promise.all([loadWallet(), loadBox(), loadWishes(), loadSettings()]).then(function () {
       renderCategories();
       renderGoods();
       renderBox();
+      renderWishes();
     });
   }
 
@@ -697,13 +1034,21 @@
     mktWalletBtn.addEventListener('click', openWalletModal);
   }
 
+  // 设置按钮（如果有）
+  var mktSettingsBtn = document.getElementById('mktSettingsBtn');
+  if (mktSettingsBtn) {
+    mktSettingsBtn.addEventListener('click', openSettingsModal);
+  }
+
   // ==================== 初始化 ====================
   function init() {
     resolveCurrentContact();
-    Promise.all([loadWallet(), loadBox()]).then(function () {
+    Promise.all([loadWallet(), loadBox(), loadWishes(), loadSettings()]).then(function () {
       renderCategories();
       renderGoods();
       renderBox();
+      renderWishes();
+      scheduleAutoGift();
     });
   }
 
@@ -726,7 +1071,9 @@
     },
     formatPrice: formatPrice,
     getBoxItems: function () { return boxItems; },
-         claimGift: function (giftRecordId) {
+    getWishes: function () { return { my: myWishes, ta: taWishes }; },
+
+    claimGift: function (giftRecordId) {
       var it = boxItems.find(function (x) { return x.id === giftRecordId; });
       if (!it) return;
       if (it.claimed) return;
@@ -738,7 +1085,8 @@
         }
       });
     },
-    // 供测试：模拟 TA 送我一个礼物
+
+    // 测试：模拟 TA 送我一个礼物
     simulateIncoming: function (giftId, wish) {
       var gift = DEFAULT_GIFTS.find(function (g) { return g.id === giftId; }) || DEFAULT_GIFTS[0];
       var rec = {
@@ -759,6 +1107,31 @@
           try { window.chatAddGift(rec); } catch (e) {}
         }
       });
+    },
+
+    // 测试：立刻触发一次 TA 自动送礼
+    forceAutoGift: function () {
+      // 跳过概率和上限，直接走一次分支
+      var savedProb = settings.autoGiftProbability;
+      var savedDay = getAutoGiftDay();
+      settings.autoGiftProbability = 1;
+      try { localStorage.setItem(LS_AUTO_GIFT_DAY, JSON.stringify({ date: savedDay.date, count: 0 })); } catch (e) {}
+      maybeAutoGift();
+      settings.autoGiftProbability = savedProb;
+    },
+
+    // 设置
+    getSettings: function () { return settings; },
+    setSettings: function (patch) {
+      settings = Object.assign({}, settings, patch || {});
+      return saveSettings();
+    },
+    openSettingsModal: openSettingsModal,
+
+    // 心愿单
+    addMyWish: function (giftId) {
+      var gift = DEFAULT_GIFTS.find(function (g) { return g.id === giftId; });
+      if (gift) addWishFromGift(gift);
     }
   };
 
