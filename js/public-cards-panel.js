@@ -11,7 +11,7 @@
   function buildPanel() {
     var container = document.getElementById('publicCardsList');
     if (!container) {
-      console.warn('[public-cards-panel] 找不到 #publicCardsList');
+      // 容器还没生成（设置面板没打开），静默跳过
       return;
     }
 
@@ -21,6 +21,8 @@
     }
 
     container.innerHTML = '';
+    // ... 后续渲染逻辑
+  }
 
     // 顶部操作栏
     var bar = document.createElement('div');
@@ -120,13 +122,18 @@
   }
 
   // 等待 publicCards 就绪 + DOM 就绪
-  function init() {
-    if (!window.publicCards) {
-      console.warn('[public-cards-panel] window.publicCards 未加载');
-      return;
-    }
-    window.publicCards.onReady(buildPanel);
+ function init() {
+  if (!window.publicCards) {
+    console.warn('[public-cards-panel] window.publicCards 未加载');
+    return;
   }
+  window.publicCards.onReady(function () {
+    // 只在容器存在时才渲染
+    if (document.getElementById('publicCardsList')) {
+      buildPanel();
+    }
+  });
+}
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
