@@ -16,8 +16,7 @@
   var pageImportantDay    = document.getElementById('pageImportantDay');
   var pageMood            = document.getElementById('pageMood');
   var pageEnvelope        = document.getElementById('pageEnvelope');
-  var pageFeed = document.getElementById('pageFeed');
-  var pageMarket = document.getElementById('pageMarket');
+  var pageFeed            = document.getElementById('pageFeed');
 
   // 所有需要参与切换的页面集合（自动收集所有 .page）
   var allPages = Array.prototype.slice.call(document.querySelectorAll('.page'));
@@ -117,6 +116,5 @@
   window.pageMood            = pageMood;
   window.pageEnvelope        = pageEnvelope;
   window.pageFeed            = pageFeed;
-  window.pageMarket          = pageMarket;
 
 })();
