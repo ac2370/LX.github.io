@@ -154,6 +154,25 @@
     }
   };
 
+    // ==================== 供字卡库只读展示用 ====================
+  // 返回指定分类下所有内置分组（带分类标识）
+  window.publicCards.getBuiltinGroups = function (category) {
+    var cat = category || 'reply';
+    var groups = getAllGroups(cat);
+    return groups.map(function (name) {
+      return {
+        name: name,
+        category: cat,
+        count: getCardsByGroup(name, cat).length
+      };
+    });
+  };
+
+  // 返回某内置分组的字卡（只读）
+  window.publicCards.getBuiltinCards = function (groupName, category) {
+    return getCardsByGroup(groupName, category || 'reply');
+  };
+  
   // ==================== 初始化 ====================
   load();
 
