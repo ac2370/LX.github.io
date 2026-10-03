@@ -555,3 +555,283 @@ body.theme-dark .feed-post-btn-cancel {
 body.theme-dark .feed-unread-dot {
   box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
 }
+
+/* ============================================================
+   评论"回复"按钮
+   ============================================================ */
+.feed-comment-reply-btn {
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  background: rgba(230, 235, 245, 0.7);
+  border: none;
+  color: #6a8ca8;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.feed-comment-reply-btn:active { background: #dfe5ee; }
+body.theme-dark .feed-comment-reply-btn {
+  background: rgba(56, 62, 72, 0.8);
+  color: #9cc3e8;
+}
+
+/* "回复 xxx" 提示 */
+.feed-comment-to {
+  color: #8899a6;
+  font-weight: 500;
+  margin-right: 2px;
+}
+
+/* ============================================================
+   删除动态按钮（红色）
+   ============================================================ */
+.feed-action-del {
+  color: #c0a8a8 !important;
+  flex: 0 0 auto !important;
+  padding: 6px 10px !important;
+}
+.feed-action-del:active {
+  background: rgba(253, 240, 240, 0.9) !important;
+  color: #e58b8b !important;
+}
+
+/* ============================================================
+   设置按钮的未读数字红点
+   ============================================================ */
+.feed-settings-btn {
+  position: relative;
+}
+.feed-notice-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #f57171;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(245, 113, 113, 0.5);
+  pointer-events: none;
+}
+
+/* ============================================================
+   通知弹窗
+   ============================================================ */
+.feed-notice-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.feed-notice-modal.active { opacity: 1; }
+
+.feed-notice-panel {
+  width: 100%;
+  max-width: 380px;
+  max-height: 80vh;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: feedPopIn 0.22s ease;
+}
+@keyframes feedPopIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+body.theme-dark .feed-notice-panel {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: var(--theme-card-border);
+}
+
+.feed-notice-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 20px;
+  border-bottom: 1px solid #f0f3f6;
+}
+body.theme-dark .feed-notice-header {
+  border-bottom-color: var(--theme-card-border);
+}
+.feed-notice-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .feed-notice-title { color: var(--theme-text); }
+.feed-notice-close {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  background: #f5f6f8;
+  border: none;
+  color: #55606b;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+.feed-notice-close:active { background: #e8ecf0; }
+body.theme-dark .feed-notice-close {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+}
+
+.feed-notice-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 12px 16px;
+  scrollbar-width: none;
+}
+.feed-notice-body::-webkit-scrollbar { display: none; }
+
+.feed-notice-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 10px;
+  border-radius: 14px;
+  margin-bottom: 6px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+}
+.feed-notice-item.new {
+  background: #fdf5f5;
+  border-color: #f8d8d8;
+}
+body.theme-dark .feed-notice-item {
+  background: rgba(42, 48, 56, 0.6);
+  border-color: var(--theme-card-border);
+}
+body.theme-dark .feed-notice-item.new {
+  background: rgba(248, 180, 180, 0.12);
+  border-color: rgba(248, 180, 180, 0.3);
+}
+
+.feed-notice-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.feed-notice-icon.like {
+  background: #fdf0f0;
+  color: #e58b8b;
+}
+.feed-notice-icon.comment {
+  background: #eaf3fb;
+  color: #6fa3cc;
+}
+.feed-notice-icon.reply {
+  background: #f0faf5;
+  color: #3d9c74;
+}
+
+.feed-notice-main {
+  flex: 1;
+  min-width: 0;
+}
+.feed-notice-line {
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+  word-break: break-word;
+}
+body.theme-dark .feed-notice-line { color: var(--theme-text); }
+.feed-notice-line b {
+  font-weight: 700;
+  color: #e58b8b;
+}
+.feed-notice-time {
+  font-size: 11px;
+  color: #a8b4c0;
+  margin-top: 4px;
+}
+body.theme-dark .feed-notice-time { color: var(--theme-text-muted); }
+
+.feed-notice-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #c0ccd6;
+  font-size: 13px;
+}
+.feed-notice-empty i {
+  font-size: 32px;
+  color: #dde6ee;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.feed-notice-footer {
+  flex-shrink: 0;
+  padding: 10px 20px 16px 20px;
+  border-top: 1px solid #f0f3f6;
+}
+body.theme-dark .feed-notice-footer {
+  border-top-color: var(--theme-card-border);
+}
+.feed-notice-clear {
+  width: 100%;
+  padding: 11px 0;
+  border-radius: 14px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  color: #8899a6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.feed-notice-clear:active { background: #f2f6fa; }
+body.theme-dark .feed-notice-clear {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+
+/* 红点（主页入口） */
+#btnFeed { position: relative; }
+.feed-unread-dot {
+  position: absolute;
+  top: 6px;
+  right: 22px;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #f57171;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+}
+body.theme-dark .feed-unread-dot {
+  box-shadow: 0 0 0 2px rgba(30, 36, 43, 0.9);
+}
