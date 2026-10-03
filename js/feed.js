@@ -11,8 +11,9 @@
      - 你发动态 / TA 自动发动态 / TA 三件套反应
      - 你评论 TA 的动态（TA 60% 概率回复）
      - 你回复评论（TA 60% 概率回复）
-     - 通知列表（点设置按钮弹出）
+     - 通知列表（点铃铛按钮弹出）
      - 删除自己的动态
+     - 顶部 ➕ 按钮触发发帖弹层
    依赖：
      - window.showPage / window.pageFeed / window.pageHome
      - window.getReplyCards（card.js）
@@ -36,10 +37,10 @@
   };
 
   // ★ 测试用
-  var TEST_REACTION_DELAY_MS = 5 * 1000;   // 三件套反应延迟
-  var TEST_COMMENT_REPLY_DELAY_MS = 5 * 1000;  // TA 回复评论延迟
-  var TEST_AUTO_POST_MIN_MS = 5 * 1000;
-  var TEST_AUTO_POST_MAX_MS = 5 * 1000;
+  var TEST_REACTION_DELAY_MS      = 5 * 1000;   // 三件套反应延迟
+  var TEST_COMMENT_REPLY_DELAY_MS = 5 * 1000;   // TA 回复评论延迟
+  var TEST_AUTO_POST_MIN_MS       = 5 * 1000;
+  var TEST_AUTO_POST_MAX_MS       = 5 * 1000;
 
   // 概率
   var AUTO_POST_PROBABILITY = 0.30;
@@ -48,23 +49,22 @@
   var FAVORITE_PROBABILITY  = 0.30;
   var TA_REPLY_TO_MY_COMMENT_PROB = 0.60;  // TA 回复你的评论 / 回复
 
-  // 红点标记（主页入口用）
+  // 主页入口红点
   var LS_UNREAD_DOT_KEY = 'feed_unread_dot';
 
   // ==================== DOM ====================
   var btnFeed         = document.getElementById('btnFeed');
   var feedBackBtn     = document.getElementById('feedBackBtn');
-  var feedSettingsBtn = document.getElementById('feedSettingsBtn');
+  var feedSettingsBtn = document.getElementById('feedSettingsBtn');   // 现在是小铃铛
+  var feedAddBtn      = document.getElementById('feedAddBtn');        // 顶部 ➕ 按钮
 
   var feedHeaderAvatar = document.getElementById('feedHeaderAvatar');
   var feedHeaderName   = document.getElementById('feedHeaderName');
 
-  var feedPostBar    = document.getElementById('feedPostBar');
-  var feedPostAvatar = document.getElementById('feedPostAvatar');
-
   var feedList  = document.getElementById('feedList');
   var feedEmpty = document.getElementById('feedEmpty');
 
+  // 发帖弹层
   var postModal  = document.getElementById('feedPostModal');
   var postClose  = document.getElementById('feedPostClose');
   var postCancel = document.getElementById('feedPostCancel');
@@ -72,19 +72,15 @@
   var postText   = document.getElementById('feedPostText');
 
   // ==================== 状态 ====================
-  var feedData   = {};
-  var feedNotices = [];       // 通知数组
-  var dataReady  = false;
-  var noticesReady = false;
+  var feedData    = {};
+  var feedNotices = [];
+  var dataReady   = false;
 
   var currentContactId = null;
   var currentContact   = null;
 
-  var autoPostTimer = null;
+  var autoPostTimer     = null;
   var autoPostScheduled = false;
-
-  // 评论输入临时状态（用于楼中楼）
-  var pendingCommentTarget = null;   // { postId, parentCommentId? , to? }
 
   // ==================== 工具 ====================
   function escapeHtml(str) {
@@ -166,7 +162,6 @@
   function loadData() {
     if (typeof localforage === 'undefined') {
       dataReady = true;
-      noticesReady = true;
       return Promise.resolve();
     }
     return Promise.all([
@@ -176,12 +171,10 @@
       feedData = (results[0] && typeof results[0] === 'object') ? results[0] : {};
       feedNotices = Array.isArray(results[1]) ? results[1] : [];
       dataReady = true;
-      noticesReady = true;
     }).catch(function () {
       feedData = {};
       feedNotices = [];
       dataReady = true;
-      noticesReady = true;
     });
   }
 
@@ -248,7 +241,6 @@
       feedHeaderAvatar.alt = getTaName();
     }
     if (feedHeaderName) feedHeaderName.textContent = getTaName();
-    if (feedPostAvatar) feedPostAvatar.src = getMyAvatar();
   }
 
   // ==================== 渲染 ====================
@@ -336,7 +328,6 @@
         '<span>' + (favorited ? '已收藏' : '收藏') + '</span>' +
       '</button>';
 
-    // 只有"我发的"动态才显示删除
     if (post.role === 'me') {
       html += '<button class="feed-action-btn feed-action-del" data-act="delete">' +
         '<i class="fa-solid fa-trash-can"></i>' +
@@ -344,8 +335,8 @@
       '</button>';
     }
 
-    html += '</div>';   // .feed-card-actions
-    html += '</div>';   // .feed-card
+    html += '</div>';
+    html += '</div>';
     return html;
   }
 
@@ -397,7 +388,6 @@
 
   // ==================== 评论输入 ====================
   function openCommentInput(postId, parentCommentId) {
-    // 找父评论作者名（若有）
     var toName = '';
     if (parentCommentId) {
       var bucket = getCurrentBucket();
@@ -413,14 +403,11 @@
     var t = text.trim();
     if (!t) return;
 
-    pendingCommentTarget = { postId: postId, parentCommentId: parentCommentId || null, to: toName };
-
     var bucket = getCurrentBucket();
     var post = bucket.posts.find(function (p) { return p.id === postId; });
     if (!post) return;
 
     if (!parentCommentId) {
-      // 顶级评论
       if (!Array.isArray(post.comments)) post.comments = [];
       post.comments.push({
         id: genId('cmt'),
@@ -431,13 +418,11 @@
       });
       saveData().then(function () {
         renderList();
-        // TA 回复我这条评论（60%）
         if (Math.random() < TA_REPLY_TO_MY_COMMENT_PROB) {
           scheduleTaReplyToComment(postId, null, t);
         }
       });
     } else {
-      // 楼中楼
       var parent = (post.comments || []).find(function (x) { return x.id === parentCommentId; });
       if (!parent) return;
       if (!Array.isArray(parent.replies)) parent.replies = [];
@@ -458,7 +443,7 @@
   }
 
   // ==================== TA 回复评论 ====================
-  function scheduleTaReplyToComment(postId, parentCommentId, myText) {
+  function scheduleTaReplyToComment(postId, parentCommentId) {
     setTimeout(function () {
       var pool = getReplyPool();
       var replyText = pool.length > 0 ? String(randomPick(pool)).trim() : '嗯嗯~';
@@ -470,7 +455,6 @@
       var taName = getTaName();
 
       if (!parentCommentId) {
-        // 直接在 post 上加一条 TA 的顶级评论
         if (!Array.isArray(post.comments)) post.comments = [];
         post.comments.push({
           id: genId('cmt'),
@@ -481,7 +465,6 @@
         });
         addNotice('comment', postId, replyText);
       } else {
-        // 塞进楼中楼
         var parent = (post.comments || []).find(function (x) { return x.id === parentCommentId; });
         if (!parent) return;
         if (!Array.isArray(parent.replies)) parent.replies = [];
@@ -539,7 +522,6 @@
     if (!confirm('确定删除这条动态吗？')) return;
 
     bucket.posts = bucket.posts.filter(function (p) { return p.id !== postId; });
-    // 也清掉与该动态相关的通知
     feedNotices = feedNotices.filter(function (n) { return n.postId !== postId; });
     saveNotices();
     saveData().then(function () {
@@ -591,7 +573,6 @@
 
   // ==================== 通知弹窗 ====================
   function openNoticeModal() {
-    // 已存在则先移除
     var old = document.getElementById('feedNoticeModal');
     if (old && old.parentNode) old.parentNode.removeChild(old);
 
@@ -641,7 +622,6 @@
       body.innerHTML = html;
     }
 
-    // 事件
     document.getElementById('feedNoticeClose').addEventListener('click', function () {
       closeNoticeModal();
     });
@@ -656,7 +636,6 @@
       if (e.target === modal) closeNoticeModal();
     });
 
-    // 打开即视为已读
     markAllNoticesRead();
   }
 
@@ -861,8 +840,8 @@
   function enterFeed() {
     resolveCurrentContact();
     updateHeader();
-    clearUnreadDot();          // 进页面清主页入口红点
-    updateNoticeBadge();       // 更新设置按钮上的未读数字
+    clearUnreadDot();
+    updateNoticeBadge();
     if (dataReady) {
       renderList();
     } else {
@@ -891,9 +870,17 @@
     });
   }
 
+  // 顶部铃铛 → 通知弹窗
   if (feedSettingsBtn) {
     feedSettingsBtn.addEventListener('click', function () {
       openNoticeModal();
+    });
+  }
+
+  // 顶部 ➕ → 发帖弹层
+  if (feedAddBtn) {
+    feedAddBtn.addEventListener('click', function () {
+      openPostModal();
     });
   }
 
@@ -907,7 +894,6 @@
     if (postModal) postModal.classList.remove('active');
   }
 
-  if (feedPostBar) feedPostBar.addEventListener('click', openPostModal);
   if (postClose)   postClose.addEventListener('click', closePostModal);
   if (postCancel)  postCancel.addEventListener('click', closePostModal);
   if (postModal) {
