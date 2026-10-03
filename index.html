@@ -27,6 +27,7 @@
   <link rel="stylesheet" href="./css/mood.css">
   <link rel="stylesheet" href="./css/envelope.css">
   <link rel="stylesheet" href="./css/feed.css">
+  <link rel="stylesheet" href="./css/market.css">
 </head>
 <body>
 
@@ -125,7 +126,7 @@
             <div class="function-icon"><i class="fa-solid fa-list-check text-[#222] text-lg"></i></div>
             <span class="function-label">梦向问卷</span>
           </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+          <a class="function-item" id="btnMarket" style="cursor: pointer;">
             <div class="function-icon"><i class="fa-solid fa-gift text-[#222] text-lg"></i></div>
             <span class="function-label">心意集市</span>
           </a>
@@ -739,6 +740,104 @@
     </div>
   </div>
 </div>
+
+  <!-- ==================== 心意市集 页面 ==================== -->
+<div class="page" id="pageMarket">
+  <div class="mkt-container">
+
+    <!-- 顶部导航栏 -->
+    <div class="mkt-topbar">
+      <button class="mkt-back-btn" id="mktBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="mkt-topbar-title">心意市集</span>
+      <button class="mkt-wallet-btn" id="mktWalletBtn" title="点击修改余额">
+        <i class="fa-solid fa-wallet"></i>
+        <span id="mktWalletAmount">¥520</span>
+      </button>
+    </div>
+
+    <!-- Tab 切换栏 -->
+    <div class="mkt-tabs">
+      <button class="mkt-tab active" data-tab="shop" id="mktTabShop">
+        <i class="fa-solid fa-store"></i> 市集
+      </button>
+      <button class="mkt-tab" data-tab="cabinet" id="mktTabCabinet">
+        <i class="fa-solid fa-box-open"></i> 心意柜
+      </button>
+      <button class="mkt-tab" data-tab="wishlist" id="mktTabWishlist">
+        <i class="fa-regular fa-heart"></i> 心愿单
+      </button>
+    </div>
+
+    <!-- 主体 -->
+    <div class="mkt-body">
+
+      <!-- 市集 Tab -->
+      <div class="mkt-view active" id="mktViewShop">
+        <!-- 分类横滚 -->
+        <div class="mkt-categories" id="mktCategories">
+          <!-- JS 或静态填充 -->
+        </div>
+        <!-- 双列商品网格 -->
+        <div class="mkt-goods-grid" id="mktGoodsGrid"></div>
+        <!-- 空状态 -->
+        <div class="mkt-empty" id="mktGoodsEmpty" style="display:none;">
+          <i class="fa-solid fa-store"></i>
+          <div class="mkt-empty-text">这个分类下还没有商品</div>
+        </div>
+      </div>
+
+      <!-- 心意柜 Tab -->
+      <div class="mkt-view" id="mktViewCabinet">
+        <!-- 三张统计卡 -->
+        <div class="mkt-stats-row">
+          <div class="mkt-stat-card">
+            <div class="mkt-stat-num" id="mktStatFromTa">0</div>
+            <div class="mkt-stat-label">TA 送我的</div>
+          </div>
+          <div class="mkt-stat-card">
+            <div class="mkt-stat-num" id="mktStatToTa">0</div>
+            <div class="mkt-stat-label">我送 TA 的</div>
+          </div>
+          <div class="mkt-stat-card">
+            <div class="mkt-stat-num" id="mktStatTaSelf">0</div>
+            <div class="mkt-stat-label">TA 自己买的</div>
+          </div>
+        </div>
+
+        <!-- 子 Tab -->
+        <div class="mkt-sub-tabs">
+          <button class="mkt-sub-tab active" data-sub="fromTa" id="mktSubFromTa">TA 送我的</button>
+          <button class="mkt-sub-tab" data-sub="toTa" id="mktSubToTa">我送 TA 的</button>
+          <button class="mkt-sub-tab" data-sub="taSelf" id="mktSubTaSelf">TA 自己买的</button>
+        </div>
+
+        <!-- 记录列表 -->
+        <div class="mkt-records" id="mktRecords"></div>
+        <div class="mkt-empty" id="mktRecordsEmpty" style="display:none;">
+          <i class="fa-solid fa-box-open"></i>
+          <div class="mkt-empty-text">这里还没有记录</div>
+        </div>
+      </div>
+
+      <!-- 心愿单 Tab -->
+      <div class="mkt-view" id="mktViewWishlist">
+        <div class="mkt-sub-tabs">
+          <button class="mkt-sub-tab active" data-sub="myWish" id="mktSubMyWish">我的心愿单</button>
+          <button class="mkt-sub-tab" data-sub="taWish" id="mktSubTaWish">Ta 的心愿单</button>
+        </div>
+        <div class="mkt-wishes" id="mktWishes"></div>
+        <div class="mkt-empty" id="mktWishesEmpty" style="display:none;">
+          <i class="fa-regular fa-heart"></i>
+          <div class="mkt-empty-text">还没有心愿</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
   
   <!-- ==================== 心晴手账 页面 ==================== -->
 <div class="page" id="pageMood">
@@ -1298,5 +1397,6 @@
   <script src="./js/mood.js"></script>
   <script src="./js/features/envelope.js"></script>
   <script src="./js/feed.js"></script>
+  <script src="./js/market.js"></script>
 </body>
 </html>
