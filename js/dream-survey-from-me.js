@@ -205,7 +205,6 @@
   }
 
   function tickAnswer(surveyId, qIdx) {
-  function tickAnswer(surveyId, qIdx) {
     var s = findSurvey(surveyId);
     if (!s) return;
     if (s.status !== 'sent') return;   // 已被撤回 / 状态变了
