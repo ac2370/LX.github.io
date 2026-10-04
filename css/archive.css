@@ -635,3 +635,34 @@
 @keyframes cenSlideFade {
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* Ta 档案 · 自动字段样式 */
+.arc-field-auto {
+  background: rgba(248, 180, 180, 0.08);
+  border-radius: 6px;
+  padding: 2px 6px;
+  cursor: default;
+  position: relative;
+  min-height: 18px;
+}
+.arc-field-auto::after {
+  content: '自动';
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  font-size: 8px;
+  color: #e58b8b;
+  background: #fff;
+  padding: 0 4px;
+  border-radius: 4px;
+  border: 1px solid #f8d8d8;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+body.theme-dark .arc-field-auto {
+  background: rgba(248, 180, 180, 0.12);
+}
+body.theme-dark .arc-field-auto::after {
+  background: rgba(38, 44, 52, 0.97);
+  border-color: rgba(248, 180, 180, 0.3);
+}
