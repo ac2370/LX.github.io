@@ -79,6 +79,83 @@
     });
   }
 
+    // ==================== 已读标记 ====================
+  var readMarkTimer = null;
+
+  function scheduleReadMark() {
+    // 已经有定时器就不重复
+    if (readMarkTimer) return;
+    // 1.5 ~ 4 秒随机延迟
+    var delay = 1500 + Math.floor(Math.random() * 2500);
+    readMarkTimer = setTimeout(function () {
+      readMarkTimer = null;
+      markAllSelfAsRead();
+    }, delay);
+  }
+
+  function markAllSelfAsRead() {
+    var settings = getSettings();
+    // 把所有未读的我方消息标为已读
+    var rows = chatMessages.querySelectorAll('.message-row.self');
+    var changed = false;
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (row.dataset.read === 'true') continue;
+      row.dataset.read = 'true';
+      changed = true;
+    }
+
+    if (!changed) return;
+
+    // 重绘所有回执
+    updateReadReceipts();
+  }
+
+  // 更新所有已读回执 DOM
+  function updateReadReceipts() {
+    var settings = getSettings();
+    var showReadStatus = !!settings.readStatus;
+
+    var rows = chatMessages.querySelectorAll('.message-row.self');
+    var arr = Array.prototype.slice.call(rows);
+
+    // 对每条消息：找到它是不是所属发送者分组的最后一条
+    // 我方消息都是同一发送者，所以直接判断「下一条我方消息」是否在 60s 内
+    arr.forEach(function (row, idx) {
+      // 先移除旧的回执
+      var existing = row.querySelector('.message-read-receipt');
+      if (existing) existing.parentNode.removeChild(existing);
+
+      if (!showReadStatus) return;
+
+      // 只在该发送者分组最后一条显示
+      // 找下一条我方消息
+      var next = arr[idx + 1];
+      if (next) {
+        var curTime = parseInt(row.dataset.time || '0', 10);
+        var nextTime = parseInt(next.dataset.time || '0', 10);
+        if (nextTime - curTime < 60000) {
+          // 60 秒内还有同发送者消息，不显示回执
+          return;
+        }
+      }
+
+      // 只有已读的才显示（2B 方案：未读不显示）
+      if (row.dataset.read !== 'true') return;
+
+      // 插入单勾图标
+      var body = row.querySelector('.message-body');
+      if (!body) return;
+
+      var receipt = document.createElement('div');
+      receipt.className = 'message-read-receipt';
+      receipt.innerHTML = '<i class="fa-solid fa-check"></i>';
+      receipt.title = '已读';
+      body.appendChild(receipt);
+    });
+  }
+
   // ==================== 时间格式化 ====================
   function formatTime(ts) {
     if (!ts) return '';
@@ -532,16 +609,34 @@
       content = text;
     }
 
-    chatMessages.appendChild(createMessageRow('self', content));
+       var newRow = createMessageRow('self', content);
+    newRow.dataset.read = 'false';
+    chatMessages.appendChild(newRow);
     lastUserMessage = text;
 
     chatInput.value = '';
     updateSendBtnState();
     scrollToBottom();
 
-    triggerAutoReply();
-  }
+    // ① 启动「已读延迟标记」——1.5~4 秒后把所有未读我方消息标为已读
+    scheduleReadMark();
 
+    // ② 判断「已读不回」——命中则只标已读，不回复
+    var settings = getSettings();
+    var shouldIgnore = false;
+    if (settings.readNoReply) {
+      // 20% 概率已读不回
+      if (Math.random() < 0.2) {
+        shouldIgnore = true;
+      }
+    }
+
+    if (!shouldIgnore) {
+      triggerAutoReply();
+    } else {
+      console.log('[传讯] 已读不回命中，跳过回复');
+    }
+  }
   sendBtn.addEventListener('click', sendMessage);
   chatInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -599,6 +694,9 @@
         if (typingRow && typingRow.parentNode) {
           typingRow.parentNode.removeChild(typingRow);
         }
+
+                // 回复路径也标一次已读（双路径兜底）
+        markAllSelfAsRead();
 
         const minCount = Math.max(0, settings.minCount || 0);
         const maxCount = Math.max(minCount, settings.maxCount || 3);
@@ -885,7 +983,13 @@
   chatMessages.addEventListener('scroll', closeMsgMenu, true);
   window.addEventListener('resize', closeMsgMenu);
 
-  updateSendBtnState();
+   updateSendBtnState();
   scrollToBottom();
-
+  // 页面初始化时刷新一遍回执（防止刷新页面后状态丢失显示）
+  setTimeout(updateReadReceipts, 100);
+  
+    // 设置变更时刷新回执
+  window.addEventListener('replySettingsChanged', function () {
+    updateReadReceipts();
+  });
 })();
