@@ -1,9 +1,10 @@
 /**
  * 梦向问卷模块
- * - 列表页 #pageDreamSurvey
- * - 编辑页 #pageDreamSurveyEdit
+ * - 列表页 #pageDreamSurvey（含「我的问卷 / Ta 的问卷」分类切换）
+ * - 编辑页 #pageDreamSurveyEdit（含「从问卷库添加」折叠面板）
  * - 详情页 #pageDreamSurveyDetail
  * - 存储：localStorage 'dream_survey_list'
+ * - 依赖：window.DREAM_SURVEY_LIB（dream-survey-questions.js）
  *
  * 本次只做 UI + 基础保存，不做「TA 作答 / 交卷」逻辑
  */
@@ -12,11 +13,15 @@
   'use strict';
 
   var STORE_KEY = 'dream_survey_list';
-  var LS_CURRENT_EDIT = 'dream_survey_editing_id';
-  var LS_CURRENT_DETAIL = 'dream_survey_detail_id';
 
   // ==================== 状态 ====================
-  var editingSurvey = null;   // 当前编辑的问卷对象（深拷贝）
+  var editingSurvey = null;      // 当前编辑的问卷对象（深拷贝）
+  var currentListTab = 'mine';   // 列表页当前 tab（'mine' | 'theirs'）
+
+  // 问卷库状态
+  var libSelected = {};          // { 'daily_0': true, ... }
+  var libCurrentCat = 'daily';   // 当前分类 key
+  var libOpen = false;           // 面板是否展开
 
   // ==================== 工具 ====================
   function genId() {
@@ -88,9 +93,26 @@
 
     var list = loadList();
 
+    // 按当前 tab 过滤
+    if (currentListTab === 'theirs') {
+      // 「Ta 的问卷」暂时空，等以后扩展
+      list = [];
+    }
+    // 「我的问卷」= 全部（后续如果需要按 status 区分，可在这里加过滤）
+
     if (list.length === 0) {
       listBox.innerHTML = '';
       emptyBox.classList.add('show');
+
+      var emptyText = emptyBox.querySelector('.ds-empty-text');
+      var emptyHint = emptyBox.querySelector('.ds-empty-hint');
+      if (currentListTab === 'theirs') {
+        if (emptyText) emptyText.textContent = 'Ta 还没有发起问卷';
+        if (emptyHint) emptyHint.textContent = '等 Ta 主动问你点什么吧';
+      } else {
+        if (emptyText) emptyText.textContent = '还没有问卷';
+        if (emptyHint) emptyHint.textContent = '点右上角 + 新建一份吧';
+      }
       return;
     }
     emptyBox.classList.remove('show');
@@ -144,6 +166,10 @@
   function renderEdit() {
     if (!editingSurvey) return;
 
+    // 重置问卷库状态（每次进编辑页都从头开始）
+    libSelected = {};
+    libOpen = false;
+
     var titleInput = document.getElementById('dsTitleInput');
     var probInput = document.getElementById('dsProbInput');
     var countLabel = document.getElementById('dsCountLabel');
@@ -157,6 +183,12 @@
         ? '编辑问卷'
         : '新建问卷';
     }
+
+    // 收起问卷库面板
+    var libPanel = document.getElementById('dsLibPanel');
+    var libToggle = document.getElementById('dsLibToggleBtn');
+    if (libPanel) libPanel.style.display = 'none';
+    if (libToggle) libToggle.classList.remove('open');
 
     renderQsList();
   }
@@ -193,7 +225,6 @@
         if (newType === q.type) return;
         q.type = newType;
         if (newType === 'text') {
-          // 文字题不需要选项
           q.options = [];
         } else if (!q.options || q.options.length < 2) {
           q.options = ['选项A', '选项B'];
@@ -228,13 +259,11 @@
       card.appendChild(textInput);
 
       if (q.type === 'text') {
-        // 文字题：显示提示
         var hint = document.createElement('div');
         hint.className = 'ds-q-text-hint';
         hint.textContent = '文字题：Ta 会自由作答';
         card.appendChild(hint);
       } else {
-        // 单选/多选：选项列表
         var optsBox = document.createElement('div');
         optsBox.className = 'ds-q-options';
 
@@ -285,7 +314,6 @@
 
         card.appendChild(optsBox);
 
-        // 多选：加多选上限
         if (q.type === 'multi') {
           var maxRow = document.createElement('div');
           maxRow.className = 'ds-q-multimax';
@@ -331,7 +359,6 @@
     });
     renderQsList();
     updateCountLabel();
-    // 滚动到新题
     requestAnimationFrame(function () {
       var cards = document.querySelectorAll('#dsQsList .ds-q-card');
       var last = cards[cards.length - 1];
@@ -344,7 +371,6 @@
     var result = [];
     if (!text || !text.trim()) return result;
 
-    // 用连续空行分段
     var blocks = text.split(/\n\s*\n/).map(function (b) { return b.trim(); }).filter(Boolean);
 
     blocks.forEach(function (block) {
@@ -354,31 +380,26 @@
       var first = lines[0];
       var rest = lines.slice(1);
 
-      // 【xxx】开头
       var m = first.match(/^【(.+?)】(.*)$/);
       var title, tail;
       if (m) {
         title = m[1].trim();
         tail = (m[2] || '').trim();
       } else {
-        // 裸行 → 文字题
         result.push({ type: 'text', text: first });
         return;
       }
 
-      // 题干带"多选"
       var isMulti = /多选/.test(tail) || /多选/.test(title);
       var multiMaxMatch = (tail + ' ' + title).match(/最多\s*(\d+)/);
       var multiMax = multiMaxMatch ? parseInt(multiMaxMatch[1], 10) : 0;
       if (multiMax && (multiMax < 2 || multiMax > 6)) multiMax = 0;
 
-      // 剩下是选项，或「一」=文字题
       if (rest.length === 0 || (rest.length === 1 && rest[0] === '一')) {
         result.push({ type: 'text', text: title });
         return;
       }
 
-      // 有选项
       if (rest.length >= 2) {
         var q = {
           type: isMulti ? 'multi' : 'single',
@@ -392,7 +413,6 @@
         return;
       }
 
-      // 只有一个选项：当文字题
       result.push({ type: 'text', text: title });
     });
 
@@ -410,7 +430,6 @@
 
     if (titleEl) titleEl.textContent = s.title || '未命名问卷';
 
-    // 顶栏的编辑按钮
     var editBtn = document.getElementById('dsDetailEditBtn');
     if (editBtn) {
       editBtn.onclick = function () {
@@ -465,6 +484,161 @@
     showPage('pageDreamSurveyDetail');
   }
 
+  // ==================== 问卷库 ====================
+  function libKeyOf(cat, idx) {
+    return cat + '_' + idx;
+  }
+
+  function renderLibCats() {
+    var box = document.getElementById('dsLibCats');
+    if (!box) return;
+    box.innerHTML = '';
+
+    var lib = window.DREAM_SURVEY_LIB || [];
+    lib.forEach(function (cat) {
+      var btn = document.createElement('button');
+      btn.className = 'ds-lib-cat' + (cat.key === libCurrentCat ? ' active' : '');
+      btn.type = 'button';
+      btn.innerHTML = '<i class="' + (cat.icon || 'fa-solid fa-circle') + '"></i> ' + cat.label;
+      btn.addEventListener('click', function () {
+        libCurrentCat = cat.key;
+        renderLibCats();
+        renderLibList();
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  function renderLibList() {
+    var box = document.getElementById('dsLibList');
+    if (!box) return;
+    box.innerHTML = '';
+
+    var lib = window.DREAM_SURVEY_LIB || [];
+    var cat = lib.find(function (c) { return c.key === libCurrentCat; });
+    if (!cat) return;
+
+    cat.questions.forEach(function (q, idx) {
+      var key = libKeyOf(cat.key, idx);
+      var isChecked = !!libSelected[key];
+
+      var item = document.createElement('div');
+      item.className = 'ds-lib-q' + (isChecked ? ' checked' : '');
+
+      var typeLabel = { single: '单选', multi: '多选', text: '文字' }[q.type] || '文字';
+      var typeClass = q.type === 'multi' ? 'multi' : (q.type === 'text' ? 'text' : '');
+
+      item.innerHTML =
+        '<div class="ds-lib-check"><i class="fa-solid fa-check"></i></div>' +
+        '<div class="ds-lib-q-body">' +
+        '  <div class="ds-lib-q-text">' + escapeHtml(q.text) + '</div>' +
+        '  <div class="ds-lib-q-tags">' +
+        '    <span class="ds-lib-q-tag ' + typeClass + '">' + typeLabel + '</span>' +
+        '    <span class="ds-lib-q-tag">' + escapeHtml(cat.label) + '</span>' +
+        '  </div>' +
+        '</div>';
+
+      item.addEventListener('click', function () {
+        if (libSelected[key]) {
+          delete libSelected[key];
+          item.classList.remove('checked');
+        } else {
+          libSelected[key] = true;
+          item.classList.add('checked');
+        }
+        updateLibCount();
+      });
+
+      box.appendChild(item);
+    });
+  }
+
+  function updateLibCount() {
+    var count = Object.keys(libSelected).length;
+    var el = document.getElementById('dsLibCount');
+    if (el) el.textContent = '已选 ' + count + ' 道';
+
+    var addBtn = document.getElementById('dsLibAddBtn');
+    if (addBtn) addBtn.disabled = count === 0;
+  }
+
+  function addSelectedFromLib() {
+    if (!editingSurvey) {
+      editingSurvey = {
+        id: genId(), title: '', qs: [], deadline: 0, prob: 10,
+        status: 'draft', createdAt: Date.now(), sentAt: 0, doneAt: 0
+      };
+    }
+    if (!editingSurvey.qs) editingSurvey.qs = [];
+
+    var lib = window.DREAM_SURVEY_LIB || [];
+    var keys = Object.keys(libSelected);
+    var added = 0;
+
+    keys.forEach(function (key) {
+      var parts = key.split('_');
+      var catKey = parts[0];
+      var idx = parseInt(parts[1], 10);
+      var cat = lib.find(function (c) { return c.key === catKey; });
+      if (!cat) return;
+      var q = cat.questions[idx];
+      if (!q) return;
+
+      var copy = {
+        type: q.type,
+        text: q.text,
+        options: q.options ? q.options.slice() : []
+      };
+      if (q.type === 'multi') {
+        copy.multiMax = q.multiMax || 2;
+      }
+      editingSurvey.qs.push(copy);
+      added++;
+    });
+
+    if (added > 0) {
+      renderQsList();
+      updateCountLabel();
+      libSelected = {};
+      renderLibList();
+      updateLibCount();
+    } else {
+      alert('没有可添加的题目');
+    }
+  }
+
+  function bindLibEvents() {
+    var toggleBtn = document.getElementById('dsLibToggleBtn');
+    var panel = document.getElementById('dsLibPanel');
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener('click', function () {
+        libOpen = !libOpen;
+        panel.style.display = libOpen ? 'block' : 'none';
+        toggleBtn.classList.toggle('open', libOpen);
+        if (libOpen) {
+          renderLibCats();
+          renderLibList();
+          updateLibCount();
+        }
+      });
+    }
+
+    var addBtn = document.getElementById('dsLibAddBtn');
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.addEventListener('click', addSelectedFromLib);
+    }
+
+    var clearBtn = document.getElementById('dsLibClearBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        libSelected = {};
+        renderLibList();
+        updateLibCount();
+      });
+    }
+  }
+
   // ==================== 事件绑定 ====================
   function bindEvents() {
     // 主页入口
@@ -487,6 +661,24 @@
           showPage('pageHome');
         }
       });
+    }
+
+    // 分类切换 tab
+    var tabMine = document.getElementById('dsTabMine');
+    var tabTheirs = document.getElementById('dsTabTheirs');
+
+    function switchListTab(tab) {
+      currentListTab = tab;
+      if (tabMine) tabMine.classList.toggle('active', tab === 'mine');
+      if (tabTheirs) tabTheirs.classList.toggle('active', tab === 'theirs');
+      renderList();
+    }
+
+    if (tabMine) {
+      tabMine.addEventListener('click', function () { switchListTab('mine'); });
+    }
+    if (tabTheirs) {
+      tabTheirs.addEventListener('click', function () { switchListTab('theirs'); });
     }
 
     // 新建按钮
@@ -533,7 +725,6 @@
           alert('至少添加一道题目');
           return;
         }
-        // 校验每道题的题干
         for (var i = 0; i < editingSurvey.qs.length; i++) {
           var q = editingSurvey.qs[i];
           if (!q.text || !q.text.trim()) {
@@ -593,7 +784,6 @@
         var isActive = advArea.style.display !== 'none';
         advArea.style.display = isActive ? 'none' : 'flex';
         advBtn.classList.toggle('active', !isActive);
-        // 切到高级模式时，把当前题目序列化成文本
         if (!isActive && advTextarea && editingSurvey) {
           advTextarea.value = serializeQsToText(editingSurvey.qs);
         }
@@ -611,7 +801,6 @@
         editingSurvey.qs = qs;
         renderQsList();
         updateCountLabel();
-        // 收起高级模式
         advArea.style.display = 'none';
         advBtn.classList.remove('active');
         alert('已解析 ' + qs.length + ' 道题');
@@ -652,6 +841,7 @@
   // ==================== 初始化 ====================
   function init() {
     bindEvents();
+    bindLibEvents();
   }
 
   if (document.readyState === 'loading') {
