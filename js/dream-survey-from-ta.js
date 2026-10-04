@@ -220,8 +220,35 @@
 
     // 1. 先推一句 Ta 的话（从字卡库抽）
     try {
-      var pool = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
-      if (Array.isArray(pool) && pool.length > 0) {
+         var pool = [];
+      try {
+        if (typeof window.getReplyCards === 'function') {
+          var u = window.getReplyCards() || [];
+          if (Array.isArray(u) && u.length > 0) pool = pool.concat(u);
+        }
+      } catch (e) {}
+
+      if (pool.length === 0) {
+        try {
+          var d = window.DEFAULT_CARD_DATA;
+          if (d && d.reply && typeof d.reply === 'object') {
+            Object.keys(d.reply).forEach(function (g) {
+              if (Array.isArray(d.reply[g])) pool = pool.concat(d.reply[g]);
+            });
+          }
+        } catch (e) {}
+      }
+
+      if (pool.length === 0) {
+        try {
+          if (window.publicCards && typeof window.publicCards.getSelectedCards === 'function') {
+            var pub = window.publicCards.getSelectedCards('reply');
+            if (Array.isArray(pub) && pub.length > 0) pool = pub;
+          }
+        } catch (e) {}
+      }
+
+      if (pool.length > 0) {
         var text = pool[Math.floor(Math.random() * pool.length)];
         if (text && typeof text === 'string') {
           if (typeof window.appendTaTextToChat === 'function') {
