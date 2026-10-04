@@ -244,18 +244,22 @@
     return Object.keys(obj);
   }
 
-  window.getGroups = function (category) {
-    return getGroupsOf(category || 'reply');
-  };
+window.getGroups = function (category) {
+  var cat = category || 'reply';
+  if (cat === 'status' || cat === 'emoji' || cat === 'sticker') return [];
+  return getGroupsOf(cat);
+};
 
   function getCardsInGroupOf(category, groupName) {
     var obj = getGroupObject(category);
     return obj[groupName] || [];
   }
 
-  window.getCardsInGroup = function (groupName, category) {
-    return getCardsInGroupOf(category || 'reply', groupName);
-  };
+window.getCardsInGroup = function (groupName, category) {
+  var cat = category || 'reply';
+  if (cat === 'status' || cat === 'emoji' || cat === 'sticker') return [];
+  return getCardsInGroupOf(cat, groupName);
+};
 
   window.getGroupColor = function (groupName, category) {
     var cat = category || 'reply';
