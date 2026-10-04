@@ -10,13 +10,13 @@
 
   var STORE_KEY = 'home_images_v3';
 
-  var DEFAULTS = {
-    bg:       'https://picsum.photos/1200/1800?random=10',
-    avatar:   'https://picsum.photos/100/100?random=1',
+    var DEFAULTS = {
+    bg:       '',
+    avatar:   '',
     headerBg: '',
-    photo1:   'https://picsum.photos/200/200?random=2',
-    photo2:   'https://picsum.photos/200/200?random=3',
-    photo3:   'https://picsum.photos/200/200?random=4',
+    photo1:   '',
+    photo2:   '',
+    photo3:   '',
     album:    '',
     chatBg:   ''
   };
@@ -60,9 +60,9 @@
       }
     }
 
-    // 2. 头像
+    // 2. 头像（空时清空 src，让背景色透出）
     var avEl = document.getElementById('avatarImg');
-    if (avEl && current.avatar) avEl.src = current.avatar;
+    if (avEl) avEl.src = current.avatar || '';
 
     // 3. 头像下的底图
     var hdEl = document.getElementById('headerCard');
@@ -77,21 +77,29 @@
       }
     }
 
-    // 4. 三张展示图
+    // 4. 三张展示图（空时清空 src）
     var p1 = document.getElementById('photo1');
-    if (p1 && current.photo1) p1.src = current.photo1;
+    if (p1) p1.src = current.photo1 || '';
     var p2 = document.getElementById('photo2');
-    if (p2 && current.photo2) p2.src = current.photo2;
+    if (p2) p2.src = current.photo2 || '';
     var p3 = document.getElementById('photo3');
-    if (p3 && current.photo3) p3.src = current.photo3;
+    if (p3) p3.src = current.photo3 || '';
 
-    // 5. 黑胶封面
+    // 5. 黑胶封面：有图显示图，无图显示默认图标
     var alEl = document.getElementById('albumCover');
     var alIcon = document.getElementById('albumIcon');
-    if (alEl && current.album) {
-      alEl.src = current.album;
-      alEl.style.display = 'block';
+    if (current.album) {
+      if (alEl) {
+        alEl.src = current.album;
+        alEl.style.display = 'block';
+      }
       if (alIcon) alIcon.style.display = 'none';
+    } else {
+      if (alEl) {
+        alEl.src = '';
+        alEl.style.display = 'none';
+      }
+      if (alIcon) alIcon.style.display = '';
     }
 
     // 6. 传讯背景
