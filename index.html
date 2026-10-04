@@ -213,11 +213,12 @@
 
       <!-- 回复 -->
       <div class="cat-panel active" id="panel-reply">
-        <div class="card-action-row">
-          <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
-          <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
-          <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
-        </div>
+      <div class="card-action-row">
+  <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
+  <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
+  <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
+  <input type="file" id="cardImportFileInput" accept=".json,application/json" style="display:none;">
+</div>
         <div class="card-dedup-row">
           <div class="card-dedup-left" id="dedupToggle">
             <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
