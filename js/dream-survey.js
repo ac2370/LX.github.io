@@ -148,8 +148,7 @@
         metaParts.push('<i class="fa-regular fa-clock"></i> ' + formatDate(s.createdAt));
       }
 
-      item.innerHTML =
-      // 「Ta 的问卷」才显示删除按钮；「我的问卷」暂不加
+          // 「Ta 的问卷」才显示删除按钮；「我的问卷」暂不加
       var delBtnHtml = '';
       if (currentListTab === 'theirs') {
         delBtnHtml = '<button class="ds-item-del" type="button" title="删除"><i class="fa-solid fa-xmark"></i></button>';
