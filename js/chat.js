@@ -6,6 +6,7 @@
  * - 引用优化：从最近 8 条我方消息里随机引用
  * - 已读回执：发消息后 1.5~4s 标已读，气泡下方显示单勾
  * - 已读不回：开启后，20% 概率只已读不回复
+ * - 问卷卡片：appendSurveyCardToChat / syncSurveyCard
  * - 每条消息 DOM 挂 dataset（sender/type/time/favorited/read）+ 渲染时间戳
  *
  * 调试开关：window.CHAT_DEBUG = true 可打印详细日志
@@ -722,14 +723,13 @@
     }, waitMs);
   }
 
-    // ==================== 追加对方文字到聊天（供外部调用） ====================
+  // ==================== 追加对方文字到聊天（供外部调用） ====================
   window.appendTaTextToChat = function (text) {
     if (!text || typeof text !== 'string') return;
     var row = createMessageRow('other', text);
     chatMessages.appendChild(row);
     scrollToBottom();
 
-    // 通知
     if (window.chatNotify && typeof window.chatNotify.show === 'function') {
       try { window.chatNotify.show('Ta', text); } catch (e) {}
     }
@@ -750,6 +750,16 @@
 
     var qCount = (survey.qs || []).length;
     var title = survey.title || 'Ta 的问卷';
+    var answeredCount = 0;
+    if (Array.isArray(survey.answers)) {
+      answeredCount = survey.answers.filter(function (a) {
+        if (!a) return false;
+        var v = a.value;
+        if (Array.isArray(v)) return v.length > 0;
+        return v !== undefined && v !== null && String(v).trim() !== '';
+      }).length;
+    }
+    var isAnswered = survey.status === 'answered';
 
     var html = '';
     html += '<div class="msg-survey-head">';
@@ -758,11 +768,19 @@
     html += '</div>';
     html += '<div class="msg-survey-title">' + escapeHtmlSafe(title) + '</div>';
     html += '<div class="msg-survey-meta">' + qCount + ' 题 · 点击作答</div>';
-    html += '<div class="msg-survey-status">';
-    if (survey.status === 'answered') {
-      html += '<i class="fa-solid fa-check-circle"></i> 已作答';
+
+    // 进度 + 状态
+    html += '<div class="msg-survey-foot">';
+    html += '  <div class="msg-survey-progress">' +
+              '<span class="msg-survey-progress-num">' + answeredCount + '/' + qCount + '</span>' +
+              '<span class="msg-survey-progress-label">已答</span>' +
+            '</div>';
+    if (isAnswered) {
+      html += '  <span class="msg-survey-status done"><i class="fa-solid fa-check-circle"></i> 已作答</span>';
+    } else if (answeredCount > 0) {
+      html += '  <span class="msg-survey-status doing"><i class="fa-solid fa-pen"></i> 作答中</span>';
     } else {
-      html += '<i class="fa-regular fa-circle"></i> 待作答';
+      html += '  <span class="msg-survey-status pending"><i class="fa-regular fa-circle"></i> 待作答</span>';
     }
     html += '</div>';
 
@@ -770,11 +788,9 @@
 
     // 点击气泡 → 打开作答页
     bubble.addEventListener('click', function () {
-      // 找到 dream-survey.js 暴露的作答入口
       if (typeof window.openTaSurveyAnswer === 'function') {
         window.openTaSurveyAnswer(survey.id);
       } else {
-        // 兜底：切到「Ta 的问卷」列表
         if (typeof window.dreamSurvey !== 'undefined' && window.dreamSurvey.openList) {
           window.dreamSurvey.openList();
         }
@@ -789,7 +805,7 @@
     row.dataset.time = String(Date.now());
     row.dataset.favorited = 'false';
 
-    // 手动挂时间戳（因为消息不是通过 createMessageRow 创建的）
+    // 手动挂时间戳
     var body = document.createElement('div');
     body.className = 'message-body';
     row.insertBefore(body, bubble);
@@ -810,6 +826,58 @@
     if (window.chatNotify && typeof window.chatNotify.show === 'function') {
       try { window.chatNotify.show('Ta', '想问你几个问题'); } catch (e) {}
     }
+  };
+
+  // ==================== 回写问卷卡片状态（供作答提交后调用） ====================
+  window.syncSurveyCard = function (surveyId) {
+    if (!surveyId) return;
+    if (!window.dreamSurveyFromTa) return;
+
+    var s = window.dreamSurveyFromTa.findById(surveyId);
+    if (!s) return;
+
+    var rows = chatMessages.querySelectorAll('.msg-survey-row');
+    rows.forEach(function (row) {
+      if (row.dataset.surveyId !== surveyId) return;
+
+      // 更新 dataset 状态
+      row.dataset.surveyStatus = s.status || 'unanswered';
+
+      // 重新计算进度
+      var qCount = (s.qs || []).length;
+      var answeredCount = 0;
+      if (Array.isArray(s.answers)) {
+        answeredCount = s.answers.filter(function (a) {
+          if (!a) return false;
+          var v = a.value;
+          if (Array.isArray(v)) return v.length > 0;
+          return v !== undefined && v !== null && String(v).trim() !== '';
+        }).length;
+      }
+      var isAnswered = s.status === 'answered';
+
+      var bubble = row.querySelector('.msg-survey-bubble');
+      if (!bubble) return;
+
+      // 更新进度数字
+      var numEl = bubble.querySelector('.msg-survey-progress-num');
+      if (numEl) numEl.textContent = answeredCount + '/' + qCount;
+
+      // 更新状态标签
+      var statusEl = bubble.querySelector('.msg-survey-status');
+      if (statusEl) {
+        if (isAnswered) {
+          statusEl.className = 'msg-survey-status done';
+          statusEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> 已作答';
+        } else if (answeredCount > 0) {
+          statusEl.className = 'msg-survey-status doing';
+          statusEl.innerHTML = '<i class="fa-solid fa-pen"></i> 作答中';
+        } else {
+          statusEl.className = 'msg-survey-status pending';
+          statusEl.innerHTML = '<i class="fa-regular fa-circle"></i> 待作答';
+        }
+      }
+    });
   };
 
   // 供卡片内部使用的转义
@@ -977,7 +1045,7 @@
     });
   }
 
-   chatMessages.addEventListener('click', function (e) {
+  chatMessages.addEventListener('click', function (e) {
     if (e.target.closest('.msg-action-menu')) return;
     if (e.target.closest('.quote-preview-bar')) return;
     if (e.target.closest('.chat-input-bar')) return;
@@ -1021,7 +1089,6 @@
 
   updateSendBtnState();
   scrollToBottom();
-  // 页面初始化时刷新一遍回执
   setTimeout(updateReadReceipts, 100);
 
 })();
