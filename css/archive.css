@@ -121,8 +121,8 @@
 #cenConfig_stage {
   width: 100%;
   max-width: 100vw;
-  min-height: 400px;
-  padding: 20px 0;
+  min-height: 560px;              /* 从 400 改成 560，给 intro 模式更多空间 */
+  padding: 120px 0 20px 0;        /* 顶部留 120px 给大标题 */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
