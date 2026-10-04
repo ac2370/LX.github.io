@@ -56,6 +56,14 @@
     console.log('[proactive] 下次主动消息将在 ' + (wait / 1000).toFixed(1) + ' 秒后');
   }
 
+   // 检查是否可以发起问卷              
+  function canPushSurvey() {          
+    if (!window.dreamSurveyFromTa) return false;                          
+    if (typeof window.dreamSurveyFromTa.generateAndSave !== 'function') return false;   
+    if (typeof window.dreamSurveyFromTa.pushToChat !== 'function') return false;        
+    return true;                                                          
+  }    
+
   function fire() {
     timer = null;
     nextFireAt = 0;
@@ -72,16 +80,37 @@
       return;
     }
 
-    // 触发一次自动回复
-    if (typeof window.triggerChatAutoReply === 'function') {
+        // 20% 概率改发问卷；否则正常主动消息
+    var surveyChance = 0.20;
+
+    if (Math.random() < surveyChance && canPushSurvey()) {
       try {
-        window.triggerChatAutoReply();
-        console.log('[proactive] 已触发一次主动消息');
+        var s2 = window.dreamSurveyFromTa.generateAndSave();
+        if (s2) {
+          window.dreamSurveyFromTa.pushToChat(s2.id);
+          console.log('[proactive] 已触发一次 Ta 的问卷');
+        } else {
+          // 出题失败，退回普通主动消息
+          window.triggerChatAutoReply();
+          console.log('[proactive] 出题失败，改发主动消息');
+        }
       } catch (e) {
-        console.warn('[proactive] 触发失败', e);
+        console.warn('[proactive] 问卷触发失败', e);
+        // 异常时退回普通主动消息
+        try { window.triggerChatAutoReply(); } catch (e2) {}
       }
     } else {
-      console.warn('[proactive] window.triggerChatAutoReply 不存在');
+      // 正常主动消息
+      if (typeof window.triggerChatAutoReply === 'function') {
+        try {
+          window.triggerChatAutoReply();
+          console.log('[proactive] 已触发一次主动消息');
+        } catch (e) {
+          console.warn('[proactive] 触发失败', e);
+        }
+      } else {
+        console.warn('[proactive] window.triggerChatAutoReply 不存在');
+      }
     }
 
     // 安排下一次
