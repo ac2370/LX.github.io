@@ -1194,34 +1194,27 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-                  <div class="setting-divider"></div>
-          <div class="setting-section-title">已读与通讯</div>
+                          <div class="setting-divider"></div>
+          <div class="setting-section-title">已读状态</div>
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">显示角色已读状态</div>
+              <div class="setting-row-desc">开启后，你发出的消息被 Ta 读过后，气泡下方出现已读标记</div>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggleReadStatus">
               <span class="toggle-slider"></span>
             </label>
           </div>
-          <div class="setting-divider"></div>
-          <div class="setting-section-title">通讯节奏</div>
-          <div class="input-row">
-            <div class="input-item">
-              <div class="input-item-label">最短等待 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputCommMinWait" value="10" min="1" max="600">
-                <span class="input-unit">秒</span>
-              </div>
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">已读不回</div>
+              <div class="setting-row-desc">开启后，Ta 有一定概率读了你的消息但不回复</div>
             </div>
-            <div class="input-item">
-              <div class="input-item-label">最长等待 / 秒</div>
-              <div class="input-with-unit">
-                <input type="number" id="inputCommMaxWait" value="60" min="1" max="600">
-                <span class="input-unit">秒</span>
-              </div>
-            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleReadNoReply">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
           <div class="auto-save-hint">修改后自动保存</div>
         </div>
