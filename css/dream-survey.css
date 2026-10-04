@@ -648,3 +648,258 @@
   margin-left: 30px;
   margin-top: 4px;
 }
+
+/* ============================================================
+   分类切换 tab（列表页）
+   ============================================================ */
+.ds-tabs {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 0 16px;
+  background: #ffffff;
+}
+.ds-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 0;
+  border-radius: 12px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  color: #8899a6;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.ds-tab:active { background: #f2f6fa; }
+.ds-tab.active {
+  background: #e6f0fa;
+  color: #5a9ed6;
+  border-color: #d0e2f5;
+}
+.ds-tab i { font-size: 12px; }
+
+/* ============================================================
+   问卷库（编辑页折叠面板）
+   ============================================================ */
+.ds-lib-wrap {
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.ds-lib-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: #f0f6fc;
+  border: 1px solid #d6e6f5;
+  color: #5a9ed6;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.ds-lib-toggle:active { background: #e2eef9; }
+.ds-lib-toggle > span {
+  flex: 1;
+  text-align: left;
+}
+.ds-lib-arrow {
+  transition: transform 0.2s ease;
+  font-size: 11px;
+}
+.ds-lib-toggle.open .ds-lib-arrow {
+  transform: rotate(180deg);
+}
+
+.ds-lib-panel {
+  margin-top: 8px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* 分类 tab */
+.ds-lib-cats {
+  display: flex;
+  gap: 6px;
+  padding: 10px 10px 6px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.ds-lib-cats::-webkit-scrollbar { display: none; }
+
+.ds-lib-cat {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #e2e8ee;
+  color: #55606b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+.ds-lib-cat:active { background: #f2f6fa; }
+.ds-lib-cat.active {
+  background: #5a9ed6;
+  color: #fff;
+  border-color: #5a9ed6;
+}
+.ds-lib-cat i { font-size: 11px; }
+
+/* 题目列表 */
+.ds-lib-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px 10px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
+}
+.ds-lib-list::-webkit-scrollbar { width: 4px; }
+.ds-lib-list::-webkit-scrollbar-thumb {
+  background: rgba(180, 190, 200, 0.5);
+  border-radius: 4px;
+}
+
+.ds-lib-q {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ds-lib-q:active { background: #f2f6fa; }
+.ds-lib-q.checked {
+  background: #e6f0fa;
+  border-color: #d0e2f5;
+}
+
+.ds-lib-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1.5px solid #cbd4dc;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ds-lib-q.checked .ds-lib-check {
+  background: #5a9ed6;
+  border-color: #5a9ed6;
+}
+.ds-lib-check i {
+  color: #fff;
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.ds-lib-q.checked .ds-lib-check i {
+  opacity: 1;
+}
+
+.ds-lib-q-body {
+  flex: 1;
+  min-width: 0;
+}
+.ds-lib-q-text {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: break-word;
+  margin-bottom: 4px;
+}
+.ds-lib-q-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ds-lib-q-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: #eef5fb;
+  color: #5a9ed6;
+  letter-spacing: 0.3px;
+}
+.ds-lib-q-tag.text {
+  background: #f5f6f8;
+  color: #8899a6;
+}
+.ds-lib-q-tag.multi {
+  background: #fdf3e6;
+  color: #c68a3a;
+}
+
+/* 底部操作 */
+.ds-lib-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid #eef1f4;
+  background: #ffffff;
+}
+.ds-lib-count {
+  font-size: 12px;
+  color: #8899a6;
+  font-weight: 600;
+}
+.ds-lib-actions {
+  display: flex;
+  gap: 6px;
+}
+.ds-lib-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.ds-lib-btn:active { transform: scale(0.97); }
+.ds-lib-clear {
+  background: #f5f6f8;
+  color: #55606b;
+}
+.ds-lib-clear:active { background: #e8ecf0; }
+.ds-lib-add {
+  background: #5a9ed6;
+  color: #fff;
+}
+.ds-lib-add:active { background: #4a8dc0; }
+.ds-lib-add:disabled {
+  background: #c6d9ea;
+  cursor: default;
+}
