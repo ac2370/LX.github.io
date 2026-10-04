@@ -692,15 +692,19 @@
       const textEl = document.createElement('div');
       textEl.className = 'word-card-text';
       textEl.textContent = text;
-      const del = document.createElement('button');
-      del.className = 'word-card-delete';
-      del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-      del.addEventListener('click', function () {
-        if (!confirm('确定删除这条内容吗？')) return;
-        var cat = category === 'kaomoji' ? 'pat' : category;
-        window.removeCardFromGroup(groupName, text, cat);
-        updateAllUI();
-      });
+    const del = document.createElement('button');
+del.className = 'word-card-delete';
+del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+del.addEventListener('click', function () {
+  if (!confirm('确定删除这条内容吗？')) return;
+  var cat = category === 'kaomoji' ? 'pat' : category;
+  if (cat === 'status') {
+    window.cardDatabase.remove('status', text);
+  } else {
+    window.removeCardFromGroup(groupName, text, cat);
+  }
+  updateAllUI();
+});
       item.appendChild(textEl);
       item.appendChild(del);
       container.appendChild(item);
