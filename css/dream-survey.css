@@ -903,3 +903,260 @@
   background: #c6d9ea;
   cursor: default;
 }
+
+/* ============================================================
+   Ta 的问卷 · 作答页（美化版）
+   ============================================================ */
+
+.ds-answer-body {
+  padding: 16px 16px 100px 16px;
+  background: #f7f9fb;
+}
+
+/* 顶部信息条 */
+.ds-answer-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #eef5fc 0%, #e6f0fa 100%);
+  border: 1px solid #d6e6f5;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a7ba8;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.08);
+}
+.ds-answer-meta i {
+  color: #5a9ed6;
+  font-size: 14px;
+}
+.ds-answer-readonly-tag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4CAF7D;
+  background: #e6f5ed;
+  padding: 3px 10px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ds-answer-readonly-tag i {
+  color: #4CAF7D;
+  font-size: 10px;
+}
+
+/* 题目列表 */
+.ds-answer-qs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ds-answer-q {
+  background: #ffffff;
+  border: 1px solid #e8eef5;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(90, 158, 214, 0.06);
+  transition: box-shadow 0.2s ease;
+}
+.ds-answer-q:focus-within {
+  box-shadow: 0 4px 16px rgba(90, 158, 214, 0.14);
+  border-color: #c8ddf2;
+}
+
+/* 题头 */
+.ds-answer-q-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.ds-answer-q-num {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6fb1e8 0%, #5a9ed6 100%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  box-shadow: 0 2px 6px rgba(90, 158, 214, 0.3);
+}
+.ds-answer-q-text {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a3a52;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+/* 选项列表 */
+.ds-answer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ds-answer-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: #fafbfc;
+  border: 1.5px solid #e8eef5;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.ds-answer-opt:active {
+  transform: scale(0.99);
+  background: #f2f6fa;
+}
+.ds-answer-opt.selected {
+  background: linear-gradient(135deg, #eaf3fc 0%, #e0eef9 100%);
+  border-color: #5a9ed6;
+  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.15);
+}
+.ds-answer-opt-mark {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #eef1f4;
+  color: #8899a6;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.ds-answer-opt.selected .ds-answer-opt-mark {
+  background: #5a9ed6;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(90, 158, 214, 0.35);
+}
+.ds-answer-opt-text {
+  flex: 1;
+  font-size: 13.5px;
+  color: #333;
+  line-height: 1.4;
+}
+.ds-answer-opt.selected .ds-answer-opt-text {
+  color: #1a3a52;
+  font-weight: 600;
+}
+
+/* 多选提示 */
+.ds-answer-multi-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #8899a6;
+  background: #f5f7fa;
+  padding: 3px 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-weight: 600;
+}
+.ds-answer-multi-hint::before {
+  content: '·';
+  color: #b6c2cd;
+  font-weight: 900;
+}
+
+/* 文字题输入 */
+.ds-answer-textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e8eef5;
+  background: #fafbfc;
+  font-size: 13.5px;
+  font-family: inherit;
+  line-height: 1.6;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+.ds-answer-textarea:focus {
+  border-color: #5a9ed6;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(90, 158, 214, 0.15);
+}
+.ds-answer-textarea::placeholder {
+  color: #b6c2cd;
+}
+.ds-answer-textarea[readonly] {
+  background: #f5f7fa;
+  color: #55606b;
+  cursor: default;
+}
+
+/* 底部固定提交栏 */
+.ds-answer-footer {
+  position: sticky;
+  bottom: 0;
+  margin: 24px -16px 0 -16px;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
+  background: linear-gradient(to top, #ffffff 70%, rgba(255,255,255,0));
+  border-top: 1px solid #eef1f4;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 5;
+}
+
+.ds-answer-submit {
+  width: 100%;
+  padding: 14px 0;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #6fb1e8 0%, #5a9ed6 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 6px 16px rgba(90, 158, 214, 0.4);
+}
+.ds-answer-submit:active {
+  background: linear-gradient(135deg, #5a9ed6 0%, #4a8dc0 100%);
+  transform: scale(0.985);
+  box-shadow: 0 3px 10px rgba(90, 158, 214, 0.35);
+}
+
+.ds-answer-footer-readonly {
+  text-align: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  background: #f7f9fb;
+}
+.ds-answer-done-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #4CAF7D;
+  font-weight: 700;
+  padding: 8px 18px;
+  background: #e6f5ed;
+  border-radius: 12px;
+}
+.ds-answer-done-hint i {
+  font-size: 14px;
+}
