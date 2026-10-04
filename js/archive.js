@@ -42,7 +42,7 @@
   ];
 
   // Ta 档案里自动填充的字段
-  var AUTO_FIELDS = ['location', 'status', 'mood', 'basicInfo', 'history', 'preferences', 'relations'];
+   var AUTO_FIELDS = ['location', 'status', 'mood', 'desc', 'basicInfo', 'history', 'preferences', 'relations'];
 
   // 自动填充的周期（毫秒）
   var AUTO_CHECK_INTERVAL = 60 * 1000;       // 60 秒检查一次
@@ -63,13 +63,16 @@
   }
 
   // 给 Ta 档案一次性抽满所有自动字段
-  function pickAutoFields() {
+    function pickAutoFields() {
     var result = {};
 
     // 3 个字段：字卡库
     result.location = window.getArchivePick ? window.getArchivePick('place') : '';
     result.status   = window.getArchivePick ? window.getArchivePick('status') : '';
     result.mood     = window.getArchivePick ? window.getArchivePick('mood') : '';
+
+    // DESC：从「回复」所有分组抽 1~3 条
+    result.desc     = window.getArchiveDesc ? window.getArchiveDesc() : '';
 
     // 4 个格子：文案库（互不相同）
     var quotes = pickUniqueQuotes(4);
