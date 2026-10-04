@@ -676,8 +676,7 @@
         for (var j = 0; j < s.qs.length; j++) {
           answers.push({ qIdx: j, value: answeringData[j] });
         }
-
-               window.dreamSurveyFromTa.submitAnswers(answeringId, answers);
+        window.dreamSurveyFromTa.submitAnswers(answeringId, answers);
 
         // 回写聊天里的卡片
         if (typeof window.syncSurveyCard === 'function') {
@@ -687,8 +686,13 @@
         }
 
         alert('已提交');
-        renderList();
-        goPage('pageDreamSurvey');
+
+        // 清空作答状态
+        answeringId = null;
+        answeringData = {};
+
+        // 回到传讯页
+        goPage('pageChat');
       });
     }
   }
