@@ -9,6 +9,7 @@
      - 站内消息横幅
      - 视频通话弹窗 + 通话记录气泡 + 主动来电横幅
      - 拍一拍弹窗
+     - 已读回执
    ============================================================ */
 
 /* ============ 聊天消息头像 ============ */
@@ -31,9 +32,6 @@
 }
 #pageChat .message-row.self .chat-msg-avatar {
   margin-left: 8px;
-}
-#pageChat .message-row .message-bubble {
-  max-width: 62%;
 }
 
 /* ============ 存钱罐面板 ============ */
@@ -1446,11 +1444,14 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
   font-size: 14px;
   line-height: 1.45;
 
-  writing-mode: horizontal-tb;
+  /* 竖排防护 */
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed;
   word-wrap: break-word;
   word-break: normal;
   overflow-wrap: break-word;
   white-space: pre-wrap;
+  box-sizing: border-box;
 }
 #pageChat .message-row.self .message-bubble {
   background: #d8ecfb;
@@ -1764,13 +1765,16 @@ body.theme-dark .pat-cancel {
   border-color: var(--theme-card-border);
 }
 
-/* ============ 消息体：气泡 + 时间戳 竖排 ============ */
+/* ============================================================
+   消息体：气泡 + 时间戳 + 回执
+   ============================================================ */
 .message-body {
   display: flex;
   flex-direction: column;
   max-width: 72%;
   /* 关键：让内部元素按内容宽度对齐，不被拉伸 */
   align-items: flex-start;
+  min-width: 0;
 }
 
 /* 我发的：整体靠右 */
@@ -1783,8 +1787,11 @@ body.theme-dark .pat-cancel {
   align-items: flex-start;
 }
 
-/* 时间戳 */
+/* 时间戳 + 回执 同一行 */
 .message-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   color: #b6c2cd;
   margin-top: 4px;
@@ -1793,8 +1800,22 @@ body.theme-dark .pat-cancel {
   user-select: none;
 }
 
-/* 关闭时间戳显示 */
-#chatMessages.hide-message-time .message-time {
+/* 已读回执（单勾）—— 跟在时间戳右边 */
+.message-read-receipt {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent-color, #6fb1e8);
+  opacity: 0.85;
+}
+
+.message-read-receipt i {
+  font-size: 11px;
+}
+
+/* 关闭时间戳显示：只隐藏时间文字，回执仍显示 */
+#chatMessages.hide-message-time .message-time .message-time-text {
   display: none;
 }
 
@@ -1892,7 +1913,7 @@ body.theme-dark .pat-cancel {
   background: #e8ecf0;
 }
 
-/* 消息反应气泡 */
+/* ============ 消息反应气泡 ============ */
 .message-reaction {
   display: inline-block;
   font-size: 14px;
@@ -1917,27 +1938,4 @@ body.theme-dark .pat-cancel {
   0%   { transform: scale(0.4); opacity: 0; }
   60%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
-}
-
-/* 已读回执（单勾） */
-.message-read-receipt {
-  display: inline-block;
-  font-size: 11px;
-  line-height: 1;
-  color: var(--accent-color, #6fb1e8);
-  margin-left: 4px;
-  vertical-align: middle;
-  opacity: 0.85;
-}
-.message-read-receipt i {
-  font-size: 11px;
-}
-.message-row.self .message-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-.message-row.self .message-read-receipt {
-  /* 与时间戳同层，右对齐 */
-  text-align: right;
 }
