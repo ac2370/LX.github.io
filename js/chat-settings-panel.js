@@ -155,7 +155,7 @@
 
     try {
       if (!silentAudioEl) {
-        silentAudioEl = new Audio('./assets/silence.mp3');
+        silentAudioEl = new Audio('./assets/silence.m4a');
         silentAudioEl.loop = true;
         silentAudioEl.volume = 0.01;      // 近乎静音
         silentAudioEl.preload = 'auto';
