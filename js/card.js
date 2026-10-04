@@ -1496,6 +1496,220 @@
     }
   };
 
+  // ==================== 字卡导入 · 模块选择弹层 ====================
+
+// 轻提示（G4 会实现真正落地，这里先定义 toast）
+window.cardImportToast = window.cardImportToast || function (msg) {
+  // 简单的顶部轻提示
+  var el = document.getElementById('cardImportToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cardImportToast';
+    el.style.cssText =
+      'position:fixed;top:24px;left:50%;transform:translateX(-50%);' +
+      'background:rgba(30,40,50,0.92);color:#fff;padding:10px 18px;' +
+      'border-radius:12px;font-size:13px;z-index:9999;' +
+      'box-shadow:0 8px 24px rgba(0,20,30,0.25);' +
+      'opacity:0;transition:opacity 0.25s ease;pointer-events:none;' +
+      'font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(function () { el.style.opacity = '0'; }, 2000);
+};
+
+// 模块显示名
+var CARD_IMPORT_MODULE_NAMES = {
+  reply:  '回复',
+  pat:    '拍一拍',
+  place:  '地点',
+  mood:   '心情',
+  status: '状态'
+};
+
+// 显示弹层
+window.cardImportShowUI = function (normalized, counts) {
+  // 移除旧弹层
+  var old = document.getElementById('cardImportModal');
+  if (old) old.parentNode.removeChild(old);
+
+  var modal = document.createElement('div');
+  modal.id = 'cardImportModal';
+  modal.className = 'card-import-modal';
+
+  var panel = document.createElement('div');
+  panel.className = 'card-import-panel';
+
+  // 标题
+  var title = document.createElement('div');
+  title.className = 'card-import-title';
+  title.textContent = '导入字卡';
+  panel.appendChild(title);
+
+  // 副标题
+  var sub = document.createElement('div');
+  sub.className = 'card-import-sub';
+  var moduleCount = 0;
+  ['reply', 'pat', 'place', 'mood', 'status'].forEach(function (k) {
+    if (counts[k] > 0) moduleCount++;
+  });
+  sub.textContent = '文件中包含 ' + moduleCount + ' 个模块';
+  panel.appendChild(sub);
+
+  // 模块列表
+  var listLabel = document.createElement('div');
+  listLabel.className = 'card-import-label';
+  listLabel.textContent = 'MODULES';
+  panel.appendChild(listLabel);
+
+  var listEl = document.createElement('div');
+  listEl.className = 'card-import-list';
+  panel.appendChild(listEl);
+
+  // 已勾选状态
+  var checked = {
+    reply:  counts.reply  > 0,
+    pat:    counts.pat    > 0,
+    place:  counts.place  > 0,
+    mood:   counts.mood   > 0,
+    status: counts.status > 0
+  };
+
+  ['reply', 'pat', 'place', 'mood', 'status'].forEach(function (k) {
+    var isDisabled = counts[k] === 0;
+    var item = document.createElement('div');
+    item.className = 'card-import-item'
+      + (checked[k] && !isDisabled ? ' checked' : '')
+      + (isDisabled ? ' disabled' : '');
+    item.setAttribute('data-module', k);
+
+    var cb = document.createElement('div');
+    cb.className = 'card-import-checkbox';
+    item.appendChild(cb);
+
+    var name = document.createElement('div');
+    name.className = 'card-import-name';
+    name.textContent = CARD_IMPORT_MODULE_NAMES[k];
+    item.appendChild(name);
+
+    var count = document.createElement('div');
+    count.className = 'card-import-count';
+    count.textContent = counts[k] + ' 条';
+    item.appendChild(count);
+
+    if (!isDisabled) {
+      item.addEventListener('click', function () {
+        checked[k] = !checked[k];
+        item.classList.toggle('checked', checked[k]);
+        updateConfirmBtn();
+      });
+    }
+
+    listEl.appendChild(item);
+  });
+
+  // 追加 / 覆盖
+  var modeLabel = document.createElement('div');
+  modeLabel.className = 'card-import-label';
+  modeLabel.textContent = 'MODE';
+  panel.appendChild(modeLabel);
+
+  var modes = document.createElement('div');
+  modes.className = 'card-import-modes';
+  panel.appendChild(modes);
+
+  var currentMode = 'merge'; // 默认追加
+
+  var mergeBtn = document.createElement('div');
+  mergeBtn.className = 'card-import-mode active';
+  mergeBtn.setAttribute('data-mode', 'merge');
+  mergeBtn.innerHTML =
+    '<div class="card-import-mode-title">追加</div>' +
+    '<div class="card-import-mode-desc">合并去重，保留现有</div>';
+  modes.appendChild(mergeBtn);
+
+  var overwriteBtn = document.createElement('div');
+  overwriteBtn.className = 'card-import-mode';
+  overwriteBtn.setAttribute('data-mode', 'overwrite');
+  overwriteBtn.innerHTML =
+    '<div class="card-import-mode-title">覆盖</div>' +
+    '<div class="card-import-mode-desc">整体替换对应模块</div>';
+  modes.appendChild(overwriteBtn);
+
+  function setMode(m) {
+    currentMode = m;
+    mergeBtn.classList.toggle('active', m === 'merge');
+    overwriteBtn.classList.toggle('active', m === 'overwrite');
+  }
+  mergeBtn.addEventListener('click', function () { setMode('merge'); });
+  overwriteBtn.addEventListener('click', function () { setMode('overwrite'); });
+
+  // 底部按钮
+  var actions = document.createElement('div');
+  actions.className = 'card-import-actions';
+  panel.appendChild(actions);
+
+  var cancelBtn = document.createElement('button');
+  cancelBtn.className = 'card-import-btn card-import-cancel';
+  cancelBtn.textContent = '取消';
+  cancelBtn.addEventListener('click', closeModal);
+  actions.appendChild(cancelBtn);
+
+  var confirmBtn = document.createElement('button');
+  confirmBtn.className = 'card-import-btn card-import-confirm';
+  confirmBtn.textContent = '导入';
+  confirmBtn.addEventListener('click', function () {
+    // 收集选中的模块
+    var selected = {};
+    ['reply', 'pat', 'place', 'mood', 'status'].forEach(function (k) {
+      if (checked[k] && counts[k] > 0) selected[k] = true;
+    });
+    if (Object.keys(selected).length === 0) {
+      window.cardImportToast('请至少选择一个模块');
+      return;
+    }
+    // G4 会实现 window.cardImportApply
+    if (typeof window.cardImportApply === 'function') {
+      window.cardImportApply(normalized, selected, currentMode);
+      closeModal();
+    } else {
+      console.log('[card-import] 待落地：', { selected: selected, mode: currentMode });
+      window.cardImportToast('落地逻辑未就绪（G4）');
+    }
+  });
+  actions.appendChild(confirmBtn);
+
+  function updateConfirmBtn() {
+    var any = ['reply', 'pat', 'place', 'mood', 'status'].some(function (k) {
+      return checked[k] && counts[k] > 0;
+    });
+    confirmBtn.disabled = !any;
+  }
+  updateConfirmBtn();
+
+  function closeModal() {
+    modal.classList.remove('active');
+    setTimeout(function () {
+      if (modal.parentNode) modal.parentNode.removeChild(modal);
+    }, 200);
+  }
+
+  modal.appendChild(panel);
+  document.body.appendChild(modal);
+
+  // 点击遮罩关闭
+  modal.addEventListener('click', function (e) {
+    if (e.target === modal) closeModal();
+  });
+
+  // 显示
+  requestAnimationFrame(function () {
+    modal.classList.add('active');
+  });
+};
+  
   // ==================== 初始化 ====================
   var inited = false;
   function init() {
