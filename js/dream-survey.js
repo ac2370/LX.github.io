@@ -676,16 +676,25 @@
         for (var j = 0; j < s.qs.length; j++) {
           answers.push({ qIdx: j, value: answeringData[j] });
         }
-        window.dreamSurveyFromTa.submitAnswers(answeringId, answers);
+               var submittedId = answeringId;
+
+        window.dreamSurveyFromTa.submitAnswers(submittedId, answers);
 
         // 回写聊天里的卡片
         if (typeof window.syncSurveyCard === 'function') {
-          try { window.syncSurveyCard(answeringId); } catch (e) {
+          try { window.syncSurveyCard(submittedId); } catch (e) {
             console.warn('[dream-survey] 同步卡片失败', e);
           }
         }
 
         alert('已提交');
+
+        // 让 Ta 稍后回应
+        if (typeof window.dreamSurveyFromTa.replyToAnswer === 'function') {
+          try { window.dreamSurveyFromTa.replyToAnswer(submittedId); } catch (e) {
+            console.warn('[dream-survey] Ta 回应失败', e);
+          }
+        }
 
         // 清空作答状态
         answeringId = null;
