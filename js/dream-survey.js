@@ -3,10 +3,13 @@
  * - 列表页 #pageDreamSurvey（含「我的问卷 / Ta 的问卷」分类切换）
  * - 编辑页 #pageDreamSurveyEdit（含「从问卷库添加」折叠面板）
  * - 详情页 #pageDreamSurveyDetail
+ * - 作答页 #pageDreamSurveyAnswer
  * - 存储：localStorage 'dream_survey_list'
  * - 依赖：window.DREAM_SURVEY_LIB（dream-survey-questions.js）
  *
- * 本次只做 UI + 基础保存，不做「TA 作答 / 交卷」逻辑
+ * 注意：
+ * - 已删除自带的 showPage 函数，统一用 window.showPage（来自 router.js）
+ * - window.showPage 已兼容字符串 id 和 DOM 节点
  */
 
 (function () {
@@ -15,13 +18,12 @@
   var STORE_KEY = 'dream_survey_list';
 
   // ==================== 状态 ====================
-  var editingSurvey = null;      // 当前编辑的问卷对象（深拷贝）
-  var currentListTab = 'mine';   // 列表页当前 tab（'mine' | 'theirs'）
+  var editingSurvey = null;
+  var currentListTab = 'mine';
 
-  // 问卷库状态
-  var libSelected = {};          // { 'daily_0': true, ... }
-  var libCurrentCat = 'daily';   // 当前分类 key
-  var libOpen = false;           // 面板是否展开
+  var libSelected = {};
+  var libCurrentCat = 'daily';
+  var libOpen = false;
 
   // ==================== 工具 ====================
   function genId() {
@@ -41,6 +43,19 @@
     var d = new Date(ts);
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
     return d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate());
+  }
+
+  // 统一跳页（走 router.js）
+  function goPage(id) {
+    if (typeof window.showPage === 'function') {
+      window.showPage(id);
+    } else {
+      // 兜底
+      document.querySelectorAll('.page').forEach(function (p) {
+        p.classList.toggle('active', p.id === id);
+      });
+      window.scrollTo(0, 0);
+    }
   }
 
   // ==================== 存储 ====================
@@ -77,31 +92,21 @@
     saveList(list);
   }
 
-  // ==================== 页面切换 ====================
-  function showPage(id) {
-    document.querySelectorAll('.page').forEach(function (p) {
-      p.classList.toggle('active', p.id === id);
-    });
-    window.scrollTo(0, 0);
-  }
-
   // ==================== 列表页 ====================
   function renderList() {
     var listBox = document.getElementById('dsList');
     var emptyBox = document.getElementById('dsEmpty');
     if (!listBox || !emptyBox) return;
 
-      var list = [];
+    var list = [];
 
     if (currentListTab === 'theirs') {
-      // 「Ta 的问卷」：从 dream_survey_from_ta 读
       if (window.dreamSurveyFromTa && typeof window.dreamSurveyFromTa.loadAll === 'function') {
         list = window.dreamSurveyFromTa.loadAll();
       } else {
         list = [];
       }
     } else {
-      // 「我的问卷」：从 dream_survey_list 读
       list = loadList();
     }
 
@@ -113,7 +118,7 @@
       var emptyHint = emptyBox.querySelector('.ds-empty-hint');
       if (currentListTab === 'theirs') {
         if (emptyText) emptyText.textContent = 'Ta 还没有发起问卷';
-      if (emptyHint) emptyHint.textContent = '等 Ta 主动问你点什么吧（调试：Console 里跑 window.debugTaSurvey()）';
+        if (emptyHint) emptyHint.textContent = '等 Ta 主动问你点什么吧（调试：Console 里跑 window.debugTaSurvey()）';
       } else {
         if (emptyText) emptyText.textContent = '还没有问卷';
         if (emptyHint) emptyHint.textContent = '点右上角 + 新建一份吧';
@@ -128,13 +133,11 @@
       item.className = 'ds-item';
       item.dataset.id = s.id;
 
-          var statusText, statusClass;
+      var statusText, statusClass;
       if (currentListTab === 'theirs') {
-        // Ta 侧：unanswered / answered
         statusText = (s.status === 'answered') ? '已作答' : '待作答';
         statusClass = (s.status === 'answered') ? 'done' : 'sent';
       } else {
-        // 我的：draft / sent / done
         statusText = { draft: '草稿', sent: '已发出', done: '已交卷' }[s.status] || '草稿';
         statusClass = s.status || 'draft';
       }
@@ -152,7 +155,7 @@
         '</div>' +
         '<div class="ds-item-meta">' + metaParts.join(' &nbsp; ') + '</div>';
 
-          item.addEventListener('click', function () {
+      item.addEventListener('click', function () {
         if (currentListTab === 'theirs') {
           openAnswerPage(s.id);
         } else {
@@ -183,7 +186,6 @@
   function renderEdit() {
     if (!editingSurvey) return;
 
-    // 重置问卷库状态（每次进编辑页都从头开始）
     libSelected = {};
     libOpen = false;
 
@@ -201,7 +203,6 @@
         : '新建问卷';
     }
 
-    // 收起问卷库面板
     var libPanel = document.getElementById('dsLibPanel');
     var libToggle = document.getElementById('dsLibToggleBtn');
     if (libPanel) libPanel.style.display = 'none';
@@ -222,7 +223,6 @@
       card.className = 'ds-q-card';
       card.dataset.idx = String(idx);
 
-      // 头部：序号 + 类型 select + 删除
       var head = document.createElement('div');
       head.className = 'ds-q-header';
 
@@ -264,7 +264,6 @@
       head.appendChild(delBtn);
       card.appendChild(head);
 
-      // 题干
       var textInput = document.createElement('input');
       textInput.type = 'text';
       textInput.className = 'ds-q-text';
@@ -452,7 +451,7 @@
       editBtn.onclick = function () {
         editingSurvey = deepClone(s);
         renderEdit();
-        showPage('pageDreamSurveyEdit');
+        goPage('pageDreamSurveyEdit');
       };
     }
 
@@ -498,13 +497,11 @@
 
     body.innerHTML = html;
 
-    showPage('pageDreamSurveyDetail');
+    goPage('pageDreamSurveyDetail');
   }
 
-    // ==================== Ta 的问卷 · 作答页 ====================
-  // 当前正在作答的问卷 id
+  // ==================== Ta 的问卷 · 作答页 ====================
   var answeringId = null;
-  // 当前作答的临时数据 { 'qIdx': value }
   var answeringData = {};
 
   function openAnswerPage(id) {
@@ -521,7 +518,6 @@
     answeringId = id;
     answeringData = {};
 
-    // 如果已作答，回填
     if (s.status === 'answered' && Array.isArray(s.answers)) {
       s.answers.forEach(function (a) {
         if (a && typeof a.qIdx === 'number') {
@@ -531,7 +527,7 @@
     }
 
     renderAnswerPage(s);
-    showPage('pageDreamSurveyAnswer');
+    goPage('pageDreamSurveyAnswer');
   }
 
   function renderAnswerPage(s) {
@@ -544,7 +540,6 @@
     var readOnly = s.status === 'answered';
     var html = '';
 
-    // 顶部信息
     html += '<div class="ds-answer-meta">';
     html += '  <i class="fa-solid fa-circle-question"></i> ' + s.qs.length + ' 题';
     if (readOnly) {
@@ -552,7 +547,6 @@
     }
     html += '</div>';
 
-    // 题目
     html += '<div class="ds-answer-qs">';
 
     s.qs.forEach(function (q, idx) {
@@ -591,7 +585,6 @@
 
     html += '</div>';
 
-    // 底部提交按钮
     if (!readOnly) {
       html += '<div class="ds-answer-footer">';
       html += '  <button class="ds-answer-submit" id="dsAnswerSubmitBtn" type="button">提交</button>';
@@ -604,14 +597,12 @@
 
     bodyEl.innerHTML = html;
 
-    // 绑定交互
     if (!readOnly) {
       bindAnswerInteractions();
     }
   }
 
   function bindAnswerInteractions() {
-    // 文字题
     document.querySelectorAll('#dsAnswerBody .ds-answer-textarea').forEach(function (ta) {
       ta.addEventListener('input', function () {
         var qi = parseInt(ta.getAttribute('data-qidx'), 10);
@@ -619,7 +610,6 @@
       });
     });
 
-    // 单选 / 多选
     document.querySelectorAll('#dsAnswerBody .ds-answer-opt').forEach(function (opt) {
       opt.addEventListener('click', function () {
         var qi = parseInt(opt.getAttribute('data-qidx'), 10);
@@ -629,13 +619,11 @@
         var multiMax = parseInt(container.getAttribute('data-multimax'), 10) || 2;
 
         if (type === 'single') {
-          // 单选
           answeringData[qi] = val;
           container.querySelectorAll('.ds-answer-opt').forEach(function (o) {
             o.classList.toggle('selected', o === opt);
           });
         } else {
-          // 多选
           var arr = Array.isArray(answeringData[qi]) ? answeringData[qi].slice() : [];
           var idx = arr.indexOf(val);
           if (idx >= 0) {
@@ -643,7 +631,6 @@
             opt.classList.remove('selected');
           } else {
             if (arr.length >= multiMax) {
-              // 超上限：先去最早一个
               var firstVal = arr.shift();
               container.querySelectorAll('.ds-answer-opt').forEach(function (o) {
                 if (o.getAttribute('data-val') === firstVal) o.classList.remove('selected');
@@ -657,11 +644,9 @@
       });
     });
 
-    // 提交按钮
     var submitBtn = document.getElementById('dsAnswerSubmitBtn');
     if (submitBtn) {
       submitBtn.addEventListener('click', function () {
-        // 校验：每题都答了
         if (!answeringId) return;
         var s = window.dreamSurveyFromTa.findById(answeringId);
         if (!s) return;
@@ -687,17 +672,15 @@
           }
         }
 
-        // 组装答案
         var answers = [];
-        for (var i = 0; i < s.qs.length; i++) {
-          answers.push({ qIdx: i, value: answeringData[i] });
+        for (var j = 0; j < s.qs.length; j++) {
+          answers.push({ qIdx: j, value: answeringData[j] });
         }
 
         window.dreamSurveyFromTa.submitAnswers(answeringId, answers);
         alert('已提交');
-        // 返回 Ta 的问卷 tab
         renderList();
-        showPage('pageDreamSurvey');
+        goPage('pageDreamSurvey');
       });
     }
   }
@@ -865,7 +848,7 @@
       homeBtn.addEventListener('click', function (e) {
         e.preventDefault();
         renderList();
-        showPage('pageDreamSurvey');
+        goPage('pageDreamSurvey');
       });
     }
 
@@ -873,11 +856,7 @@
     var backBtn = document.getElementById('dsBackBtn');
     if (backBtn) {
       backBtn.addEventListener('click', function () {
-        if (typeof window.showPage === 'function') {
-          window.showPage('pageHome');
-        } else {
-          showPage('pageHome');
-        }
+        goPage('pageHome');
       });
     }
 
@@ -915,7 +894,7 @@
           doneAt: 0
         };
         renderEdit();
-        showPage('pageDreamSurveyEdit');
+        goPage('pageDreamSurveyEdit');
       });
     }
 
@@ -926,7 +905,7 @@
         if (!confirm('放弃当前编辑吗？未保存的修改将丢失。')) return;
         editingSurvey = null;
         renderList();
-        showPage('pageDreamSurvey');
+        goPage('pageDreamSurvey');
       });
     }
 
@@ -962,7 +941,7 @@
         editingSurvey = null;
         renderList();
         alert('已保存');
-        showPage('pageDreamSurvey');
+        goPage('pageDreamSurvey');
       });
     }
 
@@ -992,7 +971,7 @@
       addQBtn.addEventListener('click', addNewQuestion);
     }
 
-    // 高级模式切换
+    // 高级模式
     var advBtn = document.getElementById('dsAdvToggleBtn');
     var advArea = document.getElementById('dsAdvArea');
     var advTextarea = document.getElementById('dsAdvTextarea');
@@ -1030,11 +1009,11 @@
     if (detailBackBtn) {
       detailBackBtn.addEventListener('click', function () {
         renderList();
-        showPage('pageDreamSurvey');
+        goPage('pageDreamSurvey');
       });
     }
 
-      // 作答页返回     ← 【新增开始】
+    // 作答页返回
     var answerBackBtn = document.getElementById('dsAnswerBackBtn');
     if (answerBackBtn) {
       answerBackBtn.addEventListener('click', function () {
@@ -1042,9 +1021,9 @@
         answeringId = null;
         answeringData = {};
         renderList();
-        showPage('pageDreamSurvey');
+        goPage('pageDreamSurvey');
       });
-    }  
+    }
   }
 
   // 把题目序列化回文本（用于高级模式回显）
@@ -1083,7 +1062,7 @@
   // 暴露给外部
   window.dreamSurvey = {
     reload: renderList,
-    openList: function () { renderList(); showPage('pageDreamSurvey'); }
+    openList: function () { renderList(); goPage('pageDreamSurvey'); }
   };
 
   console.log('[dream-survey] 模块已加载');
