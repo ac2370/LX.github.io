@@ -172,6 +172,46 @@
     return true;
   }
 
+    // ==================== Ta 对作答的回应 ====================
+  // 隔 2~5 秒，让 Ta 在聊天里说一句（从字卡库抽）
+  function replyToAnswer(surveyId) {
+    var s = findById(surveyId);
+    if (!s) return;
+
+    var delay = 2000 + Math.floor(Math.random() * 3000);
+    setTimeout(function () {
+      // 抽一句字卡
+      var pool = [];
+      try {
+        if (typeof window.getReplyCards === 'function') {
+          pool = window.getReplyCards() || [];
+        }
+      } catch (e) {}
+      if (!Array.isArray(pool)) pool = [];
+
+      // 抽不到就兜底
+      var text = '';
+      if (pool.length > 0) {
+        text = pool[Math.floor(Math.random() * pool.length)];
+      } else {
+        text = '谢谢你告诉我这些。';
+      }
+      if (!text || typeof text !== 'string') return;
+
+      // 推到聊天
+      if (typeof window.appendTaTextToChat === 'function') {
+        try {
+          window.appendTaTextToChat(text);
+          console.log('[dream-survey-from-ta] Ta 已回应作答');
+        } catch (e) {
+          console.warn('[dream-survey-from-ta] Ta 回应失败', e);
+        }
+      } else {
+        console.warn('[dream-survey-from-ta] window.appendTaTextToChat 不存在');
+      }
+    }, delay);
+  }
+
     // ==================== 推送问卷卡片到聊天 ====================
   // 依赖 chat.js 暴露的 window.appendSurveyCardToChat（下一步加）
   function pushToChat(surveyId) {
@@ -225,6 +265,7 @@
     findById: findById,
     generateAndSave: generateAndSave,
     submitAnswers: submitAnswers,
+    replyToAnswer: replyToAnswer,
     removeById: removeById,
     pushToChat: pushToChat,
     STORE_KEY: STORE_KEY
