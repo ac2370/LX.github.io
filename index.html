@@ -1133,10 +1133,9 @@
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>
-      <div class="reply-settings-tabs">
+           <div class="reply-settings-tabs">
         <button class="reply-tab-btn active" data-tab="rhythm">回复节奏</button>
         <button class="reply-tab-btn" data-tab="proactive">主动消息</button>
-        <button class="reply-tab-btn" data-tab="quote">引用/反应</button>
       </div>
       <div class="reply-settings-body">
         <div class="reply-tab-panel active" id="panel-rhythm">
@@ -1247,11 +1246,9 @@
               </div>
             </div>
           </div>
-                  <div class="input-hint">主动消息间隔可设为 10-10800 秒，角色将在该区间内随机选择时间发送</div>
-          <div class="auto-save-hint">修改后自动保存</div>
-        </div>
-
-        <div class="reply-tab-panel" id="panel-quote">
+                        <div class="input-hint">主动消息间隔可设为 10-10800 秒，角色将在该区间内随机选择时间发送</div>
+          <div class="setting-divider"></div>
+          <div class="setting-section-title">引用</div>
           <div class="setting-row">
             <div class="setting-row-label">
               <div class="setting-row-title">允许随机引用</div>
@@ -1261,19 +1258,6 @@
               <input type="checkbox" id="toggleQuote" checked>
               <span class="toggle-slider"></span>
             </label>
-          </div>
-          <div class="setting-row">
-            <div class="setting-row-label">
-              <div class="setting-row-title">允许随机贴反应</div>
-              <div class="setting-row-desc">开启后，角色回复时有一定概率对你之前的消息贴表情反应</div>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="toggleReaction" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="input-hint" style="margin-top:12px;">
-            引用和反应均为随机触发，触发概率由系统根据对话上下文自动计算。关闭后角色将不再引用或贴反应。
           </div>
           <div class="auto-save-hint">修改后自动保存</div>
         </div>
