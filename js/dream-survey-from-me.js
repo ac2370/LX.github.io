@@ -193,15 +193,18 @@
 
   // ==================== Ta 逐题作答 ====================
   // 用 tick 链，每题 1~2 秒
-  function startTaAnswering(surveyId) {
+   function startTaAnswering(surveyId) {
     var s = findSurvey(surveyId);
     if (!s) return;
 
-     // 首题：15~45 秒（30 秒轮询 + 15 秒守卫）
+    // 首题：15~45 秒（30 秒轮询 + 15 秒守卫）
     var firstDelay = 15000 + Math.floor(Math.random() * 30000);
     setTimeout(function () {
       tickAnswer(surveyId, 0);
     }, firstDelay);
+  }
+
+  function tickAnswer(surveyId, qIdx) {
   function tickAnswer(surveyId, qIdx) {
     var s = findSurvey(surveyId);
     if (!s) return;
