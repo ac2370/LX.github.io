@@ -197,12 +197,11 @@
     var s = findSurvey(surveyId);
     if (!s) return;
 
-    // 等 1 秒（Ta 收到问卷）
+     // 首题：15~45 秒（30 秒轮询 + 15 秒守卫）
+    var firstDelay = 15000 + Math.floor(Math.random() * 30000);
     setTimeout(function () {
       tickAnswer(surveyId, 0);
-    }, 1000);
-  }
-
+    }, firstDelay);
   function tickAnswer(surveyId, qIdx) {
     var s = findSurvey(surveyId);
     if (!s) return;
@@ -231,8 +230,8 @@
       try { window.syncMySurveyCard(surveyId); } catch (e) {}
     }
 
-    // 下一题：1~2 秒后
-    var delay = 1000 + Math.floor(Math.random() * 1000);
+       // 下一题：30 秒后
+    var delay = 30000;
     setTimeout(function () {
       tickAnswer(surveyId, qIdx + 1);
     }, delay);
