@@ -855,6 +855,117 @@
     });
   }
 
+    // ==================== 追加我方问卷卡片到聊天（供 A6 调用） ====================
+  window.appendMySurveyCardToChat = function (survey) {
+    if (!survey || !survey.id) return;
+
+    var row = document.createElement('div');
+    row.className = 'message-row self msg-survey-row msg-survey-row-self';
+    row.dataset.surveyId = survey.id;
+    row.dataset.surveyStatus = survey.status || 'sent';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'message-bubble msg-survey-bubble';
+
+    var qCount = (survey.qs || []).length;
+    var title = survey.title || '我的问卷';
+
+    var html = '';
+    html += '<div class="msg-survey-head">';
+    html += '  <i class="fa-solid fa-paper-plane"></i>';
+    html += '  <span class="msg-survey-tag">我发出的问卷</span>';
+    html += '</div>';
+    html += '<div class="msg-survey-title">' + escapeHtmlSafe(title) + '</div>';
+    html += '<div class="msg-survey-meta">' + qCount + ' 题</div>';
+
+    html += '<div class="msg-survey-foot">';
+    html += '  <span class="msg-survey-status pending" data-status="sent">' +
+              '<i class="fa-solid fa-hourglass-half"></i> 等待 Ta 作答' +
+            '</span>';
+    html += '</div>';
+
+    bubble.innerHTML = html;
+
+    // 我方卡片：点击不打开作答页（Ta 的问卷才点开作答）
+    // 只显示，不做点击交互
+
+    row.appendChild(bubble);
+
+    row.dataset.sender = 'me';
+    row.dataset.type = 'survey-from-me';
+    row.dataset.time = String(Date.now());
+    row.dataset.favorited = 'false';
+
+    var body = document.createElement('div');
+    body.className = 'message-body';
+    row.insertBefore(body, bubble);
+    body.appendChild(bubble);
+
+    var timeEl = document.createElement('div');
+    timeEl.className = 'message-time';
+    var timeText = document.createElement('span');
+    timeText.className = 'message-time-text';
+    timeText.textContent = formatTime(Date.now());
+    timeEl.appendChild(timeText);
+    body.appendChild(timeEl);
+
+    chatMessages.appendChild(row);
+    scrollToBottom();
+  };
+
+  // ==================== 回写我方问卷卡片状态 ====================
+  window.syncMySurveyCard = function (surveyId) {
+    if (!surveyId) return;
+    if (!window.dreamSurveyFromMe) return;
+
+    // 直接读 localStorage（因为 dream-survey-from-me 的 upsert 已经写盘了）
+    var list = [];
+    try {
+      var raw = localStorage.getItem('dream_survey_list');
+      if (raw) list = JSON.parse(raw) || [];
+    } catch (e) {}
+
+    var s = list.find(function (x) { return x.id === surveyId; });
+    if (!s) return;
+
+    var rows = chatMessages.querySelectorAll('.msg-survey-row-self');
+    rows.forEach(function (row) {
+      if (row.dataset.surveyId !== surveyId) return;
+      row.dataset.surveyStatus = s.status || 'sent';
+
+      var statusEl = row.querySelector('.msg-survey-status');
+      if (!statusEl) return;
+
+      var qCount = (s.qs || []).length;
+      var answeredCount = 0;
+      if (Array.isArray(s.answers)) {
+        answeredCount = s.answers.filter(function (a) {
+          if (!a) return false;
+          var v = a.value;
+          if (Array.isArray(v)) return v.length > 0;
+          return v !== undefined && v !== null && String(v).trim() !== '';
+        }).length;
+      }
+
+      if (s.status === 'done') {
+        statusEl.className = 'msg-survey-status done';
+        statusEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> Ta 已交卷';
+      } else if (s.status === 'sent') {
+        if (answeredCount > 0) {
+          statusEl.className = 'msg-survey-status doing';
+          statusEl.innerHTML = '<i class="fa-solid fa-pen"></i> 作答中 ' + answeredCount + '/' + qCount;
+        } else {
+          statusEl.className = 'msg-survey-status pending';
+          statusEl.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> 等待 Ta 作答';
+        }
+      } else {
+        // draft（被撤回后的状态，此时卡片通常已被删，不走这里）
+        statusEl.className = 'msg-survey-status pending';
+        statusEl.innerHTML = '<i class="fa-regular fa-circle"></i> 待发出';
+      }
+    });
+  };
+
   // ==================== 顶栏图标点击（占位） ====================
   document.querySelectorAll('.chat-action-icon').forEach(function (icon) {
     icon.addEventListener('click', function () {
@@ -1000,6 +1111,18 @@
 
   function doWithdraw(row) {
     if (!row.parentNode) return;
+
+    // 如果是我发出的问卷卡片 → 同步把问卷回 draft
+    var surveyId = row.dataset.surveyId;
+    var rowType = row.dataset.type;
+    if (surveyId && rowType === 'survey-from-me') {
+      if (window.dreamSurveyFromMe && typeof window.dreamSurveyFromMe.onCardWithdrawn === 'function') {
+        try { window.dreamSurveyFromMe.onCardWithdrawn(surveyId); } catch (e) {
+          console.warn('[chat] 撤回问卷联动失败', e);
+        }
+      }
+    }
+
     row.parentNode.removeChild(row);
   }
 
