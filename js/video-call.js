@@ -125,6 +125,7 @@
   function injectCSS() {
     if (document.getElementById('video-call-styles')) return;
 
+    var css = [
       /* ============ 通话窗口 ============ */
       '.vc-window {',
       '  position: fixed;',
