@@ -148,7 +148,7 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
   }
 
   // 从 home settings 或 chat 里读名字（尽量兼容）
-  function getSettingsNames() {
+   function getSettingsNames() {
     var partnerName = 'Ta';
     var myName = '我';
 
@@ -162,13 +162,35 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       }
     } catch (e) {}
 
-    // 2) 我的名字：从 home_custom_images 或类似键读（兼容常见字段）
+    // 2) 我的名字：优先 my_profile.name
+    var gotMyName = false;
     try {
-      var raw = localStorage.getItem('home_custom_images');
-      if (raw) {
-        var data = JSON.parse(raw);
-        if (data && data.myName) myName = data.myName;
+      var rawP = localStorage.getItem('my_profile');
+      if (rawP) {
+        var p = JSON.parse(rawP);
+        if (p && p.name) { myName = p.name; gotMyName = true; }
       }
+    } catch (e) {}
+
+    // 3) 回退：home_custom_images.myName
+    if (!gotMyName) {
+      try {
+        var raw = localStorage.getItem('home_custom_images');
+        if (raw) {
+          var data = JSON.parse(raw);
+          if (data && data.myName) myName = data.myName;
+        }
+      } catch (e) {}
+    }
+
+    // 4) 如果外部有 settings 对象（Milk 风格），优先用它
+    if (window.settings && typeof window.settings === 'object') {
+      if (window.settings.partnerName) partnerName = window.settings.partnerName;
+      if (window.settings.myName)      myName      = window.settings.myName;
+    }
+
+    return { partnerName: partnerName, myName: myName };
+  }
     } catch (e) {}
 
     // 3) 如果外部有 settings 对象（Milk 风格），优先用它
@@ -774,6 +796,16 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       });
     });
   }
+
+  // ==================== 监听 my_profile 变化 ====================
+  // 同标签页内，role-panel 保存后主动通知
+  window.addEventListener('myProfileChanged', function () {
+    // 重新渲染寄出箱 / 收件箱，让新名字生效
+    if (dataReady) {
+      renderSent();
+      renderInbox();
+    }
+  });
 
   // ==================== 初始化 ====================
   function init() {
