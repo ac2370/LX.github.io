@@ -381,12 +381,13 @@
     arr.sort(function (a, b) { return b.freq - a.freq; });
     var top = arr.slice(0, 60);
 
-    var canvas = document.getElementById('statsWCCanvas');
+      var canvas = document.getElementById('statsWCCanvas');
     var emptyEl = document.getElementById('statsWCEmpty');
 
     // 不管有没有词，canvas 都显示（容器固定高度）
     canvas.style.display = 'block';
-    emptyEl.classList.remove('active');
+    // 空状态元素可能存在也可能不存在，做个防御
+    if (emptyEl) emptyEl.classList.remove('active');
 
     // 清空画布（即使没词也要清）
     var parent = canvas.parentElement;
