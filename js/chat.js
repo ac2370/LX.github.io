@@ -3,10 +3,11 @@
  * - 自动回复：从 publicGroups / privateGroups 抽取文字
  * - 公共字卡库：合并 window.publicCards 的勾选字卡
  * - 专属字卡库：当前联系人勾选的分组（window.contactCards）优先
- * - 颜文字：从 emojiGroups 抽取
- * - 表情包：从 stickerGroups 抽取
- * - 保持原有等待时间、连发、三点气泡、随机引用机制
- * - 每条消息 DOM 挂 dataset（sender/type/time/favorited）+ 渲染时间戳
+ * - 引用优化：从最近 8 条我方消息里随机引用
+ * - 表情反应：随机给历史消息贴 emoji
+ * - 已读回执：发消息后 1.5~4s 标已读，气泡下方显示单勾
+ * - 已读不回：开启后，20% 概率只已读不回复
+ * - 每条消息 DOM 挂 dataset（sender/type/time/favorited/read）+ 渲染时间戳
  */
 
 (function () {
@@ -79,83 +80,6 @@
     });
   }
 
-    // ==================== 已读标记 ====================
-  var readMarkTimer = null;
-
-  function scheduleReadMark() {
-    // 已经有定时器就不重复
-    if (readMarkTimer) return;
-    // 1.5 ~ 4 秒随机延迟
-    var delay = 1500 + Math.floor(Math.random() * 2500);
-    readMarkTimer = setTimeout(function () {
-      readMarkTimer = null;
-      markAllSelfAsRead();
-    }, delay);
-  }
-
-  function markAllSelfAsRead() {
-    var settings = getSettings();
-    // 把所有未读的我方消息标为已读
-    var rows = chatMessages.querySelectorAll('.message-row.self');
-    var changed = false;
-
-    for (var i = 0; i < rows.length; i++) {
-      var row = rows[i];
-      if (row.dataset.read === 'true') continue;
-      row.dataset.read = 'true';
-      changed = true;
-    }
-
-    if (!changed) return;
-
-    // 重绘所有回执
-    updateReadReceipts();
-  }
-
-  // 更新所有已读回执 DOM
-  function updateReadReceipts() {
-    var settings = getSettings();
-    var showReadStatus = !!settings.readStatus;
-
-    var rows = chatMessages.querySelectorAll('.message-row.self');
-    var arr = Array.prototype.slice.call(rows);
-
-    // 对每条消息：找到它是不是所属发送者分组的最后一条
-    // 我方消息都是同一发送者，所以直接判断「下一条我方消息」是否在 60s 内
-    arr.forEach(function (row, idx) {
-      // 先移除旧的回执
-      var existing = row.querySelector('.message-read-receipt');
-      if (existing) existing.parentNode.removeChild(existing);
-
-      if (!showReadStatus) return;
-
-      // 只在该发送者分组最后一条显示
-      // 找下一条我方消息
-      var next = arr[idx + 1];
-      if (next) {
-        var curTime = parseInt(row.dataset.time || '0', 10);
-        var nextTime = parseInt(next.dataset.time || '0', 10);
-        if (nextTime - curTime < 60000) {
-          // 60 秒内还有同发送者消息，不显示回执
-          return;
-        }
-      }
-
-      // 只有已读的才显示（2B 方案：未读不显示）
-      if (row.dataset.read !== 'true') return;
-
-      // 插入单勾图标
-      var body = row.querySelector('.message-body');
-      if (!body) return;
-
-      var receipt = document.createElement('div');
-      receipt.className = 'message-read-receipt';
-      receipt.innerHTML = '<i class="fa-solid fa-check"></i>';
-      receipt.title = '已读';
-      body.appendChild(receipt);
-    });
-  }
-
   // ==================== 时间格式化 ====================
   function formatTime(ts) {
     if (!ts) return '';
@@ -192,9 +116,15 @@
       row.appendChild(body);
     }
 
+    // 时间戳：包一层 .message-time-text，回执可以插在 .message-time 里
     var timeEl = document.createElement('div');
     timeEl.className = 'message-time';
-    timeEl.textContent = formatTime(Number(row.dataset.time));
+
+    var timeText = document.createElement('span');
+    timeText.className = 'message-time-text';
+    timeText.textContent = formatTime(Number(row.dataset.time));
+    timeEl.appendChild(timeText);
+
     body.appendChild(timeEl);
   }
 
@@ -270,13 +200,15 @@
     if (typeof window.getReplySettings === 'function') return window.getReplySettings();
     return {
       normalReply: true,
-      kaomoji: false,
       typingBubble: true,
       quote: true,
+      reaction: true,
       minWait: 3,
       maxWait: 12,
       minCount: 0,
-      maxCount: 3
+      maxCount: 3,
+      readStatus: false,
+      readNoReply: false
     };
   }
 
@@ -342,7 +274,7 @@
     }
   }
 
-   // ==================== 读专属字卡（当前联系人勾选的分组） ====================
+  // ==================== 读专属字卡（当前联系人勾选的分组） ====================
   function getExclusiveReplyCards() {
     try {
       if (!window.contactCards) return [];
@@ -480,17 +412,16 @@
     return randomPick(stickerArr);
   }
 
-    // ==================== 从 DOM 取最近 N 条我方消息文本 ====================
+  // ==================== 从 DOM 取最近 N 条我方消息文本 ====================
   function getRecentSelfMessages(limit) {
     var rows = chatMessages.querySelectorAll('.message-row.self');
     var arr = [];
-    // 从后往前取，最多 limit 条
     for (var i = rows.length - 1; i >= 0 && arr.length < (limit || 8); i--) {
       var row = rows[i];
       var bubble = row.querySelector('.message-bubble');
       if (!bubble) continue;
       var img = bubble.querySelector('img');
-      if (img && !bubble.textContent.trim()) continue; // 跳过纯图片
+      if (img && !bubble.textContent.trim()) continue;
       var text = bubble.textContent.trim();
       if (text) arr.push(text);
     }
@@ -504,12 +435,11 @@
     // 概率：30%
     if (Math.random() > 0.3) return;
 
-    // 找最近 8 条我方消息（排除已有反应的）
     var rows = chatMessages.querySelectorAll('.message-row.self');
     var candidates = [];
     for (var i = rows.length - 1; i >= 0 && candidates.length < 8; i--) {
       var row = rows[i];
-      if (row.dataset.reaction) continue;      // 已有反应跳过
+      if (row.dataset.reaction) continue;
       if (!row.querySelector('.message-bubble')) continue;
       candidates.push(row);
     }
@@ -519,14 +449,11 @@
     var emoji = randomPick(REACTION_EMOJIS);
     if (!targetRow || !emoji) return;
 
-    // 标记到 dataset，防止重复贴
     targetRow.dataset.reaction = emoji;
 
-    // 渲染反应气泡（挂到 message-body 上，跟时间戳同级）
     var body = targetRow.querySelector('.message-body');
     if (!body) return;
 
-    // 如果已经有 reaction 容器就不重复创建
     var reactionEl = body.querySelector('.message-reaction');
     if (!reactionEl) {
       reactionEl = document.createElement('div');
@@ -534,10 +461,10 @@
       body.appendChild(reactionEl);
     }
     reactionEl.textContent = emoji;
-    reactionEl.classList.add('pop'); // 用于 CSS 动画
+    reactionEl.classList.add('pop');
     setTimeout(function () { reactionEl.classList.remove('pop'); }, 400);
   }
-  
+
   // ==================== 创建消息行 ====================
   function createMessageRow(type, content) {
     const row = document.createElement('div');
@@ -592,16 +519,81 @@
     return row;
   }
 
+  // ==================== 已读标记 ====================
+  var readMarkTimer = null;
+
+  function scheduleReadMark() {
+    if (readMarkTimer) return;
+    var delay = 1500 + Math.floor(Math.random() * 2500);
+    readMarkTimer = setTimeout(function () {
+      readMarkTimer = null;
+      markAllSelfAsRead();
+    }, delay);
+  }
+
+  function markAllSelfAsRead() {
+    var rows = chatMessages.querySelectorAll('.message-row.self');
+    var changed = false;
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (row.dataset.read === 'true') continue;
+      row.dataset.read = 'true';
+      changed = true;
+    }
+
+    if (!changed) return;
+    updateReadReceipts();
+  }
+
+  function updateReadReceipts() {
+    var settings = getSettings();
+    var showReadStatus = !!settings.readStatus;
+
+    var rows = chatMessages.querySelectorAll('.message-row.self');
+    var arr = Array.prototype.slice.call(rows);
+
+    arr.forEach(function (row, idx) {
+      // 先移除旧的回执
+      var existing = row.querySelector('.message-read-receipt');
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+
+      if (!showReadStatus) return;
+
+      // 判断是否是发送者分组的最后一条（下一条我方消息若在 60 秒内，则不算）
+      var next = arr[idx + 1];
+      if (next) {
+        var curTime = parseInt(row.dataset.time || '0', 10);
+        var nextTime = parseInt(next.dataset.time || '0', 10);
+        if (nextTime - curTime < 60000) return;
+      }
+
+      // 只有已读的才显示
+      if (row.dataset.read !== 'true') return;
+
+      var body = row.querySelector('.message-body');
+      if (!body) return;
+
+      // 插到 .message-time 里面，和时间戳同行
+      var timeEl = body.querySelector('.message-time');
+      if (!timeEl) return;
+
+      var receipt = document.createElement('span');
+      receipt.className = 'message-read-receipt';
+      receipt.innerHTML = '<i class="fa-solid fa-check"></i>';
+      receipt.title = '已读';
+      timeEl.appendChild(receipt);
+    });
+  }
+
   // ==================== 发送消息 ====================
-   function sendMessage() {
+  function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
 
-    // 如果有引用，组装成带引用的内容
     var content;
     if (currentQuote && currentQuote.text) {
       content = { quote: currentQuote.text, text: text };
-      // 发完清掉引用
       currentQuote = null;
       var bar = document.getElementById('quotePreviewBar');
       if (bar) bar.style.display = 'none';
@@ -609,7 +601,7 @@
       content = text;
     }
 
-       var newRow = createMessageRow('self', content);
+    var newRow = createMessageRow('self', content);
     newRow.dataset.read = 'false';
     chatMessages.appendChild(newRow);
     lastUserMessage = text;
@@ -618,14 +610,13 @@
     updateSendBtnState();
     scrollToBottom();
 
-    // ① 启动「已读延迟标记」——1.5~4 秒后把所有未读我方消息标为已读
+    // ① 启动已读延迟标记
     scheduleReadMark();
 
-    // ② 判断「已读不回」——命中则只标已读，不回复
+    // ② 判断「已读不回」
     var settings = getSettings();
     var shouldIgnore = false;
     if (settings.readNoReply) {
-      // 20% 概率已读不回
       if (Math.random() < 0.2) {
         shouldIgnore = true;
       }
@@ -637,6 +628,7 @@
       console.log('[传讯] 已读不回命中，跳过回复');
     }
   }
+
   sendBtn.addEventListener('click', sendMessage);
   chatInput.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -695,7 +687,7 @@
           typingRow.parentNode.removeChild(typingRow);
         }
 
-                // 回复路径也标一次已读（双路径兜底）
+        // 回复路径也标一次已读（兜底）
         markAllSelfAsRead();
 
         const minCount = Math.max(0, settings.minCount || 0);
@@ -709,7 +701,6 @@
         for (var i = 0; i < replyCount; i++) {
           var picked = pickOneTextReply();
 
-          // 兜底：如果分组逻辑读不到，直接从用户字卡 + 公共字卡 + 专属字卡里随机
           if (!picked) {
             var fallbackPool = allCards.concat(publicCards, getExclusiveReplyCards());
             var fb = randomPick(fallbackPool);
@@ -719,8 +710,8 @@
           if (!picked) break;
           var content = picked.text;
 
-                   if (settings.quote) {
-            var quotePool = getRecentSelfMessages(8); // 最近 8 条我方消息
+          if (settings.quote) {
+            var quotePool = getRecentSelfMessages(8);
             if (quotePool.length > 0 && Math.random() < 0.35) {
               var pickedQuote = randomPick(quotePool);
               content = { quote: pickedQuote, text: content };
@@ -730,7 +721,7 @@
           replies.push({ type: 'text', content: content });
         }
 
-                // 1.5 随机贴表情反应
+        // 1.5 随机贴表情反应
         if (settings.reaction) {
           tryAddReaction();
         }
@@ -820,14 +811,12 @@
 
   window.applyChatTimeDisplay = applyTimeDisplaySetting;
 
-  // 兼容外部可能调用 window.getCards
   window.getCards = getAllReplyCards;
 
-    // ==================== 消息操作菜单 ====================
-  var currentMenu = null;       // 当前弹出的菜单 DOM
-  var currentMenuRow = null;    // 当前操作的消息行
+  // ==================== 消息操作菜单 ====================
+  var currentMenu = null;
+  var currentMenuRow = null;
 
-  // 引用状态：null 或 { text: '被引用的文字' }
   var currentQuote = null;
 
   function closeMsgMenu() {
@@ -841,7 +830,6 @@
   function getMessageText(row) {
     var bubble = row.querySelector('.message-bubble');
     if (!bubble) return '';
-    // 排除图片
     var img = bubble.querySelector('img');
     if (img && !bubble.textContent.trim()) return '[图片]';
     return bubble.textContent.trim();
@@ -866,7 +854,6 @@
     document.body.appendChild(menu);
     currentMenu = menu;
 
-    // 定位：浮在消息旁边
     var rect = menu.getBoundingClientRect();
     var mw = rect.width;
     var mh = rect.height;
@@ -874,11 +861,9 @@
     var left = x - mw / 2;
     var top = y - mh - 8;
 
-    // 边界处理
     if (left < 8) left = 8;
     if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
     if (top < 8) {
-      // 上方不够，放下面
       top = y + 8;
     }
     if (top + mh > window.innerHeight - 8) {
@@ -888,7 +873,6 @@
     menu.style.left = left + 'px';
     menu.style.top = top + 'px';
 
-    // 按钮事件
     menu.querySelectorAll('.msg-action-btn').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -896,13 +880,11 @@
         if (act === 'quote') doQuote(row);
         else if (act === 'fav') doFav(row, btn);
         else if (act === 'withdraw') doWithdraw(row);
-        // 引用和撤回后关闭菜单；收藏不关闭，让用户看到变化
         if (act !== 'fav') closeMsgMenu();
       });
     });
   }
 
-  // ---------- 引用 ----------
   function doQuote(row) {
     var text = getMessageText(row);
     if (!text) return;
@@ -914,17 +896,14 @@
       textEl.textContent = text;
       bar.style.display = 'block';
     }
-    // 聚焦输入框
     chatInput.focus();
   }
 
-  // ---------- 收藏 ----------
   function doFav(row, btn) {
     var isFav = row.dataset.favorited === 'true';
     var next = !isFav;
     row.dataset.favorited = next ? 'true' : 'false';
 
-    // 更新按钮图标
     var icon = btn.querySelector('i');
     if (icon) {
       icon.className = 'fa-' + (next ? 'solid' : 'regular') + ' fa-star';
@@ -932,14 +911,11 @@
     btn.classList.toggle('active', next);
   }
 
-  // ---------- 撤回 ----------
   function doWithdraw(row) {
     if (!row.parentNode) return;
-    // 直接从 DOM 移除
     row.parentNode.removeChild(row);
   }
 
-  // ---------- 引用预览条关闭 ----------
   var quoteClose = document.getElementById('quotePreviewClose');
   if (quoteClose) {
     quoteClose.addEventListener('click', function () {
@@ -949,29 +925,22 @@
     });
   }
 
-  // ---------- 消息点击 → 弹菜单 ----------
   chatMessages.addEventListener('click', function (e) {
-    // 点在菜单上，不处理
     if (e.target.closest('.msg-action-menu')) return;
-    // 点在引用预览条或输入栏，不处理
     if (e.target.closest('.quote-preview-bar')) return;
     if (e.target.closest('.chat-input-bar')) return;
-    // 点在 typing 气泡上，不处理
     if (e.target.closest('#typingRow')) return;
 
     var row = e.target.closest('.message-row');
     if (!row) {
-      // 点空白处，关闭菜单
       closeMsgMenu();
       return;
     }
 
-    // 点消息，弹菜单
     e.stopPropagation();
     openMsgMenu(row, e.clientX, e.clientY);
   }, true);
 
-  // ---------- 点其他地方关闭菜单 ----------
   document.addEventListener('click', function (e) {
     if (!currentMenu) return;
     if (e.target.closest('.msg-action-menu')) return;
@@ -979,17 +948,17 @@
     closeMsgMenu();
   });
 
-  // ---------- 滚动 / 改变窗口时关闭菜单 ----------
   chatMessages.addEventListener('scroll', closeMsgMenu, true);
   window.addEventListener('resize', closeMsgMenu);
 
-   updateSendBtnState();
-  scrollToBottom();
-  // 页面初始化时刷新一遍回执（防止刷新页面后状态丢失显示）
-  setTimeout(updateReadReceipts, 100);
-  
-    // 设置变更时刷新回执
+  // 设置变更时刷新回执
   window.addEventListener('replySettingsChanged', function () {
     updateReadReceipts();
   });
+
+  updateSendBtnState();
+  scrollToBottom();
+  // 页面初始化时刷新一遍回执
+  setTimeout(updateReadReceipts, 100);
+
 })();
