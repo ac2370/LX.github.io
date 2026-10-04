@@ -125,9 +125,9 @@
       }
     });
 
-    // 3D 引擎复位
-    if (window.cen3DEngineInstance) {
-      window.cen3DEngineInstance.targetY = 0;
+        // 3D 引擎复位
+    if (window.cen3DEngineInstance && typeof window.cen3DEngineInstance.setTargetY === 'function') {
+      window.cen3DEngineInstance.setTargetY(0);
     }
   }
 
