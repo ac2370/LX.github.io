@@ -20,6 +20,7 @@
 
   // ==================== 常量 ====================
   var LS_CONTACTS_KEY = 'my_contacts';
+  var LS_MY_PROFILE_KEY = 'my_profile';
   var LS_CURRENT_KEY  = 'my_current_contact';
   var DEFAULT_CONTACT = {
     id: 'default_ta',
@@ -97,6 +98,27 @@
     return contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
   }
 
+     // ==================== 我的资料 ====================
+  function loadMyProfile() {
+    try {
+      var raw = localStorage.getItem(LS_MY_PROFILE_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && typeof p === 'object') {
+          return {
+            name: p.name || '我',
+            avatar: p.avatar || ''
+          };
+        }
+      }
+    } catch (e) {}
+    return { name: '我', avatar: '' };
+  }
+
+  function saveMyProfile(p) {
+    try { localStorage.setItem(LS_MY_PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+   
   // ==================== 同步顶栏 UI ====================
   function applyCurrentContact() {
     var c = getCurrentContact();
@@ -144,6 +166,27 @@
     var editAvatar = isEditingCur && editingAvatarData ? editingAvatarData : cur.avatar;
 
     var html = '';
+
+         // ---------- 我的角色 ----------
+    var myProfile = loadMyProfile();
+    var myAvatarSrc = myProfile.avatar
+      || (function () {
+           var img = document.getElementById('avatarImg');
+           return (img && img.src) ? img.src : '';
+         })()
+      || 'https://picsum.photos/100/100?random=1';
+
+    html += '<div class="rp-my-block">';
+    html += '<div class="rp-my-title">我的角色</div>';
+    html += '<div class="rp-my-row">';
+    html += '<div class="rp-my-avatar-wrap" data-action="my-avatar">';
+    html += '<img class="rp-my-avatar" src="' + escapeHtml(myAvatarSrc) + '" alt="">';
+    html += '<div class="rp-my-avatar-badge"><i class="fa-solid fa-camera"></i></div>';
+    html += '</div>';
+    html += '<input class="rp-my-name" type="text" value="' + escapeHtml(myProfile.name) + '" placeholder="输入我的昵称..." data-role="my-name">';
+    html += '</div>';
+    html += '<button class="rp-my-save" data-action="save-my">保存我的资料</button>';
+    html += '</div>';
 
     // ---------- 当前角色编辑区 ----------
     html += '<div class="rp-current-block">';
@@ -226,6 +269,44 @@
 
   // ==================== 面板内事件绑定 ====================
   function bindPanelEvents() {
+         // ---- 我的角色：头像上传 ----
+    var myAvatarWrap = roleListContainer.querySelector('[data-action="my-avatar"]');
+    var myPendingAvatar = null;   // 暂存"我的头像"
+
+    if (myAvatarWrap) {
+      myAvatarWrap.addEventListener('click', function () {
+        pickImage(function (dataUrl) {
+          myPendingAvatar = dataUrl;
+          var img = roleListContainer.querySelector('[data-action="my-avatar"] .rp-my-avatar');
+          if (img) img.src = dataUrl;
+        });
+      });
+    }
+
+    // ---- 我的角色：保存 ----
+    var saveMyBtn = roleListContainer.querySelector('[data-action="save-my"]');
+    if (saveMyBtn) {
+      saveMyBtn.addEventListener('click', function () {
+        var nameInput = roleListContainer.querySelector('[data-role="my-name"]');
+        var newName = nameInput ? nameInput.value.trim() : '';
+        if (!newName) { alert('昵称不能为空'); return; }
+
+        var cur = loadMyProfile();
+        cur.name = newName;
+        if (myPendingAvatar) cur.avatar = myPendingAvatar;
+
+        saveMyProfile(cur);
+        myPendingAvatar = null;
+
+        // 广播：让 chat-avatars / feed / envelope 等刷新
+        try {
+          window.dispatchEvent(new CustomEvent('myProfileChanged', { detail: cur }));
+        } catch (e) {}
+
+        alert('已保存我的资料');
+        renderRolePanel();
+      });
+    }
     // ---- 当前角色：头像上传 ----
     var curAvatarWrap = roleListContainer.querySelector('[data-action="edit-avatar"]');
     if (curAvatarWrap) {
@@ -469,12 +550,14 @@
   }
 
   // 暴露给外部
-  window.rolePanel = {
+   window.rolePanel = {
     open: openRolePanel,
     close: closeRolePanel,
     refresh: renderRolePanel,
     getCurrentContact: getCurrentContact,
-    getContacts: function () { return contacts.slice(); }
+    getContacts: function () { return contacts.slice(); },
+    getMyProfile: loadMyProfile,
+    saveMyProfile: saveMyProfile
   };
-
+   
 })();
