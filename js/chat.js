@@ -202,7 +202,6 @@
       normalReply: true,
       typingBubble: true,
       quote: true,
-      reaction: true,
       minWait: 3,
       maxWait: 12,
       minCount: 0,
@@ -426,43 +425,6 @@
       if (text) arr.push(text);
     }
     return arr;
-  }
-
-  // ==================== 随机给我之前的消息贴表情反应 ====================
-  var REACTION_EMOJIS = ['❤️', '👍', '😂', '😍', '🤔', '😮', '🥰', '😢', '🔥', '👀'];
-
-  function tryAddReaction() {
-    // 概率：30%
-    if (Math.random() > 0.3) return;
-
-    var rows = chatMessages.querySelectorAll('.message-row.self');
-    var candidates = [];
-    for (var i = rows.length - 1; i >= 0 && candidates.length < 8; i--) {
-      var row = rows[i];
-      if (row.dataset.reaction) continue;
-      if (!row.querySelector('.message-bubble')) continue;
-      candidates.push(row);
-    }
-    if (candidates.length === 0) return;
-
-    var targetRow = randomPick(candidates);
-    var emoji = randomPick(REACTION_EMOJIS);
-    if (!targetRow || !emoji) return;
-
-    targetRow.dataset.reaction = emoji;
-
-    var body = targetRow.querySelector('.message-body');
-    if (!body) return;
-
-    var reactionEl = body.querySelector('.message-reaction');
-    if (!reactionEl) {
-      reactionEl = document.createElement('div');
-      reactionEl.className = 'message-reaction';
-      body.appendChild(reactionEl);
-    }
-    reactionEl.textContent = emoji;
-    reactionEl.classList.add('pop');
-    setTimeout(function () { reactionEl.classList.remove('pop'); }, 400);
   }
 
   // ==================== 创建消息行 ====================
@@ -719,11 +681,6 @@
           }
 
           replies.push({ type: 'text', content: content });
-        }
-
-        // 1.5 随机贴表情反应
-        if (settings.reaction) {
-          tryAddReaction();
         }
 
         // 2. 图片回复
