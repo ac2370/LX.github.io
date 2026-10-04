@@ -40,9 +40,8 @@
     maxCount:        3,
     kaomoji:         false,
     typingBubble:    true,
-    // 已读/状态（UI 有，逻辑后续再接）
+    // 已读状态
     readStatus:      false,
-    autoReply:       false,
     // 通讯节奏
     commMinWait:     10,
     commMaxWait:     60,
@@ -97,9 +96,8 @@
     inputMaxCount:        { key: 'maxCount',     type: 'int',  min: 0,  max: 10 },
     toggleKaomoji:        { key: 'kaomoji',      type: 'bool' },
     toggleTypingBubble:   { key: 'typingBubble', type: 'bool' },
-    // 已读/状态
+    // 已读状态
     toggleReadStatus:     { key: 'readStatus',   type: 'bool' },
-    toggleAutoReply:      { key: 'autoReply',    type: 'bool' },
     // 通讯节奏
     inputCommMinWait:     { key: 'commMinWait',  type: 'int',  min: 1,  max: 600 },
     inputCommMaxWait:     { key: 'commMaxWait',  type: 'int',  min: 1,  max: 600 },
