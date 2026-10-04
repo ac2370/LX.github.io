@@ -96,9 +96,12 @@
   }
 
   // ==================== 显示系统通知 ====================
-  function showSystemNotification(title, content) {
+   function showSystemNotification(title, content) {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
+
+    // iOS/Android 上，页面在前台时不用弹系统通知（页面本身就能看到）
+    if (!document.hidden) return;
 
     var state = getState();
     if (!state.permissionGranted) return;
