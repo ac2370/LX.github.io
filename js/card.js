@@ -213,6 +213,11 @@
   function getGroupObject(category) {
     if (!window.cardDatabase) return { '默认分组': [] };
 
+      // 数组类分类不走分组逻辑，避免误迁移
+  if (category === 'status' || category === 'emoji' || category === 'sticker') {
+    return { '默认分组': [] };
+  }
+
     var dbKey = category;
     if (category === 'place') dbKey = 'location';
     else if (category === 'kaomoji') dbKey = 'pat';
@@ -512,39 +517,36 @@
   }
 
   // ==================== 统一添加逻辑 ====================
-  function addTextToCategory(category, texts, groupName) {
-    if (!window.cardDatabase || !window.cardDatabase.ready) return;
+ function addTextToCategory(category, texts, groupName) {
+  if (!window.cardDatabase || !window.cardDatabase.ready) return;
 
-    var cat = category === 'kaomoji' ? 'pat' : category;
+  var cat = category === 'kaomoji' ? 'pat' : category;
 
-    if (cat === 'reply' || cat === 'pat' || cat === 'place' || cat === 'mood') {
-      var target = groupName || currentGroupMap[cat] || '默认分组';
-      texts.forEach(function (t) {
-        window.addCardToGroup(target, t, cat);
-      });
-      currentGroupMap[cat] = target;
-    } else if (cat === 'emoji') {
-      window.cardDatabase.addMany('sticker', texts, autoDedup);
-    } else if (cat === 'status') {
-      if (!window.cardDatabase.status) window.cardDatabase.status = [];
-      texts.forEach(function (t) {
-        if (autoDedup && window.cardDatabase.status.indexOf(t) >= 0) return;
-        window.cardDatabase.status.push(t);
-      });
-      if (window.cardDatabase.persist) window.cardDatabase.persist();
-    }
+  if (cat === 'reply' || cat === 'pat' || cat === 'place' || cat === 'mood') {
+    var target = groupName || currentGroupMap[cat] || '默认分组';
+    texts.forEach(function (t) {
+      window.addCardToGroup(target, t, cat);
+    });
+    currentGroupMap[cat] = target;
+  } else if (cat === 'status') {
+    if (!window.cardDatabase.status) window.cardDatabase.status = [];
+    texts.forEach(function (t) {
+      if (autoDedup && window.cardDatabase.status.indexOf(t) >= 0) return;
+      window.cardDatabase.status.push(t);
+    });
+    if (window.cardDatabase.persist) window.cardDatabase.persist();
   }
+}
 
   // ==================== 弹窗内的分组选择器 ====================
   function showGroupSelectorInModal(category) {
-    var cat = category === 'kaomoji' ? 'pat' : category;
+  var cat = category === 'kaomoji' ? 'pat' : category;
 
-    if (cat === 'emoji' || cat === 'status') {
-      var existing = document.getElementById('modalGroupSelector');
-      if (existing) existing.style.display = 'none';
-      return;
-    }
-
+  if (cat === 'status') {
+    var existing = document.getElementById('modalGroupSelector');
+    if (existing) existing.style.display = 'none';
+    return;
+  }
     var container = document.getElementById('modalGroupSelector');
     if (!container) {
       container = document.createElement('div');
