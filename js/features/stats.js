@@ -108,7 +108,13 @@
       pageStats.querySelectorAll('.stats-view').forEach(function (v) {
         v.classList.remove('active');
       });
-      var view = document.getElementById('statsView' + name.charAt(0).toUpperCase() + name.slice(1));
+     var VIEW_ID_MAP = {
+  overview: 'statsViewOverview',
+  search: 'statsViewSearch',
+  favorites: 'statsViewFavorites',
+  wordcloud: 'statsViewWordCloud'
+};
+var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
       if (view) view.classList.add('active');
 
       if (name === 'overview') renderOverview();
