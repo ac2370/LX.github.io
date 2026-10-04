@@ -57,6 +57,7 @@
   const cardListPlaceholder = document.getElementById('cardListPlaceholder');
   const groupSelect = document.getElementById('groupSelect');
   const btnImport = document.getElementById('btnImport');
+  const cardImportFileInput = document.getElementById('cardImportFileInput');
   const btnExport = document.getElementById('btnExport');
   const btnAddCard = document.getElementById('btnAddCard');
   const dedupNowBtn = document.getElementById('dedupNowBtn');
@@ -1008,9 +1009,39 @@ del.addEventListener('click', function () {
   if (btnAddCard) btnAddCard.addEventListener('click', function () {
     openSimpleModal('add', '添加回复字卡', '输入一句话...', 'reply');
   });
-  if (btnImport) btnImport.addEventListener('click', function () {
-    openSimpleModal('import', '导入回复字卡', '批量添加回复（每行一条，自动去重）', 'reply');
+ if (btnImport) btnImport.addEventListener('click', function () {
+  if (cardImportFileInput) cardImportFileInput.click();
+});
+
+if (cardImportFileInput) {
+  cardImportFileInput.addEventListener('change', function () {
+    var file = cardImportFileInput.files && cardImportFileInput.files[0];
+    cardImportFileInput.value = ''; // 允许重复选同一个文件
+    if (!file) return;
+
+    // 大小限制 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      window.cardImportToast && window.cardImportToast('文件超过 5MB，请拆分后再导入');
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var text = e.target.result;
+      // G2 会实现 window.cardImportHandleText
+      if (typeof window.cardImportHandleText === 'function') {
+        window.cardImportHandleText(text);
+      } else {
+        console.warn('[card-import] G2 未就绪，暂时只读取到文件内容');
+        console.log(text);
+      }
+    };
+    reader.onerror = function () {
+      window.cardImportToast && window.cardImportToast('文件读取失败');
+    };
+    reader.readAsText(file, 'UTF-8');
   });
+}
   if (btnExport) btnExport.addEventListener('click', function () {
     var currentGroup = currentGroupMap.reply || '默认分组';
     var cards = window.getCardsInGroup(currentGroup, 'reply');
