@@ -587,3 +587,34 @@
 #cen_main_photo {
   cursor: pointer;
 }
+
+/* intro 模式下右侧面板和底部折叠隐藏 */
+.cen-intro-mode #cen_right_panel,
+.cen-intro-mode #cen_bottom_panels {
+  display: none !important;
+}
+
+/* play 模式下右侧面板和底部折叠淡入 */
+#cen_right_panel,
+#cen_bottom_panels details {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.cen-play-mode #cen_right_panel {
+  animation: cenSlideFade 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s forwards;
+}
+.cen-play-mode #cen_bottom_panels details:nth-child(1) {
+  animation: cenSlideFade 0.6s forwards 0.6s;
+}
+.cen-play-mode #cen_bottom_panels details:nth-child(2) {
+  animation: cenSlideFade 0.6s forwards 0.7s;
+}
+.cen-play-mode #cen_bottom_panels details:nth-child(3) {
+  animation: cenSlideFade 0.6s forwards 0.8s;
+}
+.cen-play-mode #cen_bottom_panels details:nth-child(4) {
+  animation: cenSlideFade 0.6s forwards 0.9s;
+}
+@keyframes cenSlideFade {
+  to { opacity: 1; transform: translateX(0); }
+}
