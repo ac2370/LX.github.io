@@ -1823,6 +1823,28 @@ window.cardImportApply = function (normalized, selected, mode) {
     '导入成功（' + modeText + '），共 ' + totalAdded + ' 条'
   );
 };
+
+    // 给档案 DESC 用：从「回复」所有分组随机抽 1~3 条，空格拼接
+  window.getArchiveDesc = function () {
+    var obj = getGroupObject('reply');
+    var all = [];
+    Object.keys(obj).forEach(function (g) {
+      (obj[g] || []).forEach(function (t) { all.push(t); });
+    });
+    if (all.length === 0) return '';
+
+    var count = 1 + Math.floor(Math.random() * 3);   // 1~3
+    if (count > all.length) count = all.length;
+
+    var picked = [];
+    var pool = all.slice();
+    for (var i = 0; i < count; i++) {
+      var idx = Math.floor(Math.random() * pool.length);
+      picked.push(pool[idx]);
+      pool.splice(idx, 1);
+    }
+    return picked.join(' ');
+  };
   
   // ==================== 初始化 ====================
   var inited = false;
