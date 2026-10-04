@@ -1467,11 +1467,16 @@ silentAudioEl.onpause = function () {
         persistNotifyState();
       });
     }
-    var randomCallToggle = document.getElementById('dsRandomCallToggle');
+       var randomCallToggle = document.getElementById('dsRandomCallToggle');
     if (randomCallToggle) {
       randomCallToggle.addEventListener('change', function () {
         notifyState.randomCall = randomCallToggle.checked;
         persistNotifyState();
+
+        // 通知 video-call.js 立即重排定时器（这样开关一开就重新计时）
+        if (window.callFeature && typeof window.callFeature.rescheduleRandomCall === 'function') {
+          try { window.callFeature.rescheduleRandomCall(); } catch (e) {}
+        }
       });
     }
     var silentLoopBtn = document.getElementById('dsSilentLoopBtn');
