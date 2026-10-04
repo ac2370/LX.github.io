@@ -1,11 +1,25 @@
 /**
- * 主页图片自定义设置面板（独立模块 - 修正版）
- * - 新增"头像下的底图"设置项
- * - 上传文件使用 Blob/DataURL，保持原图清晰
+ * 主页图片自定义设置面板（重写版）
+ * - 确保面板只创建一次
+ * - 每个设置项独立绑定（key ↔ input 一一对应）
+ * - 上传文件后立即应用 + 回填文件名
+ * - 保存时收集所有 URL 统一写入
  */
 
 (function () {
   'use strict';
+
+  // 8 个设置项：key → { urlId, fileId, nameId }
+  var FIELDS = [
+    { key: 'bg',       urlId: 'hsBgUrl',       fileId: 'hsBgFile',       nameId: 'hsBgName' },
+    { key: 'avatar',   urlId: 'hsAvatarUrl',   fileId: 'hsAvatarFile',   nameId: 'hsAvatarName' },
+    { key: 'headerBg', urlId: 'hsHeaderBgUrl', fileId: 'hsHeaderBgFile', nameId: 'hsHeaderBgName' },
+    { key: 'photo1',   urlId: 'hsPhoto1Url',   fileId: 'hsPhoto1File',   nameId: 'hsPhoto1Name' },
+    { key: 'photo2',   urlId: 'hsPhoto2Url',   fileId: 'hsPhoto2File',   nameId: 'hsPhoto2Name' },
+    { key: 'photo3',   urlId: 'hsPhoto3Url',   fileId: 'hsPhoto3File',   nameId: 'hsPhoto3Name' },
+    { key: 'album',    urlId: 'hsAlbumUrl',    fileId: 'hsAlbumFile',    nameId: 'hsAlbumName' },
+    { key: 'chatBg',   urlId: 'hsChatBgUrl',   fileId: 'hsChatBgFile',   nameId: 'hsChatBgName' }
+  ];
 
   // ==================== 创建设置按钮 ====================
   function createSettingsButton() {
@@ -25,6 +39,7 @@
 
   // ==================== 创建设置面板 ====================
   function createSettingsPanel() {
+    // 已存在就直接返回，避免重复创建
     if (document.getElementById('homeSettingsPanel')) return;
 
     var panel = document.createElement('div');
@@ -43,7 +58,6 @@
       '  <div class="home-settings-body">',
       // ============ 主页 Tab ============
       '    <div class="home-settings-tab-panel active" data-panel="home">',
-      // 背景图
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-mountain-sun"></i>主页背景图</div>',
       '        <input type="text" class="hs-input" id="hsBgUrl" placeholder="粘贴图片 URL">',
@@ -53,7 +67,6 @@
       '          <span class="hs-file-name" id="hsBgName">未选择文件</span>',
       '        </div>',
       '      </div>',
-      // 头像
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-user"></i>头像</div>',
       '        <input type="text" class="hs-input" id="hsAvatarUrl" placeholder="粘贴图片 URL">',
@@ -63,7 +76,6 @@
       '          <span class="hs-file-name" id="hsAvatarName">未选择文件</span>',
       '        </div>',
       '      </div>',
-      // 头像下的底图（新增）
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-id-card"></i>头像下的底图</div>',
       '        <input type="text" class="hs-input" id="hsHeaderBgUrl" placeholder="粘贴图片 URL">',
@@ -73,7 +85,6 @@
       '          <span class="hs-file-name" id="hsHeaderBgName">未选择文件</span>',
       '        </div>',
       '      </div>',
-      // 展示图1
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-image"></i>展示图 1</div>',
       '        <input type="text" class="hs-input" id="hsPhoto1Url" placeholder="粘贴图片 URL">',
@@ -83,7 +94,6 @@
       '          <span class="hs-file-name" id="hsPhoto1Name">未选择文件</span>',
       '        </div>',
       '      </div>',
-      // 展示图2
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-image"></i>展示图 2</div>',
       '        <input type="text" class="hs-input" id="hsPhoto2Url" placeholder="粘贴图片 URL">',
@@ -93,7 +103,6 @@
       '          <span class="hs-file-name" id="hsPhoto2Name">未选择文件</span>',
       '        </div>',
       '      </div>',
-      // 展示图3
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-image"></i>展示图 3</div>',
       '        <input type="text" class="hs-input" id="hsPhoto3Url" placeholder="粘贴图片 URL">',
@@ -103,7 +112,6 @@
       '          <span class="hs-file-name" id="hsPhoto3Name">未选择文件</span>',
       '        </div>',
       '      </div>',
-      // 音乐黑胶
       '      <div class="hs-row">',
       '        <div class="hs-label"><i class="fa-solid fa-music"></i>音乐黑胶封面</div>',
       '        <input type="text" class="hs-input" id="hsAlbumUrl" placeholder="粘贴图片 URL">',
@@ -137,6 +145,7 @@
     ].join('');
 
     document.body.appendChild(panel);
+
     bindPanelEvents();
   }
 
@@ -145,9 +154,9 @@
     var panel = document.getElementById('homeSettingsPanel');
     if (!panel) return;
 
+    // 关闭 / 取消
     var closeBtn = document.getElementById('homeSettingsClose');
     if (closeBtn) closeBtn.addEventListener('click', closePanel);
-
     var cancelBtn = document.getElementById('homeSettingsCancel');
     if (cancelBtn) cancelBtn.addEventListener('click', closePanel);
 
@@ -168,46 +177,33 @@
       });
     });
 
-    // 上传文件：立即应用（保持清晰）
-    var pending = {};
-
-    function bindFile(inputId, nameId, key) {
-      var input = document.getElementById(inputId);
-      var nameEl = document.getElementById(nameId);
+    // ==================== 每个设置项：文件上传 ====================
+    FIELDS.forEach(function (field) {
+      var input = document.getElementById(field.fileId);
+      var nameEl = document.getElementById(field.nameId);
       if (!input) return;
+
       input.addEventListener('change', function () {
         var file = input.files && input.files[0];
         if (!file) {
-          nameEl.textContent = '未选择文件';
-          delete pending[key];
+          if (nameEl) nameEl.textContent = '未选择文件';
           return;
         }
-        nameEl.textContent = file.name;
-        // 立即处理文件（保持清晰度，不做压缩）
+        if (nameEl) nameEl.textContent = file.name;
+        // 立即应用
         if (window.homeSettings && window.homeSettings.setFile) {
-          window.homeSettings.setFile(key, file, function () {
-            console.log('[home-settings] 已应用 ' + key);
+          window.homeSettings.setFile(field.key, file, function () {
+            console.log('[home-settings] 已应用 ' + field.key);
           });
         }
       });
-    }
-
-    bindFile('hsBgFile', 'hsBgName', 'bg');
-    bindFile('hsAvatarFile', 'hsAvatarName', 'avatar');
-    bindFile('hsHeaderBgFile', 'hsHeaderBgName', 'headerBg');
-    bindFile('hsPhoto1File', 'hsPhoto1Name', 'photo1');
-    bindFile('hsPhoto2File', 'hsPhoto2Name', 'photo2');
-    bindFile('hsPhoto3File', 'hsPhoto3Name', 'photo3');
-    bindFile('hsAlbumFile', 'hsAlbumName', 'album');
-    bindFile('hsChatBgFile', 'hsChatBgName', 'chatBg');
+    });
 
     // 恢复默认传讯背景
     var resetChatBg = document.getElementById('hsChatBgReset');
     if (resetChatBg) {
       resetChatBg.addEventListener('click', function () {
-        if (window.homeSettings) {
-          window.homeSettings.reset('chatBg');
-        }
+        if (window.homeSettings) window.homeSettings.reset('chatBg');
         var urlInput = document.getElementById('hsChatBgUrl');
         if (urlInput) urlInput.value = '';
         var nameEl = document.getElementById('hsChatBgName');
@@ -215,40 +211,22 @@
       });
     }
 
-    // 保存（主要处理 URL 输入）
+    // ==================== 保存（收集所有 URL） ====================
     var saveBtn = document.getElementById('homeSettingsSave');
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
         var updates = {};
-
-        function pickUrl(id) {
-          var el = document.getElementById(id);
-          if (el && el.value.trim()) return el.value.trim();
-          return undefined;
-        }
-
-        var urlMap = {
-          bg: 'hsBgUrl',
-          avatar: 'hsAvatarUrl',
-          headerBg: 'hsHeaderBgUrl',
-          photo1: 'hsPhoto1Url',
-          photo2: 'hsPhoto2Url',
-          photo3: 'hsPhoto3Url',
-          album: 'hsAlbumUrl',
-          chatBg: 'hsChatBgUrl'
-        };
-
-        Object.keys(urlMap).forEach(function (key) {
-          var v = pickUrl(urlMap[key]);
-          if (v !== undefined) {
-            updates[key] = v;
+        FIELDS.forEach(function (field) {
+          var el = document.getElementById(field.urlId);
+          if (el) {
+            var v = el.value.trim();
+            if (v) updates[field.key] = v;
           }
         });
 
         if (window.homeSettings && Object.keys(updates).length > 0) {
           window.homeSettings.setMany(updates);
         }
-
         closePanel();
       });
     }
@@ -256,29 +234,19 @@
 
   // ==================== 打开/关闭面板 ====================
   function openPanel() {
+    // 确保面板存在（只创建一次）
     createSettingsPanel();
     var panel = document.getElementById('homeSettingsPanel');
     if (!panel) return;
 
-    var cur = window.homeSettings ? window.homeSettings.current : {};
+    var cur = (window.homeSettings && window.homeSettings.current) || {};
 
-    function setVal(id, val) {
-      var el = document.getElementById(id);
-      if (el) el.value = val || '';
-    }
-
-    setVal('hsBgUrl', cur.bg);
-    setVal('hsAvatarUrl', cur.avatar);
-    setVal('hsHeaderBgUrl', cur.headerBg);
-    setVal('hsPhoto1Url', cur.photo1);
-    setVal('hsPhoto2Url', cur.photo2);
-    setVal('hsPhoto3Url', cur.photo3);
-    setVal('hsAlbumUrl', cur.album);
-    setVal('hsChatBgUrl', cur.chatBg);
-
-    ['hsBgName', 'hsAvatarName', 'hsHeaderBgName', 'hsPhoto1Name', 'hsPhoto2Name', 'hsPhoto3Name', 'hsAlbumName', 'hsChatBgName'].forEach(function (id) {
-      var el = document.getElementById(id);
-      if (el) el.textContent = '未选择文件';
+    // 回填当前值
+    FIELDS.forEach(function (field) {
+      var el = document.getElementById(field.urlId);
+      if (el) el.value = cur[field.key] || '';
+      var nameEl = document.getElementById(field.nameId);
+      if (nameEl) nameEl.textContent = '未选择文件';
     });
 
     panel.classList.add('active');
@@ -292,7 +260,8 @@
   // ==================== 初始化 ====================
   function init() {
     createSettingsButton();
-    createSettingsPanel();
+    // 注意：面板懒创建（在 openPanel 时创建），这里不预先创建
+    // 避免"面板已被创建但事件绑了两次"的问题
   }
 
   if (document.readyState === 'loading') {
