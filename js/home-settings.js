@@ -1,162 +1,83 @@
 /**
- * 主页图片自定义设置（独立模块 - 修正版）
- * - 使用 localforage 持久化
- * - 图片文件使用 Blob URL 保持清晰度
- * - 新增 headerBg（头像下的底图）设置
+ * 主页图片自定义 · 数据层（重写版）
+ * - 8 个字段：bg / avatar / headerBg / photo1-3 / album / chatBg
+ * - 只用 localStorage 持久化（简单可靠）
+ * - applyAll() 把值写回 DOM
  */
 
 (function () {
   'use strict';
 
-  var STORE_KEY = 'home_custom_images_v2';
-  var BLOB_STORE_KEY = 'home_custom_blobs_v2';
+  var STORE_KEY = 'home_images_v3';
 
-  // ==================== 默认值 ====================
   var DEFAULTS = {
-    bg: 'https://picsum.photos/1200/1800?random=10',
-    avatar: 'https://picsum.photos/100/100?random=1',
-    photo1: 'https://picsum.photos/200/200?random=2',
-    photo2: 'https://picsum.photos/200/200?random=3',
-    photo3: 'https://picsum.photos/200/200?random=4',
-    album: null,
-    headerBg: null,   // 头像下的底图（header-card 背景）
-    chatBg: null
+    bg:       'https://picsum.photos/1200/1800?random=10',
+    avatar:   'https://picsum.photos/100/100?random=1',
+    headerBg: '',
+    photo1:   'https://picsum.photos/200/200?random=2',
+    photo2:   'https://picsum.photos/200/200?random=3',
+    photo3:   'https://picsum.photos/200/200?random=4',
+    album:    '',
+    chatBg:   ''
   };
 
-  var current = {
-    bg: DEFAULTS.bg,
-    avatar: DEFAULTS.avatar,
-    photo1: DEFAULTS.photo1,
-    photo2: DEFAULTS.photo2,
-    photo3: DEFAULTS.photo3,
-    album: null,
-    headerBg: null,
-    chatBg: null
-  };
+  var current = Object.assign({}, DEFAULTS);
 
-  // 存储文件 Blob（用于上传的本地文件，保持清晰）
-  var blobStore = {
-    bg: null,
-    avatar: null,
-    photo1: null,
-    photo2: null,
-    photo3: null,
-    album: null,
-    headerBg: null,
-    chatBg: null
-  };
-
-  // 运行时生成的 ObjectURL（不持久化，每次刷新重建）
-  var objectUrls = {
-    bg: null,
-    avatar: null,
-    photo1: null,
-    photo2: null,
-    photo3: null,
-    album: null,
-    headerBg: null,
-    chatBg: null
-  };
-
-  // ==================== 保存 ====================
-  function persist() {
-    if (typeof localforage === 'undefined') {
-      try {
-        localStorage.setItem(STORE_KEY, JSON.stringify(current));
-        localStorage.setItem(BLOB_STORE_KEY, JSON.stringify(blobStore));
-      } catch (e) {}
-      return;
+  // ==================== 存储 ====================
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(current));
+    } catch (e) {
+      console.warn('[home-settings] 保存失败（可能超出配额）', e);
     }
-    localforage.setItem(STORE_KEY, current).catch(function (e) {
-      console.warn('[home-settings] 保存失败', e);
-    });
-    // 单独存 Blob（DataURL 也可以）
-    localforage.setItem(BLOB_STORE_KEY, blobStore).catch(function (e) {
-      console.warn('[home-settings] Blob 保存失败', e);
-    });
   }
 
-  // ==================== 加载 ====================
-  function load(callback) {
-    function applyUrls(data) {
-      if (data && typeof data === 'object') {
-        Object.keys(current).forEach(function (key) {
-          if (data[key] !== undefined && data[key] !== null) {
-            current[key] = data[key];
-          }
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var d = JSON.parse(raw);
+        Object.keys(DEFAULTS).forEach(function (k) {
+          if (d[k] !== undefined && d[k] !== null) current[k] = d[k];
         });
       }
-    }
-
-    function applyBlobs(blobs) {
-      if (blobs && typeof blobs === 'object') {
-        Object.keys(blobStore).forEach(function (key) {
-          if (blobs[key]) {
-            blobStore[key] = blobs[key];
-            // 重建 ObjectURL
-            try {
-              // 如果存的是 DataURL，直接使用
-              if (typeof blobs[key] === 'string' && blobs[key].indexOf('data:') === 0) {
-                current[key] = blobs[key];
-              } else {
-                objectUrls[key] = URL.createObjectURL(blobs[key]);
-                current[key] = objectUrls[key];
-              }
-            } catch (e) {
-              console.warn('[home-settings] 重建 URL 失败', key, e);
-            }
-          }
-        });
-      }
-      applyAll();
-      if (callback) callback();
-    }
-
-    if (typeof localforage === 'undefined') {
-      try {
-        var rawUrl = localStorage.getItem(STORE_KEY);
-        var rawBlob = localStorage.getItem(BLOB_STORE_KEY);
-        applyUrls(rawUrl ? JSON.parse(rawUrl) : null);
-        applyBlobs(rawBlob ? JSON.parse(rawBlob) : null);
-      } catch (e) {
-        applyAll();
-        if (callback) callback();
-      }
-      return;
-    }
-
-    // 先加载 URL 配置
-    localforage.getItem(STORE_KEY).then(function (data) {
-      applyUrls(data);
-      // 再加载 Blob
-      return localforage.getItem(BLOB_STORE_KEY);
-    }).then(function (blobs) {
-      applyBlobs(blobs);
-    }).catch(function () {
-      applyAll();
-      if (callback) callback();
-    });
+    } catch (e) {}
+    applyAll();
   }
 
   // ==================== 应用到页面 ====================
   function applyAll() {
-    // 主页背景图（务必清晰：用 cover + center）
+    // 1. 主页背景
     var bgEl = document.getElementById('bgDream');
-    if (bgEl && current.bg) {
-      bgEl.style.backgroundImage = "url('" + current.bg + "')";
-      bgEl.style.backgroundSize = 'cover';
-      bgEl.style.backgroundPosition = 'center';
-      bgEl.style.backgroundRepeat = 'no-repeat';
+    if (bgEl) {
+      if (current.bg) {
+        bgEl.style.backgroundImage = 'url("' + current.bg + '")';
+        bgEl.style.backgroundSize = 'cover';
+        bgEl.style.backgroundPosition = 'center';
+        bgEl.style.backgroundRepeat = 'no-repeat';
+      } else {
+        bgEl.style.backgroundImage = '';
+      }
     }
 
-    // 头像
-    var avatarEl = document.getElementById('avatarImg');
-    if (avatarEl && current.avatar) {
-      avatarEl.src = current.avatar;
-      avatarEl.style.imageRendering = 'auto';
+    // 2. 头像
+    var avEl = document.getElementById('avatarImg');
+    if (avEl && current.avatar) avEl.src = current.avatar;
+
+    // 3. 头像下的底图
+    var hdEl = document.getElementById('headerCard');
+    if (hdEl) {
+      if (current.headerBg) {
+        hdEl.style.backgroundImage = 'url("' + current.headerBg + '")';
+        hdEl.style.backgroundSize = 'cover';
+        hdEl.style.backgroundPosition = 'center';
+        hdEl.style.backgroundRepeat = 'no-repeat';
+      } else {
+        hdEl.style.backgroundImage = '';
+      }
     }
 
-    // 三张展示图
+    // 4. 三张展示图
     var p1 = document.getElementById('photo1');
     if (p1 && current.photo1) p1.src = current.photo1;
     var p2 = document.getElementById('photo2');
@@ -164,108 +85,89 @@
     var p3 = document.getElementById('photo3');
     if (p3 && current.photo3) p3.src = current.photo3;
 
-    // 音乐黑胶封面
-    if (current.album) {
-      var albumCover = document.getElementById('albumCover');
-      var albumIcon = document.getElementById('albumIcon');
-      if (albumCover) {
-        albumCover.src = current.album;
-        albumCover.style.display = 'block';
-      }
-      if (albumIcon) albumIcon.style.display = 'none';
+    // 5. 黑胶封面
+    var alEl = document.getElementById('albumCover');
+    var alIcon = document.getElementById('albumIcon');
+    if (alEl && current.album) {
+      alEl.src = current.album;
+      alEl.style.display = 'block';
+      if (alIcon) alIcon.style.display = 'none';
     }
 
-    // 头像下的底图（header-card）
-    var headerCard = document.getElementById('headerCard');
-    if (headerCard && current.headerBg) {
-      headerCard.style.backgroundImage = "url('" + current.headerBg + "')";
-      headerCard.style.backgroundSize = 'cover';
-      headerCard.style.backgroundPosition = 'center';
-      headerCard.style.backgroundRepeat = 'no-repeat';
-    }
-
-    // 传讯背景图
-    var pageChat = document.getElementById('pageChat');
-    if (pageChat) {
+    // 6. 传讯背景
+    var chatEl = document.getElementById('pageChat');
+    if (chatEl) {
       if (current.chatBg) {
-        pageChat.style.backgroundImage = "url('" + current.chatBg + "')";
-        pageChat.style.backgroundSize = 'cover';
-        pageChat.style.backgroundPosition = 'center';
-        pageChat.style.backgroundRepeat = 'no-repeat';
+        chatEl.style.backgroundImage = 'url("' + current.chatBg + '")';
+        chatEl.style.backgroundSize = 'cover';
+        chatEl.style.backgroundPosition = 'center';
+        chatEl.style.backgroundRepeat = 'no-repeat';
       } else {
-        pageChat.style.backgroundImage = '';
-      }
-      var chatMsgs = document.getElementById('chatMessages');
-      if (chatMsgs) {
-        chatMsgs.style.background = current.chatBg ? 'transparent' : '#ffffff';
+        chatEl.style.backgroundImage = '';
       }
     }
   }
 
-  // ==================== 处理上传文件（保持原图清晰度） ====================
-  function handleFileUpload(file, key, callback) {
+  // ==================== 文件上传 ====================
+  function handleFile(file, key, cb) {
     if (!file) return;
     var reader = new FileReader();
     reader.onload = function (e) {
       var dataUrl = e.target.result;
-      // 存 DataURL（localforage 支持存字符串，且不会二次压缩，保持原始清晰度）
-      blobStore[key] = dataUrl;
       current[key] = dataUrl;
-      persist();
+      save();
       applyAll();
-      if (callback) callback(dataUrl);
+      if (cb) cb(dataUrl);
     };
-    // 直接读取为 DataURL，不做任何压缩，保持原始清晰度
+    reader.onerror = function () {
+      console.warn('[home-settings] 文件读取失败');
+    };
     reader.readAsDataURL(file);
   }
 
-  // ==================== 对外 API ====================
+  // ==================== API ====================
   window.homeSettings = {
     current: current,
-    set: function (key, value) {
-      current[key] = value;
-      blobStore[key] = null;
-      persist();
+
+    set: function (key, val) {
+      current[key] = val;
+      save();
       applyAll();
     },
-    setFile: function (key, file, callback) {
-      handleFileUpload(file, key, callback);
+
+    setFile: function (key, file, cb) {
+      handleFile(file, key, cb);
     },
+
     setMany: function (obj) {
       Object.keys(obj).forEach(function (k) {
-        if (obj[k] === undefined) return;
-        current[k] = obj[k];
-        if (typeof obj[k] === 'string' && obj[k].indexOf('data:') === 0) {
-          blobStore[k] = obj[k];
-        } else {
-          blobStore[k] = null;
-        }
+        if (obj[k] !== undefined) current[k] = obj[k];
       });
-      persist();
+      save();
       applyAll();
     },
+
     reset: function (key) {
       if (key) {
         current[key] = DEFAULTS[key];
-        blobStore[key] = null;
       } else {
-        Object.keys(DEFAULTS).forEach(function (k) {
-          current[k] = DEFAULTS[k];
-          blobStore[k] = null;
-        });
+        Object.keys(DEFAULTS).forEach(function (k) { current[k] = DEFAULTS[k]; });
       }
-      persist();
+      save();
       applyAll();
     },
-    reload: function () { load(); },
+
+    reload: load,
     apply: applyAll
   };
 
   // ==================== 初始化 ====================
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { load(); });
+    document.addEventListener('DOMContentLoaded', load);
   } else {
     load();
   }
+
+  console.log('[home-settings] v3 已加载');
 
 })();
