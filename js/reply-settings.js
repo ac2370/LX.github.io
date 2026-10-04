@@ -42,9 +42,8 @@
     // 已读状态
     readStatus:      false,
     readNoReply:     false,
-    // 引用/反应
+        // 引用
     quote:           true,
-    reaction:        true,
     // 主动消息
     proactive:       false,
     proactiveMin:    120,
@@ -95,9 +94,8 @@
     // 已读状态
     toggleReadStatus:     { key: 'readStatus',   type: 'bool' },
     toggleReadNoReply:    { key: 'readNoReply',  type: 'bool' },
-    // 引用/反应
+       // 引用
     toggleQuote:          { key: 'quote',        type: 'bool' },
-    toggleReaction:       { key: 'reaction',     type: 'bool' },
     // 主动消息
     toggleProactive:      { key: 'proactive',    type: 'bool' },
     inputProactiveMin:    { key: 'proactiveMin', type: 'int',  min: 10, max: 10800 },
@@ -198,10 +196,9 @@
 
   // ==================== tab 切换 ====================
   var tabBtns = document.querySelectorAll('.reply-tab-btn');
-  var panels = {
+   var panels = {
     rhythm:    document.getElementById('panel-rhythm'),
-    proactive: document.getElementById('panel-proactive'),
-    quote:     document.getElementById('panel-quote')
+    proactive: document.getElementById('panel-proactive')
   };
   tabBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
