@@ -1180,7 +1180,7 @@
     }
   });
 
-  // ==================== 暴露给外部 ====================
+   // ==================== 暴露给外部 ====================
   window.callFeature = {
     startCall: startCall,
     endCall: endCall,
@@ -1188,6 +1188,7 @@
     showIncomingCall: showIncomingCall,
     restoreWindow: restoreWindow,
     minimizeWindow: minimizeWindow,
+    rescheduleRandomCall: scheduleRandomCall,
     _addCallEvent: _addCallEvent,
     // 调试接口
     _state: state
