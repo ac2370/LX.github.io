@@ -149,11 +149,32 @@
       }
 
       item.innerHTML =
+      // 「Ta 的问卷」才显示删除按钮；「我的问卷」暂不加
+      var delBtnHtml = '';
+      if (currentListTab === 'theirs') {
+        delBtnHtml = '<button class="ds-item-del" type="button" title="删除"><i class="fa-solid fa-xmark"></i></button>';
+      }
+
+      item.innerHTML =
         '<div class="ds-item-header">' +
         '  <div class="ds-item-title">' + escapeHtml(s.title || '未命名问卷') + '</div>' +
         '  <span class="ds-item-status ' + statusClass + '">' + statusText + '</span>' +
         '</div>' +
-        '<div class="ds-item-meta">' + metaParts.join(' &nbsp; ') + '</div>';
+        '<div class="ds-item-meta">' + metaParts.join(' &nbsp; ') + '</div>' +
+        delBtnHtml;
+
+      // 删除按钮事件
+      var delBtn = item.querySelector('.ds-item-del');
+      if (delBtn) {
+        delBtn.addEventListener('click', function (e) {
+          e.stopPropagation();   // 阻止触发 item 的点击
+          if (!confirm('删除这份问卷吗？')) return;
+          if (window.dreamSurveyFromTa && typeof window.dreamSurveyFromTa.removeById === 'function') {
+            window.dreamSurveyFromTa.removeById(s.id);
+            renderList();
+          }
+        });
+      }
 
       item.addEventListener('click', function () {
         if (currentListTab === 'theirs') {
