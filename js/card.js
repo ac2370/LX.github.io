@@ -83,8 +83,6 @@
   const emojiFileInput = document.getElementById('emojiFileInput');
   const emojiUploadBtn = document.getElementById('emojiUploadBtn');
   const emojiAddLinkBtn = document.getElementById('emojiAddLinkBtn');
-  const emojiImportLinkBtn = document.getElementById('emojiImportLinkBtn');
-  const emojiExportBtn = document.getElementById('emojiExportBtn');
   const emojiNewGroupBtn = document.getElementById('emojiNewGroupBtn');
   const emojiAllGroupBtn = document.getElementById('emojiAllGroupBtn');
   const emojiOrganizeBtn = document.getElementById('emojiOrganizeBtn');
@@ -1109,19 +1107,6 @@
   }
   if (emojiAddLinkBtn) emojiAddLinkBtn.addEventListener('click', function () {
     openSimpleModal('add', '添加表情包链接', '粘贴图片 URL，每行一条...', 'emoji');
-  });
-  if (emojiImportLinkBtn) emojiImportLinkBtn.addEventListener('click', function () {
-    openSimpleModal('import', '导入表情包链接', '每行一个图片 URL...', 'emoji');
-  });
-  if (emojiExportBtn) emojiExportBtn.addEventListener('click', function () {
-    const stickerArr = (window.cardDatabase.get('sticker')) || [];
-    if (stickerArr.length === 0) { alert('没有表情包可导出'); return; }
-    const blob = new Blob([JSON.stringify(stickerArr, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'emoji_cards.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   });
   if (emojiSearchInput) emojiSearchInput.addEventListener('input', renderEmojiGrid);
   if (emojiNewGroupBtn) emojiNewGroupBtn.addEventListener('click', function () {
