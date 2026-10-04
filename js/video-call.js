@@ -35,21 +35,18 @@
 
   // ==================== 状态 ====================
   var state = {
-    active: false,        // 是否有通话进行中
-    connected: false,     // 是否已接通
-    minimized: false,     // 是否已最小化为胶囊
-    seconds: 0,           // 通话计时
-    timerId: null,        // 计时器
-    mode: 'outgoing',     // 'outgoing' | 'incoming'
-    randomCallTimer: null,// 随机来电定时器
-    pendingTimeoutIds: [],// 待清理的 timeout
+    active: false,
+    connected: false,
+    minimized: false,
+    seconds: 0,
+    timerId: null,
+    mode: 'outgoing',
+    randomCallTimer: null,
+    pendingTimeoutIds: [],
     incomingAutoReject: null,
     incomingAutoMiss: null,
-    // 窗口位置/尺寸
     win: { x: null, y: null, w: DEFAULT_W, h: DEFAULT_H },
-    // 拖拽状态
     drag: null,
-    // 拉伸状态
     resize: null
   };
 
@@ -87,7 +84,7 @@
   }
 
   // ==================== 向聊天窗口添加通话记录 ====================
-   function _addCallEvent(icon, label, detail) {
+  function _addCallEvent(icon, label, detail) {
     if (typeof window._addCallEvent === 'function' && window._addCallEvent !== _addCallEvent) {
       try { window._addCallEvent(icon, label, detail); return; } catch (e) {}
     }
@@ -95,7 +92,6 @@
     var chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
 
-    // 系统消息行：只包含一个居中的提示条，无任何头像
     var row = document.createElement('div');
     row.className = 'message-row call-record system-call-event';
 
@@ -109,7 +105,6 @@
     row.appendChild(bubble);
     chatMessages.appendChild(row);
 
-    // 兜底：移除可能被其他脚本添加的头像
     setTimeout(function () {
       var avatars = row.querySelectorAll('.chat-msg-avatar');
       avatars.forEach(function (a) { a.remove(); });
@@ -126,7 +121,7 @@
     if (document.getElementById('video-call-styles')) return;
 
     var css = [
-          /* ============ 通话窗口（浅色玻璃拟态） ============ */
+      /* ============ 通话窗口（浅色玻璃拟态） ============ */
       '.vc-window {',
       '  position: fixed;',
       '  z-index: 650;',
@@ -145,7 +140,6 @@
       '  transition: opacity 0.22s ease, transform 0.22s ease;',
       '  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;',
       '}',
-      /* 背景柔光装饰（浅色版） */
       '.vc-window::before {',
       '  content: "";',
       '  position: absolute;',
@@ -303,18 +297,6 @@
       '  text-transform: uppercase;',
       '}',
 
-      /* 本地小窗 */
-      '.vc-local-avatar {',
-      '  position: absolute;',
-      '  right: 12px; bottom: 12px;',
-      '  width: 84px; height: 112px;',
-      '  border-radius: 16px;',
-      '  object-fit: cover;',
-      '  border: 2px solid rgba(255,255,255,0.95);',
-      '  box-shadow: 0 10px 28px rgba(150, 180, 210, 0.35);',
-      '  z-index: 3;',
-      '}',
-
       /* 底部操作栏 */
       '.vc-action-bar {',
       '  flex-shrink: 0;',
@@ -355,6 +337,7 @@
       '  box-shadow: 0 4px 12px rgba(150, 180, 210, 0.2);',
       '}',
       '.vc-btn-minimize:hover { background: #ffffff; }',
+
       /* 右下角拉伸把手 */
       '.vc-resize-handle {',
       '  position: absolute;',
@@ -368,8 +351,8 @@
       '  position: absolute;',
       '  right: 4px; bottom: 4px;',
       '  width: 10px; height: 10px;',
-      '  border-right: 2px solid rgba(255,255,255,0.4);',
-      '  border-bottom: 2px solid rgba(255,255,255,0.4);',
+      '  border-right: 2px solid rgba(0,0,0,0.2);',
+      '  border-bottom: 2px solid rgba(0,0,0,0.2);',
       '  border-radius: 0 0 3px 0;',
       '}',
 
@@ -382,7 +365,7 @@
       '  align-items: center;',
       '  justify-content: center;',
       '  padding: 20px;',
-      '  background: rgba(15, 22, 30, 0.55);',
+      '  background: rgba(15, 22, 30, 0.35);',
       '  backdrop-filter: blur(14px);',
       '  -webkit-backdrop-filter: blur(14px);',
       '  opacity: 0;',
@@ -626,7 +609,6 @@
       '    <div class="vc-connected-timer" id="vcConnectedTimer">00:00</div>',
       '    <div class="vc-connected-label">正在通话中</div>',
       '  </div>',
-      '  <img class="vc-local-avatar" id="vcLocalAvatar" src="" alt="我">',
       '</div>',
       '<div class="vc-action-bar">',
       '  <button class="vc-action-btn vc-btn-mute" id="vcMuteBtn" title="静音">',
@@ -644,19 +626,10 @@
 
     document.body.appendChild(win);
 
-    // 初始化头像
     document.getElementById('vcRemoteAvatar').src = getContactAvatar();
-    document.getElementById('vcLocalAvatar').src = getMyAvatar();
     document.getElementById('vcTitleName').textContent = getContactName();
 
-    // 绑定事件
     bindWindowEvents();
-  }
-
-  function getMyAvatar() {
-    var avatarImg = document.getElementById('avatarImg');
-    if (avatarImg && avatarImg.src) return avatarImg.src;
-    return 'https://picsum.photos/100/100?random=1';
   }
 
   // ==================== 通话窗口拖拽 ====================
@@ -665,7 +638,6 @@
     var dragBar = document.getElementById('vcDragBar');
     var resizeHandle = document.getElementById('vcResizeHandle');
 
-    // 拖拽移动
     dragBar.addEventListener('pointerdown', function (e) {
       if (e.target.closest('.vc-icon-btn')) return;
       var rect = win.getBoundingClientRect();
@@ -700,7 +672,6 @@
       state.drag = null;
     });
 
-    // 右下角拉伸
     resizeHandle.addEventListener('pointerdown', function (e) {
       e.stopPropagation();
       var rect = win.getBoundingClientRect();
@@ -733,11 +704,9 @@
       state.resize = null;
     });
 
-    // 最小化
     document.getElementById('vcMinimizeBtn').addEventListener('click', minimizeWindow);
     document.getElementById('vcMinimizeBtn2').addEventListener('click', minimizeWindow);
 
-    // 关闭
     document.getElementById('vcCloseBtn').addEventListener('click', function () {
       if (state.connected) {
         endCall();
@@ -746,7 +715,6 @@
       }
     });
 
-    // 挂断
     document.getElementById('vcHangupBtn').addEventListener('click', function () {
       if (state.connected) {
         endCall();
@@ -755,7 +723,6 @@
       }
     });
 
-    // 静音按钮（视觉切换）
     var muteBtn = document.getElementById('vcMuteBtn');
     var muted = false;
     muteBtn.addEventListener('click', function () {
@@ -763,7 +730,7 @@
       var icon = muteBtn.querySelector('i');
       if (muted) {
         icon.className = 'fa-solid fa-microphone-slash';
-        muteBtn.style.background = 'rgba(240, 90, 90, 0.4)';
+        muteBtn.style.background = 'rgba(240, 90, 90, 0.2)';
       } else {
         icon.className = 'fa-solid fa-microphone';
         muteBtn.style.background = '';
@@ -776,7 +743,6 @@
     var win = document.getElementById('vc-window');
     if (!win) return;
 
-    // 默认位置：居中偏上
     if (state.win.x === null) {
       state.win.x = Math.max(10, (window.innerWidth - state.win.w) / 2);
       state.win.y = Math.max(10, (window.innerHeight - state.win.h) / 2 - 30);
@@ -789,17 +755,13 @@
     win.style.bottom = 'auto';
 
     win.classList.remove('vc-hidden');
-    // 触发动画
     requestAnimationFrame(function () {
       win.classList.add('vc-show');
     });
 
-    // 更新头像和名字
     document.getElementById('vcRemoteAvatar').src = getContactAvatar();
-    document.getElementById('vcLocalAvatar').src = getMyAvatar();
     document.getElementById('vcTitleName').textContent = getContactName();
 
-    // 显示"正在连接"
     document.getElementById('vcConnectingOverlay').style.display = 'flex';
     document.getElementById('vcConnectedOverlay').classList.remove('vc-show');
     document.getElementById('vcConnectingText').textContent = mode === 'incoming' ? '正在接通...' : '正在连接...';
@@ -846,11 +808,9 @@
   function onConnected() {
     state.connected = true;
 
-    // 隐藏"正在连接"，显示"通话中"
     document.getElementById('vcConnectingOverlay').style.display = 'none';
     document.getElementById('vcConnectedOverlay').classList.add('vc-show');
 
-    // 启动计时器
     startTimer();
   }
 
@@ -867,9 +827,7 @@
 
     showWindow('outgoing');
 
-    // 决定：拒绝 or 接通
     if (Math.random() < OUTGOING_REJECT_PROBABILITY) {
-      // 35% 概率被拒
       var rejectDelay = rand(OUTGOING_REJECT_DELAY_MIN, OUTGOING_REJECT_DELAY_MAX);
       var tid = setTimeout(function () {
         if (!state.active || state.connected) return;
@@ -885,7 +843,6 @@
       }, rejectDelay);
       state.pendingTimeoutIds.push(tid);
     } else {
-      // 65% 概率接通
       var connectDelay = rand(OUTGOING_CONNECT_DELAY_MIN, OUTGOING_CONNECT_DELAY_MAX);
       var tid2 = setTimeout(function () {
         if (!state.active || state.connected) return;
@@ -941,7 +898,6 @@
     state.minimized = false;
     hideMiniPill();
     showWindow('outgoing');
-    // 恢复"通话中"界面
     document.getElementById('vcConnectingOverlay').style.display = 'none';
     document.getElementById('vcConnectedOverlay').classList.add('vc-show');
     document.getElementById('vcConnectedTimer').textContent = formatTime(state.seconds);
@@ -965,21 +921,17 @@
     ].join('');
     document.body.appendChild(pill);
 
-    // 挂断
     document.getElementById('vcMiniHangup').addEventListener('click', function (e) {
       e.stopPropagation();
       endCall();
     });
 
-    // 点击胶囊（除挂断按钮）恢复窗口
     pill.addEventListener('click', function (e) {
       if (e.target.closest('#vcMiniHangup')) return;
-      // 如果正在拖拽，不恢复
       if (pill.dataset.dragging === '1') return;
       restoreWindow();
     });
 
-    // 拖拽
     var dragStart = null;
     var origX = 0, origY = 0;
     pill.addEventListener('pointerdown', function (e) {
@@ -1027,7 +979,6 @@
     document.getElementById('vcMiniName').textContent = getContactName();
     document.getElementById('vcMiniTimer').textContent = formatTime(state.seconds);
 
-    // 默认位置：右上角
     if (!pill.style.left) {
       pill.style.left = (window.innerWidth - 160) + 'px';
       pill.style.top = '16px';
@@ -1091,19 +1042,16 @@
     document.getElementById('vcIncomingName').textContent = getContactName();
     overlay.classList.add('vc-show');
 
-    // 30% 概率自动拒绝（4-6 秒）
     if (Math.random() < INCOMING_AUTO_REJECT_PROBABILITY) {
       var autoRejectDelay = rand(INCOMING_AUTO_REJECT_MIN, INCOMING_AUTO_REJECT_MAX);
       state.incomingAutoReject = setTimeout(function () {
         if (overlay.classList.contains('vc-show')) {
-          // 模拟对方挂断
           overlay.classList.remove('vc-show');
           state.active = false;
           _addCallEvent('fa-solid fa-video', '视频通话 · 对方已挂断');
         }
       }, autoRejectDelay);
     } else {
-      // 22 秒后自动未接
       state.incomingAutoMiss = setTimeout(function () {
         if (overlay.classList.contains('vc-show')) {
           overlay.classList.remove('vc-show');
@@ -1123,7 +1071,6 @@
     state.mode = 'incoming';
     showWindow('incoming');
 
-    // 接通前随机延迟
     var connectDelay = rand(OUTGOING_CONNECT_DELAY_MIN, OUTGOING_CONNECT_DELAY_MAX);
     var tid = setTimeout(function () {
       onConnected();
@@ -1140,23 +1087,18 @@
     _addCallEvent('fa-solid fa-video', '视频通话 · 已拒绝');
   }
 
-   // ==================== 随机来电调度（读取用户开关） ====================
+  // ==================== 随机来电调度 ====================
   function isRandomCallEnabled() {
-    // 优先读 window.chatNotifyState
     if (window.chatNotifyState && typeof window.chatNotifyState.randomCall === 'boolean') {
       return window.chatNotifyState.randomCall;
     }
-    // 降级：直接读 localforage / localStorage
-    // 由于异步，这里只能同步读 localStorage
     try {
       var raw = localStorage.getItem('chat_notify_random_call');
       if (raw === 'true') return true;
       if (raw === 'false') return false;
-      // localforage 里存的可能是 JSON
       var parsed = JSON.parse(raw);
       if (typeof parsed === 'boolean') return parsed;
     } catch (e) {}
-    // 默认关闭（用户需要在设置里主动开启）
     return false;
   }
 
@@ -1165,13 +1107,11 @@
 
     var delay = rand(RANDOM_CALL_MIN_MS, RANDOM_CALL_MAX_MS);
     state.randomCallTimer = setTimeout(function () {
-      // 每次触发前检查用户开关
       if (isRandomCallEnabled() && !state.active) {
         if (Math.random() < RANDOM_CALL_PROBABILITY) {
           showIncomingCall();
         }
       }
-      // 递归调度下一次（无论是否触发都继续调度，以便用户后续开启）
       scheduleRandomCall();
     }, delay);
   }
@@ -1199,7 +1139,6 @@
     bindVideoCallIcon();
     scheduleRandomCall();
 
-    // 监听开关变化（可选）
     window.addEventListener('storage', function (e) {
       if (e.key === 'chat_notify_random_call') {
         console.log('[视频通话] 随机来电开关变化:', e.newValue);
@@ -1213,12 +1152,10 @@
     init();
   }
 
-  // 延迟再绑定一次，确保图标存在
   setTimeout(bindVideoCallIcon, 500);
   setTimeout(bindVideoCallIcon, 1500);
   setTimeout(bindVideoCallIcon, 3000);
 
-  // 窗口大小变化时，确保窗口不超出
   window.addEventListener('resize', function () {
     var win = document.getElementById('vc-window');
     if (!win || win.classList.contains('vc-hidden')) return;
@@ -1231,7 +1168,7 @@
     }
   });
 
-   // ==================== 暴露给外部 ====================
+  // ==================== 暴露给外部 ====================
   window.callFeature = {
     startCall: startCall,
     endCall: endCall,
@@ -1241,11 +1178,9 @@
     minimizeWindow: minimizeWindow,
     rescheduleRandomCall: scheduleRandomCall,
     _addCallEvent: _addCallEvent,
-    // 调试接口
     _state: state
   };
 
-  // 兼容老代码调用
   window.videoCall = window.callFeature;
 
 })();
