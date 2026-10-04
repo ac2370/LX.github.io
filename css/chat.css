@@ -1983,22 +1983,6 @@ body.theme-dark .pat-cancel {
   margin-top: 8px;
 }
 
-.msg-survey-progress {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 3px;
-  font-size: 11px;
-  color: #7a8a99;
-}
-.msg-survey-progress-num {
-  font-size: 14px;
-  font-weight: 700;
-  color: #5a9ed6;
-}
-.msg-survey-progress-label {
-  font-weight: 600;
-}
-
 .msg-survey-status {
   display: inline-flex;
   align-items: center;
