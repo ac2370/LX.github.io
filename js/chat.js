@@ -1141,15 +1141,21 @@
     if (e.target.closest('.chat-input-bar')) return;
     if (e.target.closest('#typingRow')) return;
 
-    // 问卷卡片点击 → 打开作答页，不走消息菜单
+      // 问卷卡片点击
     var surveyRow = e.target.closest('.msg-survey-row');
     if (surveyRow) {
-      e.stopPropagation();
-      var sid = surveyRow.dataset.surveyId;
-      if (sid && typeof window.openTaSurveyAnswer === 'function') {
-        window.openTaSurveyAnswer(sid);
+      // 我方卡片（我发出的问卷）：不打开作答页，让它走消息菜单（可以撤回）
+      if (surveyRow.classList.contains('msg-survey-row-self')) {
+        // 落到下面的 openMsgMenu 分支
+      } else {
+        // Ta 的问卷卡片：打开作答页
+        e.stopPropagation();
+        var sid = surveyRow.dataset.surveyId;
+        if (sid && typeof window.openTaSurveyAnswer === 'function') {
+          window.openTaSurveyAnswer(sid);
+        }
+        return;
       }
-      return;
     }
 
     var row = e.target.closest('.message-row');
