@@ -722,6 +722,104 @@
     }, waitMs);
   }
 
+    // ==================== 追加对方文字到聊天（供外部调用） ====================
+  window.appendTaTextToChat = function (text) {
+    if (!text || typeof text !== 'string') return;
+    var row = createMessageRow('other', text);
+    chatMessages.appendChild(row);
+    scrollToBottom();
+
+    // 通知
+    if (window.chatNotify && typeof window.chatNotify.show === 'function') {
+      try { window.chatNotify.show('Ta', text); } catch (e) {}
+    }
+  };
+
+  // ==================== 追加问卷卡片到聊天（供外部调用） ====================
+  window.appendSurveyCardToChat = function (survey) {
+    if (!survey || !survey.id) return;
+
+    // 卡片 DOM
+    var row = document.createElement('div');
+    row.className = 'message-row other msg-survey-row';
+    row.dataset.surveyId = survey.id;
+    row.dataset.surveyStatus = survey.status || 'unanswered';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'message-bubble msg-survey-bubble';
+
+    var qCount = (survey.qs || []).length;
+    var title = survey.title || 'Ta 的问卷';
+
+    var html = '';
+    html += '<div class="msg-survey-head">';
+    html += '  <i class="fa-solid fa-clipboard-question"></i>';
+    html += '  <span class="msg-survey-tag">问卷</span>';
+    html += '</div>';
+    html += '<div class="msg-survey-title">' + escapeHtmlSafe(title) + '</div>';
+    html += '<div class="msg-survey-meta">' + qCount + ' 题 · 点击作答</div>';
+    html += '<div class="msg-survey-status">';
+    if (survey.status === 'answered') {
+      html += '<i class="fa-solid fa-check-circle"></i> 已作答';
+    } else {
+      html += '<i class="fa-regular fa-circle"></i> 待作答';
+    }
+    html += '</div>';
+
+    bubble.innerHTML = html;
+
+    // 点击气泡 → 打开作答页
+    bubble.addEventListener('click', function () {
+      // 找到 dream-survey.js 暴露的作答入口
+      if (typeof window.openTaSurveyAnswer === 'function') {
+        window.openTaSurveyAnswer(survey.id);
+      } else {
+        // 兜底：切到「Ta 的问卷」列表
+        if (typeof window.dreamSurvey !== 'undefined' && window.dreamSurvey.openList) {
+          window.dreamSurvey.openList();
+        }
+      }
+    });
+
+    row.appendChild(bubble);
+
+    // 挂 dataset（时间戳、发送者等）
+    row.dataset.sender = 'partner';
+    row.dataset.type = 'ask-survey-from-ta';
+    row.dataset.time = String(Date.now());
+    row.dataset.favorited = 'false';
+
+    // 手动挂时间戳（因为消息不是通过 createMessageRow 创建的）
+    var body = document.createElement('div');
+    body.className = 'message-body';
+    row.insertBefore(body, bubble);
+    body.appendChild(bubble);
+
+    var timeEl = document.createElement('div');
+    timeEl.className = 'message-time';
+    var timeText = document.createElement('span');
+    timeText.className = 'message-time-text';
+    timeText.textContent = formatTime(Date.now());
+    timeEl.appendChild(timeText);
+    body.appendChild(timeEl);
+
+    chatMessages.appendChild(row);
+    scrollToBottom();
+
+    // 通知
+    if (window.chatNotify && typeof window.chatNotify.show === 'function') {
+      try { window.chatNotify.show('Ta', '想问你几个问题'); } catch (e) {}
+    }
+  };
+
+  // 供卡片内部使用的转义
+  function escapeHtmlSafe(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, function (m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+    });
+  }
+
   // ==================== 顶栏图标点击（占位） ====================
   document.querySelectorAll('.chat-action-icon').forEach(function (icon) {
     icon.addEventListener('click', function () {
@@ -879,11 +977,22 @@
     });
   }
 
-  chatMessages.addEventListener('click', function (e) {
+   chatMessages.addEventListener('click', function (e) {
     if (e.target.closest('.msg-action-menu')) return;
     if (e.target.closest('.quote-preview-bar')) return;
     if (e.target.closest('.chat-input-bar')) return;
     if (e.target.closest('#typingRow')) return;
+
+    // 问卷卡片点击 → 打开作答页，不走消息菜单
+    var surveyRow = e.target.closest('.msg-survey-row');
+    if (surveyRow) {
+      e.stopPropagation();
+      var sid = surveyRow.dataset.surveyId;
+      if (sid && typeof window.openTaSurveyAnswer === 'function') {
+        window.openTaSurveyAnswer(sid);
+      }
+      return;
+    }
 
     var row = e.target.closest('.message-row');
     if (!row) {
