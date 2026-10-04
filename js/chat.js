@@ -4,10 +4,11 @@
  * - 公共字卡库：合并 window.publicCards 的勾选字卡
  * - 专属字卡库：当前联系人勾选的分组（window.contactCards）优先
  * - 引用优化：从最近 8 条我方消息里随机引用
- * - 表情反应：随机给历史消息贴 emoji
  * - 已读回执：发消息后 1.5~4s 标已读，气泡下方显示单勾
  * - 已读不回：开启后，20% 概率只已读不回复
  * - 每条消息 DOM 挂 dataset（sender/type/time/favorited/read）+ 渲染时间戳
+ *
+ * 调试开关：window.CHAT_DEBUG = true 可打印详细日志
  */
 
 (function () {
@@ -54,6 +55,13 @@
   if (!chatMessages || !chatInput || !sendBtn) return;
 
   let lastUserMessage = '';
+
+  // ==================== 调试日志 ====================
+  function dlog() {
+    if (window.CHAT_DEBUG) {
+      try { console.log.apply(console, arguments); } catch (e) {}
+    }
+  }
 
   // ==================== 时间戳显示开关 ====================
   function applyTimeDisplaySetting() {
@@ -129,10 +137,10 @@
   }
 
   // ==================== 从 localforage 读取用户勾选的分组 ====================
+  // 注意：emojiGroups 已移除（颜文字功能下线）
   var groupCache = {
     publicGroups: [],
     privateGroups: [],
-    emojiGroups: [],
     stickerGroups: [],
     loaded: false
   };
@@ -141,7 +149,6 @@
     function assign(data) {
       groupCache.publicGroups = Array.isArray(data.publicGroups) ? data.publicGroups : [];
       groupCache.privateGroups = Array.isArray(data.privateGroups) ? data.privateGroups : [];
-      groupCache.emojiGroups = Array.isArray(data.emojiGroups) ? data.emojiGroups : [];
       groupCache.stickerGroups = Array.isArray(data.stickerGroups) ? data.stickerGroups : [];
       groupCache.loaded = true;
       if (callback) callback();
@@ -152,7 +159,6 @@
         assign({
           publicGroups: JSON.parse(localStorage.getItem('chat_public_groups') || '[]'),
           privateGroups: JSON.parse(localStorage.getItem('chat_private_groups') || '[]'),
-          emojiGroups: JSON.parse(localStorage.getItem('chat_emoji_groups') || '[]'),
           stickerGroups: JSON.parse(localStorage.getItem('chat_sticker_groups') || '[]')
         });
       } catch (e) { assign({}); }
@@ -162,14 +168,12 @@
     Promise.all([
       localforage.getItem('chat_public_groups'),
       localforage.getItem('chat_private_groups'),
-      localforage.getItem('chat_emoji_groups'),
       localforage.getItem('chat_sticker_groups')
     ]).then(function (results) {
       assign({
         publicGroups: results[0],
         privateGroups: results[1],
-        emojiGroups: results[2],
-        stickerGroups: results[3]
+        stickerGroups: results[2]
       });
     }).catch(function () {
       assign({});
@@ -183,14 +187,12 @@
       return {
         publicGroups: Array.isArray(window.chatPublicGroups) ? window.chatPublicGroups : [],
         privateGroups: Array.isArray(window.chatPrivateGroups) ? window.chatPrivateGroups : [],
-        emojiGroups: Array.isArray(window.chatEmojiGroups) ? window.chatEmojiGroups : [],
         stickerGroups: Array.isArray(window.chatStickerGroups) ? window.chatStickerGroups : []
       };
     }
     return {
       publicGroups: groupCache.publicGroups,
       privateGroups: groupCache.privateGroups,
-      emojiGroups: groupCache.emojiGroups,
       stickerGroups: groupCache.stickerGroups
     };
   }
@@ -336,13 +338,11 @@
 
     // 用户自己勾选的分组都没内容时，优先从公共字卡库抽
     if (validPublic.length === 0 && validPrivate.length === 0) {
-      // 1) 公共字卡库（勾选的内置字卡）
       var publicCards = getPublicReplyCards();
       if (publicCards.length > 0) {
         return { text: randomPick(publicCards), source: 'publicCards' };
       }
 
-      // 2) 兜底：用户所有分组
       var allGroups = getAllGroupsOfCategory('reply');
       var fallback = pickFromGroups(allGroups, 'reply');
       if (fallback) return { text: fallback, source: 'fallback' };
@@ -350,11 +350,9 @@
       return null;
     }
 
-    // 以下保持原有逻辑
     if (validPublic.length === 0) {
       var privateText = pickFromGroups(validPrivate, 'reply');
       if (privateText) return { text: privateText, source: 'private' };
-      // 用户私聊组没内容，试试公共字卡库
       var pub1 = getPublicReplyCards();
       if (pub1.length > 0) return { text: randomPick(pub1), source: 'publicCards' };
       return null;
@@ -385,16 +383,6 @@
     }
 
     return null;
-  }
-
-  // ==================== 抽取颜文字 ====================
-  function pickOneEmoji() {
-    var selections = getGroupSelections();
-    var emojiGroups = selections.emojiGroups;
-
-    if (!emojiGroups || emojiGroups.length === 0) return null;
-
-    return pickFromGroups(emojiGroups, 'kaomoji');
   }
 
   // ==================== 抽取表情包 ====================
@@ -522,7 +510,7 @@
 
       if (!showReadStatus) return;
 
-      // 判断是否是发送者分组的最后一条（下一条我方消息若在 60 秒内，则不算）
+      // 判断是否是发送者分组的最后一条
       var next = arr[idx + 1];
       if (next) {
         var curTime = parseInt(row.dataset.time || '0', 10);
@@ -536,7 +524,6 @@
       var body = row.querySelector('.message-body');
       if (!body) return;
 
-      // 插到 .message-time 里面，和时间戳同行
       var timeEl = body.querySelector('.message-time');
       if (!timeEl) return;
 
@@ -587,7 +574,7 @@
     if (!shouldIgnore) {
       triggerAutoReply();
     } else {
-      console.log('[传讯] 已读不回命中，跳过回复');
+      dlog('[传讯] 已读不回命中，跳过回复');
     }
   }
 
@@ -604,7 +591,7 @@
     const settings = getSettings();
 
     if (!settings.normalReply) {
-      console.log('[传讯] 正常字卡回复已关闭');
+      dlog('[传讯] 正常字卡回复已关闭');
       return;
     }
 
@@ -630,7 +617,7 @@
     const maxWait = Math.max(minWait, settings.maxWait || 12);
     const waitMs = randomInt(minWait, maxWait) * 1000;
 
-    console.log('[传讯] 将在 ' + (waitMs / 1000).toFixed(1) + ' 秒后回复');
+    dlog('[传讯] 将在 ' + (waitMs / 1000).toFixed(1) + ' 秒后回复');
 
     const showTyping = settings.typingBubble !== false;
 
@@ -739,7 +726,7 @@
   document.querySelectorAll('.chat-action-icon').forEach(function (icon) {
     icon.addEventListener('click', function () {
       if (icon.id === 'fishingIcon') return;
-      console.log('点击了：' + (icon.getAttribute('title') || '功能'));
+      dlog('点击了：' + (icon.getAttribute('title') || '功能'));
     });
   });
 
@@ -756,7 +743,7 @@
     }
     // 其它图标：占位日志
     icon.addEventListener('click', function () {
-      console.log('点击了：' + (icon.getAttribute('title') || '功能'));
+      dlog('点击了：' + (icon.getAttribute('title') || '功能'));
     });
   });
 
