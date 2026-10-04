@@ -1046,31 +1046,27 @@ del.addEventListener('click', function () {
   if (cardSearchInput) cardSearchInput.addEventListener('input', updateAllUI);
 
   // ==================== 拍一拍/地点/心情/状态 操作栏 ====================
-  function bindCategoryButtons(cat, prefix) {
-    var addBtn = document.getElementById(prefix + 'AddBtn');
-    var importBtn = document.getElementById(prefix + 'ImportBtn');
-    var exportBtn = document.getElementById(prefix + 'ExportBtn');
+ function bindCategoryButtons(cat, prefix) {
+  var addBtn = document.getElementById(prefix + 'AddBtn');
+  var exportBtn = document.getElementById(prefix + 'ExportBtn');
 
-    if (addBtn) addBtn.addEventListener('click', function () {
-      openSimpleModal('add', '添加' + categoryTitle(cat) + '字卡', '输入一句话...', cat);
-    });
-    if (importBtn) importBtn.addEventListener('click', function () {
-      openSimpleModal('import', '导入' + categoryTitle(cat) + '字卡', '批量添加（每行一条，自动去重）', cat);
-    });
-    if (exportBtn) exportBtn.addEventListener('click', function () {
-      var currentGroup = currentGroupMap[cat] || '默认分组';
-      var cards = window.getCardsInGroup(currentGroup, cat);
-      if (cards.length === 0) { alert('当前分组没有内容可导出'); return; }
-      var data = {};
-      data[currentGroup] = cards;
-      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url; a.download = cat + '_cards_' + currentGroup + '.json';
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-  }
+  if (addBtn) addBtn.addEventListener('click', function () {
+    openSimpleModal('add', '添加' + categoryTitle(cat) + '字卡', '输入一句话...', cat);
+  });
+  if (exportBtn) exportBtn.addEventListener('click', function () {
+    var currentGroup = currentGroupMap[cat] || '默认分组';
+    var cards = window.getCardsInGroup(currentGroup, cat);
+    if (cards.length === 0) { alert('当前分组没有内容可导出'); return; }
+    var data = {};
+    data[currentGroup] = cards;
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = cat + '_cards_' + currentGroup + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+}
 
   function categoryTitle(cat) {
     var map = { reply: '回复', pat: '拍一拍', place: '地点', mood: '心情', emoji: '表情包', status: '状态' };
@@ -1131,9 +1127,6 @@ del.addEventListener('click', function () {
   // ==================== 状态面板事件 ====================
   if (statusAddBtn) statusAddBtn.addEventListener('click', function () {
     openSimpleModal('add', '添加状态', '输入一个状态...', 'status');
-  });
-  if (statusImportBtn) statusImportBtn.addEventListener('click', function () {
-    openSimpleModal('import', '导入状态', '每行一条状态...', 'status');
   });
   if (statusExportBtn) statusExportBtn.addEventListener('click', function () {
     var statusArr = window.cardDatabase.status || [];
