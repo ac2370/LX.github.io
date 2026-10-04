@@ -787,7 +787,17 @@
   });
 
   // ==================== 左侧图标点击（占位） ====================
+    // ==================== 左侧图标点击 ====================
   document.querySelectorAll('.input-left-icons i').forEach(function (icon) {
+    // 「让 Ta 继续说」手动触发
+    if (icon.id === 'continueBtn') {
+      icon.addEventListener('click', function (e) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        triggerAutoReply();
+      });
+      return;
+    }
     icon.addEventListener('click', function () {
       console.log('点击了：' + (icon.getAttribute('title') || '功能'));
     });
