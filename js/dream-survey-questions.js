@@ -159,5 +159,49 @@
     });
   });
 
-  console.log('[dream-survey-questions] 问卷库已加载，共 ' + window.DREAM_SURVEY_LIB_FLAT.length + ' 道题');
+    // ==================== Ta 自编题库（30% 用） ====================
+  // 一句模板，Ta 出题时从中随机抽
+  window.DREAM_SURVEY_TA_SELF_QUESTIONS = [
+    { type: 'text', text: '你会用什么词来形容今天的我？' },
+    { type: 'text', text: '最近有没有一件事，你一直没和别人说？' },
+    { type: 'text', text: '如果我明天要消失一天，你最想带我去哪？' },
+    { type: 'text', text: '你觉得我们之间最像哪一种电影？' },
+    { type: 'single', text: '如果世界上只剩下一种味道，你会选什么？', options: ['甜', '咸', '辣', '苦'] },
+    { type: 'text', text: '你今天有没有偷偷笑过？' },
+    { type: 'single', text: '如果我是天气，你觉得我是什么天？', options: ['晴', '阴', '雨', '雪'] },
+    { type: 'text', text: '你最近有没有对谁心软过？' },
+    { type: 'text', text: '如果给你一次改写今天的机会，你会改什么？' },
+    { type: 'multi', text: '如果今晚只做三件事，你会选哪些？', options: ['发呆', '听歌', '写字', '找你说话', '看星星'], multiMax: 3 },
+    { type: 'text', text: '你希望我记住你哪一句话？' },
+    { type: 'text', text: '如果我给你写一首歌，你想是什么调？' },
+    { type: 'single', text: '你觉得自己是什么颜色？', options: ['暖色', '冷色', '浅色', '深色'] },
+    { type: 'text', text: '你最近最想被谁夸一句？' },
+    { type: 'text', text: '如果有一天我们不再联系，你会记得什么？' },
+    { type: 'text', text: '你今天想了哪件小事很多次？' },
+    { type: 'single', text: '如果有一个愿望今晚就能实现，你会要什么？', options: ['休息一天', '见一个人', '吃一顿好的', '什么都不做'] },
+    { type: 'text', text: '你最近有没有觉得「这样就很好」的时候？' },
+    { type: 'text', text: '如果我能陪你做一件事，你会选什么？' },
+    { type: 'text', text: '你今天有没有做过一件对不起自己的事？' },
+    { type: 'multi', text: '你最近最想被哪种方式陪？', options: ['不打扰', '聊天', '安静待着', '陪着发呆', '听你说话'], multiMax: 2 },
+    { type: 'text', text: '如果让你给我一句话，只能四个字，你会写什么？' },
+    { type: 'text', text: '你最近有没有哪一个瞬间觉得「活着真好」？' },
+    { type: 'text', text: '如果我问你「你怎么了」，你会怎么答？' },
+    { type: 'text', text: '你今天有没有想一个人？' },
+    { type: 'text', text: '你希望我怎么称呼你？' },
+    { type: 'single', text: '你现在最想待在哪里？', options: ['家里', '外面', '我身边', '一个人'] },
+    { type: 'text', text: '你最近有没有特别想珍藏的一句话？' },
+    { type: 'text', text: '如果我今晚给你发消息，你最想看到什么？' },
+    { type: 'text', text: '你最近有没有偷偷许愿过？' }
+  ];
+
+  // ==================== 分类标题衍生（Q3 方案 B） ====================
+  window.DREAM_SURVEY_TA_TITLE_MAP = {
+    daily:    'Ta 想了解你的日常',
+    care:     'Ta 想问点关心的事',
+    interact: 'Ta 想和你互动一下',
+    world:    'Ta 想带你去 Ta 的世界',
+    self:     'Ta 有话想问你'
+  };
+  
+   console.log('[dream-survey-questions] 问卷库已加载，共 ' + window.DREAM_SURVEY_LIB_FLAT.length + ' 道题（+ ' + window.DREAM_SURVEY_TA_SELF_QUESTIONS.length + ' 道 Ta 自编题）');
 })();
