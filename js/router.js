@@ -28,8 +28,18 @@
     });
   }
 
-  function showPage(page) {
-    if (!page) return;
+   function showPage(pageOrId) {
+    if (!pageOrId) return;
+
+    // 兼容字符串 id 和 DOM 节点两种调用
+    var page = pageOrId;
+    if (typeof pageOrId === 'string') {
+      page = document.getElementById(pageOrId);
+    }
+    if (!page) {
+      console.warn('[router] 找不到页面:', pageOrId);
+      return;
+    }
 
     // 1) 先移除所有页面的 .active
     hideAll();
