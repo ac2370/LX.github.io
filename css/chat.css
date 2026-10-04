@@ -2027,3 +2027,9 @@ body.theme-dark .pat-cancel {
   color: #c68a3a;
   background: rgba(198, 138, 58, 0.15);
 }
+
+/* 我方问卷卡片：标题和题数居中 */
+.msg-survey-row-self .msg-survey-title,
+.msg-survey-row-self .msg-survey-meta {
+  text-align: center;
+}
