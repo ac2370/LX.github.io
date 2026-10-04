@@ -107,9 +107,9 @@
         <audio id="audioPlayer" preload="metadata"></audio>
 
         <div class="function-grid mt-4 mb-2">
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
-            <div class="function-icon"><i class="fa-solid fa-house text-[#222] text-lg"></i></div>
-            <span class="function-label">主页</span>
+          <a class="function-item" id="btnArchive" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-folder-open text-[#222] text-lg"></i></div>
+            <span class="function-label">档案</span>
           </a>
           <a class="function-item" id="btnCompanion" style="cursor: pointer;">
             <div class="function-icon"><i class="fa-solid fa-hand-holding-heart text-[#222] text-lg"></i></div>
@@ -1011,6 +1011,197 @@
       </div>
 
       <div class="ds-body ds-answer-body" id="dsAnswerBody"></div>
+
+    </div>
+  </div>
+
+    <!-- ==================== 档案 页面 ==================== -->
+  <div class="page" id="pageArchive">
+    <div class="arc-container">
+
+      <!-- 顶栏 -->
+      <div class="arc-topbar">
+        <button class="arc-back-btn" id="arcBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="arc-topbar-title">档案</span>
+        <button class="arc-save-btn" id="arcSaveBtn" title="保存">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+
+      <!-- 切换 tab -->
+      <div class="arc-tabs">
+        <button class="arc-tab active" data-tab="me" id="arcTabMe">
+          <i class="fa-solid fa-user"></i> 我的档案
+        </button>
+        <button class="arc-tab" data-tab="ta" id="arcTabTa">
+          <i class="fa-solid fa-heart"></i> Ta 的档案
+        </button>
+      </div>
+
+      <!-- 主体 -->
+      <div class="arc-body">
+        <div id="cenConfig_stage" class="cen-intro-mode">
+
+          <div id="cen_rain_layer">
+            <div class="cen-rain-track rain-1"></div>
+            <div class="cen-rain-track rain-2"></div>
+            <div class="cen-rain-track rain-3"></div>
+            <div class="cen-rain-track rain-4"></div>
+            <div class="cen-rain-track rain-5"></div>
+          </div>
+
+          <div class="cen-wind-chime chime-1">
+            <div class="cen-chime-rope"></div>
+            <div class="cen-chime-bell"><div class="cen-chime-clapper"></div></div>
+            <div class="cen-chime-leaf"></div>
+          </div>
+          <div class="cen-wind-chime chime-2">
+            <div class="cen-chime-rope"></div>
+            <div class="cen-chime-bell"><div class="cen-chime-clapper"></div></div>
+            <div class="cen-chime-leaf"></div>
+          </div>
+
+          <div id="cen_intro_big_text">
+            <div class="cen-float-line" style="font-size: 16px; margin-bottom: 2px;">
+              <span style="animation: cenFadeFloat 3.7s ease-in-out infinite; animation-delay: -0.4s; --y-offset: -8px; margin-right: 6px;">试</span>
+              <span style="animation: cenFadeFloat 4.3s ease-in-out infinite; animation-delay: -1.2s; --y-offset: -4px; margin-right: 6px;">着</span>
+            </div>
+            <div class="cen-float-line" style="font-size: 36px; transform: translateY(-25px); margin: 0 0 4px 0; font-weight: bold;">
+              <span style="animation: cenFadeFloat 2.9s ease-in-out infinite; animation-delay: -0.7s; --y-offset: -6px; margin-right: 4px;">多</span>
+              <span style="animation: cenFadeFloat 3.4s ease-in-out infinite; animation-delay: -2.1s; --y-offset: -9px; margin-right: 4px;">了</span>
+              <span style="animation: cenFadeFloat 4.8s ease-in-out infinite; animation-delay: -0.2s; --y-offset: -3px; margin-right: 4px;">解</span>
+              <span style="animation: cenFadeFloat 3.1s ease-in-out infinite; animation-delay: -1.5s; --y-offset: -7px; margin-right: 4px;">我</span>
+            </div>
+            <div class="cen-float-line" style="font-size: 28px; margin-left: 65px;">
+              <span style="animation: cenExtremeGlow 3.9s ease-in-out infinite; animation-delay: -2.8s; --y-offset: -5px; margin-right: 4px; color: #4a6aff;">—</span>
+              <span style="animation: cenExtremeGlow 4.5s ease-in-out infinite; animation-delay: -0.9s; --y-offset: -8px; margin-right: 4px; color: #4a6aff;">点</span>
+              <span style="animation: cenExtremeGlow 3.3s ease-in-out infinite; animation-delay: -1.7s; --y-offset: -4px; margin-right: 4px; color: #4a6aff;">吧</span>
+            </div>
+          </div>
+
+          <div id="cen_intro_poetry">你的名字是一颗我没有勇气咬开的糖</div>
+
+          <div id="intro_particles">
+            <div class="intro-dust-layer"></div>
+            <div class="intro-dust-layer delayed"></div>
+          </div>
+
+          <div id="cen_main_container">
+
+            <div id="cen_left_wrapper" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <div style="position: relative; width: 160px; height: 240px;">
+                <div id="Tuan_init_rotator" style="width: 100%; height: 100%; transform-style: preserve-3d; cursor: grab; background: transparent;">
+
+                  <div class="cen-pins-wrapper">
+                    <div class="cen-paperclip cen-pin-1"></div>
+                    <div class="cen-paperclip cen-pin-2"></div>
+                  </div>
+
+                  <div class="hide-in-intro" style="position: absolute; inset:0; border-radius:12px; border: 1px solid rgba(160,180,255,0.4); pointer-events:none; box-shadow: 0 0 15px rgba(160,180,255,0.2);"></div>
+
+                  <div id="cen_main_photo" onclick="cenTriggerPlayAnim()"
+                       style="position: absolute; inset: 6px; border-radius: 6px; transform: translateZ(20px); pointer-events: auto; display: flex; align-items: center; justify-content: center; user-select: none; background-size: cover; background-position: center;">
+                    <div class="cen-click-hint hide-in-intro" style="font-size: 9px;">Tap to Explore</div>
+                    <input type="file" id="arcPhotoInput" accept="image/*" style="display:none;">
+                  </div>
+
+                  <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; transform: translateZ(40px); pointer-events: none;">
+                    <span id="arcPhotoName" style="color: #2a2a3a; font-size: 13px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 2px 6px rgba(160,180,255,0.4);">人物姓名</span>
+                  </div>
+
+                  <div id="cen_mouth_zone" class="hide-in-intro" style="position: absolute; top: 48%; left: 50%; width: 40px; height: 30px; transform: translate(-50%, -50%) translateZ(45px); cursor: pointer; z-index: 10;"></div>
+
+                  <div id="cen_speech_bubble" class="hide-in-intro"
+                       style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, 10px) translateZ(50px); opacity: 0; filter: blur(8px); pointer-events: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; white-space: nowrap; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;">
+                    怎么了...？
+                    <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #ffffff;"></div>
+                  </div>
+
+                  <div class="hide-in-intro" style="position: absolute; inset: 0; border-radius: 12px; background: rgba(160,180,255,0.05); transform: rotateY(180deg) translateZ(1px); backface-visibility: hidden; border: 1px solid rgba(160,180,255,0.2);"></div>
+
+                  <div id="reset_btn_cen" class="hide-in-intro"
+                       style="width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(4px); position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4a6aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                      <path d="M3 3v5h5"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="cen_right_panel">
+              <div class="cen-floating-box"
+                   style="width: 170px; height: 260px; border: 1px solid rgba(160,180,255,0.3); box-shadow: inset 0 25px 20px -20px rgba(160,180,255,0.2), inset 0 0 6px rgba(160,180,255,0.1), 0 0 20px rgba(160,180,255,0.15); padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; background: rgba(255,255,255,0.5);">
+
+                <div class="cen-particle-layer">
+                  <div class="cen-dust"></div>
+                  <div class="cen-dust-group-2"></div>
+                </div>
+
+                <div style="position: absolute; inset: 0; z-index: -2; background: rgba(160,180,255,0.03);"></div>
+                <div style="position: absolute; top: 0; right: 0; width: 20px; height: 20px; background: linear-gradient(135deg, transparent 50%, rgba(160,180,255,0.15) 50%);"></div>
+
+                <div id="arcQuoteTitle" style="color: #2a2a3a; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid rgba(160,180,255,0.3); padding-bottom: 6px;">
+                  如果某天我真的杳无音讯
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px; color: #4a4a5a; font-size: 11px; line-height: 1.4; position: relative; z-index: 1;">
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">APPEARANCE</span>
+                    <span contenteditable="true" class="arc-field" data-field="appearance" style="color: #2a2a3a; letter-spacing: 0.5px; outline:none; min-height:14px;">输入外貌</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">IDENTITY</span>
+                    <span contenteditable="true" class="arc-field" data-field="identity" style="color: #2a2a3a; letter-spacing: 0.5px; outline:none; min-height:14px;">输入身份</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">AGE</span>
+                    <span contenteditable="true" class="arc-field" data-field="age" style="color: #2a2a3a; letter-spacing: 0.5px; outline:none; min-height:14px;">输入年龄</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">DESC</span>
+                    <span contenteditable="true" class="arc-field" data-field="desc" style="color: #2a2a3a; letter-spacing: 0.5px; text-align: justify; overflow-y: auto; max-height: 50px; padding-right: 4px; outline:none;">
+                      背景设定留白，文本过长可滑动展开。
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="cen_bottom_panels" style="width: 345px; display: flex; flex-direction: column; gap: 6px; z-index: 1;">
+            <details class="cen-glow-box">
+              <summary>BASIC INFO</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="basicInfo">在此填入更多基础维度的详细数据与设定参数。</div>
+              </div>
+            </details>
+            <details class="cen-glow-box">
+              <summary>HISTORY</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="history">记录人物过往的履历、事件节点与背景故事。</div>
+              </div>
+            </details>
+            <details class="cen-glow-box">
+              <summary>PREFERENCES</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="preferences">关于日习惯、偏好物品以及厌恶事物的明细。</div>
+              </div>
+            </details>
+            <details class="cen-glow-box">
+              <summary>RELATIONS</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="relations">展示与外部社会、其他角色的阵营关系及纽带。</div>
+              </div>
+            </details>
+          </div>
+
+          <div class="cen-back-btn" onclick="cenReturnToIntro()">RETURN</div>
+        </div>
+      </div>
 
     </div>
   </div>
