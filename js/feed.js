@@ -205,7 +205,17 @@
   }
 
   // ==================== 我的头像 / 名字 ====================
-  function getMyAvatar() {
+    function getMyAvatar() {
+    // 1. 优先 my_profile.avatar
+    try {
+      var rawP = localStorage.getItem('my_profile');
+      if (rawP) {
+        var p = JSON.parse(rawP);
+        if (p && p.avatar) return p.avatar;
+      }
+    } catch (e) {}
+
+    // 2. 回退：主页头像
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
     if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
@@ -222,6 +232,16 @@
   }
 
   function getMyName() {
+    // 1. 优先 my_profile.name
+    try {
+      var rawP = localStorage.getItem('my_profile');
+      if (rawP) {
+        var p = JSON.parse(rawP);
+        if (p && p.name) return p.name;
+      }
+    } catch (e) {}
+
+    // 2. 回退：home_custom_images.myName
     try {
       var raw = localStorage.getItem('home_custom_images');
       if (raw) {
@@ -1051,8 +1071,8 @@
   }
 
   // ==================== 联系人切换监听 ====================
-  window.addEventListener('storage', function (e) {
-    if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY) {
+   window.addEventListener('storage', function (e) {
+    if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY || e.key === 'my_profile') {
       var pageFeed = document.getElementById('pageFeed');
       if (pageFeed && pageFeed.classList.contains('active')) {
         enterFeed();
@@ -1060,6 +1080,14 @@
     }
   });
 
+  // 同标签页内，role-panel 保存后主动通知
+  window.addEventListener('myProfileChanged', function () {
+    var pageFeed = document.getElementById('pageFeed');
+    if (pageFeed && pageFeed.classList.contains('active')) {
+      enterFeed();
+    }
+  });
+   
   // ==================== 初始化 ====================
   function init() {
     resolveCurrentContact();
