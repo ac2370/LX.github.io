@@ -466,13 +466,22 @@
 
     if (titleEl) titleEl.textContent = s.title || '未命名问卷';
 
-    var editBtn = document.getElementById('dsDetailEditBtn');
+       var editBtn = document.getElementById('dsDetailEditBtn');
     if (editBtn) {
-      editBtn.onclick = function () {
-        editingSurvey = deepClone(s);
-        renderEdit();
-        goPage('pageDreamSurveyEdit');
-      };
+      if (s.status === 'sent' || s.status === 'done') {
+        // 已发出 / 已交卷：禁止编辑
+        editBtn.style.opacity = '0.35';
+        editBtn.style.pointerEvents = 'none';
+        editBtn.onclick = null;
+      } else {
+        editBtn.style.opacity = '';
+        editBtn.style.pointerEvents = '';
+        editBtn.onclick = function () {
+          editingSurvey = deepClone(s);
+          renderEdit();
+          goPage('pageDreamSurveyEdit');
+        };
+      }
     }
 
     var statusText = { draft: '草稿', sent: '已发出', done: '已交卷' }[s.status] || '草稿';
@@ -517,7 +526,52 @@
 
     body.innerHTML = html;
 
+        renderDetailFooter(s);
+
     goPage('pageDreamSurveyDetail');
+  }
+
+    // ==================== 详情页底部操作栏 ====================
+  function renderDetailFooter(s) {
+    var footer = document.getElementById('dsDetailFooter');
+    if (!footer) return;
+
+    var status = s.status || 'draft';
+
+    if (status === 'draft') {
+      // 草稿：显示「发出」按钮
+      footer.innerHTML =
+        '<button class="ds-detail-send-btn" id="dsDetailSendBtn" type="button">' +
+        '  <i class="fa-solid fa-paper-plane"></i> 发出问卷' +
+        '</button>';
+      var sendBtn = document.getElementById('dsDetailSendBtn');
+      if (sendBtn) {
+        sendBtn.addEventListener('click', function () {
+          if (!confirm('发出后 Ta 会开始作答，确认发出？')) return;
+          if (typeof window.dreamSurveyFromMe === 'undefined') {
+            alert('模块未加载');
+            return;
+          }
+          var ok = window.dreamSurveyFromMe.sendSurvey(s.id);
+          if (ok) {
+            // 立即跳传讯页
+            goPage('pageChat');
+          }
+        });
+      }
+    } else if (status === 'sent') {
+      footer.innerHTML =
+        '<div class="ds-detail-status-hint sending">' +
+        '  <i class="fa-solid fa-hourglass-half"></i> Ta 正在作答…' +
+        '</div>';
+    } else if (status === 'done') {
+      footer.innerHTML =
+        '<div class="ds-detail-status-hint done">' +
+        '  <i class="fa-solid fa-check-circle"></i> Ta 已交卷' +
+        '</div>';
+    } else {
+      footer.innerHTML = '';
+    }
   }
 
   // ==================== Ta 的问卷 · 作答页 ====================
