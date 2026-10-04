@@ -1709,6 +1709,103 @@ window.cardImportShowUI = function (normalized, counts) {
     modal.classList.add('active');
   });
 };
+
+// ==================== 字卡导入 · 落地 ====================
+
+// 导入落地：normalized 是归一后的结构，selected 是选中的模块，mode 是 merge / overwrite
+window.cardImportApply = function (normalized, selected, mode) {
+  if (!window.cardDatabase || !window.cardDatabase.ready) {
+    window.cardImportToast && window.cardImportToast('字卡库未就绪');
+    return;
+  }
+
+  var totalAdded = 0;
+
+  // ---------- 1. 分组对象类：reply / pat / place / mood ----------
+  ['reply', 'pat', 'place', 'mood'].forEach(function (cat) {
+    if (!selected[cat]) return;
+    var incoming = normalized[cat] || {};
+    var incomingGroups = Object.keys(incoming);
+    if (incomingGroups.length === 0) return;
+
+    var obj = getGroupObject(cat);
+
+    if (mode === 'overwrite') {
+      // 覆盖：整体替换该分类
+      // 保留「默认分组」键，如果 incoming 里没有，就建一个空的
+      var newObj = {};
+      incomingGroups.forEach(function (g) {
+        newObj[g] = incoming[g].slice();
+        totalAdded += incoming[g].length;
+      });
+      // 覆盖后把 dbKey 指过去
+      var dbKey = cat;
+      if (cat === 'place') dbKey = 'location';
+      window.cardDatabase[dbKey] = newObj;
+      // 补分组颜色
+      incomingGroups.forEach(function (g) {
+        if (!groupsMeta[cat]) groupsMeta[cat] = {};
+        if (!groupsMeta[cat][g]) {
+          groupsMeta[cat][g] = {
+            color: DEFAULT_COLORS[Object.keys(newObj).indexOf(g) % DEFAULT_COLORS.length]
+          };
+        }
+      });
+    } else {
+      // 追加：同名分组合并 + 去重
+      incomingGroups.forEach(function (g) {
+        if (!obj[g]) obj[g] = [];
+        incoming[g].forEach(function (text) {
+          if (obj[g].indexOf(text) < 0) {
+            obj[g].push(text);
+            totalAdded++;
+          }
+        });
+        // 补分组颜色
+        if (!groupsMeta[cat]) groupsMeta[cat] = {};
+        if (!groupsMeta[cat][g]) {
+          groupsMeta[cat][g] = {
+            color: DEFAULT_COLORS[Object.keys(obj).indexOf(g) % DEFAULT_COLORS.length]
+          };
+        }
+      });
+    }
+  });
+
+  // ---------- 2. 数组类：status ----------
+  if (selected.status) {
+    var statusIncoming = normalized.status || [];
+    if (statusIncoming.length > 0) {
+      if (mode === 'overwrite') {
+        window.cardDatabase.status = statusIncoming.slice();
+        totalAdded += statusIncoming.length;
+      } else {
+        if (!window.cardDatabase.status) window.cardDatabase.status = [];
+        statusIncoming.forEach(function (t) {
+          if (window.cardDatabase.status.indexOf(t) < 0) {
+            window.cardDatabase.status.push(t);
+            totalAdded++;
+          }
+        });
+      }
+    }
+  }
+
+  // ---------- 3. 持久化 + 刷新 ----------
+  if (window.cardDatabase.persist) window.cardDatabase.persist();
+  persistAll();
+  updateAllUI();
+
+  // 通知外部（如果 chat-settings-panel 要刷新）
+  if (window.chatSettingsPanel && window.chatSettingsPanel.refreshGroupCheckboxes) {
+    try { window.chatSettingsPanel.refreshGroupCheckboxes(); } catch (e) {}
+  }
+
+  var modeText = mode === 'overwrite' ? '覆盖' : '追加';
+  window.cardImportToast && window.cardImportToast(
+    '导入成功（' + modeText + '），共 ' + totalAdded + ' 条'
+  );
+};
   
   // ==================== 初始化 ====================
   var inited = false;
