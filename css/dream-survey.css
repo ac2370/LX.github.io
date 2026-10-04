@@ -1164,3 +1164,32 @@
 .ds-answer-done-hint i {
   font-size: 14px;
 }
+
+/* 「Ta 的问卷」列表项 · 删除按钮 */
+.ds-item-del {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: #fdf0f0;
+  color: #e58b8b;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+  z-index: 2;
+}
+.ds-item-del:active {
+  background: #f8d8d8;
+  transform: scale(0.92);
+}
+
+/* 列表项需要 position: relative 才能让删除按钮绝对定位 */
+.ds-item {
+  position: relative;
+}
