@@ -196,12 +196,14 @@
   }
 
   // ==================== Tab 切换 ====================
-  function switchTab(tab) {
+   function switchTab(tab) {
     currentTab = tab;
     var tabMe = document.getElementById('arcTabMe');
     var tabTa = document.getElementById('arcTabTa');
     if (tabMe) tabMe.classList.toggle('active', tab === 'me');
     if (tabTa) tabTa.classList.toggle('active', tab === 'ta');
+    // 切 tab 也重播动画
+    resetAnimState();
     render();
   }
 
@@ -228,11 +230,13 @@
 
   // ==================== 事件绑定 ====================
   function bindEvents() {
-    // 主页入口
+       // 主页入口
     var homeBtn = document.getElementById('btnArchive');
     if (homeBtn) {
       homeBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        // 每次进入：先重置动画状态
+        resetAnimState();
         if (typeof window.showPage === 'function') {
           window.showPage('pageArchive');
         }
@@ -379,6 +383,34 @@
       if (window.cen3DEngineInstance) window.cen3DEngineInstance.setTargetY(0);
     }
   };
+
+    // ==================== 重置动画状态（每次进页面重播） ====================
+  function resetAnimState() {
+    var stage = document.getElementById('cenConfig_stage');
+    if (stage) {
+      stage.classList.remove('cen-play-mode');
+      stage.classList.add('cen-intro-mode');
+    }
+    // 3D 引擎复位
+    if (window.cen3DEngineInstance && typeof window.cen3DEngineInstance.setTargetY === 'function') {
+      window.cen3DEngineInstance.setTargetY(0);
+    }
+    // 气泡隐藏
+    var bubble = document.getElementById('cen_speech_bubble');
+    if (bubble) {
+      bubble.style.opacity = '0';
+      bubble.style.filter = 'blur(8px)';
+      bubble.style.transform = 'translate(-50%, 10px) translateZ(50px)';
+    }
+    // 折叠面板收起
+    document.querySelectorAll('#cen_bottom_panels details[open]').forEach(function (d) {
+      d.removeAttribute('open');
+    });
+    // 字段焦点清空
+    if (document.activeElement && document.activeElement.blur) {
+      try { document.activeElement.blur(); } catch (e) {}
+    }
+  }
 
   // ==================== 初始化 ====================
   function init() {
