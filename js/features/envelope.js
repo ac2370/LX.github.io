@@ -191,16 +191,6 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
 
     return { partnerName: partnerName, myName: myName };
   }
-    } catch (e) {}
-
-    // 3) 如果外部有 settings 对象（Milk 风格），优先用它
-    if (window.settings && typeof window.settings === 'object') {
-      if (window.settings.partnerName) partnerName = window.settings.partnerName;
-      if (window.settings.myName)      myName      = window.settings.myName;
-    }
-
-    return { partnerName: partnerName, myName: myName };
-  }
 
   // ==================== 页面切换 ====================
   function gotoEnvelope() {
