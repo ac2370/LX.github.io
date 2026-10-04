@@ -909,7 +909,7 @@
    ============================================================ */
 
 .ds-answer-body {
-  padding: 16px 16px 100px 16px;
+  padding: 16px 16px 120px 16px;   /* 底部留出 120px，避开固定栏 */
   background: #f7f9fb;
 }
 
@@ -1109,15 +1109,19 @@
 
 /* 底部固定提交栏 */
 .ds-answer-footer {
-  position: sticky;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 0;
-  margin: 24px -16px 0 -16px;
+  width: 100%;
+  max-width: 430px;   /* 和页面同宽 */
   padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
-  background: linear-gradient(to top, #ffffff 70%, rgba(255,255,255,0));
+  background: rgba(255, 255, 255, 0.96);
   border-top: 1px solid #eef1f4;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 5;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 50;
+  box-sizing: border-box;
 }
 
 .ds-answer-submit {
