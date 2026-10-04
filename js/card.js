@@ -207,6 +207,23 @@
     }
   }
 
+    // ==================== 档案联动 · 抽卡接口 ====================
+  window.getArchivePick = function (category) {
+    // status：平铺随机抽
+    if (category === 'status') {
+      var arr = window.cardDatabase.status || [];
+      if (arr.length === 0) return '';
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // place / mood：当前选中分组的随机一条
+    var cat = category === 'kaomoji' ? 'pat' : category;
+    var groupName = currentGroupMap[cat] || '默认分组';
+    var cards = window.getCardsInGroup(groupName, cat) || [];
+    if (cards.length === 0) return '';
+    return cards[Math.floor(Math.random() * cards.length)];
+  };
+  
   // ==================== 获取/初始化数据 ====================
   function getGroupObject(category) {
     if (!window.cardDatabase) return { '默认分组': [] };
