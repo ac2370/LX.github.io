@@ -1912,3 +1912,84 @@ body.theme-dark .pat-cancel {
 .quote-preview-close:active {
   background: #e8ecf0;
 }
+
+/* ============================================================
+   Ta 的问卷 · 聊天卡片
+   ============================================================ */
+.msg-survey-row {
+  display: flex !important;
+  justify-content: flex-start !important;
+  padding: 0 !important;
+}
+
+.msg-survey-bubble {
+  display: block !important;
+  max-width: 78% !important;
+  padding: 14px 16px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%) !important;
+  border: 1px solid #d0e2f5 !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.12) !important;
+  color: #333 !important;
+}
+.msg-survey-bubble:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 14px rgba(90, 158, 214, 0.22);
+}
+
+.msg-survey-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.msg-survey-head i {
+  color: #5a9ed6;
+  font-size: 13px;
+}
+.msg-survey-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a9ed6;
+  background: rgba(90, 158, 214, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.msg-survey-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a3a52;
+  line-height: 1.45;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.msg-survey-meta {
+  font-size: 11px;
+  color: #7a8a99;
+  margin-bottom: 8px;
+}
+
+.msg-survey-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+}
+.msg-survey-status i {
+  font-size: 10px;
+}
+.msg-survey-row[data-survey-status="answered"] .msg-survey-status {
+  color: #4CAF7D;
+}
+.msg-survey-row[data-survey-status="unanswered"] .msg-survey-status {
+  color: #5a9ed6;
+}
