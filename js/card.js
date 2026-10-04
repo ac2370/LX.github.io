@@ -93,7 +93,6 @@
   const statusPlaceholder = document.getElementById('statusPlaceholder');
   const statusSearchInput = document.getElementById('statusSearchInput');
   const statusGroupSelect = document.getElementById('statusGroupSelect');
-  const statusNewGroupBtn = document.getElementById('statusNewGroupBtn');
   const statusOrganizeBtn = document.getElementById('statusOrganizeBtn');
   const statusImportBtn = document.getElementById('statusImportBtn');
   const statusExportBtn = document.getElementById('statusExportBtn');
@@ -1152,8 +1151,7 @@
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
-  if (statusNewGroupBtn) statusNewGroupBtn.addEventListener('click', function () { alert('分组功能开发中'); });
-  if (statusOrganizeBtn) statusOrganizeBtn.addEventListener('click', function () {
+ if (statusOrganizeBtn) statusOrganizeBtn.addEventListener('click', function () {
     var statusArr = window.cardDatabase.status || [];
     var before = statusArr.length;
     window.cardDatabase.status = deduplicate(statusArr);
