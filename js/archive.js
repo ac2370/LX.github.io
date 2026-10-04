@@ -9,13 +9,32 @@
  * - Ta 档案的 basicInfo / history / preferences / relations 从内置文案库抽
  * - 1~8 小时周期自动换一批
  * - 保存时只保存「我的档案」
+ * - 「我的档案」的 name / photo 与传讯页 my_profile 同步（只读）
  */
 
 (function () {
   'use strict';
 
   var STORE_KEY = 'archive_data_v1';
+  var MY_PROFILE_KEY = 'my_profile';
   var currentTab = 'me';   // 'me' | 'ta'
+
+  // ==================== 我的资料（与传讯页同步） ====================
+  function loadMyProfile() {
+    try {
+      var raw = localStorage.getItem(MY_PROFILE_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && typeof p === 'object') {
+          return {
+            name: p.name || '我',
+            avatar: p.avatar || ''
+          };
+        }
+      }
+    } catch (e) {}
+    return { name: '我', avatar: '' };
+  }
 
   // ==================== 文案库（内置） ====================
   var ARCHIVE_QUOTES = [
@@ -42,7 +61,7 @@
   ];
 
   // Ta 档案里自动填充的字段
-   var AUTO_FIELDS = ['location', 'status', 'mood', 'desc', 'basicInfo', 'history', 'preferences', 'relations'];
+  var AUTO_FIELDS = ['location', 'status', 'mood', 'desc', 'basicInfo', 'history', 'preferences', 'relations'];
 
   // 自动填充的周期（毫秒）
   var AUTO_CHECK_INTERVAL = 60 * 1000;       // 60 秒检查一次
@@ -63,7 +82,7 @@
   }
 
   // 给 Ta 档案一次性抽满所有自动字段
-    function pickAutoFields() {
+  function pickAutoFields() {
     var result = {};
 
     // 3 个字段：字卡库
@@ -148,20 +167,25 @@
 
     // 照片
     if (photoEl) {
-      if (entry.photo) {
-        photoEl.style.backgroundImage = 'url(' + entry.photo + ')';
-      } else if (currentTab === 'me') {
-        var myAvatar = document.getElementById('avatarImg');
-        var url = '';
-        try {
-          var raw = localStorage.getItem('home_custom_images');
-          if (raw) {
-            var hd = JSON.parse(raw);
-            if (hd && hd.avatar) url = hd.avatar;
-          }
-        } catch (e) {}
-        if (!url && myAvatar && myAvatar.src) url = myAvatar.src;
+      if (currentTab === 'me') {
+        // 我的档案：优先读 my_profile.avatar
+        var myProfile = loadMyProfile();
+        var url = myProfile.avatar || '';
+        if (!url) {
+          // 回退：主页头像
+          var myAvatar = document.getElementById('avatarImg');
+          try {
+            var raw = localStorage.getItem('home_custom_images');
+            if (raw) {
+              var hd = JSON.parse(raw);
+              if (hd && hd.avatar) url = hd.avatar;
+            }
+          } catch (e) {}
+          if (!url && myAvatar && myAvatar.src) url = myAvatar.src;
+        }
         photoEl.style.backgroundImage = url ? 'url(' + url + ')' : '';
+      } else if (entry.photo) {
+        photoEl.style.backgroundImage = 'url(' + entry.photo + ')';
       } else {
         var taAvatar = document.getElementById('chatAvatar');
         if (taAvatar && taAvatar.src) photoEl.style.backgroundImage = 'url(' + taAvatar.src + ')';
@@ -171,10 +195,12 @@
 
     // 名字
     if (nameEl) {
-      if (entry.name) {
+      if (currentTab === 'me') {
+        // 我的档案：优先读 my_profile.name
+        var myProfile2 = loadMyProfile();
+        nameEl.textContent = myProfile2.name || '我';
+      } else if (entry.name) {
         nameEl.textContent = entry.name;
-      } else if (currentTab === 'me') {
-        nameEl.textContent = '我';
       } else {
         nameEl.textContent = c ? (c.name || 'Ta') : 'Ta';
       }
@@ -236,17 +262,16 @@
       entry[f] = text;
     });
 
-    var nameEl = document.getElementById('arcPhotoName');
-    if (nameEl) {
-      var n = nameEl.textContent.trim();
-      if (n && n !== '我' && n !== 'Ta') entry.name = n;
-    }
+    // 我的档案的 name 由 my_profile 控制，不写回 entry
+    // （photo 本来就不在 FIELDS / collectFields 里，无需处理）
 
     saveData(data);
     return true;
   }
 
   // ==================== 照片上传 ====================
+  // 我的档案的照片由 my_profile 控制，不上传；
+  // 这里只处理 Ta 档案的照片上传
   function bindPhotoUpload() {
     var photoEl = document.getElementById('cen_main_photo');
     var input = document.getElementById('arcPhotoInput');
@@ -255,6 +280,8 @@
     var pressTimer = null;
 
     function startPress() {
+      // 我的档案不允许上传照片
+      if (currentTab === 'me') return;
       pressTimer = setTimeout(function () {
         input.click();
       }, 600);
@@ -387,6 +414,15 @@
       if (e.key === 'my_current_contact') {
         if (currentTab === 'ta') { runAutoPick(false); render(); }
       }
+      // my_profile 变化 → 我的档案刷新
+      if (e.key === MY_PROFILE_KEY && currentTab === 'me') {
+        render();
+      }
+    });
+
+    // 同标签页内，role-panel 保存后主动通知
+    window.addEventListener('myProfileChanged', function () {
+      if (currentTab === 'me') render();
     });
   }
 
@@ -592,7 +628,8 @@
     render: render,
     loadData: loadData,
     saveData: saveData,
-    runAutoPick: runAutoPick          // 方便调试
+    runAutoPick: runAutoPick,
+    loadMyProfile: loadMyProfile          // 方便调试
   };
 
   console.log('[archive] 模块已加载');
