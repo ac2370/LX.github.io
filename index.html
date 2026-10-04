@@ -844,13 +844,23 @@
   <div class="page ds-page" id="pageDreamSurvey">
     <div class="ds-container">
 
-      <div class="ds-topbar">
+            <div class="ds-topbar">
         <button class="ds-back-btn" id="dsBackBtn">
           <i class="fa-solid fa-arrow-left"></i>
         </button>
         <span class="ds-topbar-title">梦向问卷</span>
         <button class="ds-topbar-add" id="dsNewBtn" title="新建问卷">
           <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+
+      <!-- 分类切换 -->
+      <div class="ds-tabs">
+        <button class="ds-tab active" data-tab="mine" id="dsTabMine">
+          <i class="fa-solid fa-paper-plane"></i> 我的问卷
+        </button>
+        <button class="ds-tab" data-tab="theirs" id="dsTabTheirs">
+          <i class="fa-solid fa-inbox"></i> Ta 的问卷
         </button>
       </div>
 
@@ -904,7 +914,7 @@
           </div>
         </div>
 
-        <!-- 题干区（C 方案：结构化 + 高级模式） -->
+              <!-- 题干区（C 方案：结构化 + 高级模式 + 问卷库） -->
         <div class="ds-section">
           <div class="ds-section-header">
             <div class="ds-section-title">题目</div>
@@ -915,10 +925,37 @@
 
           <!-- 结构化编辑 -->
           <div class="ds-qs" id="dsQsList"></div>
+
+          <!-- 问卷库（折叠面板） -->
+          <div class="ds-lib-wrap">
+            <button class="ds-lib-toggle" id="dsLibToggleBtn" type="button">
+              <i class="fa-solid fa-book-open"></i>
+              <span>从问卷库添加</span>
+              <i class="fa-solid fa-chevron-down ds-lib-arrow" id="dsLibArrow"></i>
+            </button>
+
+            <div class="ds-lib-panel" id="dsLibPanel" style="display:none;">
+              <!-- 分类 tab -->
+              <div class="ds-lib-cats" id="dsLibCats"></div>
+
+              <!-- 题目列表 -->
+              <div class="ds-lib-list" id="dsLibList"></div>
+
+              <!-- 底部操作 -->
+              <div class="ds-lib-footer">
+                <span class="ds-lib-count" id="dsLibCount">已选 0 道</span>
+                <div class="ds-lib-actions">
+                  <button class="ds-lib-btn ds-lib-clear" id="dsLibClearBtn" type="button">清空</button>
+                  <button class="ds-lib-btn ds-lib-add" id="dsLibAddBtn" type="button">添加选中</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <button class="ds-add-q-btn" id="dsAddQBtn">
             <i class="fa-solid fa-plus"></i> 添加题目
           </button>
-
+          
           <!-- 高级模式（文本框解析） -->
           <div class="ds-adv-area" id="dsAdvArea" style="display:none;">
             <div class="ds-adv-hint">
@@ -1486,6 +1523,7 @@
   <script src="./js/features/envelope.js"></script>
   <script src="./js/feed.js"></script>
   <script src="./js/features/stats.js"></script>
+  <script src="./js/dream-survey-questions.js"></script>
   <script src="./js/dream-survey.js"></script>
 </body>
 </html>
