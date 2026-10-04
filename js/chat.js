@@ -748,17 +748,8 @@
     var bubble = document.createElement('div');
     bubble.className = 'message-bubble msg-survey-bubble';
 
-    var qCount = (survey.qs || []).length;
+      var qCount = (survey.qs || []).length;
     var title = survey.title || 'Ta 的问卷';
-    var answeredCount = 0;
-    if (Array.isArray(survey.answers)) {
-      answeredCount = survey.answers.filter(function (a) {
-        if (!a) return false;
-        var v = a.value;
-        if (Array.isArray(v)) return v.length > 0;
-        return v !== undefined && v !== null && String(v).trim() !== '';
-      }).length;
-    }
     var isAnswered = survey.status === 'answered';
 
     var html = '';
@@ -769,16 +760,10 @@
     html += '<div class="msg-survey-title">' + escapeHtmlSafe(title) + '</div>';
     html += '<div class="msg-survey-meta">' + qCount + ' 题 · 点击作答</div>';
 
-    // 进度 + 状态
+    // 只保留状态标签
     html += '<div class="msg-survey-foot">';
-    html += '  <div class="msg-survey-progress">' +
-              '<span class="msg-survey-progress-num">' + answeredCount + '/' + qCount + '</span>' +
-              '<span class="msg-survey-progress-label">已答</span>' +
-            '</div>';
     if (isAnswered) {
       html += '  <span class="msg-survey-status done"><i class="fa-solid fa-check-circle"></i> 已作答</span>';
-    } else if (answeredCount > 0) {
-      html += '  <span class="msg-survey-status doing"><i class="fa-solid fa-pen"></i> 作答中</span>';
     } else {
       html += '  <span class="msg-survey-status pending"><i class="fa-regular fa-circle"></i> 待作答</span>';
     }
@@ -836,32 +821,17 @@
     var s = window.dreamSurveyFromTa.findById(surveyId);
     if (!s) return;
 
-    var rows = chatMessages.querySelectorAll('.msg-survey-row');
+      var rows = chatMessages.querySelectorAll('.msg-survey-row');
     rows.forEach(function (row) {
       if (row.dataset.surveyId !== surveyId) return;
 
       // 更新 dataset 状态
       row.dataset.surveyStatus = s.status || 'unanswered';
 
-      // 重新计算进度
-      var qCount = (s.qs || []).length;
-      var answeredCount = 0;
-      if (Array.isArray(s.answers)) {
-        answeredCount = s.answers.filter(function (a) {
-          if (!a) return false;
-          var v = a.value;
-          if (Array.isArray(v)) return v.length > 0;
-          return v !== undefined && v !== null && String(v).trim() !== '';
-        }).length;
-      }
       var isAnswered = s.status === 'answered';
 
       var bubble = row.querySelector('.msg-survey-bubble');
       if (!bubble) return;
-
-      // 更新进度数字
-      var numEl = bubble.querySelector('.msg-survey-progress-num');
-      if (numEl) numEl.textContent = answeredCount + '/' + qCount;
 
       // 更新状态标签
       var statusEl = bubble.querySelector('.msg-survey-status');
@@ -869,9 +839,6 @@
         if (isAnswered) {
           statusEl.className = 'msg-survey-status done';
           statusEl.innerHTML = '<i class="fa-solid fa-check-circle"></i> 已作答';
-        } else if (answeredCount > 0) {
-          statusEl.className = 'msg-survey-status doing';
-          statusEl.innerHTML = '<i class="fa-solid fa-pen"></i> 作答中';
         } else {
           statusEl.className = 'msg-survey-status pending';
           statusEl.innerHTML = '<i class="fa-regular fa-circle"></i> 待作答';
