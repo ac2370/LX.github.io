@@ -92,7 +92,6 @@
   const statusSearchInput = document.getElementById('statusSearchInput');
   const statusGroupSelect = document.getElementById('statusGroupSelect');
   const statusOrganizeBtn = document.getElementById('statusOrganizeBtn');
-  const statusImportBtn = document.getElementById('statusImportBtn');
   const statusExportBtn = document.getElementById('statusExportBtn');
   const statusAddBtn = document.getElementById('statusAddBtn');
 
