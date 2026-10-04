@@ -1912,30 +1912,3 @@ body.theme-dark .pat-cancel {
 .quote-preview-close:active {
   background: #e8ecf0;
 }
-
-/* ============ 消息反应气泡 ============ */
-.message-reaction {
-  display: inline-block;
-  font-size: 14px;
-  line-height: 1;
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  margin-top: 4px;
-  user-select: none;
-  transform-origin: left center;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.message-row.self .message-reaction {
-  align-self: flex-end;
-}
-.message-reaction.pop {
-  animation: reactionPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes reactionPop {
-  0%   { transform: scale(0.4); opacity: 0; }
-  60%  { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
