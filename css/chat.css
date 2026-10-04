@@ -1918,3 +1918,26 @@ body.theme-dark .pat-cancel {
   60%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
+
+/* 已读回执（单勾） */
+.message-read-receipt {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent-color, #6fb1e8);
+  margin-left: 4px;
+  vertical-align: middle;
+  opacity: 0.85;
+}
+.message-read-receipt i {
+  font-size: 11px;
+}
+.message-row.self .message-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.message-row.self .message-read-receipt {
+  /* 与时间戳同层，右对齐 */
+  text-align: right;
+}
