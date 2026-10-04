@@ -43,18 +43,18 @@
   }
 
   // ==================== 字段定义 ====================
-  var FIELDS = ['appearance', 'identity', 'age', 'desc', 'basicInfo', 'history', 'preferences', 'relations'];
-  var PLACEHOLDERS = {
-    appearance: '输入外貌',
-    identity: '输入身份',
-    age: '输入年龄',
+  var FIELDS = ['location', 'status', 'mood', 'desc', 'basicInfo', 'history', 'preferences', 'relations'];
+    var PLACEHOLDERS = {
+    location: '输入地点',
+    status: '输入状态',
+    mood: '输入心情',
     desc: '背景设定留白，文本过长可滑动展开。',
     basicInfo: '在此填入更多基础维度的详细数据与设定参数。',
     history: '记录人物过往的履历、事件节点与背景故事。',
     preferences: '关于日习惯、偏好物品以及厌恶事物的明细。',
     relations: '展示与外部社会、其他角色的阵营关系及纽带。'
   };
-
+  
   function getCurrentEntry(data) {
     if (currentTab === 'me') return data.me;
     var c = getCurrentContact();
