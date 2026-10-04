@@ -1060,9 +1060,22 @@
   }
 
   // 暴露给外部
-  window.dreamSurvey = {
+   window.dreamSurvey = {
     reload: renderList,
     openList: function () { renderList(); goPage('pageDreamSurvey'); }
+  };
+
+  // 供外部（如聊天卡片点击）打开 Ta 的问卷作答页
+  window.openTaSurveyAnswer = function (id) {
+    if (!id) return;
+    // 先切到列表页（确保 tab 状态正确）
+    currentListTab = 'theirs';
+    var tabMine = document.getElementById('dsTabMine');
+    var tabTheirs = document.getElementById('dsTabTheirs');
+    if (tabMine) tabMine.classList.remove('active');
+    if (tabTheirs) tabTheirs.classList.add('active');
+    // 打开作答页
+    openAnswerPage(id);
   };
 
   console.log('[dream-survey] 模块已加载');
