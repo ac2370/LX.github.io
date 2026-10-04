@@ -118,7 +118,7 @@
       var emptyHint = emptyBox.querySelector('.ds-empty-hint');
       if (currentListTab === 'theirs') {
         if (emptyText) emptyText.textContent = 'Ta 还没有发起问卷';
-        if (emptyHint) emptyHint.textContent = '等 Ta 主动问你点什么吧（调试：Console 里跑 window.debugTaSurvey()）';
+        if (emptyHint) emptyHint.textContent = '等 Ta 主动问你点什么吧';
       } else {
         if (emptyText) emptyText.textContent = '还没有问卷';
         if (emptyHint) emptyHint.textContent = '点右上角 + 新建一份吧';
