@@ -172,13 +172,61 @@
     return true;
   }
 
+    // ==================== 推送问卷卡片到聊天 ====================
+  // 依赖 chat.js 暴露的 window.appendSurveyCardToChat（下一步加）
+  function pushToChat(surveyId) {
+    var s = findById(surveyId);
+    if (!s) return false;
+
+    // 1. 先推一句 Ta 的话（从字卡库抽）
+    try {
+      var pool = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
+      if (Array.isArray(pool) && pool.length > 0) {
+        var text = pool[Math.floor(Math.random() * pool.length)];
+        if (text && typeof text === 'string') {
+          if (typeof window.appendTaTextToChat === 'function') {
+            window.appendTaTextToChat(text);
+          } else {
+            pushTextFallback(text);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[dream-survey-from-ta] 推送陪衬话失败', e);
+    }
+
+    // 2. 推问卷卡片
+    if (typeof window.appendSurveyCardToChat === 'function') {
+      window.appendSurveyCardToChat(s);
+      return true;
+    } else {
+      console.warn('[dream-survey-from-ta] chat.js 未暴露 appendSurveyCardToChat');
+      return false;
+    }
+  }
+
+  // 兜底：直接往聊天里塞一条对方文字
+  function pushTextFallback(text) {
+    var chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+    var row = document.createElement('div');
+    row.className = 'message-row other';
+    var bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chatMessages.appendChild(row);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
   // ==================== 暴露给外部 ====================
-  window.dreamSurveyFromTa = {
+   window.dreamSurveyFromTa = {
     loadAll: loadAll,
     findById: findById,
     generateAndSave: generateAndSave,
     submitAnswers: submitAnswers,
     removeById: removeById,
+    pushToChat: pushToChat,
     STORE_KEY: STORE_KEY
   };
 
@@ -186,11 +234,12 @@
   window.debugTaSurvey = function () {
     var s = generateAndSave();
     if (s) {
-      console.log('[debugTaSurvey] 已生成，刷新「Ta 的问卷」tab 可以看到');
+      console.log('[debugTaSurvey] 已生成并推送到聊天，切到传讯页可看到卡片');
+      pushToChat(s.id);
       return s;
     }
     return null;
   };
-
+  
   console.log('[dream-survey-from-ta] 模块已加载');
 })();
