@@ -11,14 +11,13 @@
   // ==================== 全局数据对象 ====================
   // 注意：reply / pat / place / mood 都是分组对象；emoji / sticker 是数组
   window.cardDatabase = {
-    reply:   { '默认分组': [] },
-    pat:     { '默认分组': [] },
-    place:   { '默认分组': [] },
-    mood:    { '默认分组': [] },
-    emoji:   [],
-    sticker: [],
-    status:  []
-  };
+  reply:   { '默认分组': [] },
+  pat:     { '默认分组': [] },
+  place:   { '默认分组': [] },
+  mood:    { '默认分组': [] },
+  sticker: [],
+  status:  []
+};
 
   // ==================== localforage 配置 ====================
   var hasLocalforage = typeof localforage !== 'undefined';
@@ -26,15 +25,14 @@
 
   // ==================== 保存 ====================
   function persist() {
-    var data = {
-      reply:   window.cardDatabase.reply,
-      pat:     window.cardDatabase.pat,
-      place:   window.cardDatabase.place,
-      mood:    window.cardDatabase.mood,
-      emoji:   window.cardDatabase.emoji,
-      sticker: window.cardDatabase.sticker,
-      status:  window.cardDatabase.status
-    };
+   var data = {
+  reply:   window.cardDatabase.reply,
+  pat:     window.cardDatabase.pat,
+  place:   window.cardDatabase.place,
+  mood:    window.cardDatabase.mood,
+  sticker: window.cardDatabase.sticker,
+  status:  window.cardDatabase.status
+};
     if (hasLocalforage) {
       localforage.setItem(STORE_KEY, data).catch(function (e) {
         console.warn('[cardDatabase] localforage 保存失败', e);
@@ -71,9 +69,8 @@
       });
 
       // emoji / sticker / status：数组
-      window.cardDatabase.emoji   = Array.isArray(data.emoji)   ? data.emoji   : [];
-      window.cardDatabase.sticker = Array.isArray(data.sticker) ? data.sticker : [];
-      window.cardDatabase.status  = Array.isArray(data.status)  ? data.status  : [];
+     window.cardDatabase.sticker = Array.isArray(data.sticker) ? data.sticker : [];
+     window.cardDatabase.status  = Array.isArray(data.status)  ? data.status  : [];
 
       if (callback) callback();
     }
@@ -97,16 +94,15 @@
 
   // ==================== 对外 API ====================
 
-  window.cardDatabase.get = function (category) {
-    if (category === 'reply')   return window.cardDatabase.reply;
-    if (category === 'pat')     return window.cardDatabase.pat;
-    if (category === 'place')   return window.cardDatabase.place;
-    if (category === 'mood')    return window.cardDatabase.mood;
-    if (category === 'emoji')   return window.cardDatabase.emoji;
-    if (category === 'sticker') return window.cardDatabase.sticker;
-    if (category === 'status')  return window.cardDatabase.status;
-    return [];
-  };
+ window.cardDatabase.get = function (category) {
+  if (category === 'reply')   return window.cardDatabase.reply;
+  if (category === 'pat')     return window.cardDatabase.pat;
+  if (category === 'place')   return window.cardDatabase.place;
+  if (category === 'mood')    return window.cardDatabase.mood;
+  if (category === 'sticker') return window.cardDatabase.sticker;
+  if (category === 'status')  return window.cardDatabase.status;
+  return [];
+};
 
   // 添加一条（自动去重）—— 仅用于数组类分类（emoji / sticker / status）
   window.cardDatabase.add = function (category, value, autoDedup) {
