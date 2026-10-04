@@ -121,8 +121,8 @@
 #cenConfig_stage {
   width: 100%;
   max-width: 100vw;
-  min-height: 500px;
-  padding: 30px 0 20px 0;
+  min-height: 0;              /* 默认不撑高 */
+  padding: 20px 0 20px 0;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -132,6 +132,11 @@
   position: relative;
   overflow: hidden;
   background: #fcfcfd;
+}
+
+/* intro 模式才需要撑高（给大标题留空间） */
+#cenConfig_stage.cen-intro-mode {
+  min-height: 460px;
 }
 
 /* ==================== 雨丝 ==================== */
@@ -617,4 +622,12 @@
 }
 @keyframes cenSlideFade {
   to { opacity: 1; transform: translateX(0); }
+}
+
+/* play 模式下容器紧凑一些 */
+.cen-play-mode #cen_main_container {
+  margin-top: 0;
+}
+.cen-play-mode {
+  padding-top: 10px !important;
 }
