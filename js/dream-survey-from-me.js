@@ -256,12 +256,34 @@
     // Ta 说一句回应（隔 2~4 秒）
     var delay = 2000 + Math.floor(Math.random() * 2000);
     setTimeout(function () {
-      var pool = [];
+        var pool = [];
       try {
         if (typeof window.getReplyCards === 'function') {
-          pool = window.getReplyCards() || [];
+          var u = window.getReplyCards() || [];
+          if (Array.isArray(u) && u.length > 0) pool = pool.concat(u);
         }
       } catch (e) {}
+
+      if (pool.length === 0) {
+        try {
+          var d = window.DEFAULT_CARD_DATA;
+          if (d && d.reply && typeof d.reply === 'object') {
+            Object.keys(d.reply).forEach(function (g) {
+              if (Array.isArray(d.reply[g])) pool = pool.concat(d.reply[g]);
+            });
+          }
+        } catch (e) {}
+      }
+
+      if (pool.length === 0) {
+        try {
+          if (window.publicCards && typeof window.publicCards.getSelectedCards === 'function') {
+            var pub = window.publicCards.getSelectedCards('reply');
+            if (Array.isArray(pub) && pub.length > 0) pool = pub;
+          }
+        } catch (e) {}
+      }
+
       var text = '';
       if (pool.length > 0) {
         text = randomPick(pool);
