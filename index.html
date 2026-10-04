@@ -130,7 +130,7 @@
             <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
             <span class="function-label">朋友圈</span>
           </a>
-          <a href="#" target="_blank" rel="noopener noreferrer" class="function-item">
+          <a class="function-item" id="btnDreamSurvey" style="cursor: pointer;">
             <div class="function-icon"><i class="fa-solid fa-list-check text-[#222] text-lg"></i></div>
             <span class="function-label">梦向问卷</span>
           </a>
@@ -838,6 +838,124 @@
     </div>
   </div>
 </div>
+
+    <!-- ==================== 梦向问卷 列表页 ==================== -->
+  <div class="page ds-page" id="pageDreamSurvey">
+    <div class="ds-container">
+
+      <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title">梦向问卷</span>
+        <button class="ds-topbar-add" id="dsNewBtn" title="新建问卷">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+
+      <div class="ds-body">
+        <div class="ds-list" id="dsList"></div>
+        <div class="ds-empty" id="dsEmpty">
+          <i class="fa-solid fa-list-check"></i>
+          <div class="ds-empty-text">还没有问卷</div>
+          <div class="ds-empty-hint">点右上角 + 新建一份吧</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 梦向问卷 编辑页 ==================== -->
+  <div class="page ds-page" id="pageDreamSurveyEdit">
+    <div class="ds-container">
+
+      <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsEditBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title" id="dsEditTitle">新建问卷</span>
+        <button class="ds-topbar-save" id="dsSaveBtn" title="保存">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+
+      <div class="ds-body ds-edit-body">
+
+        <!-- 基本信息 -->
+        <div class="ds-section">
+          <div class="ds-field-label">问卷标题</div>
+          <input type="text" class="ds-input" id="dsTitleInput" placeholder="例如：关于你的一天" maxlength="30">
+        </div>
+
+        <div class="ds-section">
+          <div class="ds-field-row">
+            <div class="ds-field-half">
+              <div class="ds-field-label">提前交卷概率</div>
+              <div class="ds-input-unit">
+                <input type="number" class="ds-input ds-input-num" id="dsProbInput" value="10" min="0" max="100">
+                <span class="ds-unit">%</span>
+              </div>
+            </div>
+            <div class="ds-field-half">
+              <div class="ds-field-label">题目数量</div>
+              <div class="ds-input ds-input-static" id="dsCountLabel">0 题</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 题干区（C 方案：结构化 + 高级模式） -->
+        <div class="ds-section">
+          <div class="ds-section-header">
+            <div class="ds-section-title">题目</div>
+            <button class="ds-adv-btn" id="dsAdvToggleBtn">
+              <i class="fa-solid fa-code"></i> 高级模式
+            </button>
+          </div>
+
+          <!-- 结构化编辑 -->
+          <div class="ds-qs" id="dsQsList"></div>
+          <button class="ds-add-q-btn" id="dsAddQBtn">
+            <i class="fa-solid fa-plus"></i> 添加题目
+          </button>
+
+          <!-- 高级模式（文本框解析） -->
+          <div class="ds-adv-area" id="dsAdvArea" style="display:none;">
+            <div class="ds-adv-hint">
+              按以下格式书写，用空行分隔题目：<br>
+              <code>【问题】<br>选项1<br>选项2</code> → 单选<br>
+              <code>【问题】（多选）<br>选项1<br>选项2</code> → 多选<br>
+              <code>【问题】<br>一</code> → 文字题<br>
+              裸行 → 文字题题干
+            </div>
+            <textarea class="ds-adv-textarea" id="dsAdvTextarea" placeholder="【问题】&#10;选项A&#10;选项B&#10;&#10;【问题】（多选）&#10;选项A&#10;选项B&#10;&#10;【随便聊点什么】&#10;一"></textarea>
+            <button class="ds-adv-parse-btn" id="dsAdvParseBtn">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 解析并应用
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 梦向问卷 详情页 ==================== -->
+  <div class="page ds-page" id="pageDreamSurveyDetail">
+    <div class="ds-container">
+
+      <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsDetailBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title" id="dsDetailTitle">问卷详情</span>
+        <button class="ds-topbar-add" id="dsDetailEditBtn" title="编辑">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+      </div>
+
+      <div class="ds-body ds-detail-body" id="dsDetailBody"></div>
+
+    </div>
+  </div>
   
   <!-- ==================== 心晴手账 页面 ==================== -->
 <div class="page" id="pageMood">
