@@ -157,11 +157,21 @@
       if (!silentAudioEl) {
         silentAudioEl = new Audio('./assets/silence.m4a');
         silentAudioEl.loop = true;
-        silentAudioEl.volume = 0.01;      // 近乎静音
+        silentAudioEl.volume = 0.1;       // 稍微大一点，iOS 才会认可
         silentAudioEl.preload = 'auto';
         silentAudioEl.setAttribute('playsinline', '');
         silentAudioEl.setAttribute('webkit-playsinline', '');
       }
+
+      silentAudioEl.onplay = function () {
+  console.log('[静音循环] 音频已开始播放');
+};
+silentAudioEl.onerror = function (e) {
+  console.warn('[静音循环] 音频加载/播放错误', e);
+};
+silentAudioEl.onpause = function () {
+  console.log('[静音循环] 音频已暂停');
+};
 
       var p = silentAudioEl.play();
       if (p && typeof p.catch === 'function') {
