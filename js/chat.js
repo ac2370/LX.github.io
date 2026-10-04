@@ -786,8 +786,7 @@
     });
   });
 
-  // ==================== 左侧图标点击（占位） ====================
-    // ==================== 左侧图标点击 ====================
+  // ==================== 左侧图标点击 ====================
   document.querySelectorAll('.input-left-icons i').forEach(function (icon) {
     // 「让 Ta 继续说」手动触发
     if (icon.id === 'continueBtn') {
@@ -798,6 +797,7 @@
       });
       return;
     }
+    // 其它图标：占位日志
     icon.addEventListener('click', function () {
       console.log('点击了：' + (icon.getAttribute('title') || '功能'));
     });
