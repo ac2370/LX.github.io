@@ -1974,22 +1974,52 @@ body.theme-dark .pat-cancel {
   margin-bottom: 8px;
 }
 
+/* 卡片底部：进度 + 状态 */
+.msg-survey-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.msg-survey-progress {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-size: 11px;
+  color: #7a8a99;
+}
+.msg-survey-progress-num {
+  font-size: 14px;
+  font-weight: 700;
+  color: #5a9ed6;
+}
+.msg-survey-progress-label {
+  font-weight: 600;
+}
+
 .msg-survey-status {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
+  font-weight: 700;
+  padding: 3px 9px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.7);
 }
 .msg-survey-status i {
   font-size: 10px;
 }
-.msg-survey-row[data-survey-status="answered"] .msg-survey-status {
-  color: #4CAF7D;
-}
-.msg-survey-row[data-survey-status="unanswered"] .msg-survey-status {
+.msg-survey-status.pending {
   color: #5a9ed6;
+  background: rgba(90, 158, 214, 0.15);
+}
+.msg-survey-status.doing {
+  color: #c68a3a;
+  background: rgba(198, 138, 58, 0.15);
+}
+.msg-survey-status.done {
+  color: #4CAF7D;
+  background: rgba(76, 175, 125, 0.15);
 }
