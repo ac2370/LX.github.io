@@ -621,13 +621,6 @@
           if (!picked) break;
           var content = picked.text;
 
-          if (settings.kaomoji) {
-            var emojiText = pickOneEmoji();
-            if (emojiText) {
-              content = content + ' ' + emojiText;
-            }
-          }
-
                    if (settings.quote) {
             var quotePool = getRecentSelfMessages(8); // 最近 8 条我方消息
             if (quotePool.length > 0 && Math.random() < 0.35) {
