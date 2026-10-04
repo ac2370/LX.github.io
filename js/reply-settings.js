@@ -38,7 +38,6 @@
     maxWait:         12,
     minCount:        0,
     maxCount:        3,
-    kaomoji:         false,
     typingBubble:    true,
     // 已读状态
     readStatus:      false,
@@ -94,7 +93,6 @@
     inputMaxWait:         { key: 'maxWait',      type: 'int',  min: 1,  max: 600 },
     inputMinCount:        { key: 'minCount',     type: 'int',  min: 0,  max: 10 },
     inputMaxCount:        { key: 'maxCount',     type: 'int',  min: 0,  max: 10 },
-    toggleKaomoji:        { key: 'kaomoji',      type: 'bool' },
     toggleTypingBubble:   { key: 'typingBubble', type: 'bool' },
     // 已读状态
     toggleReadStatus:     { key: 'readStatus',   type: 'bool' },
