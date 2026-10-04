@@ -809,3 +809,223 @@ body.theme-dark .new-group-cancel {
   text-transform: uppercase;
   font-weight: 500;
 }
+
+/* ============================================================
+   字卡导入弹层（玻璃拟态浅色风）
+   ============================================================ */
+.card-import-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 470;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 30, 40, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 0.15s ease;
+}
+.card-import-modal.active { display: flex; }
+
+.card-import-panel {
+  width: 100%;
+  max-width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
+  padding: 22px 20px;
+  animation: popIn 0.22s ease;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.card-import-panel::-webkit-scrollbar { display: none; }
+body.theme-dark .card-import-panel {
+  background: rgba(38, 44, 52, 0.97);
+}
+
+.card-import-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+body.theme-dark .card-import-title { color: var(--theme-text); }
+
+.card-import-sub {
+  font-size: 11px;
+  color: #8899a6;
+  text-align: center;
+  margin-bottom: 18px;
+  letter-spacing: 0.5px;
+}
+
+.card-import-label {
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding-left: 2px;
+  text-transform: uppercase;
+}
+
+.card-import-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.card-import-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 14px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+.card-import-item:active { background: #f2f6fa; }
+.card-import-item.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.card-import-item.disabled:active { background: #fafbfc; }
+body.theme-dark .card-import-item {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+}
+body.theme-dark .card-import-item:active {
+  background: rgba(42, 48, 56, 0.9);
+}
+
+.card-import-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 1.5px solid #cbd4dc;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.card-import-item.checked .card-import-checkbox {
+  background: #f8b4b4;
+  border-color: #f8b4b4;
+}
+.card-import-item.checked .card-import-checkbox::after {
+  content: '\f00c';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  color: #fff;
+  font-size: 10px;
+}
+
+.card-import-name {
+  flex: 1;
+  font-size: 13px;
+  color: #333;
+  font-weight: 500;
+}
+body.theme-dark .card-import-name { color: var(--theme-text); }
+
+.card-import-count {
+  font-size: 11px;
+  color: #8899a6;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* 追加 / 覆盖 */
+.card-import-modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.card-import-mode {
+  flex: 1;
+  padding: 11px 8px;
+  border-radius: 14px;
+  background: #fafbfc;
+  border: 1px solid #eef1f4;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+.card-import-mode:active { background: #f2f6fa; }
+.card-import-mode.active {
+  background: #fdf0f0;
+  border-color: #f8b4b4;
+}
+body.theme-dark .card-import-mode {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+}
+body.theme-dark .card-import-mode.active {
+  background: rgba(248, 180, 180, 0.12);
+  border-color: #f8b4b4;
+}
+
+.card-import-mode-title {
+  font-size: 12px;
+  color: #333;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+body.theme-dark .card-import-mode-title { color: var(--theme-text); }
+.card-import-mode.active .card-import-mode-title { color: #e58b8b; }
+
+.card-import-mode-desc {
+  font-size: 10px;
+  color: #8899a6;
+  line-height: 1.3;
+}
+
+/* 底部按钮 */
+.card-import-actions {
+  display: flex;
+  gap: 12px;
+}
+.card-import-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.card-import-btn:active { transform: scale(0.97); }
+.card-import-cancel {
+  background: #f5f6f8;
+  color: #55606b;
+  border: 1px solid #eef1f4;
+}
+body.theme-dark .card-import-cancel {
+  background: rgba(42, 48, 56, 0.9);
+  color: var(--theme-text-soft);
+  border-color: var(--theme-card-border);
+}
+.card-import-confirm {
+  background: #f8b4b4;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
+}
+.card-import-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
