@@ -211,10 +211,10 @@
   function getGroupObject(category) {
     if (!window.cardDatabase) return { '默认分组': [] };
 
-      // 数组类分类不走分组逻辑，避免误迁移
-  if (category === 'status' || category === 'emoji' || category === 'sticker') {
-    return { '默认分组': [] };
-  }
+    // 数组类分类不走分组逻辑，避免误迁移
+    if (category === 'status' || category === 'emoji' || category === 'sticker') {
+      return { '默认分组': [] };
+    }
 
     var dbKey = category;
     if (category === 'place') dbKey = 'location';
@@ -244,22 +244,22 @@
     return Object.keys(obj);
   }
 
-window.getGroups = function (category) {
-  var cat = category || 'reply';
-  if (cat === 'status' || cat === 'emoji' || cat === 'sticker') return [];
-  return getGroupsOf(cat);
-};
+  window.getGroups = function (category) {
+    var cat = category || 'reply';
+    if (cat === 'status' || cat === 'emoji' || cat === 'sticker') return [];
+    return getGroupsOf(cat);
+  };
 
   function getCardsInGroupOf(category, groupName) {
     var obj = getGroupObject(category);
     return obj[groupName] || [];
   }
 
-window.getCardsInGroup = function (groupName, category) {
-  var cat = category || 'reply';
-  if (cat === 'status' || cat === 'emoji' || cat === 'sticker') return [];
-  return getCardsInGroupOf(cat, groupName);
-};
+  window.getCardsInGroup = function (groupName, category) {
+    var cat = category || 'reply';
+    if (cat === 'status' || cat === 'emoji' || cat === 'sticker') return [];
+    return getCardsInGroupOf(cat, groupName);
+  };
 
   window.getGroupColor = function (groupName, category) {
     var cat = category || 'reply';
@@ -519,36 +519,36 @@ window.getCardsInGroup = function (groupName, category) {
   }
 
   // ==================== 统一添加逻辑 ====================
- function addTextToCategory(category, texts, groupName) {
-  if (!window.cardDatabase || !window.cardDatabase.ready) return;
+  function addTextToCategory(category, texts, groupName) {
+    if (!window.cardDatabase || !window.cardDatabase.ready) return;
 
-  var cat = category === 'kaomoji' ? 'pat' : category;
+    var cat = category === 'kaomoji' ? 'pat' : category;
 
-  if (cat === 'reply' || cat === 'pat' || cat === 'place' || cat === 'mood') {
-    var target = groupName || currentGroupMap[cat] || '默认分组';
-    texts.forEach(function (t) {
-      window.addCardToGroup(target, t, cat);
-    });
-    currentGroupMap[cat] = target;
-  } else if (cat === 'status') {
-    if (!window.cardDatabase.status) window.cardDatabase.status = [];
-    texts.forEach(function (t) {
-      if (autoDedup && window.cardDatabase.status.indexOf(t) >= 0) return;
-      window.cardDatabase.status.push(t);
-    });
-    if (window.cardDatabase.persist) window.cardDatabase.persist();
+    if (cat === 'reply' || cat === 'pat' || cat === 'place' || cat === 'mood') {
+      var target = groupName || currentGroupMap[cat] || '默认分组';
+      texts.forEach(function (t) {
+        window.addCardToGroup(target, t, cat);
+      });
+      currentGroupMap[cat] = target;
+    } else if (cat === 'status') {
+      if (!window.cardDatabase.status) window.cardDatabase.status = [];
+      texts.forEach(function (t) {
+        if (autoDedup && window.cardDatabase.status.indexOf(t) >= 0) return;
+        window.cardDatabase.status.push(t);
+      });
+      if (window.cardDatabase.persist) window.cardDatabase.persist();
+    }
   }
-}
 
   // ==================== 弹窗内的分组选择器 ====================
   function showGroupSelectorInModal(category) {
-  var cat = category === 'kaomoji' ? 'pat' : category;
+    var cat = category === 'kaomoji' ? 'pat' : category;
 
-  if (cat === 'status') {
-    var existing = document.getElementById('modalGroupSelector');
-    if (existing) existing.style.display = 'none';
-    return;
-  }
+    if (cat === 'status') {
+      var existing = document.getElementById('modalGroupSelector');
+      if (existing) existing.style.display = 'none';
+      return;
+    }
     var container = document.getElementById('modalGroupSelector');
     if (!container) {
       container = document.createElement('div');
@@ -650,29 +650,29 @@ window.getCardsInGroup = function (groupName, category) {
   }
 
   // ==================== 确认添加 ====================
- if (simpleModalConfirm) {
-  simpleModalConfirm.addEventListener('click', function () {
-    const raw = simpleModalInput.value;
-    if (!raw || !raw.trim()) { alert('请输入内容'); return; }
+  if (simpleModalConfirm) {
+    simpleModalConfirm.addEventListener('click', function () {
+      const raw = simpleModalInput.value;
+      if (!raw || !raw.trim()) { alert('请输入内容'); return; }
 
-    // 无论 add 还是 import，都按换行切分
-    const lines = raw.split('\n')
-      .map(function (l) { return l.trim(); })
-      .filter(function (l) { return l; });
+      // 无论 add 还是 import，都按换行切分
+      const lines = raw.split('\n')
+        .map(function (l) { return l.trim(); })
+        .filter(function (l) { return l; });
 
-    if (lines.length === 0) { alert('没有有效内容'); return; }
+      if (lines.length === 0) { alert('没有有效内容'); return; }
 
-    if (simpleModalCategory === 'emoji') {
-      addTextToCategory('emoji', lines);
-    } else {
-      addTextToCategory(simpleModalCategory, lines);
-    }
+      if (simpleModalCategory === 'emoji') {
+        addTextToCategory('emoji', lines);
+      } else {
+        addTextToCategory(simpleModalCategory, lines);
+      }
 
-    closeSimpleModal();
-    updateAllUI();
-  });
-}
-  
+      closeSimpleModal();
+      updateAllUI();
+    });
+  }
+
   // ==================== 渲染通用卡片 ====================
   function renderTextList(container, placeholderEl, arr, searchInput, category, groupName) {
     if (!container) return;
@@ -696,19 +696,19 @@ window.getCardsInGroup = function (groupName, category) {
       const textEl = document.createElement('div');
       textEl.className = 'word-card-text';
       textEl.textContent = text;
-    const del = document.createElement('button');
-del.className = 'word-card-delete';
-del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-del.addEventListener('click', function () {
-  if (!confirm('确定删除这条内容吗？')) return;
-  var cat = category === 'kaomoji' ? 'pat' : category;
-  if (cat === 'status') {
-    window.cardDatabase.remove('status', text);
-  } else {
-    window.removeCardFromGroup(groupName, text, cat);
-  }
-  updateAllUI();
-});
+      const del = document.createElement('button');
+      del.className = 'word-card-delete';
+      del.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+      del.addEventListener('click', function () {
+        if (!confirm('确定删除这条内容吗？')) return;
+        var cat = category === 'kaomoji' ? 'pat' : category;
+        if (cat === 'status') {
+          window.cardDatabase.remove('status', text);
+        } else {
+          window.removeCardFromGroup(groupName, text, cat);
+        }
+        updateAllUI();
+      });
       item.appendChild(textEl);
       item.appendChild(del);
       container.appendChild(item);
@@ -863,7 +863,7 @@ del.addEventListener('click', function () {
     renderBuiltinGroups();
   }
 
-    // ==================== 内置字卡库（只读展示） ====================
+  // ==================== 内置字卡库（只读展示） ====================
   function renderBuiltinGroups() {
     // 找到「回复」面板里的容器
     var container = document.getElementById('builtinGroupsList');
@@ -1009,39 +1009,38 @@ del.addEventListener('click', function () {
   if (btnAddCard) btnAddCard.addEventListener('click', function () {
     openSimpleModal('add', '添加回复字卡', '输入一句话...', 'reply');
   });
- if (btnImport) btnImport.addEventListener('click', function () {
-  if (cardImportFileInput) cardImportFileInput.click();
-});
-
-if (cardImportFileInput) {
-  cardImportFileInput.addEventListener('change', function () {
-    var file = cardImportFileInput.files && cardImportFileInput.files[0];
-    cardImportFileInput.value = ''; // 允许重复选同一个文件
-    if (!file) return;
-
-    // 大小限制 5MB
-    if (file.size > 5 * 1024 * 1024) {
-      window.cardImportToast && window.cardImportToast('文件超过 5MB，请拆分后再导入');
-      return;
-    }
-
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      var text = e.target.result;
-      // G2 会实现 window.cardImportHandleText
-      if (typeof window.cardImportHandleText === 'function') {
-        window.cardImportHandleText(text);
-      } else {
-        console.warn('[card-import] G2 未就绪，暂时只读取到文件内容');
-        console.log(text);
-      }
-    };
-    reader.onerror = function () {
-      window.cardImportToast && window.cardImportToast('文件读取失败');
-    };
-    reader.readAsText(file, 'UTF-8');
+  if (btnImport) btnImport.addEventListener('click', function () {
+    if (cardImportFileInput) cardImportFileInput.click();
   });
-}
+
+  if (cardImportFileInput) {
+    cardImportFileInput.addEventListener('change', function () {
+      var file = cardImportFileInput.files && cardImportFileInput.files[0];
+      cardImportFileInput.value = ''; // 允许重复选同一个文件
+      if (!file) return;
+
+      // 大小限制 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        window.cardImportToast && window.cardImportToast('文件超过 5MB，请拆分后再导入');
+        return;
+      }
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var text = e.target.result;
+        if (typeof window.cardImportHandleText === 'function') {
+          window.cardImportHandleText(text);
+        } else {
+          console.warn('[card-import] G2 未就绪，暂时只读取到文件内容');
+          console.log(text);
+        }
+      };
+      reader.onerror = function () {
+        window.cardImportToast && window.cardImportToast('文件读取失败');
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+  }
   if (btnExport) btnExport.addEventListener('click', function () {
     var currentGroup = currentGroupMap.reply || '默认分组';
     var cards = window.getCardsInGroup(currentGroup, 'reply');
@@ -1077,27 +1076,27 @@ if (cardImportFileInput) {
   if (cardSearchInput) cardSearchInput.addEventListener('input', updateAllUI);
 
   // ==================== 拍一拍/地点/心情/状态 操作栏 ====================
- function bindCategoryButtons(cat, prefix) {
-  var addBtn = document.getElementById(prefix + 'AddBtn');
-  var exportBtn = document.getElementById(prefix + 'ExportBtn');
+  function bindCategoryButtons(cat, prefix) {
+    var addBtn = document.getElementById(prefix + 'AddBtn');
+    var exportBtn = document.getElementById(prefix + 'ExportBtn');
 
-  if (addBtn) addBtn.addEventListener('click', function () {
-    openSimpleModal('add', '添加' + categoryTitle(cat) + '字卡', '输入一句话...', cat);
-  });
-  if (exportBtn) exportBtn.addEventListener('click', function () {
-    var currentGroup = currentGroupMap[cat] || '默认分组';
-    var cards = window.getCardsInGroup(currentGroup, cat);
-    if (cards.length === 0) { alert('当前分组没有内容可导出'); return; }
-    var data = {};
-    data[currentGroup] = cards;
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url; a.download = cat + '_cards_' + currentGroup + '.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-}
+    if (addBtn) addBtn.addEventListener('click', function () {
+      openSimpleModal('add', '添加' + categoryTitle(cat) + '字卡', '输入一句话...', cat);
+    });
+    if (exportBtn) exportBtn.addEventListener('click', function () {
+      var currentGroup = currentGroupMap[cat] || '默认分组';
+      var cards = window.getCardsInGroup(currentGroup, cat);
+      if (cards.length === 0) { alert('当前分组没有内容可导出'); return; }
+      var data = {};
+      data[currentGroup] = cards;
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = cat + '_cards_' + currentGroup + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
 
   function categoryTitle(cat) {
     var map = { reply: '回复', pat: '拍一拍', place: '地点', mood: '心情', emoji: '表情包', status: '状态' };
@@ -1169,7 +1168,7 @@ if (cardImportFileInput) {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
- if (statusOrganizeBtn) statusOrganizeBtn.addEventListener('click', function () {
+  if (statusOrganizeBtn) statusOrganizeBtn.addEventListener('click', function () {
     var statusArr = window.cardDatabase.status || [];
     var before = statusArr.length;
     window.cardDatabase.status = deduplicate(statusArr);
@@ -1368,6 +1367,133 @@ if (cardImportFileInput) {
       return;
     }
     updateAllUI();
+  };
+
+  // ==================== 字卡导入 · 解析 + 归一 ====================
+
+  // 容错解析：先 JSON.parse，失败则修尾逗号 / 补逗号再试
+  function parseFlexibleJSON(text) {
+    if (!text || typeof text !== 'string') return null;
+
+    // 1) 直接 parse
+    try {
+      return JSON.parse(text);
+    } catch (e) {}
+
+    // 2) 去尾逗号
+    var fixed = text.replace(/,\s*([}\]])/g, '$1');
+    try {
+      return JSON.parse(fixed);
+    } catch (e) {}
+
+    // 3) 去尾逗号 + 补缺失逗号（对象/数组元素之间）
+    fixed = fixed.replace(/([}\]"0-9])\s*\n\s*(["\[{0-9])/g, '$1,\n$2');
+    try {
+      return JSON.parse(fixed);
+    } catch (e) {}
+
+    return null;
+  }
+
+  // 归一：把各种格式统一成 { reply:{...}, pat:{...}, place:{...}, mood:{...}, status:[...] }
+  // 返回 null 表示无效文件
+  function normalizeImportData(data) {
+    if (!data || typeof data !== 'object') return null;
+
+    var result = {
+      reply:   {},
+      pat:     {},
+      place:   {},
+      mood:    {},
+      status:  []
+    };
+
+    var knownKeys = ['reply', 'pat', 'place', 'mood', 'status'];
+    var hasKnown = false;
+
+    // 1) 新版多模块格式：{ reply:{...}, pat:{...}, ... }
+    knownKeys.forEach(function (k) {
+      if (data[k] !== undefined) hasKnown = true;
+    });
+
+    if (hasKnown) {
+      // reply / pat / place / mood：期望是 { 分组名: [卡...] }
+      ['reply', 'pat', 'place', 'mood'].forEach(function (k) {
+        var v = data[k];
+        if (!v) return;
+        if (Array.isArray(v)) {
+          // 允许直接是数组 → 放进默认分组
+          result[k] = { '默认分组': v.slice() };
+        } else if (typeof v === 'object') {
+          // 逐分组校验
+          Object.keys(v).forEach(function (g) {
+            if (Array.isArray(v[g])) {
+              result[k][g] = v[g].slice();
+            }
+          });
+        }
+      });
+      // status：期望是数组
+      if (Array.isArray(data.status)) {
+        result.status = data.status.slice();
+      }
+      return result;
+    }
+
+    // 2) 旧版格式：{ 分组名: [卡...] } → 默认当 reply
+    var keys = Object.keys(data);
+    var isAllArray = keys.length > 0 && keys.every(function (k) {
+      return Array.isArray(data[k]);
+    });
+    if (isAllArray) {
+      keys.forEach(function (g) {
+        result.reply[g] = data[g].slice();
+      });
+      return result;
+    }
+
+    // 3) 纯数组 → 默认当 reply 的默认分组
+    if (Array.isArray(data)) {
+      result.reply['默认分组'] = data.slice();
+      return result;
+    }
+
+    return null;
+  }
+
+  // 对外入口：接收文件文本
+  window.cardImportHandleText = function (text) {
+    var parsed = parseFlexibleJSON(text);
+    if (!parsed) {
+      window.cardImportToast && window.cardImportToast('文件解析失败，请检查 JSON 格式');
+      return;
+    }
+    var normalized = normalizeImportData(parsed);
+    if (!normalized) {
+      window.cardImportToast && window.cardImportToast('无效的字卡文件');
+      return;
+    }
+
+    // G3 会实现弹层；现在先打印归一结果
+    console.log('[card-import] 归一结果：', normalized);
+
+    // 统计各模块条数，方便 G3 用
+    var counts = {
+      reply:  Object.keys(normalized.reply).reduce(function (n, g) { return n + normalized.reply[g].length; }, 0),
+      pat:    Object.keys(normalized.pat).reduce(function (n, g) { return n + normalized.pat[g].length; }, 0),
+      place:  Object.keys(normalized.place).reduce(function (n, g) { return n + normalized.place[g].length; }, 0),
+      mood:   Object.keys(normalized.mood).reduce(function (n, g) { return n + normalized.mood[g].length; }, 0),
+      status: normalized.status.length
+    };
+    console.log('[card-import] 各模块条数：', counts);
+
+    // G3 会替换成弹层调用
+    if (typeof window.cardImportShowUI === 'function') {
+      window.cardImportShowUI(normalized, counts);
+    } else {
+      window.cardImportToast && window.cardImportToast('解析成功，共 ' +
+        (counts.reply + counts.pat + counts.place + counts.mood + counts.status) + ' 条（UI 未就绪）');
+    }
   };
 
   // ==================== 初始化 ====================
