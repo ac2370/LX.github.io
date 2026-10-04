@@ -146,29 +146,56 @@
     loadValue(STORE_KEY_NOTIFY_GRANTED, function (v) { if (typeof v === 'boolean') notifyState.permissionGranted = v; done(); });
   }
 
-  // ==================== 静音循环 ====================
+   // ==================== 静音循环（真实音频 · iOS 兼容） ====================
+  var silentAudioEl = null;
+
   function startSilentLoop() {
-    if (silentLoopNodes) return true;
+    // 已经有在播的 → 直接返回
+    if (silentAudioEl && !silentAudioEl.paused) return true;
+
     try {
-      var AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return false;
-      var ctx = new AudioContext();
-      var oscillator = ctx.createOscillator();
-      var gainNode = ctx.createGain();
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 0;
-      gainNode.gain.value = 0;
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-      oscillator.start();
-      if (ctx.state === 'suspended') ctx.resume().catch(function () {});
-      silentLoopNodes = { ctx: ctx, oscillator: oscillator, gainNode: gainNode };
+      if (!silentAudioEl) {
+        silentAudioEl = new Audio('./assets/silence.mp3');
+        silentAudioEl.loop = true;
+        silentAudioEl.volume = 0.01;      // 近乎静音
+        silentAudioEl.preload = 'auto';
+        silentAudioEl.setAttribute('playsinline', '');
+        silentAudioEl.setAttribute('webkit-playsinline', '');
+      }
+
+      var p = silentAudioEl.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function (err) {
+          console.warn('[静音循环] 自动播放被拦截，等待用户交互后重试', err);
+          // 绑定一次性交互解锁
+          var unlock = function () {
+            document.removeEventListener('touchstart', unlock);
+            document.removeEventListener('click', unlock);
+            silentAudioEl.play().then(function () {
+              console.log('[静音循环] 用户交互后已解锁播放');
+            }).catch(function (e2) {
+              console.warn('[静音循环] 交互后仍失败', e2);
+            });
+          };
+          document.addEventListener('touchstart', unlock, { once: true });
+          document.addEventListener('click', unlock, { once: true });
+        });
+      }
       console.log('[静音循环] 已开启');
       return true;
     } catch (e) {
       console.warn('[静音循环] 启动失败:', e);
       return false;
-    }
+   }
+
+  function stopSilentLoop() {
+    if (!silentAudioEl) return;
+    try {
+      silentAudioEl.pause();
+      silentAudioEl.currentTime = 0;
+    } catch (e) {}
+    console.log('[静音循环] 已关闭');
+  }
   }
 
   function stopSilentLoop() {
