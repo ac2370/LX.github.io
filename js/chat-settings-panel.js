@@ -173,6 +173,23 @@ silentAudioEl.onpause = function () {
   console.log('[静音循环] 音频已暂停');
 };
 
+              // 设置媒体会话（让 iOS 控制中心显示图标 + 名字）
+        if ('mediaSession' in navigator) {
+          try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: '应许之地',
+              artist: '后台保活中',
+              album: 'LX.github.io',
+              artwork: [
+                { src: './icon.png', sizes: '192x192', type: 'image/png' },
+                { src: './icon.png', sizes: '512x512', type: 'image/png' }
+              ]
+            });
+          } catch (e) {
+            console.warn('[静音循环] MediaSession 设置失败', e);
+          }
+        }
+
       var p = silentAudioEl.play();
       if (p && typeof p.catch === 'function') {
         p.catch(function (err) {
