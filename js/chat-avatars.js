@@ -29,15 +29,22 @@
   }
 
   // ==================== 获取我的头像 ====================
-  function getMyAvatar() {
-    // 优先从主页头像读取
+   function getMyAvatar() {
+    // 1. 优先 my_profile.avatar
+    try {
+      var rawP = localStorage.getItem('my_profile');
+      if (rawP) {
+        var p = JSON.parse(rawP);
+        if (p && p.avatar) return p.avatar;
+      }
+    } catch (e) {}
+
+    // 2. 回退：主页头像
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
-    // 从 homeSettings 读取
     if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
       return window.homeSettings.current.avatar;
     }
-    // 从 localStorage 读取
     try {
       var raw = localStorage.getItem('home_custom_images');
       if (raw) {
@@ -108,10 +115,15 @@
 
   // ==================== 监听联系人或头像变化 ====================
   // 当主页头像更新时，重新应用所有头像
-  window.addEventListener('storage', function (e) {
-    if (e.key === 'home_custom_images' || e.key === 'my_contacts' || e.key === 'my_current_contact') {
+   window.addEventListener('storage', function (e) {
+    if (e.key === 'home_custom_images' || e.key === 'my_contacts' || e.key === 'my_current_contact' || e.key === 'my_profile') {
       refreshAllAvatars();
     }
+  });
+
+  // 同标签页内，role-panel 保存后主动通知
+  window.addEventListener('myProfileChanged', function () {
+    refreshAllAvatars();
   });
 
   function refreshAllAvatars() {
