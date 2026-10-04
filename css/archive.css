@@ -4,15 +4,22 @@
    ============================================================ */
 
 /* ==================== 字体 ==================== */
-@font-face {
-  font-family: 'JinchengCustom';
-  src: url('https://s3plus.meituan.net/opapisdk/op_ticket_1_5677168484_1772019524134_qdqqd_7zgmfh.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-#cenConfig_stage, #cenConfig_stage * {
-  font-family: 'JinchengCustom', -apple-system, 'PingFang SC', 'Microsoft YaHei', monospace;
+/* 字体：系统字体栈，iOS 用苹方，Windows 用微软雅黑 */
+#cenConfig_stage,
+#cenConfig_stage * {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    "Microsoft JhengHei",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ==================== 页面外壳 ==================== */
@@ -121,7 +128,7 @@
 #cenConfig_stage {
   width: 100%;
   max-width: 100vw;
-  min-height: 0;              /* 默认不撑高 */
+  min-height: 0;
   padding: 20px 0 20px 0;
   margin: 0 auto;
   display: flex;
@@ -137,6 +144,11 @@
 /* intro 模式才需要撑高（给大标题留空间） */
 #cenConfig_stage.cen-intro-mode {
   min-height: 460px;
+}
+
+/* play 模式紧凑 */
+#cenConfig_stage.cen-play-mode {
+  padding-top: 10px;
 }
 
 /* ==================== 雨丝 ==================== */
@@ -622,12 +634,4 @@
 }
 @keyframes cenSlideFade {
   to { opacity: 1; transform: translateX(0); }
-}
-
-/* play 模式下容器紧凑一些 */
-.cen-play-mode #cen_main_container {
-  margin-top: 0;
-}
-.cen-play-mode {
-  padding-top: 10px !important;
 }
