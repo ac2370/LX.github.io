@@ -677,7 +677,15 @@
           answers.push({ qIdx: j, value: answeringData[j] });
         }
 
-        window.dreamSurveyFromTa.submitAnswers(answeringId, answers);
+               window.dreamSurveyFromTa.submitAnswers(answeringId, answers);
+
+        // 回写聊天里的卡片
+        if (typeof window.syncSurveyCard === 'function') {
+          try { window.syncSurveyCard(answeringId); } catch (e) {
+            console.warn('[dream-survey] 同步卡片失败', e);
+          }
+        }
+
         alert('已提交');
         renderList();
         goPage('pageDreamSurvey');
