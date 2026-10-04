@@ -41,9 +41,7 @@
     typingBubble:    true,
     // 已读状态
     readStatus:      false,
-    // 通讯节奏
-    commMinWait:     10,
-    commMaxWait:     60,
+    readNoReply:     false,
     // 引用/反应
     quote:           true,
     reaction:        true,
@@ -96,9 +94,7 @@
     toggleTypingBubble:   { key: 'typingBubble', type: 'bool' },
     // 已读状态
     toggleReadStatus:     { key: 'readStatus',   type: 'bool' },
-    // 通讯节奏
-    inputCommMinWait:     { key: 'commMinWait',  type: 'int',  min: 1,  max: 600 },
-    inputCommMaxWait:     { key: 'commMaxWait',  type: 'int',  min: 1,  max: 600 },
+    toggleReadNoReply:    { key: 'readNoReply',  type: 'bool' },
     // 引用/反应
     toggleQuote:          { key: 'quote',        type: 'bool' },
     toggleReaction:       { key: 'reaction',     type: 'bool' },
@@ -176,12 +172,6 @@
       settings.maxCount = settings.minCount;
       var elMaxCount = document.getElementById('inputMaxCount');
       if (elMaxCount) elMaxCount.value = settings.maxCount;
-    }
-    // 通讯节奏
-    if (settings.commMaxWait < settings.commMinWait) {
-      settings.commMaxWait = settings.commMinWait;
-      var elCommMax = document.getElementById('inputCommMaxWait');
-      if (elCommMax) elCommMax.value = settings.commMaxWait;
     }
     // 主动消息
     if (settings.proactiveMax < settings.proactiveMin) {
