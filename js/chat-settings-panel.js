@@ -870,6 +870,123 @@
     input.click();
   }
 
+    // ==================== 数据与工具 · 真实功能 ====================
+  function estimateLocalStorageBytes() {
+    var bytes = 0;
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k === null) continue;
+        var v = localStorage.getItem(k);
+        if (v === null) v = '';
+        bytes += (k.length + v.length) * 2;
+      }
+    } catch (e) {
+      console.warn('[chat-settings-panel] 统计 localStorage 失败', e);
+    }
+    return bytes;
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes || bytes < 0) bytes = 0;
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+  }
+
+  function updateStorageStats() {
+    var usedBytes = estimateLocalStorageBytes();
+    var limitBytes = 5 * 1024 * 1024;
+    var percent = Math.min(100, Math.round((usedBytes / limitBytes) * 100));
+
+    var fillEl = document.querySelector('#chatSettingsPanel .ds-storage-progress-fill');
+    if (fillEl) {
+      fillEl.style.width = percent + '%';
+      if (percent > 90) fillEl.style.background = '#F05A5A';
+      else if (percent > 70) fillEl.style.background = '#F5A623';
+      else fillEl.style.background = '';
+    }
+
+    var textEl = document.querySelector('#chatSettingsPanel .ds-storage-progress-text');
+    if (textEl) {
+      textEl.innerHTML =
+        '本机快取已用 <strong>' + formatBytes(usedBytes) + '</strong>' +
+        ' / 约 ' + formatBytes(limitBytes) +
+        '（' + percent + '%）';
+    }
+  }
+
+  function clearAllChat() {
+    if (!confirm('确定清空全部聊天记录吗？\n\n这个操作不可撤销。')) return;
+
+    var chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+      chatMessages.innerHTML = '';
+    }
+
+    var chatKeyPatterns = ['chat_', 'group_chat_', 'call_', 'partner_pat_'];
+    var toRemove = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k) continue;
+        for (var j = 0; j < chatKeyPatterns.length; j++) {
+          if (k.indexOf(chatKeyPatterns[j]) === 0) {
+            toRemove.push(k);
+            break;
+          }
+        }
+      }
+      toRemove.forEach(function (k) {
+        try { localStorage.removeItem(k); } catch (e) {}
+      });
+    } catch (e) {
+      console.warn('[chat-settings-panel] 清空聊天失败', e);
+    }
+
+    updateStorageStats();
+    alert('已清空全部聊天记录。');
+  }
+
+  function resetCardLibrary() {
+    if (!confirm('确定恢复默认字卡库吗？\n\n你自建的所有字卡、分组、以及公共字卡的勾选都会被重置。\n这个操作不可撤销。')) return;
+
+    var keysToClear = [
+      'cardDatabase_v3',
+      'cardDatabase_modes',
+      'my_word_cards',
+      'my_card_groups_v2',
+      'public_card_groups',
+      'contact_exclusive_cards'
+    ];
+
+    var done = 0;
+    var total = keysToClear.length;
+
+    function finish() {
+      done++;
+      if (done >= total) {
+        updateStorageStats();
+        alert('已恢复默认字卡库。\n\n页面即将刷新以应用更改。');
+        setTimeout(function () { window.location.reload(); }, 800);
+      }
+    }
+
+    keysToClear.forEach(function (k) {
+      try {
+        if (typeof localforage !== 'undefined') {
+          localforage.removeItem(k).then(finish).catch(finish);
+        } else {
+          localStorage.removeItem(k);
+          finish();
+        }
+      } catch (e) {
+        finish();
+      }
+    });
+  }
+  
   // ==================== 创建面板 ====================
   function createPanel() {
     if (document.getElementById('chatSettingsPanel')) return;
@@ -1267,11 +1384,16 @@
       });
     }
 
-    // ============ 数据与工具 ============
+     // ============ 数据与工具 ============
     var exportBtn = document.getElementById('dsExportDataBtn');
     if (exportBtn) exportBtn.addEventListener('click', function () { openExportPanel(); });
     var importBtn = document.getElementById('dsImportDataBtn');
     if (importBtn) importBtn.addEventListener('click', function () { doImport(); });
+
+    var clearChatBtn = document.getElementById('dsClearChatBtn');
+    if (clearChatBtn) clearChatBtn.addEventListener('click', function () { clearAllChat(); });
+    var resetCardBtn = document.getElementById('dsResetCardLibraryBtn');
+    if (resetCardBtn) resetCardBtn.addEventListener('click', function () { resetCardLibrary(); });
 
     // ============ 通知/保活 ============
     var allowNotifyBtn = document.getElementById('dsAllowNotifyBtn');
@@ -1340,7 +1462,10 @@
       }
       renderContactCardsPanel();
     }
-    if (tabName === 'data') updateNotifyUI();
+       if (tabName === 'data') {
+      updateNotifyUI();
+      updateStorageStats();
+    }
   }
 
   function openPanel() {
@@ -1350,6 +1475,7 @@
     switchTab(activeTab);
     fillPanelValues();
     updateNotifyUI();
+    updateStorageStats();
     panel.classList.add('active');
   }
   function closePanel() {
