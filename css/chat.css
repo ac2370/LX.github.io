@@ -2007,3 +2007,23 @@ body.theme-dark .pat-cancel {
   color: #4CAF7D;
   background: rgba(76, 175, 125, 0.15);
 }
+
+/* ============================================================
+   我方问卷卡片（发出方向）
+   ============================================================ */
+.msg-survey-row-self {
+  justify-content: flex-end !important;
+}
+.msg-survey-row-self .msg-survey-bubble {
+  background: linear-gradient(135deg, #e6f0fa 0%, #d0e2f5 100%) !important;
+  border-color: #b8d4ec !important;
+  cursor: default !important;
+}
+.msg-survey-row-self .msg-survey-bubble:active {
+  transform: none !important;
+  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.12) !important;
+}
+.msg-survey-status.doing {
+  color: #c68a3a;
+  background: rgba(198, 138, 58, 0.15);
+}
