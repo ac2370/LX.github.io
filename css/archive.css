@@ -721,3 +721,25 @@
 .arc-sw-cancel:active {
   background: #e8eaee;
 }
+
+/* ==================== 档案页 · 暗色模式 ==================== */
+body.theme-dark #pageArchive { background: var(--theme-page-bg); }
+body.theme-dark #pageArchive .arc-container { background: var(--theme-page-bg); }
+body.theme-dark #pageArchive .arc-topbar { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark #pageArchive .arc-back-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
+body.theme-dark #pageArchive .arc-topbar-title { color: var(--theme-text); }
+body.theme-dark #pageArchive .arc-tab { color: var(--theme-text-muted); background: transparent; }
+body.theme-dark #pageArchive .arc-tab.active { color: var(--theme-text); background: rgba(42,48,56,0.8); }
+body.theme-dark #pageArchive .arc-body { background: var(--theme-page-bg); }
+body.theme-dark #pageArchive .arc-field { color: var(--theme-text-soft); }
+body.theme-dark #pageArchive .arc-field-block { background: var(--theme-card-bg); border-color: var(--theme-card-border); color: var(--theme-text); }
+body.theme-dark #pageArchive #arcPhotoName { color: var(--theme-text); }
+body.theme-dark #pageArchive #arcQuoteTitle { color: var(--theme-text-soft); }
+body.theme-dark #pageArchive .arc-sw-modal { background: rgba(10,14,18,0.6); }
+body.theme-dark #pageArchive .arc-sw-panel { background: rgba(38,44,52,0.97); border-color: var(--theme-card-border); }
+body.theme-dark #pageArchive .arc-sw-title { color: var(--theme-text); }
+body.theme-dark #pageArchive .arc-sw-item { background: rgba(42,48,56,0.8); border-color: var(--theme-card-border); }
+body.theme-dark #pageArchive .arc-sw-item.active { border-color: var(--accent-color, #6fb1e8); }
+body.theme-dark #pageArchive .arc-sw-name { color: var(--theme-text); }
+body.theme-dark #pageArchive .arc-sw-check { color: var(--accent-color, #6fb1e8); }
+body.theme-dark #pageArchive .arc-sw-cancel { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
