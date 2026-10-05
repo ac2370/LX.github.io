@@ -39,7 +39,8 @@ body {
   width: 100%;
   height: 100%;
   z-index: -2;
-  background-image: url('https://picsum.photos/1200/1800?random=10');
+  background-color: #ffffff;   /* 未上传背景图时为白色 */
+  background-image: none;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -134,15 +135,12 @@ body {
   position: relative;
   border-radius: 24px;
   overflow: hidden;
-  background-image: url('https://picsum.photos/600/200?random=12');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: #ffffff;
   box-shadow: 0 6px 16px rgba(0, 20, 30, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.7);
-  padding: 16px 16px 26px;
-  height: min(460px, 40vh);
-  min-height: min(460px, 40vh);
+  padding: 8px 10px;
+  min-height: 68px;
+}
 }
 .header-card::before {
   content: '';
@@ -169,6 +167,7 @@ img { max-width: 100%; display: block; }
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+  background: #ffffff;
 }
 @media (min-width: 400px) { .photo-scroll-item { width: 102px; height: 102px; } }
 @media (min-width: 430px) { .photo-scroll-item { width: 110px; height: 110px; } }
@@ -271,17 +270,18 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #2a2a2a;
+  background: #ffffff;
   flex-shrink: 0;
 }
 .vinyl-cover.spinning .vinyl-img {
-  animation: spin-vinyl 4s linear infinite;
+  /* 封面不再旋转滚动 */
+  animation: none;
 }
 .vinyl-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 12px;
   animation-play-state: paused;
 }
 .vinyl-cover.spinning .vinyl-img {
@@ -581,3 +581,6 @@ img { max-width: 100%; display: block; }
 #pageHome .main-content > .h-8 { height: 8px; }
 #pageHome .function-grid { margin-top: 8px; margin-bottom: 4px; }
 #pageHome .glass.mt-3 { margin-top: 8px; }
+/* 音乐播放器白底（浅色模式），暗色模式保持暗色 */
+#pageHome .main-content .glass { background: #ffffff; }
+body.theme-dark #pageHome .main-content .glass { background: var(--theme-overlay); }
