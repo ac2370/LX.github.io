@@ -1257,3 +1257,27 @@
 .ds-detail-status-hint i {
   font-size: 14px;
 }
+
+/* ==================== 问卷页 · 暗色模式 ==================== */
+body.theme-dark .ds-page { background: var(--theme-page-bg); }
+body.theme-dark .ds-container { background: var(--theme-page-bg); }
+body.theme-dark .ds-topbar { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark .ds-topbar-title { color: var(--theme-text); }
+body.theme-dark .ds-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark .ds-item-title { color: var(--theme-text); }
+body.theme-dark .ds-item-meta { color: var(--theme-text-muted); }
+body.theme-dark .ds-item-status { color: var(--theme-text-muted); }
+body.theme-dark .ds-empty-text { color: var(--theme-text-soft); }
+body.theme-dark .ds-empty-hint { color: var(--theme-text-muted); }
+body.theme-dark .ds-section-title { color: var(--theme-text); }
+body.theme-dark .ds-field-label { color: var(--theme-text-muted); }
+body.theme-dark .ds-input { background: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-text); }
+body.theme-dark .ds-input::placeholder { color: var(--theme-text-faint); }
+body.theme-dark .ds-input-static { color: var(--theme-text-soft); }
+body.theme-dark .ds-adv-btn { background: rgba(42,48,56,0.9); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark .ds-q-card { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark .ds-q-num { color: var(--theme-text-muted); }
+body.theme-dark .ds-q-text { color: var(--theme-text); }
+body.theme-dark .ds-q-type-select { background: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-text); }
+body.theme-dark .ds-q-opt-input { background: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-text); }
+body.theme-dark .ds-q-opt-mark { color: var(--theme-text-muted); }
