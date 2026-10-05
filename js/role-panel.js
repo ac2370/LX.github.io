@@ -1,8 +1,9 @@
 /* ============================================================
    role-panel.js —— 角色面板（多角色管理）· 新版
    功能：
-     - 单击 #chatContactArea（头像+昵称区域）→ 打开角色面板
+     - 会话选择页右上角「＋」→ 打开角色面板（聊天页点昵称不再打开）
      - 面板结构（自上而下）：
+         · 「我的角色」编辑区（常驻）：我自己的头像、昵称、保存我的资料
          · 「当前角色」编辑区（常驻）：改昵称、上传头像、粘贴 URL
          · 「所有角色」列表：点击切换、删除
          · 「+ 添加好友」按钮（虚线）→ 展开新建角色区
@@ -10,6 +11,7 @@
      - 数据存 localStorage：
          · my_contacts        [{id, name, avatar}]
          · my_current_contact 当前 id
+         · my_profile         {name, avatar}（「我的」头像昵称，聊天页全局跟随）
      - 切换角色后广播事件，让 chat-avatars / mood 等刷新
    依赖：
      - HTML 中的 #rolePanelModal / #roleListContainer 等节点
@@ -20,8 +22,8 @@
 
   // ==================== 常量 ====================
   var LS_CONTACTS_KEY = 'my_contacts';
-  var LS_MY_PROFILE_KEY = 'my_profile';
   var LS_CURRENT_KEY  = 'my_current_contact';
+  var MY_PROFILE_KEY  = 'my_profile';
   var DEFAULT_CONTACT = {
     id: 'default_ta',
     name: 'Ta',
@@ -47,6 +49,7 @@
   var pendingNewAvatarData = null;   // 新建角色时暂存的头像（dataURL 或 URL）
   var editingContactId = null;       // 当前正在编辑的联系人 id（null = 不在编辑态）
   var editingAvatarData = null;      // 编辑态下暂存的头像
+  var myEditingAvatar = null;        // 「我的角色」编辑态下暂存的头像
 
   // ==================== 工具 ====================
   function escapeHtml(str) {
@@ -98,27 +101,6 @@
     return contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
   }
 
-     // ==================== 我的资料 ====================
-  function loadMyProfile() {
-    try {
-      var raw = localStorage.getItem(LS_MY_PROFILE_KEY);
-      if (raw) {
-        var p = JSON.parse(raw);
-        if (p && typeof p === 'object') {
-          return {
-            name: p.name || '我',
-            avatar: p.avatar || ''
-          };
-        }
-      }
-    } catch (e) {}
-    return { name: '我', avatar: '' };
-  }
-
-  function saveMyProfile(p) {
-    try { localStorage.setItem(LS_MY_PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
-  }
-   
   // ==================== 同步顶栏 UI ====================
   function applyCurrentContact() {
     var c = getCurrentContact();
@@ -157,6 +139,32 @@
     input.click();
   }
 
+  // ==================== 「我的」资料读写 ====================
+  function getMyProfile() {
+    try {
+      var raw = localStorage.getItem(MY_PROFILE_KEY);
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && typeof p === 'object') return p;
+      }
+    } catch (e) {}
+    // 默认：从主页读取（昵称取自主页 h1，头像取自主页头像）
+    var name = '阿晏';
+    var h1 = document.querySelector('#pageHome .header-card h1');
+    if (h1 && h1.textContent && h1.textContent.trim()) name = h1.textContent.trim();
+    var avatar = null;
+    var avatarImg = document.getElementById('avatarImg');
+    if (avatarImg && avatarImg.src) avatar = avatarImg.src;
+    else if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
+      avatar = window.homeSettings.current.avatar;
+    }
+    return { name: name, avatar: avatar };
+  }
+
+  function saveMyProfile(p) {
+    try { localStorage.setItem(MY_PROFILE_KEY, JSON.stringify(p)); } catch (e) {}
+  }
+
   // ==================== 渲染面板 ====================
   function renderRolePanel() {
     applyCurrentContact();
@@ -167,25 +175,19 @@
 
     var html = '';
 
-         // ---------- 我的角色 ----------
-    var myProfile = loadMyProfile();
-    var myAvatarSrc = myProfile.avatar
-      || (function () {
-           var img = document.getElementById('avatarImg');
-           return (img && img.src) ? img.src : '';
-         })()
-      || 'https://picsum.photos/100/100?random=1';
-
-    html += '<div class="rp-my-block">';
-    html += '<div class="rp-my-title">我的角色</div>';
-    html += '<div class="rp-my-row">';
-    html += '<div class="rp-my-avatar-wrap" data-action="my-avatar">';
-    html += '<img class="rp-my-avatar" src="' + escapeHtml(myAvatarSrc) + '" alt="">';
-    html += '<div class="rp-my-avatar-badge"><i class="fa-solid fa-camera"></i></div>';
+    // ---------- 我的角色编辑区 ----------
+    var my = getMyProfile();
+    var myAvatarSrc = myEditingAvatar || my.avatar || DEFAULT_CONTACT.avatar;
+    html += '<div class="rp-current-block rp-my-block">';
+    html += '<div class="rp-current-title">我的角色</div>';
+    html += '<div class="rp-edit-row">';
+    html += '<div class="rp-edit-avatar-wrap" data-action="my-avatar">';
+    html += '<img class="rp-edit-avatar" src="' + escapeHtml(myAvatarSrc) + '" alt="">';
+    html += '<div class="rp-edit-avatar-badge"><i class="fa-solid fa-camera"></i></div>';
     html += '</div>';
-    html += '<input class="rp-my-name" type="text" value="' + escapeHtml(myProfile.name) + '" placeholder="输入我的昵称..." data-role="my-name">';
+    html += '<input class="rp-edit-name" type="text" value="' + escapeHtml(my.name || '') + '" placeholder="我的昵称..." data-role="my-name">';
     html += '</div>';
-    html += '<button class="rp-my-save" data-action="save-my">保存我的资料</button>';
+    html += '<button class="rp-edit-save" data-action="save-my">保存我的资料</button>';
     html += '</div>';
 
     // ---------- 当前角色编辑区 ----------
@@ -269,44 +271,47 @@
 
   // ==================== 面板内事件绑定 ====================
   function bindPanelEvents() {
-         // ---- 我的角色：头像上传 ----
+    // ---- 我的角色：头像上传 ----
     var myAvatarWrap = roleListContainer.querySelector('[data-action="my-avatar"]');
-    var myPendingAvatar = null;   // 暂存"我的头像"
-
     if (myAvatarWrap) {
       myAvatarWrap.addEventListener('click', function () {
         pickImage(function (dataUrl) {
-          myPendingAvatar = dataUrl;
-          var img = roleListContainer.querySelector('[data-action="my-avatar"] .rp-my-avatar');
+          myEditingAvatar = dataUrl;
+          var img = roleListContainer.querySelector('[data-action="my-avatar"] .rp-edit-avatar');
           if (img) img.src = dataUrl;
         });
       });
     }
 
-    // ---- 我的角色：保存 ----
+    // ---- 我的角色：保存我的资料 ----
     var saveMyBtn = roleListContainer.querySelector('[data-action="save-my"]');
     if (saveMyBtn) {
       saveMyBtn.addEventListener('click', function () {
         var nameInput = roleListContainer.querySelector('[data-role="my-name"]');
-        var newName = nameInput ? nameInput.value.trim() : '';
-        if (!newName) { alert('昵称不能为空'); return; }
+        var name = nameInput ? nameInput.value.trim() : '';
+        if (!name) { alert('昵称不能为空'); return; }
 
-        var cur = loadMyProfile();
-        cur.name = newName;
-        if (myPendingAvatar) cur.avatar = myPendingAvatar;
+        var profile = getMyProfile() || {};
+        profile.name = name;
+        if (myEditingAvatar) profile.avatar = myEditingAvatar;
+        saveMyProfile(profile);
+        myEditingAvatar = null;
 
-        saveMyProfile(cur);
-        myPendingAvatar = null;
+        // 刷新聊天页「我」的头像昵称（单聊 + 群聊全局跟随）
+        if (typeof window.refreshChatAvatars === 'function') {
+          try { window.refreshChatAvatars(); } catch (e) {}
+        }
 
-        // 广播：让 chat-avatars / feed / envelope 等刷新
-        try {
-          window.dispatchEvent(new CustomEvent('myProfileChanged', { detail: cur }));
-        } catch (e) {}
-
-        alert('已保存我的资料');
-        renderRolePanel();
+        // 短暂提示"已保存"
+        var btn = roleListContainer.querySelector('[data-action="save-my"]');
+        if (btn) {
+          var orig = btn.textContent;
+          btn.textContent = '已保存 ✓';
+          setTimeout(function () { if (btn) btn.textContent = orig; }, 1200);
+        }
       });
     }
+
     // ---- 当前角色：头像上传 ----
     var curAvatarWrap = roleListContainer.querySelector('[data-action="edit-avatar"]');
     if (curAvatarWrap) {
@@ -509,18 +514,12 @@
     editingContactId = null;
     editingAvatarData = null;
     pendingNewAvatarData = null;
+    myEditingAvatar = null;
   }
 
    // ==================== 事件绑定 ====================
-  // 单击昵称 "Ta" → 打开角色面板
+  // 聊天页点昵称：无操作（原"打开角色面板"入口已移除，只保留会话选择页右上角「＋」入口）
   // （单击头像由 chat-extras.js 处理，弹出"拍一拍"）
-  if (chatName) {
-    chatName.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();   // 防止冒泡到 chatContactArea
-      openRolePanel();
-    });
-  }
 
   // 点击遮罩关闭
   rolePanelModal.addEventListener('click', function (e) {
@@ -550,14 +549,22 @@
   }
 
   // 暴露给外部
-   window.rolePanel = {
+  window.rolePanel = {
     open: openRolePanel,
     close: closeRolePanel,
     refresh: renderRolePanel,
     getCurrentContact: getCurrentContact,
     getContacts: function () { return contacts.slice(); },
-    getMyProfile: loadMyProfile,
-    saveMyProfile: saveMyProfile
+    // 供会话选择页 / 外部直接切换当前角色（同步内存 + 存储 + 顶栏 + 广播）
+    setCurrentContact: function (id) {
+      if (!id) return false;
+      if (!contacts.some(function (c) { return c.id === id; })) return false;
+      currentContactId = id;
+      saveCurrentId();
+      applyCurrentContact();
+      broadcastContactChanged();
+      return true;
+    }
   };
-   
+
 })();
