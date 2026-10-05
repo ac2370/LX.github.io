@@ -81,8 +81,11 @@
   if (tabMessage) {
     tabMessage.addEventListener('click', function (e) {
       e.preventDefault();
-      showPage(pageChat);
-      if (window.initChatPage) window.initChatPage();
+      // 先进会话选择页（联系人 / 群聊），点条目才进入聊天框
+      showPage('pageChatHome');
+      if (window.sessionChat && window.sessionChat.refresh) {
+        try { window.sessionChat.refresh(); } catch (err) {}
+      }
     });
   }
 
