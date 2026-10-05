@@ -218,3 +218,24 @@
   background: rgba(245, 248, 252, 1);
   color: #55606b;
 }
+
+/* ==================== 传讯页 · 暗色模式 ==================== */
+body.theme-dark #pageChatHome { background: var(--theme-page-bg); color: var(--theme-text); }
+body.theme-dark #pageChatHome .chat-home-header { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark #pageChatHome .chat-home-back { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
+body.theme-dark #pageChatHome .chat-home-title { color: var(--theme-text); }
+body.theme-dark #pageChatHome .chat-home-action { color: var(--theme-text-soft); background: rgba(42,48,56,0.9); border-color: var(--theme-card-border); }
+body.theme-dark #pageChatHome .chat-home-tabs { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageChatHome .chat-home-tab { color: var(--theme-text-muted); }
+body.theme-dark #pageChatHome .chat-home-tab.active { color: var(--accent-color, #6fb1e8); background: rgba(111,177,232,0.12); }
+body.theme-dark #pageChatHome .chat-home-list { background: var(--theme-page-bg); }
+body.theme-dark #pageChatHome .chat-home-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageChatHome .chat-home-item:active { background: rgba(42,48,56,0.8); }
+body.theme-dark #pageChatHome .chat-home-item-active { background: rgba(111,177,232,0.12); border-color: var(--accent-color, #6fb1e8); }
+body.theme-dark #pageChatHome .chat-home-item-name { color: var(--theme-text); }
+body.theme-dark #pageChatHome .chat-home-item-sub { color: var(--theme-text-muted); }
+body.theme-dark #pageChatHome .chat-home-item-chevron { color: var(--theme-text-faint); }
+body.theme-dark #pageChatHome .chat-home-empty { background: var(--theme-card-bg); color: var(--theme-text-muted); border-color: var(--theme-card-border); }
+body.theme-dark #pageChat .chat-top-actions { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark #pageChat .chat-back-btn,
+body.theme-dark #pageChat .chat-top-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
