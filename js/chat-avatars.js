@@ -28,23 +28,36 @@
     return 'https://picsum.photos/200/200?random=99';
   }
 
-  // ==================== 获取我的头像 ====================
-   function getMyAvatar() {
-    // 1. 优先 my_profile.avatar
+  // ==================== 获取「我的」昵称 ====================
+  function getMyName() {
     try {
-      var rawP = localStorage.getItem('my_profile');
-      if (rawP) {
-        var p = JSON.parse(rawP);
+      var raw = localStorage.getItem('my_profile');
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && p.name) return p.name;
+      }
+    } catch (e) {}
+    return '我';
+  }
+
+  // ==================== 获取我的头像 ====================
+  function getMyAvatar() {
+    // 优先「我的角色」面板设置（角色面板 → 保存我的资料）
+    try {
+      var rawProfile = localStorage.getItem('my_profile');
+      if (rawProfile) {
+        var p = JSON.parse(rawProfile);
         if (p && p.avatar) return p.avatar;
       }
     } catch (e) {}
-
-    // 2. 回退：主页头像
+    // 其次从主页头像读取
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
+    // 从 homeSettings 读取
     if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
       return window.homeSettings.current.avatar;
     }
+    // 从 localStorage 读取
     try {
       var raw = localStorage.getItem('home_custom_images');
       if (raw) {
@@ -60,9 +73,22 @@
     if (!row) return;
     // 系统消息（通话记录）不加头像
     if (row.classList.contains('call-record')) return;
-    if (row.querySelector('.chat-msg-avatar')) return;
 
     var isSelf = row.classList.contains('self');
+    var existing = row.querySelector('.chat-msg-avatar');
+
+    // 已有头像（群聊行由 group-chat.js 自带头像）→ 只需补「我」的昵称标签
+    if (existing) {
+      if (isSelf && !row.querySelector('.chat-msg-my-name')) {
+        var nameTag = document.createElement('span');
+        nameTag.className = 'chat-msg-my-name';
+        nameTag.textContent = getMyName();
+        row.insertBefore(nameTag, existing);
+      }
+      return;
+    }
+    if (row.querySelector('.chat-msg-my-name')) return;
+
     var avatar = document.createElement('img');
     avatar.className = 'chat-msg-avatar';
     avatar.src = isSelf ? getMyAvatar() : getContactAvatar();
@@ -75,6 +101,12 @@
 
     if (isSelf) {
       row.appendChild(avatar);
+      if (!row.querySelector('.chat-msg-my-name')) {
+        var nameTag2 = document.createElement('span');
+        nameTag2.className = 'chat-msg-my-name';
+        nameTag2.textContent = getMyName();
+        row.insertBefore(nameTag2, avatar);
+      }
     } else {
       row.insertBefore(avatar, row.firstChild);
     }
@@ -114,21 +146,16 @@
   observer.observe(chatMessages, { childList: true, subtree: true });
 
   // ==================== 监听联系人或头像变化 ====================
-  // 当主页头像更新时，重新应用所有头像
-   window.addEventListener('storage', function (e) {
-    if (e.key === 'home_custom_images' || e.key === 'my_contacts' || e.key === 'my_current_contact' || e.key === 'my_profile') {
+  // 当主页头像 / 我的资料 / 联系人变化时，重新应用所有头像
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'home_custom_images' || e.key === 'my_profile' || e.key === 'my_contacts' || e.key === 'my_current_contact') {
       refreshAllAvatars();
     }
   });
 
-  // 同标签页内，role-panel 保存后主动通知
-  window.addEventListener('myProfileChanged', function () {
-    refreshAllAvatars();
-  });
-
   function refreshAllAvatars() {
-    // 移除所有旧头像，重新添加
-    chatMessages.querySelectorAll('.chat-msg-avatar').forEach(function (a) { a.remove(); });
+    // 移除所有旧头像和昵称标签，重新添加
+    chatMessages.querySelectorAll('.chat-msg-avatar, .chat-msg-my-name').forEach(function (a) { a.remove(); });
     scanAllMessages();
   }
 
