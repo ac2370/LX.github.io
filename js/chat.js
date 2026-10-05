@@ -556,6 +556,12 @@
     chatMessages.appendChild(newRow);
     lastUserMessage = text;
 
+    // 会话分桶：记录我方消息（异步回复将写入同一会话）
+    if (window.sessionChat) {
+      window.sessionChat.setReplyTarget(window.sessionChat.getCurrentKey());
+      window.sessionChat.record('self', content);
+    }
+
     chatInput.value = '';
     updateSendBtnState();
     scrollToBottom();
@@ -609,6 +615,9 @@
       setTimeout(function () {
         const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~');
         chatMessages.appendChild(row);
+        if (window.sessionChat) {
+          try { window.sessionChat.recordReply('other', '字卡库还没有内容哦，先去添加字卡吧~'); } catch (e) {}
+        }
         scrollToBottom();
       }, 800);
       return;
@@ -701,6 +710,17 @@
               chatMessages.appendChild(row);
               scrollToBottom();
 
+              // 会话分桶：记录对方回复（写入发送时所在的会话）
+              if (window.sessionChat) {
+                try {
+                  if (item.type === 'text') {
+                    window.sessionChat.recordReply('other', item.content);
+                  } else if (item.type === 'image') {
+                    window.sessionChat.recordReply('other', { type: 'image', url: item.url });
+                  }
+                } catch (e) {}
+              }
+
               if (window.chatNotify && typeof window.chatNotify.show === 'function') {
                 var notifyContent;
                 if (item.type === 'text') {
@@ -728,6 +748,9 @@
     if (!text || typeof text !== 'string') return;
     var row = createMessageRow('other', text);
     chatMessages.appendChild(row);
+    if (window.sessionChat) {
+      try { window.sessionChat.record('other', text); } catch (e) {}
+    }
     scrollToBottom();
 
     if (window.chatNotify && typeof window.chatNotify.show === 'function') {
