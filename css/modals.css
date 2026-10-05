@@ -639,6 +639,17 @@
   text-transform: uppercase;
 }
 
+/* 「我的角色」板块（粉色点缀，与「当前角色」区分） */
+.rp-my-block {
+  background: #fdf4f6;
+  border-color: #f8d7dc;
+}
+.rp-my-block .rp-current-title { color: #d47a8a; }
+.rp-my-block .rp-edit-save {
+  background: #f8b4b4;
+  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.4);
+}
+
 /* 编辑行：头像 + 昵称 */
 .rp-edit-row {
   display: flex;
@@ -966,116 +977,4 @@ body.theme-dark .rp-close-full:active {
 /* 角色面板：底部"添加好友"+ 关闭 的容器（让间距更好看） */
 .rp-bottom-actions {
   margin-top: 14px;
-}
-
-/* ============================================================
-   角色面板 · 「我的角色」区块
-   ============================================================ */
-.rp-my-block {
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  background: #fdf5f5;
-  border: 1px solid #f8d8d8;
-  border-radius: 18px;
-}
-
-.rp-my-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #e58b8b;
-  margin-bottom: 10px;
-  letter-spacing: 0.5px;
-}
-
-.rp-my-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.rp-my-avatar-wrap {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: visible;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.rp-my-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(248, 180, 180, 0.35);
-  display: block;
-}
-
-.rp-my-avatar-badge {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #f8b4b4;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 9px;
-  border: 2px solid #fff;
-}
-
-.rp-my-name {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #f0d8d8;
-  background: #fff;
-  font-size: 14px;
-  color: #333;
-  outline: none;
-  box-sizing: border-box;
-}
-.rp-my-name:focus {
-  border-color: #f8b4b4;
-  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-}
-
-.rp-my-save {
-  width: 100%;
-  padding: 11px 0;
-  border-radius: 14px;
-  border: none;
-  background: #f8b4b4;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
-}
-.rp-my-save:active {
-  opacity: 0.85;
-  transform: scale(0.97);
-}
-
-body.theme-dark .rp-my-block {
-  background: rgba(248, 180, 180, 0.08);
-  border-color: rgba(248, 180, 180, 0.2);
-}
-body.theme-dark .rp-my-name {
-  background: var(--theme-input-bg);
-  border-color: var(--theme-input-border);
-  color: var(--theme-text);
-}
-body.theme-dark .rp-my-avatar {
-  border-color: rgba(38, 44, 52, 0.97);
-}
-body.theme-dark .rp-my-avatar-badge {
-  border-color: rgba(38, 44, 52, 0.97);
 }
