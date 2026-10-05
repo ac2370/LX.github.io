@@ -1375,7 +1375,7 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 #pageChat .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 16px 24px 16px;
+  padding: 116px 16px 24px 16px;
   background: #ffffff;
   scrollbar-width: none;
   -ms-overflow-style: none;
