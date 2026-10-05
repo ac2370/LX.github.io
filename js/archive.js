@@ -92,7 +92,7 @@
     if (!arr || arr.length === 0) return '';
     return arr[Math.floor(Math.random() * arr.length)].trim();
   }
-  // 按类型从字卡库抽一条（place / status / mood / 兜底随机）
+  // 按类型从字卡库抽一条（place / status / mood；栏位为空返回 ''，由渲染层显示"暂无"）
   window.getArchivePick = function (type) {
     var all = [];
     var db = window.cardDatabase || {};
@@ -103,25 +103,14 @@
     keys.forEach(function (k) {
       if (db[k]) all = all.concat(flattenGroups(db[k]));
     });
-    var dd = window.DEFAULT_CARD_DATA || {};
-    if (type && dd[type]) all = all.concat(flattenGroups(dd[type]));
-    // 兜底：从整个字卡库（含收纳盒）随机
-    if (!all.length) {
-      var pub = null;
-      try { pub = JSON.parse(localStorage.getItem('public_card_groups')); } catch (e) {}
-      if (pub) all = all.concat(flattenGroups(pub));
-      all = all.concat(flattenGroups(db.reply));
-      all = all.concat(flattenGroups(dd.reply));
-    }
+    // 不兜底：用户没在对应栏位添加内容就返回空，档案显示「暂无」
     return randomPickFrom(all);
   };
-  // 从「回复」所有分组抽 1~3 条作为 desc
+  // 从「回复」分组抽 1~3 条作为 desc（只读用户自己的回复栏，空则返回 ''）
   window.getArchiveDesc = function () {
     var all = [];
     var db = window.cardDatabase || {};
     if (db.reply) all = all.concat(flattenGroups(db.reply));
-    var dd = window.DEFAULT_CARD_DATA || {};
-    if (dd.reply) all = all.concat(flattenGroups(dd.reply));
     if (!all.length) return '';
     var n = Math.min(3, all.length);
     var used = {};
