@@ -179,6 +179,18 @@
   color: #d4dde6;
 }
 
+/* ---------- 聊天页顶部白色平铺区域（灰线在昵称下方，无边框无圆角） ---------- */
+#pageChat .chat-top-bg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(104px + env(safe-area-inset-top, 0px));
+  background: #ffffff;
+  border-bottom: 1px solid #e3e7ec;
+  z-index: 30;
+  pointer-events: none;
+}
 /* ---------- 聊天页顶部一行：返回键（左）＋ 头像昵称（中）＋ 昼夜/视频（右端同排） ---------- */
 #pageChat .chat-top-actions {
   position: fixed;
@@ -212,8 +224,14 @@
 }
 #pageChat .chat-back-btn { font-size: 15px; }
 #pageChat .chat-top-btn { font-size: 16px; }
-/* 悬浮行中的头像昵称（合并进顶栏一行后） */
+/* 悬浮行中的头像昵称（屏幕正中，比原位置更靠近月亮按钮） */
 #pageChat .chat-top-actions #chatContactArea {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   pointer-events: auto;
 }
 body.theme-dark #pageChat .chat-avatar {
@@ -228,6 +246,29 @@ body.theme-dark #pageChat .chat-messages {
   transform: scale(0.94);
   background: rgba(245, 248, 252, 1);
   color: #55606b;
+}
+
+/* ---------- 头像下的提示横条（扁平纯色条，颜色区别于聊天框） ---------- */
+#pageChat .chat-start-bar {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  top: calc(108px + env(safe-area-inset-top, 0px));
+  z-index: 31;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef1f4;
+  color: #8a94a0;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+body.theme-dark #pageChat .chat-start-bar {
+  background: #262c34;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 /* ==================== 传讯页 · 暗色模式 ==================== */
@@ -248,5 +289,6 @@ body.theme-dark #pageChatHome .chat-home-item-sub { color: var(--theme-text-mute
 body.theme-dark #pageChatHome .chat-home-item-chevron { color: var(--theme-text-faint); }
 body.theme-dark #pageChatHome .chat-home-empty { background: var(--theme-card-bg); color: var(--theme-text-muted); border-color: var(--theme-card-border); }
 body.theme-dark #pageChat .chat-top-actions { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark #pageChat .chat-top-bg { background: #1a1f26; border-bottom-color: rgba(255, 255, 255, 0.08); }
 body.theme-dark #pageChat .chat-back-btn,
 body.theme-dark #pageChat .chat-top-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
