@@ -740,77 +740,249 @@
   background: #e8eaee;
 }
 
-/* ==================== 档案页 · 暗色模式 ==================== */
-body.theme-dark #pageArchive { background: var(--theme-page-bg); }
-body.theme-dark #pageArchive .arc-container { background: var(--theme-page-bg); }
-body.theme-dark #pageArchive .arc-topbar { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
-body.theme-dark #pageArchive .arc-back-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
-body.theme-dark #pageArchive .arc-topbar-title { color: var(--theme-text); }
-body.theme-dark #pageArchive .arc-tab { color: var(--theme-text-muted); background: transparent; }
-body.theme-dark #pageArchive .arc-tab.active { color: var(--theme-text); background: rgba(42,48,56,0.8); }
-body.theme-dark #pageArchive .arc-body { background: var(--theme-page-bg); }
-body.theme-dark #pageArchive .arc-field { color: var(--theme-text-soft); }
-body.theme-dark #pageArchive .arc-field-block { background: var(--theme-card-bg); border-color: var(--theme-card-border); color: var(--theme-text); }
-body.theme-dark #pageArchive #arcPhotoName { color: var(--theme-text); }
-body.theme-dark #pageArchive #arcQuoteTitle { color: var(--theme-text-soft); }
-body.theme-dark #pageArchive .arc-sw-modal { background: rgba(10,14,18,0.6); }
-body.theme-dark #pageArchive .arc-sw-panel { background: rgba(38,44,52,0.97); border-color: var(--theme-card-border); }
-body.theme-dark #pageArchive .arc-sw-title { color: var(--theme-text); }
-body.theme-dark #pageArchive .arc-sw-item { background: rgba(42,48,56,0.8); border-color: var(--theme-card-border); }
-body.theme-dark #pageArchive .arc-sw-item.active { border-color: var(--accent-color, #6fb1e8); }
-body.theme-dark #pageArchive .arc-sw-name { color: var(--theme-text); }
-body.theme-dark #pageArchive .arc-sw-check { color: var(--accent-color, #6fb1e8); }
-body.theme-dark #pageArchive .arc-sw-cancel { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
+/* ==================== 档案页 · 暗色模式（发光风格） ==================== */
+body.theme-dark #pageArchive {
+  background: #0a0a12;
+}
+body.theme-dark #pageArchive .arc-container {
+  background: #0a0a12;
+}
+body.theme-dark #pageArchive .arc-topbar {
+  background: #12121c;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+body.theme-dark #pageArchive .arc-back-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+body.theme-dark #pageArchive .arc-topbar-title {
+  color: #ffffff;
+}
+body.theme-dark #pageArchive .arc-tab {
+  color: rgba(255, 255, 255, 0.5);
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.theme-dark #pageArchive .arc-tab.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+body.theme-dark #pageArchive .arc-body {
+  background: #0a0a12;
+}
+body.theme-dark #pageArchive .arc-field {
+  color: #e0e0e0;
+}
+body.theme-dark #pageArchive .arc-field-block {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #e0e0e0;
+}
 
-/* ==================== 档案 3D 舞台 · 暗色模式（深黑+白色发光） ==================== */
-body.theme-dark #cenConfig_stage { background: #0a0a12; }
+/* 切换联系人弹层（暗色） */
+body.theme-dark #pageArchive .arc-sw-modal {
+  background: rgba(0, 0, 0, 0.7);
+}
+body.theme-dark #pageArchive .arc-sw-panel {
+  background: #1a1a2a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+body.theme-dark #pageArchive .arc-sw-title {
+  color: #ffffff;
+}
+body.theme-dark #pageArchive .arc-sw-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+body.theme-dark #pageArchive .arc-sw-item.active {
+  border-color: rgba(160, 180, 255, 0.6);
+}
+body.theme-dark #pageArchive .arc-sw-name {
+  color: #e0e0e0;
+}
+body.theme-dark #pageArchive .arc-sw-check {
+  color: rgba(160, 180, 255, 0.9);
+}
+body.theme-dark #pageArchive .arc-sw-cancel {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==================== 档案 3D 舞台 · 暗色模式（深黑 + 白色发光） ==================== */
+body.theme-dark #cenConfig_stage {
+  background: #0a0a12;
+}
+
 /* 大标题与诗意小字 → 白色发光 */
-body.theme-dark #cen_intro_big_text { color: #ffffff !important; }
-body.theme-dark #cen_intro_big_text span[style*="color"] { color: #ffffff !important; }
-body.theme-dark #cen_intro_poetry { color: #ffffff !important; text-shadow: 0 0 8px rgba(255,255,255,0.9), 0 0 15px rgba(255,255,255,0.6) !important; }
+body.theme-dark #cen_intro_big_text {
+  color: #ffffff !important;
+}
+body.theme-dark #cen_intro_big_text span[style*="color"] {
+  color: #ffffff !important;
+}
+body.theme-dark #cen_intro_poetry {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.9), 0 0 15px rgba(255, 255, 255, 0.6) !important;
+}
+
 /* 照片姓名 / 右侧标题 */
-body.theme-dark #arcPhotoName { color: #ffffff !important; text-shadow: 0 2px 8px rgba(0,0,0,0.8) !important; }
-body.theme-dark #arcQuoteTitle { color: #ffffff !important; border-bottom-color: rgba(255,255,255,0.2) !important; }
+body.theme-dark #arcPhotoName {
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8) !important;
+}
+body.theme-dark #arcQuoteTitle {
+  color: #ffffff !important;
+  border-bottom-color: rgba(255, 255, 255, 0.2) !important;
+}
+
 /* 右侧四栏：面板底色/边框/标签/字段文字 */
-body.theme-dark #cen_right_panel .cen-floating-box { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.25) !important; box-shadow: inset 0 25px 20px -20px rgba(255,255,255,0.18), 0 0 20px rgba(255,255,255,0.08) !important; }
-body.theme-dark #cen_right_panel span[style*="opacity"] { color: rgba(255,255,255,0.55) !important; }
-body.theme-dark .arc-field { color: #e0e0e0 !important; }
-/* 主照片：无图时的占位渐变改为深色（有照片时内联 background-image 优先保留） */
-body.theme-dark #cen_main_photo { background: linear-gradient(135deg, #2b2b3a, #1a1a2e); }
-body.theme-dark .cen-intro-mode #cen_main_photo { box-shadow: 0 8px 25px rgba(0,0,0,0.5) !important; border: 1px solid rgba(255,255,255,0.2) !important; }
+body.theme-dark #cen_right_panel .cen-floating-box {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: inset 0 25px 20px -20px rgba(255, 255, 255, 0.18), 0 0 20px rgba(255, 255, 255, 0.08) !important;
+}
+body.theme-dark #cen_right_panel span[style*="opacity"] {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+body.theme-dark .arc-field {
+  color: #e0e0e0 !important;
+}
+
+/* 主照片：无图时的占位渐变改为深色 */
+body.theme-dark #cen_main_photo {
+  background: linear-gradient(135deg, #2b2b3a, #1a1a2e);
+}
+body.theme-dark .cen-intro-mode #cen_main_photo {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
 /* 折叠四格：半透明白发光框 */
-body.theme-dark .cen-glow-box { background: rgba(255,255,255,0.03) !important; border-color: rgba(255,255,255,0.15) !important; box-shadow: none !important; }
-body.theme-dark .cen-glow-box:hover:not([open]) { border-color: rgba(255,255,255,0.4) !important; background: rgba(255,255,255,0.05) !important; }
-body.theme-dark .cen-glow-box[open] { box-shadow: 0 0 12px rgba(255,255,255,0.4), inset 0 0 6px rgba(255,255,255,0.15) !important; border-color: rgba(255,255,255,0.7) !important; background: rgba(255,255,255,0.07) !important; }
-body.theme-dark .cen-glow-box summary { color: rgba(255,255,255,0.6) !important; }
-body.theme-dark .cen-glow-box[open] summary { color: #ffffff !important; text-shadow: 0 0 8px rgba(255,255,255,0.9) !important; }
-body.theme-dark .cen-glow-content { color: rgba(255,255,255,0.8) !important; border-top-color: rgba(255,255,255,0.3) !important; background: rgba(0,0,0,0.4) !important; }
+body.theme-dark .cen-glow-box {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: none !important;
+}
+body.theme-dark .cen-glow-box:hover:not([open]) {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+body.theme-dark .cen-glow-box[open] {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4), inset 0 0 6px rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+body.theme-dark .cen-glow-box summary {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+body.theme-dark .cen-glow-box[open] summary {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
+}
+body.theme-dark .cen-glow-content {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-top-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(0, 0, 0, 0.4) !important;
+}
+
 /* 回形针 / 返回 / 点击提示 / 重置按钮 → 白色系 */
-body.theme-dark .cen-paperclip { border-color: rgba(240,240,245,0.9) !important; }
-body.theme-dark .cen-back-btn { color: rgba(255,255,255,0.5) !important; }
-body.theme-dark .cen-back-btn:hover { color: #ffffff !important; text-shadow: 0 0 8px rgba(255,255,255,0.8) !important; }
-body.theme-dark .cen-click-hint { color: rgba(255,255,255,0.5) !important; }
-body.theme-dark #reset_btn_cen { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.2) !important; }
+body.theme-dark .cen-paperclip {
+  border-color: rgba(240, 240, 245, 0.9) !important;
+}
+body.theme-dark .cen-back-btn {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+body.theme-dark .cen-back-btn:hover {
+  color: #ffffff !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8) !important;
+}
+body.theme-dark .cen-click-hint {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+body.theme-dark #reset_btn_cen {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
 body.theme-dark #pageArchive .cen-knot-line {
   filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) !important;
 }
 body.theme-dark #pageArchive .cen-knot-line path {
   stroke: rgba(255, 255, 255, 0.5) !important;
 }
-body.theme-dark #reset_btn_cen svg { stroke: #ffffff !important; }
+body.theme-dark #reset_btn_cen svg {
+  stroke: #ffffff !important;
+}
+
 /* 照片外框 / 背面占位 → 白色半透明 */
-body.theme-dark #cenConfig_stage .hide-in-intro[style*="border"] { border-color: rgba(255,255,255,0.2) !important; box-shadow: 0 0 15px rgba(255,255,255,0.12) !important; }
-body.theme-dark #cenConfig_stage .hide-in-intro[style*="rgba(160,180,255,0.05)"] { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.15) !important; }
+body.theme-dark #cenConfig_stage .hide-in-intro[style*="border"] {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.12) !important;
+}
+body.theme-dark #cenConfig_stage .hide-in-intro[style*="rgba(160,180,255,0.05)"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
 /* 气泡 */
-body.theme-dark #cen_speech_bubble { background: rgba(255,255,255,0.9) !important; color: #1a1a1a !important; }
-/* 白色发光文字动画（暗色专用 keyframes，用 !important 覆盖内联 animation） */
+body.theme-dark #cen_speech_bubble {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #1a1a1a !important;
+}
+
+/* ==================== 暗色专用发光文字动画 ==================== */
 @keyframes cenFadeFloatDark {
-  0%, 100% { transform: translateY(0); opacity: 0.15; text-shadow: 0 0 2px rgba(255,255,255,0.1); }
-  50% { transform: translateY(var(--y-offset, -4px)); opacity: 0.85; text-shadow: 0 0 12px rgba(255,255,255,0.6); }
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.15;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    transform: translateY(var(--y-offset, -4px));
+    opacity: 0.85;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  }
 }
 @keyframes cenExtremeGlowDark {
-  0%, 100% { transform: translateY(0); opacity: 0.3; text-shadow: 0 0 10px #fff, 0 0 20px #fff; }
-  50% { transform: translateY(var(--y-offset, -6px)); opacity: 1; text-shadow: 0 0 15px #fff, 0 0 30px #fff, 0 0 50px #fff, 0 0 80px rgba(255,255,255,0.9); }
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.3;
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff;
+  }
+  50% {
+    transform: translateY(var(--y-offset, -6px));
+    opacity: 1;
+    text-shadow: 0 0 15px #fff, 0 0 30px #fff, 0 0 50px #fff, 0 0 80px rgba(255, 255, 255, 0.9);
+  }
 }
-body.theme-dark .cen-float-line span { animation: cenFadeFloatDark 3.5s ease-in-out infinite !important; }
-body.theme-dark .cen-float-line span[style*="cenExtremeGlow"] { animation: cenExtremeGlowDark 3.5s ease-in-out infinite !important; }
+body.theme-dark .cen-float-line span {
+  animation: cenFadeFloatDark 3.5s ease-in-out infinite !important;
+}
+body.theme-dark .cen-float-line span[style*="cenExtremeGlow"] {
+  animation: cenExtremeGlowDark 3.5s ease-in-out infinite !important;
+}
+
+/* ==================== 雨丝与风铃（暗色模式下更亮） ==================== */
+body.theme-dark .cen-rain-track::before {
+  background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.3) 30%, rgba(255, 255, 255, 0.9) 100%) !important;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6), 0 0 12px rgba(255, 255, 255, 0.3) !important;
+}
+body.theme-dark .cen-chime-rope {
+  background: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.5) !important;
+}
+body.theme-dark .cen-chime-bell {
+  border-color: rgba(255, 255, 255, 0.7) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3) !important;
+}
+body.theme-dark .cen-chime-clapper {
+  background: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9) !important;
+}
+body.theme-dark .cen-chime-leaf {
+  background: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.6) !important;
+}
