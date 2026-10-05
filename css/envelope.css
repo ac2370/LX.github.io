@@ -169,6 +169,23 @@ body.theme-dark .env-card {
 }
 body.theme-dark .env-card-date { color: var(--theme-text-muted); }
 
+/* 寄出箱：收件人标签 */
+.env-card-to {
+  display: inline-block;
+  font-size: 11px;
+  color: #5C7CFA;
+  background: #eef1ff;
+  border-radius: 10px;
+  padding: 2px 8px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+body.theme-dark .env-card-to {
+  color: #a9b8ff;
+  background: #333c55;
+}
+
 /* 原信引用（收件箱用） */
 .env-card-quote {
   display: block;
@@ -321,6 +338,64 @@ body.theme-dark .env-empty i { color: #4a5560; }
   -webkit-backdrop-filter: blur(8px);
 }
 .env-write-modal.active { display: flex; }
+
+/* 写信：收件人选择 */
+.env-write-to {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 20px 0 20px;
+}
+.env-write-to-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #8a93a6;
+}
+.env-write-to-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+}
+.env-write-to-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid #e3e8ef;
+  background: #f7f9fc;
+  font-size: 12px;
+  color: #3a4557;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.env-write-to-item img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.env-write-to-item.active {
+  border-color: #5C7CFA;
+  background: #eef1ff;
+  color: #4a62e8;
+}
+.env-write-to-item.active img {
+  border: 1.5px solid #5C7CFA;
+}
+body.theme-dark .env-write-to-label { color: #9aa4b5; }
+body.theme-dark .env-write-to-item {
+  border-color: #3a4150;
+  background: #2c323d;
+  color: #cdd5e1;
+}
+body.theme-dark .env-write-to-item.active {
+  border-color: #6b84ff;
+  background: #333c55;
+  color: #a9b8ff;
+}
 
 .env-write-panel {
   width: 100%;
