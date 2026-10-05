@@ -105,6 +105,13 @@
     row.appendChild(bubble);
     chatMessages.appendChild(row);
 
+    // 会话分桶：记录通话记录（写入当前会话）
+    if (window.sessionChat) {
+      try {
+        window.sessionChat.record('other', { kind: 'call', icon: icon || '', label: label || '', detail: detail || '' });
+      } catch (e) {}
+    }
+
     setTimeout(function () {
       var avatars = row.querySelectorAll('.chat-msg-avatar');
       avatars.forEach(function (a) { a.remove(); });
