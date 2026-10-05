@@ -69,6 +69,14 @@
   }
 
   function getMyAvatar() {
+    // 优先「我的角色」面板设置（角色面板 → 保存我的资料）
+    try {
+      var rawProfile = localStorage.getItem('my_profile');
+      if (rawProfile) {
+        var p = JSON.parse(rawProfile);
+        if (p && p.avatar) return p.avatar;
+      }
+    } catch (e) {}
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
     return 'https://picsum.photos/100/100?random=1';
@@ -291,21 +299,6 @@
     // 清空聊天区，渲染群聊历史消息
     chatMessages.innerHTML = '';
     renderGroupMessages(g);
-
-    // 在群名下方加一个"退出群聊"按钮（如果没有）
-    var chatHeader = document.querySelector('#pageChat .chat-header');
-    if (chatHeader && !document.getElementById('exitGroupBtn')) {
-      var exitBtn = document.createElement('button');
-      exitBtn.id = 'exitGroupBtn';
-      exitBtn.className = 'exit-group-btn';
-      exitBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i> 退出群聊';
-      exitBtn.addEventListener('click', function () {
-        state.currentGroupId = null;
-        persist();
-        exitGroupMode();
-      });
-      chatHeader.appendChild(exitBtn);
-    }
 
     // 更新输入框 placeholder
     chatInput.placeholder = '在「' + g.name + '」中发言...';
@@ -550,7 +543,7 @@
 
   // ==================== 初始化 ====================
   function init() {
-    bindGroupIcon();
+    // 顶栏群聊图标已移除（入口收敛到会话选择页：群聊 Tab + 右上群聊管理）
   }
 
   if (document.readyState === 'loading') {
@@ -573,7 +566,8 @@
     open: openGroupPanel,
     enter: enterGroup,
     exit: exitGroupMode,
-    getCurrentGroup: getCurrentGroup
+    getCurrentGroup: getCurrentGroup,
+    getGroups: function () { return state.groups.slice(); }
   };
 
 })();
