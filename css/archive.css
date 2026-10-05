@@ -133,6 +133,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto !important;    /* 允许纵向滚动 */
+  overflow-x: hidden !important;  /* 防止横向滚动 */
   overflow-y: auto;
   padding: 0 0 40px 0;
   background: #fcfcfd;
@@ -155,11 +157,13 @@
   background: #fcfcfd;
 }
 
-/* intro 模式才需要撑高（给大标题留空间） */
+/* intro 模式：高度自适应，不强制撑满，让内容自然撑开 */
 #cenConfig_stage.cen-intro-mode {
-  flex: 1;
+  flex: none !important;           /* 关键：不要撑满父级 */
   justify-content: flex-start;
   padding-top: 80px;
+  min-height: 0 !important;        /* 关键：解除最小高度限制 */
+  height: auto !important;         /* 关键：高度自适应 */
 }
 
 /* play 模式：内容偏上（顶部留 70px，不居中） */
