@@ -34,9 +34,12 @@
 /* ==================== 页面外壳 ==================== */
 #pageArchive {
   background: #fcfcfd;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   display: none;
   flex-direction: column;
+  overflow: hidden;
 }
 #pageArchive.active { display: flex; }
 
@@ -128,6 +131,8 @@
 /* 主体 */
 .arc-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   padding: 0 0 40px 0;
   background: #fcfcfd;
@@ -152,7 +157,9 @@
 
 /* intro 模式才需要撑高（给大标题留空间） */
 #cenConfig_stage.cen-intro-mode {
-  min-height: 460px;
+  flex: 1;
+  min-height: 0;
+  justify-content: space-evenly;
 }
 
 /* play 模式紧凑 */
