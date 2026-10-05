@@ -413,3 +413,24 @@
   color: #b6c2cd;
   margin-top: 4px;
 }
+
+/* ==================== 词云/统计页 · 暗色模式 ==================== */
+body.theme-dark #pageStats { background: var(--theme-page-bg); }
+body.theme-dark #pageStats .stats-container { background: var(--theme-page-bg); }
+body.theme-dark #pageStats .stats-topbar { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark #pageStats .stats-back-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
+body.theme-dark #pageStats .stats-topbar-title { color: var(--theme-text); }
+body.theme-dark #pageStats .stats-tab { color: var(--theme-text-muted); background: transparent; }
+body.theme-dark #pageStats .stats-tab.active { color: var(--theme-text); background: rgba(42,48,56,0.8); }
+body.theme-dark #pageStats .stats-card { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageStats .stats-card-label { color: var(--theme-text-muted); }
+body.theme-dark #pageStats .stats-card-value { color: var(--theme-text); }
+body.theme-dark #pageStats .stats-section-title { color: var(--theme-text); }
+body.theme-dark #pageStats .stats-view-btn { background: rgba(42,48,56,0.9); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageStats .stats-view-btn.active { background: var(--accent-color, #6fb1e8); color: #fff; }
+body.theme-dark #pageStats .stats-rank-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageStats .stats-rank-text { color: var(--theme-text); }
+body.theme-dark #pageStats .stats-rank-count { color: var(--theme-text-muted); }
+body.theme-dark #pageStats .stats-rank-bar { background: rgba(90,100,115,0.35); }
+body.theme-dark #pageStats .stats-search-input { background: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-text); }
+body.theme-dark #pageStats .stats-search-input::placeholder { color: var(--theme-text-faint); }
