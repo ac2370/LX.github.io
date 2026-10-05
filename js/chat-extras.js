@@ -642,6 +642,14 @@
       chatMessages.appendChild(sysRow);
       scrollToBottom();
 
+      // 会话分桶：记录「我拍了拍」系统行 + 设置回复目标会话
+      if (window.sessionChat) {
+        try {
+          window.sessionChat.setReplyTarget(window.sessionChat.getCurrentKey());
+          window.sessionChat.record('other', { kind: 'pat', by: 'me', text: text, name: contactName });
+        } catch (e) {}
+      }
+
       var delay = 2000 + Math.floor(Math.random() * 3000);
       setTimeout(function () {
         var replies = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
@@ -658,6 +666,10 @@
         row.appendChild(bubble);
         chatMessages.appendChild(row);
         scrollToBottom();
+
+        if (window.sessionChat) {
+          try { window.sessionChat.recordReply('other', replyText); } catch (e) {}
+        }
 
         if (window.chatNotify && typeof window.chatNotify.show === 'function') {
           try { window.chatNotify.show(contactName, replyText); } catch (e) {}
@@ -735,6 +747,14 @@
     chatMessages.appendChild(sysRow);
     scrollToBottom();
 
+    // 会话分桶：记录「Ta 拍了拍我」系统行
+    if (window.sessionChat) {
+      try {
+        window.sessionChat.setReplyTarget(window.sessionChat.getCurrentKey());
+        window.sessionChat.record('other', { kind: 'pat', by: 'partner', text: text, name: contactName });
+      } catch (e) {}
+    }
+
     var delay = 2000 + Math.floor(Math.random() * 3000);
     setTimeout(function () {
       var replies = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
@@ -751,6 +771,10 @@
       row.appendChild(bubble);
       chatMessages.appendChild(row);
       scrollToBottom();
+
+      if (window.sessionChat) {
+        try { window.sessionChat.recordReply('other', replyText); } catch (e) {}
+      }
 
       if (window.chatNotify && typeof window.chatNotify.show === 'function') {
         try { window.chatNotify.show(contactName, replyText); } catch (e) {}
