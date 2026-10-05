@@ -212,6 +212,17 @@
 }
 #pageChat .chat-back-btn { font-size: 15px; }
 #pageChat .chat-top-btn { font-size: 16px; }
+/* 悬浮行中的头像昵称（合并进顶栏一行后） */
+#pageChat .chat-top-actions #chatContactArea {
+  pointer-events: auto;
+}
+body.theme-dark #pageChat .chat-avatar {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+}
+body.theme-dark #pageChat .chat-messages {
+  background: var(--theme-chat-bg) !important;
+}
 #pageChat .chat-back-btn:active,
 #pageChat .chat-top-btn:active {
   transform: scale(0.94);
