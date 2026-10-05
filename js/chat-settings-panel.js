@@ -353,7 +353,25 @@ silentAudioEl.onpause = function () {
       '#chatSettingsPanel .chat-settings-title i { color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-css-apply { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-font-url-apply { background: ' + colorDark + ' !important; }',
-      '.home-settings-btn i, .floating-settings i { color: ' + color + ' !important; }'
+      '.home-settings-btn i, .floating-settings i { color: ' + color + ' !important; }',
+      // ===== 全局主题色扩展（档案 / 朋友圈 / 信箱 / 陪伴 / 问卷 / 心情 / 词云） =====
+      '#pageEnvelope .env-tab.active { color: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#pageEnvelope .env-write-btn { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#pageEnvelope .env-card-to { color: ' + color + ' !important; background: ' + colorLight + ' !important; }',
+      '#pageFeed .feed-post-btn-submit { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#pageFeed .feed-icon-btn { color: ' + color + ' !important; }',
+      '#pageArchive .arc-tab.active { color: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#pageArchive .arc-sw-check { color: ' + color + ' !important; }',
+      '#pageCompanion .companion-pill.active { border-color: ' + color + ' !important; box-shadow: 0 4px 14px ' + rgba(color, 0.35) + ' !important; }',
+      '#pageCompanion .companion-scene-btn.active { border-color: ' + color + ' !important; box-shadow: 0 6px 18px ' + rgba(color, 0.3) + ' !important; }',
+      '#pageCompanion .companion-start-btn { background: linear-gradient(135deg, ' + color + ' 0%, ' + colorDark + ' 100%) !important; }',
+      '#pageCompanionActive .cpa-end-btn { background: linear-gradient(135deg, ' + color + ' 0%, ' + colorDark + ' 100%) !important; }',
+      '.ds-topbar-save { background: ' + color + ' !important; }',
+      '.ds-adv-btn { border-color: ' + color + ' !important; color: ' + colorDark + ' !important; }',
+      '#pageStats .stats-view-btn.active { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
+      '#pageMood .mood-topbar-action { color: ' + color + ' !important; }',
+      '#pageMood .mood-sw-check { color: ' + color + ' !important; }',
+      '#pageHome .function-item.active .function-icon { background: ' + colorLight + ' !important; border-color: ' + color + ' !important; }'
     ].join('\n');
 
     document.querySelectorAll('.tab-btn.active i, .tab-btn.active span').forEach(function (el) {
