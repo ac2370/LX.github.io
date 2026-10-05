@@ -139,8 +139,8 @@ body {
   box-shadow: 0 6px 16px rgba(0, 20, 30, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.7);
   padding: 16px 16px 26px;
-  height: min(460px, 50vh);
-  min-height: min(460px, 50vh);
+  height: min(320px, 30vh);
+  min-height: min(320px, 30vh);
 }
 /* 桌面/平板视口：头图适中，不撑满 */
 @media (min-width: 768px) {
@@ -148,7 +148,6 @@ body {
     height: min(260px, 45vh);
     min-height: min(260px, 45vh);
   }
-}
 }
 .header-card::before {
   content: '';
