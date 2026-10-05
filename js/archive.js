@@ -253,6 +253,9 @@
           if (!url && myAvatar && myAvatar.src) url = myAvatar.src;
         }
         photoEl.style.backgroundImage = url ? 'url(' + url + ')' : '';
+      } else if (c && c.avatar) {
+        // Ta 档案头像：跟随「添加联系人」里设置的头像（切联系人即变）
+        photoEl.style.backgroundImage = 'url(' + c.avatar + ')';
       } else if (entry.photo) {
         photoEl.style.backgroundImage = 'url(' + entry.photo + ')';
       } else {
