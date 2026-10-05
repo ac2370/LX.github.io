@@ -576,6 +576,17 @@ img { max-width: 100%; display: block; }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ============ 全局隐藏滚动条（App 风格） ============ */
+*::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 /* ============ 主页全屏适配（PWA 撑满不滚动，内容紧凑） ============ */
 #pageHome .main-content { padding-top: 0; }
 #pageHome .main-content > .h-8 { height: 8px; }
