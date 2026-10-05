@@ -335,8 +335,9 @@ silentAudioEl.onpause = function () {
     }
     styleEl.textContent = [
       '#pageHome .play-btn { background: ' + color + ' !important; box-shadow: 0 3px 10px ' + rgba(color, 0.35) + ' !important; }',
-      '#pageHome .tab-btn.active i, #pageHome .tab-btn.active span { color: ' + color + ' !important; }',
-      '#pageHome .tab-btn.active { color: ' + color + ' !important; }',
+      '#pageHome .tab-btn i, #pageHome .tab-btn span { color: ' + color + ' !important; }',
+      '#pageHome .tab-btn.active i, #pageHome .tab-btn.active span { color: ' + colorDark + ' !important; }',
+      '#pageHome .tab-btn.active { color: ' + colorDark + ' !important; }',
       '#pageHome .function-icon i { color: ' + colorDark + ' !important; }',
       '#pageHome .search-glass i { color: ' + color + ' !important; }',
       '#pageCard .cat-grid-item.active { background: ' + colorLight + ' !important; border-color: ' + color + ' !important; }',
@@ -1096,12 +1097,6 @@ silentAudioEl.onpause = function () {
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">全局主题配色</div>',
       '        <div class="cs-theme-colors" id="csThemeColors"></div>',
-      '        <div class="cs-custom-color-row">',
-      '          <label class="cs-custom-color-btn" for="csCustomColorInput"><i class="fa-solid fa-eye-dropper"></i> 自定义颜色</label>',
-      '          <input type="color" id="csCustomColorInput" value="#6fb1e8" style="display:none;">',
-      '          <span class="cs-custom-color-value" id="csCustomColorValue">#6fb1e8</span>',
-      '        </div>',
-      '        <div class="cs-slider-hint">修改后主页、传讯页、字卡库的强调色会同步变化（不影响页面背景）</div>',
       '      </div>',
       '      <div class="chat-settings-section">',
       '        <div class="chat-settings-section-title">文字设置</div>',
@@ -1267,15 +1262,12 @@ silentAudioEl.onpause = function () {
   }
 
   var PRESET_COLORS = [
-    { name: '红', value: '#F05A5A' },
-    { name: '橙', value: '#F5A623' },
-    { name: '黄', value: '#FFD54F' },
-    { name: '绿', value: '#7ED3A8' },
-    { name: '蓝', value: '#6FB1E8' },
-    { name: '紫', value: '#B78BEA' },
-    { name: '粉', value: '#F8B4B4' },
-    { name: '黑', value: '#333333' },
-    { name: '白', value: '#FFFFFF' }
+    { name: '墨黑', value: '#1C1C1E' },
+    { name: '雾蓝', value: '#5B7A9D' },
+    { name: '樱粉', value: '#D98A9E' },
+    { name: '抹茶', value: '#7A9D7F' },
+    { name: '暖棕', value: '#A0826D' },
+    { name: '紫灰', value: '#8A7F9D' }
   ];
 
   function renderThemeColors() {
@@ -1283,25 +1275,20 @@ silentAudioEl.onpause = function () {
     if (!container) return;
     container.innerHTML = '';
     PRESET_COLORS.forEach(function (c) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'cs-theme-color-btn' + (c.value.toLowerCase() === theme.accentColor.toLowerCase() ? ' active' : '');
-      btn.style.background = c.value;
-      btn.setAttribute('data-color', c.value);
-      btn.title = c.name;
-      if (c.value === '#FFFFFF') btn.style.border = '1px solid #e2e8ee';
-      btn.addEventListener('click', function (e) {
+      var item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'cs-theme-item' + (c.value.toLowerCase() === theme.accentColor.toLowerCase() ? ' active' : '');
+      item.setAttribute('data-color', c.value);
+      item.setAttribute('data-name', c.name);
+      item.innerHTML = '<span class="cs-theme-swatch" style="background:' + c.value + ';"></span><span class="cs-theme-name">' + c.name + '</span>';
+      item.addEventListener('click', function (e) {
         e.preventDefault(); e.stopPropagation();
         theme.accentColor = c.value;
         persistTheme();
         applyTheme();
         renderThemeColors();
-        var valEl = document.getElementById('csCustomColorValue');
-        if (valEl) valEl.textContent = c.value;
-        var picker = document.getElementById('csCustomColorInput');
-        if (picker) picker.value = c.value;
       });
-      container.appendChild(btn);
+      container.appendChild(item);
     });
   }
 
@@ -1315,10 +1302,6 @@ silentAudioEl.onpause = function () {
   }
 
   function fillPanelValues() {
-    var valEl = document.getElementById('csCustomColorValue');
-    if (valEl) valEl.textContent = theme.accentColor;
-    var picker = document.getElementById('csCustomColorInput');
-    if (picker) picker.value = theme.accentColor;
     renderThemeColors();
 
     var slider = document.getElementById('csFontSizeSlider');
@@ -1356,23 +1339,6 @@ silentAudioEl.onpause = function () {
     });
 
     // ============ 外观与界面 ============
-    var customColorInput = document.getElementById('csCustomColorInput');
-    if (customColorInput) {
-      customColorInput.addEventListener('input', function () {
-        theme.accentColor = customColorInput.value;
-        var valEl = document.getElementById('csCustomColorValue');
-        if (valEl) valEl.textContent = customColorInput.value;
-        persistTheme();
-        applyTheme();
-        renderThemeColors();
-      });
-      customColorInput.addEventListener('change', function () {
-        theme.accentColor = customColorInput.value;
-        persistTheme();
-        applyTheme();
-      });
-    }
-
     var fontSizeSlider = document.getElementById('csFontSizeSlider');
     var fontSizeValue = document.getElementById('csFontSizeValue');
     if (fontSizeSlider) {
