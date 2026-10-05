@@ -154,16 +154,16 @@
   // 给 Ta 档案一次性抽满所有自动字段
   function pickAutoFields() {
     var result = {};
-    // 图片旁四栏（从上往下）：地点 / 心情 / 状态 / 回复
-    // location 栏 ← 字卡库 place（地点）
-    // status 栏   ← 字卡库 mood（心情）
-    // mood 栏     ← 字卡库 status（状态）
-    // desc 栏     ← 回复词库（reply）抽 1~3 条
+    // 图片旁四个格子（从上往下）：地点 / 心情 / 状态 / 回复
+    // location 字段 ← 字卡收纳盒「地点」栏（字卡库键 location，面板叫 place）
+    // status 字段   ← 字卡收纳盒「心情」栏（字卡库键 mood）
+    // mood 字段     ← 字卡收纳盒「状态」栏（字卡库键 status）
+    // desc 字段     ← 字卡收纳盒「回复」栏（reply 词库抽 1~3 条）
     result.location = window.getArchivePick ? window.getArchivePick('place') : '';
     result.status   = window.getArchivePick ? window.getArchivePick('mood') : '';
     result.mood     = window.getArchivePick ? window.getArchivePick('status') : '';
     result.desc     = window.getArchiveDesc ? window.getArchiveDesc() : '';
-    // 4 个格子：文案库（互不相同）
+    // 下方四个格子：文案库（互不相同）
     var quotes = pickUniqueQuotes(4);
     result.basicInfo   = quotes[0] || '';
     result.history     = quotes[1] || '';
