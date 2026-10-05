@@ -198,24 +198,22 @@
   }
 
   function getCurrentBucket() {
-    if (!currentContactId) return { posts: [] };
-    if (!feedData[currentContactId]) feedData[currentContactId] = { posts: [] };
-    if (!Array.isArray(feedData[currentContactId].posts)) feedData[currentContactId].posts = [];
-    return feedData[currentContactId];
+    // 朋友圈是「我的朋友圈」：统一存一个桶，不按联系人分桶
+    var bucketId = 'my';
+    if (!feedData[bucketId]) feedData[bucketId] = { posts: [] };
+    if (!Array.isArray(feedData[bucketId].posts)) feedData[bucketId].posts = [];
+    return feedData[bucketId];
   }
 
-  // ==================== 我的头像 / 名字 ====================
-    function getMyAvatar() {
-    // 1. 优先 my_profile.avatar
+  // ==================== 我的头像 / 名字（优先「我的角色」面板设置） ====================
+  function getMyAvatar() {
     try {
-      var rawP = localStorage.getItem('my_profile');
-      if (rawP) {
-        var p = JSON.parse(rawP);
+      var rawProfile = localStorage.getItem('my_profile');
+      if (rawProfile) {
+        var p = JSON.parse(rawProfile);
         if (p && p.avatar) return p.avatar;
       }
     } catch (e) {}
-
-    // 2. 回退：主页头像
     var avatarImg = document.getElementById('avatarImg');
     if (avatarImg && avatarImg.src) return avatarImg.src;
     if (window.homeSettings && window.homeSettings.current && window.homeSettings.current.avatar) {
@@ -232,16 +230,13 @@
   }
 
   function getMyName() {
-    // 1. 优先 my_profile.name
     try {
-      var rawP = localStorage.getItem('my_profile');
-      if (rawP) {
-        var p = JSON.parse(rawP);
+      var rawProfile = localStorage.getItem('my_profile');
+      if (rawProfile) {
+        var p = JSON.parse(rawProfile);
         if (p && p.name) return p.name;
       }
     } catch (e) {}
-
-    // 2. 回退：home_custom_images.myName
     try {
       var raw = localStorage.getItem('home_custom_images');
       if (raw) {
@@ -249,6 +244,9 @@
         if (data && data.myName) return data.myName;
       }
     } catch (e) {}
+    // 回退：主页昵称（h1「阿晏」）
+    var h1 = document.querySelector('h1');
+    if (h1 && h1.textContent && h1.textContent.trim()) return h1.textContent.trim();
     return '我';
   }
 
@@ -259,33 +257,29 @@
     return (currentContact && currentContact.avatar) || DEFAULT_CONTACT.avatar;
   }
 
-  // ==================== 封面背景 ====================
-  function coverKey(contactId) {
-    return 'feedCoverBg_' + (contactId || 'default');
+  // ==================== 封面背景（固定「我的朋友圈」一份） ====================
+  function coverKey() {
+    return 'feedCoverBg_my';
   }
 
-  function loadCoverBg(contactId) {
+  function loadCoverBg() {
     var url = '';
     try {
-      if (contactId) {
-        var v = localStorage.getItem(coverKey(contactId));
-        if (v) url = v;
-      }
+      var v = localStorage.getItem(coverKey());
+      if (v) url = v;
     } catch (e) {}
     return url;
   }
 
-  function saveCoverBg(contactId, url) {
+  function saveCoverBg(url) {
     try {
-      if (contactId) {
-        localStorage.setItem(coverKey(contactId), url);
-      }
+      localStorage.setItem(coverKey(), url);
     } catch (e) {}
   }
 
    function applyCoverBg() {
-    if (!feedCover || !currentContactId) return;
-    var url = loadCoverBg(currentContactId);
+    if (!feedCover) return;
+    var url = loadCoverBg();
     if (url) {
       feedCover.style.backgroundImage = 'url("' + url + '")';
       feedCover.style.backgroundSize = 'cover';
@@ -341,7 +335,7 @@
         var reader = new FileReader();
         reader.onload = function (ev) {
           var dataUrl = ev.target.result;
-          saveCoverBg(currentContactId, dataUrl);
+          saveCoverBg(dataUrl);
           applyCoverBg();
           document.body.removeChild(input);
         };
@@ -356,7 +350,7 @@
       if (!url) return;
       url = url.trim();
       if (!url) return;
-      saveCoverBg(currentContactId, url);
+      saveCoverBg(url);
       applyCoverBg();
     });
 
@@ -366,13 +360,16 @@
     });
   }
 
-  // ==================== 头部 ====================
+  // ==================== 头部（我的朋友圈） ====================
   function updateHeader() {
     if (feedHeaderAvatar) {
-      feedHeaderAvatar.src = getTaAvatar();
-      feedHeaderAvatar.alt = getTaName();
+      feedHeaderAvatar.src = getMyAvatar();
+      feedHeaderAvatar.alt = getMyName();
     }
-    if (feedHeaderName) feedHeaderName.textContent = getTaName();
+    if (feedHeaderName) feedHeaderName.textContent = getMyName();
+    // 副标题「XX 的朋友圈」→「我的朋友圈」
+    var sub = document.querySelector('#pageFeed .feed-header-sub');
+    if (sub) sub.textContent = '我的朋友圈';
     applyCoverBg();
   }
 
@@ -820,12 +817,9 @@
     });
   }
 
-  // ==================== TA 自动发动态 ====================
-  function maybeAutoPostFor(contactId) {
-    if (!contactId) return;
-    if (!feedData[contactId]) feedData[contactId] = { posts: [] };
-    if (!Array.isArray(feedData[contactId].posts)) feedData[contactId].posts = [];
-
+  // ==================== 联系人们自动发动态（发到同一个朋友圈，与我的动态混在一起） ====================
+  function maybeAutoPost() {
+    if (!dataReady) return;
     if (Math.random() > AUTO_POST_PROBABILITY) return;
 
     var pool = getReplyPool();
@@ -847,12 +841,14 @@
     }
     var content = picked.join(' ');
 
+    // 随机选一位联系人作为发帖人
     var contacts = loadContacts();
-    var c = contacts.find(function (x) { return x.id === contactId; }) || contacts[0];
+    var c = randomPick(contacts) || contacts[0];
     var name = (c && c.name) || 'Ta';
     var avatar = (c && c.avatar) || DEFAULT_CONTACT.avatar;
 
-    feedData[contactId].posts.push({
+    var bucket = getCurrentBucket();
+    bucket.posts.push({
       id: genId('post'),
       role: 'ta',
       authorName: name,
@@ -865,8 +861,7 @@
     });
 
     saveData().then(function () {
-      if (currentContactId === contactId &&
-          document.getElementById('pageFeed') &&
+      if (document.getElementById('pageFeed') &&
           document.getElementById('pageFeed').classList.contains('active')) {
         renderList();
       }
@@ -881,7 +876,7 @@
 
     function tick() {
       resolveCurrentContact();
-      maybeAutoPostFor(currentContactId);
+      maybeAutoPost();
       var next = randomInt(TEST_AUTO_POST_MIN_MS, TEST_AUTO_POST_MAX_MS);
       autoPostTimer = setTimeout(tick, next);
     }
@@ -1044,7 +1039,6 @@
     postSubmit.addEventListener('click', function () {
       var text = postText ? postText.value.trim() : '';
       if (!text) { alert('请输入内容'); return; }
-      if (!currentContactId) { alert('请先选择一个联系人'); return; }
 
       var postId = genId('post');
       var bucket = getCurrentBucket();
@@ -1071,8 +1065,8 @@
   }
 
   // ==================== 联系人切换监听 ====================
-   window.addEventListener('storage', function (e) {
-    if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY || e.key === 'my_profile') {
+  window.addEventListener('storage', function (e) {
+    if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY) {
       var pageFeed = document.getElementById('pageFeed');
       if (pageFeed && pageFeed.classList.contains('active')) {
         enterFeed();
@@ -1080,14 +1074,6 @@
     }
   });
 
-  // 同标签页内，role-panel 保存后主动通知
-  window.addEventListener('myProfileChanged', function () {
-    var pageFeed = document.getElementById('pageFeed');
-    if (pageFeed && pageFeed.classList.contains('active')) {
-      enterFeed();
-    }
-  });
-   
   // ==================== 初始化 ====================
   function init() {
     resolveCurrentContact();
