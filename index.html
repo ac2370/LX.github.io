@@ -1454,26 +1454,20 @@
 
   <!-- ==================== 传讯页面 ==================== -->
   <div class="page" id="pageChat">
-    <div class="chat-header">
+    <!-- 顶部一行：返回键（左）＋ 头像昵称（中）＋ 昼夜/视频（右端同排） -->
+    <div class="chat-top-actions" id="chatTopActions">
+      <i class="fa-solid fa-chevron-left chat-back-btn" id="chatBackBtn" title="返回会话列表"></i>
       <div id="chatContactArea" style="display:flex;flex-direction:column;align-items:center;">
         <img class="chat-avatar" id="chatAvatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
         <div class="chat-name" id="chatName">Ta</div>
       </div>
-      <div class="chat-actions">
-        <div class="chat-action-icon" title="电话" id="phoneIcon" style="display:none;"><i class="fa-solid fa-phone"></i></div>
-      </div>
-    </div>
-
-    <!-- 顶部一行：返回键（左）＋ 昼夜/视频（右端同排） -->
-    <div class="chat-top-actions" id="chatTopActions">
-      <i class="fa-solid fa-chevron-left chat-back-btn" id="chatBackBtn" title="返回会话列表"></i>
       <div class="chat-top-right">
         <div class="chat-action-icon chat-top-btn" title="月亮"><i class="fa-solid fa-moon"></i></div>
         <div class="chat-action-icon chat-top-btn" title="视频通话"><i class="fa-solid fa-video"></i></div>
       </div>
     </div>
 
-       <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-messages" id="chatMessages"></div>
 
     <div class="sos-btn" id="sosBtn" style="display: none;" title="急救">
       <i class="fa-solid fa-kit-medical"></i>
