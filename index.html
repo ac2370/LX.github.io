@@ -21,24 +21,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
 
   <!-- 本地样式（全部放在 css/ 目录） -->
-  <link rel="stylesheet" href="./css/theme.css">
-  <link rel="stylesheet" href="./css/home.css">
-  <link rel="stylesheet" href="./css/home-settings.css">
-  <link rel="stylesheet" href="./css/modals.css">
-  <link rel="stylesheet" href="./css/card.css">
-  <link rel="stylesheet" href="./css/chat.css">
-  <link rel="stylesheet" href="./css/chat-home.css">
-  <link rel="stylesheet" href="./css/chat-settings.css">
-  <link rel="stylesheet" href="./css/companion.css">
-  <link rel="stylesheet" href="./css/important-day.css">
-  <link rel="stylesheet" href="./css/mood.css">
-  <link rel="stylesheet" href="./css/envelope.css">
-  <link rel="stylesheet" href="./css/feed.css">
-  <link rel="stylesheet" href="./css/public-cards.css">
-  <link rel="stylesheet" href="./css/stats.css">
-  <link rel="stylesheet" href="./css/dream-survey.css">
+  <link rel="stylesheet" href="./css/theme.css?v=20261005">
+  <link rel="stylesheet" href="./css/home.css?v=20261005">
+  <link rel="stylesheet" href="./css/home-settings.css?v=20261005">
+  <link rel="stylesheet" href="./css/modals.css?v=20261005">
+  <link rel="stylesheet" href="./css/card.css?v=20261005">
+  <link rel="stylesheet" href="./css/chat.css?v=20261005">
+  <link rel="stylesheet" href="./css/chat-home.css?v=20261005">
+  <link rel="stylesheet" href="./css/chat-settings.css?v=20261005">
+  <link rel="stylesheet" href="./css/companion.css?v=20261005">
+  <link rel="stylesheet" href="./css/important-day.css?v=20261005">
+  <link rel="stylesheet" href="./css/mood.css?v=20261005">
+  <link rel="stylesheet" href="./css/envelope.css?v=20261005">
+  <link rel="stylesheet" href="./css/feed.css?v=20261005">
+  <link rel="stylesheet" href="./css/public-cards.css?v=20261005">
+  <link rel="stylesheet" href="./css/stats.css?v=20261005">
+  <link rel="stylesheet" href="./css/dream-survey.css?v=20261005">
   <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./css/archive.css">
+  <link rel="stylesheet" href="./css/archive.css?v=20261005">
 </head>
 <body>
 
@@ -1222,7 +1222,18 @@
         <i class="fa-solid fa-arrow-left"></i>
       </button>
       <span class="mood-topbar-title">心晴手账</span>
-      <div class="mood-topbar-placeholder"></div>
+      <button class="mood-topbar-action" id="moodSwitchBtn" title="切换联系人">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+      </button>
+    </div>
+
+    <!-- 切换联系人弹层 -->
+    <div class="mood-sw-modal" id="moodSwitchModal">
+      <div class="mood-sw-panel">
+        <div class="mood-sw-title">切换联系人</div>
+        <div class="mood-sw-list" id="moodSwitchList"></div>
+        <button class="mood-sw-cancel" id="moodSwitchCancel">取消</button>
+      </div>
     </div>
 
     <!-- 当前角色指示 -->
@@ -1729,45 +1740,45 @@
 
   <!-- ==================== 脚本引入 ==================== -->
   <!-- 1) 依赖其它模块的底层逻辑：先加载 -->
-  <script src="./js/reply.js"></script>
+  <script src="./js/reply.js?v=20261005"></script>
 
   <!-- 2) 全局路由 / 页面切换（挂载 window.showPage 等） -->
-  <script src="./js/router.js"></script>
+  <script src="./js/router.js?v=20261005"></script>
 
   <!-- 3) 音乐播放器（挂载 window.playlist / window.playSong 等） -->
-  <script src="./js/music-player.js"></script>
+  <script src="./js/music-player.js?v=20261005"></script>
 
   <!-- 4) 各功能模块 -->
-  <script src="./js/default-cards-data.js"></script>
-  <script src="./js/card.js"></script>
-  <script src="./js/chat.js"></script>
-  <script src="./js/public-cards.js"></script>
-  <script src="./js/public-cards-panel.js"></script>
-   <script src="./js/reply-settings.js"></script>
-  <script src="./js/proactive.js"></script>
-  <script src="./js/role-panel.js"></script>
-  <script src="./js/home-settings.js"></script>
-  <script src="./js/home-settings-panel.js"></script>
-  <script src="./js/chat-avatars.js"></script>
-  <script src="./js/chat-extras.js"></script>
-  <script src="./js/theme-mode.js"></script>
-  <script src="./js/video-call.js"></script>
-  <script src="./js/group-chat.js"></script>
-  <script src="./js/session-chat.js"></script>
-  <script src="./js/chat-settings-panel.js"></script>
-  <script src="./js/notify-keepalive.js"></script>
+  <script src="./js/default-cards-data.js?v=20261005"></script>
+  <script src="./js/card.js?v=20261005"></script>
+  <script src="./js/chat.js?v=20261005"></script>
+  <script src="./js/public-cards.js?v=20261005"></script>
+  <script src="./js/public-cards-panel.js?v=20261005"></script>
+   <script src="./js/reply-settings.js?v=20261005"></script>
+  <script src="./js/proactive.js?v=20261005"></script>
+  <script src="./js/role-panel.js?v=20261005"></script>
+  <script src="./js/home-settings.js?v=20261005"></script>
+  <script src="./js/home-settings-panel.js?v=20261005"></script>
+  <script src="./js/chat-avatars.js?v=20261005"></script>
+  <script src="./js/chat-extras.js?v=20261005"></script>
+  <script src="./js/theme-mode.js?v=20261005"></script>
+  <script src="./js/video-call.js?v=20261005"></script>
+  <script src="./js/group-chat.js?v=20261005"></script>
+  <script src="./js/session-chat.js?v=20261005"></script>
+  <script src="./js/chat-settings-panel.js?v=20261005"></script>
+  <script src="./js/notify-keepalive.js?v=20261005"></script>
 
   <!-- 5) 陪伴 / 重要日 -->
-  <script src="./js/companion.js"></script>
-  <script src="./js/important-day.js"></script>
-  <script src="./js/mood.js"></script>
-  <script src="./js/features/envelope.js"></script>
-  <script src="./js/feed.js"></script>
-  <script src="./js/features/stats.js"></script>
-  <script src="./js/dream-survey-questions.js"></script>
-  <script src="./js/dream-survey-from-ta.js"></script>
-  <script src="./js/dream-survey-from-me.js"></script>
-  <script src="./js/dream-survey.js"></script>
-  <script src="./js/archive.js"></script>
+  <script src="./js/companion.js?v=20261005"></script>
+  <script src="./js/important-day.js?v=20261005"></script>
+  <script src="./js/mood.js?v=20261005"></script>
+  <script src="./js/features/envelope.js?v=20261005"></script>
+  <script src="./js/feed.js?v=20261005"></script>
+  <script src="./js/features/stats.js?v=20261005"></script>
+  <script src="./js/dream-survey-questions.js?v=20261005"></script>
+  <script src="./js/dream-survey-from-ta.js?v=20261005"></script>
+  <script src="./js/dream-survey-from-me.js?v=20261005"></script>
+  <script src="./js/dream-survey.js?v=20261005"></script>
+  <script src="./js/archive.js?v=20261005"></script>
 </body>
 </html>
