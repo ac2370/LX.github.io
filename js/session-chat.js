@@ -226,11 +226,7 @@
     chatMessages.innerHTML = '';
     var arr = state.buckets[state.currentKey] || [];
     if (arr.length === 0) {
-      var contactName = getCurrentContactName();
-      var welcome = document.createElement('div');
-      welcome.className = 'message-row other system-call-event';
-      welcome.innerHTML = '<div class="call-record-bubble"><i class="fa-solid fa-circle-check"></i> 和「' + escapeHtml(contactName) + '」的对话开始了</div>';
-      chatMessages.appendChild(welcome);
+      // 顶部横条已显示「和『X』的对话开始了」，这里不再重复渲染欢迎气泡
     } else {
       arr.forEach(function (m) {
         var row = buildRow(m);
