@@ -96,7 +96,13 @@
   window.getArchivePick = function (type) {
     var all = [];
     var db = window.cardDatabase || {};
-    if (type && db[type]) all = all.concat(flattenGroups(db[type]));
+    // 地点分类在字卡库里的键是 location（面板叫 place）
+    var keys = [];
+    if (type === 'place') keys = ['location', 'place'];
+    else if (type) keys = [type];
+    keys.forEach(function (k) {
+      if (db[k]) all = all.concat(flattenGroups(db[k]));
+    });
     var dd = window.DEFAULT_CARD_DATA || {};
     if (type && dd[type]) all = all.concat(flattenGroups(dd[type]));
     // 兜底：从整个字卡库（含收纳盒）随机
@@ -148,11 +154,14 @@
   // 给 Ta 档案一次性抽满所有自动字段
   function pickAutoFields() {
     var result = {};
-    // 3 个字段：字卡库
+    // 图片旁四栏（从上往下）：地点 / 心情 / 状态 / 回复
+    // location 栏 ← 字卡库 place（地点）
+    // status 栏   ← 字卡库 mood（心情）
+    // mood 栏     ← 字卡库 status（状态）
+    // desc 栏     ← 回复词库（reply）抽 1~3 条
     result.location = window.getArchivePick ? window.getArchivePick('place') : '';
-    result.status   = window.getArchivePick ? window.getArchivePick('status') : '';
-    result.mood     = window.getArchivePick ? window.getArchivePick('mood') : '';
-    // DESC：从「回复」所有分组抽 1~3 条
+    result.status   = window.getArchivePick ? window.getArchivePick('mood') : '';
+    result.mood     = window.getArchivePick ? window.getArchivePick('status') : '';
     result.desc     = window.getArchiveDesc ? window.getArchiveDesc() : '';
     // 4 个格子：文案库（互不相同）
     var quotes = pickUniqueQuotes(4);
