@@ -327,3 +327,22 @@
   color: #b6c2cd;
   font-size: 12px;
 }
+
+/* ==================== 字卡库公共条 · 暗色模式 ==================== */
+body.theme-dark .public-cards-bar { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark .public-cards-title { color: var(--theme-text); }
+body.theme-dark .public-cards-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
+body.theme-dark .public-cards-section-title { color: var(--theme-text); }
+body.theme-dark .public-cards-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark .public-cards-item-name { color: var(--theme-text); }
+body.theme-dark .public-cards-item-count { color: var(--theme-text-muted); }
+body.theme-dark .builtin-groups-header { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark .builtin-groups-count { color: var(--theme-text-muted); }
+body.theme-dark .builtin-groups-hint { color: var(--theme-text-muted); }
+body.theme-dark .builtin-section-title { color: var(--theme-text); }
+body.theme-dark .builtin-group-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark .builtin-group-name { color: var(--theme-text); }
+body.theme-dark .builtin-group-count { color: var(--theme-text-muted); }
+body.theme-dark .builtin-viewer-modal { background: rgba(10,14,18,0.6); }
+body.theme-dark .builtin-viewer-panel { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark .builtin-viewer-title { color: var(--theme-text); }
