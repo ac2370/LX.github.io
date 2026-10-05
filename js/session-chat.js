@@ -115,6 +115,15 @@
     }
   }
 
+  // 写入指定单聊会话的桶（不改变当前会话/回复目标），若正看着该会话则即时渲染
+  function recordTo(key, kind, content) {
+    if (!key || key.indexOf('c:') !== 0) return false;
+    getBucket(key).push(normalize(kind, content));
+    persist();
+    if (state.currentKey === key) renderCurrent();
+    return true;
+  }
+
   function setReplyTarget(key) {
     state.replyTarget = key || state.currentKey;
   }
@@ -518,6 +527,7 @@
   window.sessionChat = {
     record: record,
     recordReply: recordReply,
+    recordTo: recordTo,
     setReplyTarget: setReplyTarget,
     enterContact: enterContact,
     enterGroup: enterGroup,
