@@ -153,13 +153,8 @@
 
   function resolveCurrentContact() {
     var contacts = loadContacts();
-    var cid = null;
-    try { cid = localStorage.getItem(LS_CURRENT_KEY); } catch (e) {}
-    if (cid && contacts.some(function (c) { return c.id === cid; })) {
-      currentContactId = cid;
-    } else {
-      currentContactId = contacts[0].id;
-    }
+    // 朋友圈不跟随聊天当前联系人：固定第一位联系人（Ta），避免切联系人影响朋友圈署名
+    currentContactId = contacts[0].id;
     currentContact = contacts.find(function (c) { return c.id === currentContactId; }) || contacts[0];
   }
 
@@ -1065,8 +1060,9 @@
   }
 
   // ==================== 联系人切换监听 ====================
+  // 只监听联系人列表变化（新增/删除联系人时刷新）；点击联系人切换聊天不再影响朋友圈
   window.addEventListener('storage', function (e) {
-    if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY) {
+    if (e.key === LS_CONTACTS_KEY) {
       var pageFeed = document.getElementById('pageFeed');
       if (pageFeed && pageFeed.classList.contains('active')) {
         enterFeed();
@@ -1121,12 +1117,17 @@
         picked.push(String(pool[idx]).trim());
       }
       var content = picked.join(' ');
-      if (!feedData[currentContactId]) feedData[currentContactId] = { posts: [] };
-      feedData[currentContactId].posts.push({
+      // 随机选一位联系人作为发帖人（同自动发帖逻辑），发到统一朋友圈
+      var fContacts = loadContacts();
+      var fC = randomPick(fContacts) || fContacts[0];
+      var fName = (fC && fC.name) || 'Ta';
+      var fAvatar = (fC && fC.avatar) || DEFAULT_CONTACT.avatar;
+      var bucket = getCurrentBucket();
+      bucket.posts.push({
         id: genId('post'),
         role: 'ta',
-        authorName: getTaName(),
-        authorAvatar: getTaAvatar(),
+        authorName: fName,
+        authorAvatar: fAvatar,
         content: content,
         ts: Date.now(),
         likes: [],
@@ -1139,7 +1140,7 @@
           renderList();
         }
         showUnreadDot();
-        pushChatSystemMessage(getTaName() + ' 发布了一条朋友圈动态');
+        pushChatSystemMessage(fName + ' 发布了一条朋友圈动态');
       });
     }
   };
