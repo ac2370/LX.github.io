@@ -871,3 +871,42 @@
 .cpa-footer-space {
   height: 20px;
 }
+
+/* ==================== 陪伴页 · 暗色模式 ==================== */
+body.theme-dark #pageCompanion { background: #1a1f26; color: var(--theme-text); }
+body.theme-dark #pageCompanion .companion-topbar-title { color: var(--theme-text); }
+body.theme-dark #pageCompanion .companion-back-btn { background: rgba(38,44,52,0.9); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageCompanion .companion-hero-text { color: var(--theme-text-muted); }
+body.theme-dark #pageCompanion .companion-section-title { color: var(--theme-text-soft); }
+body.theme-dark #pageCompanion .companion-pill { background: rgba(38,44,52,0.85); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageCompanion .companion-pill.active { background: rgba(248,180,200,0.18); border-color: #f8b4c8; color: #f0a4b4; }
+body.theme-dark #pageCompanion .companion-now-playing { color: var(--theme-text-muted); }
+body.theme-dark #pageCompanion .companion-now-playing span { color: #f0a4b4; }
+body.theme-dark #pageCompanion .companion-partner-card { background: rgba(38,44,52,0.85); border-color: var(--theme-card-border); box-shadow: 0 8px 24px rgba(0,0,0,0.35); }
+body.theme-dark #pageCompanion .companion-partner-name { color: var(--theme-text); }
+body.theme-dark #pageCompanion .companion-scene-btn { background: rgba(38,44,52,0.85); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageCompanion .companion-scene-btn i { color: #8fa8bd; }
+body.theme-dark #pageCompanion .companion-scene-btn.active { background: rgba(248,180,200,0.16); border-color: #f8b4c8; color: #f0a4b4; }
+body.theme-dark #pageCompanion .companion-scene-btn.active i { color: #f0a4b4; }
+body.theme-dark #pageCompanion .companion-custom-input { background: rgba(38,44,52,0.85); border-color: var(--theme-card-border); color: var(--theme-text); }
+body.theme-dark #pageCompanion .companion-custom-input::placeholder { color: var(--theme-text-faint); }
+body.theme-dark #pageCompanion .companion-bg-custom-btn { background: rgba(38,44,52,0.9); border-color: var(--theme-card-border); color: #f0a4b4; }
+body.theme-dark #pageCompanion .companion-bg-block span { color: var(--theme-text-soft); background: rgba(38,44,52,0.85); }
+body.theme-dark #pageCompanion .companion-partner-modal { background: rgba(10,14,18,0.6); }
+body.theme-dark #pageCompanion .companion-partner-modal-panel { background: rgba(38,44,52,0.97); border-color: var(--theme-card-border); }
+body.theme-dark #pageCompanion .companion-partner-modal-title { color: var(--theme-text); }
+body.theme-dark #pageCompanion .companion-partner-item { background: rgba(42,48,56,0.8); border-color: var(--theme-card-border); }
+body.theme-dark #pageCompanion .companion-partner-item-name { color: var(--theme-text); }
+body.theme-dark #pageCompanion .companion-partner-modal-cancel { background: rgba(42,48,56,0.9); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageCompanionActive { background: #12161b !important; color: var(--theme-text); }
+body.theme-dark #pageCompanionActive .cpa-back-btn { background: rgba(38,44,52,0.9); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageCompanionActive .cpa-topbar-title { color: var(--theme-text-soft); }
+body.theme-dark #pageCompanionActive .cpa-date { color: var(--theme-text-muted); }
+body.theme-dark #pageCompanionActive .cpa-status-title { color: var(--theme-text); }
+body.theme-dark #pageCompanionActive .cpa-status-sub { color: var(--theme-text-muted); }
+body.theme-dark #pageCompanionActive .cpa-music-pill { background: rgba(38,44,52,0.9); border-color: var(--theme-card-border); color: var(--theme-text-soft); }
+body.theme-dark #pageCompanionActive .cpa-timer-card { background: rgba(38,44,52,0.9); border-color: var(--theme-card-border); }
+body.theme-dark #pageCompanionActive .cpa-timer-label { color: var(--theme-text); }
+body.theme-dark #pageCompanionActive .cpa-timer-value { color: var(--theme-text); }
+body.theme-dark #pageCompanionActive .cpa-focus-bar { background: rgba(90,100,115,0.4); }
+body.theme-dark #pageCompanionActive .cpa-focus-labels { color: var(--theme-text-muted); }
