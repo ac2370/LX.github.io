@@ -809,10 +809,12 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
         toName: toContact ? (toContact.name || 'Ta') : 'Ta'
       });
 
-      // 可选：同步到聊天记录
+      // 可选：同步到聊天记录（写入收件人的单聊会话，不切换当前聊天）
       if (writeSync && writeSync.checked) {
         var text = '【寄出的信】' + content;
-        if (typeof window.addMessage === 'function') {
+        if (toContact && window.sessionChat && typeof window.sessionChat.recordTo === 'function') {
+          try { window.sessionChat.recordTo('c:' + toContact.id, 'self', text); } catch (e) {}
+        } else if (typeof window.addMessage === 'function') {
           try { window.addMessage('self', text); } catch (e) {}
         } else {
           var chatMessages = document.getElementById('chatMessages');
