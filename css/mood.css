@@ -58,6 +58,132 @@
   width: 36px;
   height: 36px;
 }
+.mood-topbar-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #eef1f4;
+  color: #5C7CFA;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.mood-topbar-action:active {
+  background: #f2f6fa;
+  transform: scale(0.94);
+}
+body.theme-dark .mood-topbar-action {
+  background: #2a2f3a;
+  border-color: #3a4150;
+  color: #a9b8ff;
+}
+
+/* ============ 切换联系人弹层 ============ */
+.mood-sw-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.mood-sw-modal.active {
+  display: flex;
+}
+.mood-sw-panel {
+  width: 78%;
+  max-width: 340px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 0 12px 0;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+  animation: moodSwIn 0.18s ease;
+}
+@keyframes moodSwIn {
+  from { opacity: 0; transform: scale(0.94) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+body.theme-dark .mood-sw-panel {
+  background: #232833;
+}
+.mood-sw-title {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f2f5;
+}
+body.theme-dark .mood-sw-title {
+  color: #e6e9f0;
+  border-bottom-color: #343b49;
+}
+.mood-sw-list {
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 6px 14px;
+}
+.mood-sw-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.mood-sw-item:active {
+  background: #f2f6fa;
+}
+.mood-sw-item.active {
+  background: #eef1ff;
+}
+body.theme-dark .mood-sw-item:active { background: #2a303d; }
+body.theme-dark .mood-sw-item.active { background: #333c55; }
+.mood-sw-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #eef1f4;
+}
+.mood-sw-name {
+  flex: 1;
+  font-size: 15px;
+  color: #333;
+  font-weight: 600;
+}
+body.theme-dark .mood-sw-name { color: #e6e9f0; }
+.mood-sw-check {
+  color: #5C7CFA;
+  font-size: 14px;
+}
+body.theme-dark .mood-sw-check { color: #a9b8ff; }
+.mood-sw-cancel {
+  display: block;
+  width: calc(100% - 28px);
+  margin: 8px 14px 0 14px;
+  padding: 10px 0;
+  border: none;
+  border-radius: 12px;
+  background: #f2f4f7;
+  color: #55606b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mood-sw-cancel:active {
+  background: #e6eaf0;
+}
+body.theme-dark .mood-sw-cancel {
+  background: #2a303d;
+  color: #aab4c5;
+}
 
 /* ============ 当前角色指示 ============ */
 .mood-current-contact {
@@ -1239,3 +1365,39 @@
   display: block;
   margin-bottom: 14px;
 }
+
+/* ==================== 心晴手账 · 暗色模式 ==================== */
+body.theme-dark #pageMood { background: var(--theme-page-bg); color: var(--theme-text); }
+body.theme-dark #pageMood .mood-container { background: var(--theme-page-bg); }
+body.theme-dark #pageMood .mood-topbar { background: var(--theme-header-bg); border-bottom-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-back-btn { background: rgba(42,48,56,0.9); color: var(--theme-text-soft); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-topbar-title { color: var(--theme-text); }
+body.theme-dark #pageMood .mood-current-contact { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-current-name { color: var(--theme-text); }
+body.theme-dark #pageMood .mood-view-tabs { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-view-tab { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-view-tab.active { color: var(--accent-color, #6fb1e8); background: rgba(111,177,232,0.12); }
+body.theme-dark #pageMood .mood-body { background: var(--theme-page-bg); }
+body.theme-dark #pageMood .mood-card { background: var(--theme-card-bg); border-color: var(--theme-card-border); color: var(--theme-text); }
+body.theme-dark #pageMood .mood-month-label { color: var(--theme-text); }
+body.theme-dark #pageMood .mood-weekday { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-day { background: rgba(42,48,56,0.6); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-day-num { color: var(--theme-text-soft); }
+body.theme-dark #pageMood .mood-legend { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-legend-item { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-stats-card { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-stats-title { color: var(--theme-text); }
+body.theme-dark #pageMood .mood-stats-ratio-label { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-stats-day-item { background: rgba(42,48,56,0.7); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-stats-day-num { color: var(--theme-text); }
+body.theme-dark #pageMood .mood-stats-day-label { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-stats-dominant-item { background: rgba(42,48,56,0.7); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-stats-dominant-label { color: var(--theme-text-soft); }
+body.theme-dark #pageMood .mood-stats-dominant-who { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-stats-cat-label { color: var(--theme-text-soft); }
+body.theme-dark #pageMood .mood-stats-cat-bar-wrap { background: rgba(90,100,115,0.35); }
+body.theme-dark #pageMood .mood-stats-cat-count { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-stats-empty { color: var(--theme-text-muted); }
+body.theme-dark #pageMood .mood-trash-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
+body.theme-dark #pageMood .mood-trash-head { color: var(--theme-text); }
+body.theme-dark #pageMood .mood-trash-date { color: var(--theme-text-muted); }
