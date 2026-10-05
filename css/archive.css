@@ -158,15 +158,15 @@
 /* intro 模式才需要撑高（给大标题留空间） */
 #cenConfig_stage.cen-intro-mode {
   flex: 1;
-  min-height: 0;
-  justify-content: space-evenly;
+  justify-content: flex-start;
+  padding-top: 80px;
 }
 
-/* play 模式：撑满剩余空间，内容垂直居中（消除底部空白） */
+/* play 模式：内容偏上（顶部留 70px，不居中） */
 #cenConfig_stage.cen-play-mode {
   flex: 1;
-  justify-content: center;
-  padding-top: 10px;
+  justify-content: flex-start;
+  padding-top: 70px;
 }
 
 /* ==================== 雨丝 ==================== */
