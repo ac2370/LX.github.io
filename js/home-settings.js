@@ -198,7 +198,8 @@
       }
       var chatMsgs = document.getElementById('chatMessages');
       if (chatMsgs) {
-        chatMsgs.style.background = current.chatBg ? 'transparent' : '#ffffff';
+        // 设了聊天背景图 → 透明露出背景；未设 → 清空内联，交给 CSS（#f2f4f7）控制
+        chatMsgs.style.background = current.chatBg ? 'transparent' : '';
       }
     }
   }
