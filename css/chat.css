@@ -1375,8 +1375,17 @@ body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
 #pageChat .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: calc(116px + env(safe-area-inset-top, 0px)) 16px 24px 16px;
-  background: #ffffff;
+  padding: calc(142px + env(safe-area-inset-top, 0px)) 16px 24px 16px;
+  background-color: #f2f4f7;
+  /* 白色底图：极淡的浅蓝灰纹理（图2 白底淡花纹质感，不依赖外部图片） */
+  background-image:
+    radial-gradient(ellipse 90px 60px at 18% 22%, rgba(196,214,232,0.14), transparent 70%),
+    radial-gradient(ellipse 110px 70px at 82% 58%, rgba(205,222,238,0.12), transparent 70%),
+    radial-gradient(ellipse 70px 45px at 45% 88%, rgba(188,208,228,0.14), transparent 70%),
+    radial-gradient(circle 2px at 25% 40%, rgba(178,200,222,0.25), transparent 3px),
+    radial-gradient(circle 2px at 60% 20%, rgba(185,205,225,0.22), transparent 3px),
+    radial-gradient(circle 2px at 75% 80%, rgba(178,200,222,0.22), transparent 3px),
+    radial-gradient(circle 2px at 35% 65%, rgba(185,205,225,0.20), transparent 3px);
   scrollbar-width: none;
   -ms-overflow-style: none;
   position: relative;
