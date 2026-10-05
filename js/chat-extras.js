@@ -836,4 +836,29 @@
     getPatPool: getPatPool
   };
 
+  // ==================== 头像下提示横条文字（跟随昵称变化） ====================
+  function updateChatStartBar() {
+    var bar = document.getElementById('chatStartText');
+    if (!bar) return;
+    var nameEl = document.getElementById('chatName');
+    var name = (nameEl && nameEl.textContent.trim()) ? nameEl.textContent.trim() : 'Ta';
+    bar.textContent = '和「' + name + '」的对话开始了';
+  }
+  function bindChatStartBar() {
+    var barEl = document.getElementById('chatStartBar');
+    var nameEl = document.getElementById('chatName');
+    if (!barEl || !nameEl) return;
+    updateChatStartBar();
+    if (window.__chatStartObs) return;
+    window.__chatStartObs = new MutationObserver(updateChatStartBar);
+    window.__chatStartObs.observe(nameEl, { childList: true, characterData: true, subtree: true });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindChatStartBar);
+  } else {
+    bindChatStartBar();
+  }
+  setTimeout(bindChatStartBar, 300);
+  setTimeout(bindChatStartBar, 1000);
+
 })();
