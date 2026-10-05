@@ -977,24 +977,25 @@ body.theme-dark .cen-chime-leaf {
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.6) !important;
 }
 
-/* ==================== 关键修改：intro 模式下也让底部四个格子显示 ==================== */
-/* 只隐藏右侧面板，不隐藏底部四个格子 */
-.cen-intro-mode #cen_right_panel {
-  display: none !important;
-}
-/* 底部四个格子：intro 模式下也显示，淡入出现 */
+/* ==================== 底部四个格子：强制显示（intro 和 play 模式都显示） ==================== */
 #cen_bottom_panels {
   display: flex !important;
-  flex-direction: column;
-  gap: 6px;
-  width: 345px;
-  z-index: 1;
+  flex-direction: column !important;
+  gap: 6px !important;
+  width: 345px !important;
+  z-index: 1 !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
+/* 确保 intro 模式下不隐藏 */
 .cen-intro-mode #cen_bottom_panels {
-  opacity: 0;
-  animation: cenFadeIn 0.8s ease 0.6s forwards;
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
+/* 确保 play 模式下继续显示 */
 .cen-play-mode #cen_bottom_panels {
-  opacity: 1;
-  pointer-events: auto;
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
