@@ -635,3 +635,89 @@
 @keyframes cenSlideFade {
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* ==================== 切换联系人弹层 ==================== */
+.arc-sw-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.arc-sw-modal.active {
+  opacity: 1;
+}
+.arc-sw-panel {
+  width: 280px;
+  max-width: 82vw;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 16px 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  transform: translateY(12px) scale(0.97);
+  transition: transform 0.2s ease;
+}
+.arc-sw-modal.active .arc-sw-panel {
+  transform: translateY(0) scale(1);
+}
+.arc-sw-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin-bottom: 12px;
+}
+.arc-sw-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+.arc-sw-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.arc-sw-item:active {
+  background: #f2f3f5;
+}
+.arc-sw-item.current {
+  background: #fdf0f2;
+}
+.arc-sw-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #f0f0f0;
+}
+.arc-sw-name {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+}
+.arc-sw-check {
+  color: #f67a9b;
+  font-size: 14px;
+}
+.arc-sw-cancel {
+  width: 100%;
+  height: 38px;
+  border: none;
+  border-radius: 12px;
+  background: #f5f6f8;
+  color: #55606b;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.arc-sw-cancel:active {
+  background: #e8eaee;
+}
