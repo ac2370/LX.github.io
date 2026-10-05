@@ -162,8 +162,10 @@
   justify-content: space-evenly;
 }
 
-/* play 模式紧凑 */
+/* play 模式：撑满剩余空间，内容垂直居中（消除底部空白） */
 #cenConfig_stage.cen-play-mode {
+  flex: 1;
+  justify-content: center;
   padding-top: 10px;
 }
 
@@ -789,6 +791,12 @@ body.theme-dark .cen-back-btn { color: rgba(255,255,255,0.5) !important; }
 body.theme-dark .cen-back-btn:hover { color: #ffffff !important; text-shadow: 0 0 8px rgba(255,255,255,0.8) !important; }
 body.theme-dark .cen-click-hint { color: rgba(255,255,255,0.5) !important; }
 body.theme-dark #reset_btn_cen { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.2) !important; }
+body.theme-dark #pageArchive .cen-knot-line {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)) !important;
+}
+body.theme-dark #pageArchive .cen-knot-line path {
+  stroke: rgba(255, 255, 255, 0.5) !important;
+}
 body.theme-dark #reset_btn_cen svg { stroke: #ffffff !important; }
 /* 照片外框 / 背面占位 → 白色半透明 */
 body.theme-dark #cenConfig_stage .hide-in-intro[style*="border"] { border-color: rgba(255,255,255,0.2) !important; box-shadow: 0 0 15px rgba(255,255,255,0.12) !important; }
