@@ -168,10 +168,7 @@
   // ==================== 渲染面板 ====================
   function renderRolePanel() {
     applyCurrentContact();
-
-    var cur = getCurrentContact();
-    var isEditingCur = editingContactId === cur.id;
-    var editAvatar = isEditingCur && editingAvatarData ? editingAvatarData : cur.avatar;
+    loadContacts();
 
     var html = '';
 
@@ -188,23 +185,6 @@
     html += '<input class="rp-edit-name" type="text" value="' + escapeHtml(my.name || '') + '" placeholder="我的昵称..." data-role="my-name">';
     html += '</div>';
     html += '<button class="rp-edit-save" data-action="save-my">保存我的资料</button>';
-    html += '</div>';
-
-    // ---------- 当前角色编辑区 ----------
-    html += '<div class="rp-current-block">';
-    html += '<div class="rp-current-title">当前角色</div>';
-    html += '<div class="rp-edit-row">';
-    html += '<div class="rp-edit-avatar-wrap" data-action="edit-avatar">';
-    html += '<img class="rp-edit-avatar" src="' + escapeHtml(editAvatar || '') + '" alt="">';
-    html += '<div class="rp-edit-avatar-badge"><i class="fa-solid fa-camera"></i></div>';
-    html += '</div>';
-    html += '<input class="rp-edit-name" type="text" value="' + escapeHtml(cur.name) + '" placeholder="输入昵称..." data-role="cur-name">';
-    html += '</div>';
-    html += '<div class="rp-edit-url-row">';
-    html += '<input class="rp-edit-url" type="text" placeholder="或粘贴图片 URL" data-role="cur-url">';
-    html += '<button class="rp-edit-apply-url" data-action="apply-url">应用</button>';
-    html += '</div>';
-    html += '<button class="rp-edit-save" data-action="save-current">保存修改</button>';
     html += '</div>';
 
     // ---------- 所有角色列表 ----------
@@ -309,58 +289,6 @@
           btn.textContent = '已保存 ✓';
           setTimeout(function () { if (btn) btn.textContent = orig; }, 1200);
         }
-      });
-    }
-
-    // ---- 当前角色：头像上传 ----
-    var curAvatarWrap = roleListContainer.querySelector('[data-action="edit-avatar"]');
-    if (curAvatarWrap) {
-      curAvatarWrap.addEventListener('click', function () {
-        pickImage(function (dataUrl) {
-          editingContactId = currentContactId;
-          editingAvatarData = dataUrl;
-          var img = roleListContainer.querySelector('[data-action="edit-avatar"] .rp-edit-avatar');
-          if (img) img.src = dataUrl;
-        });
-      });
-    }
-
-    // ---- 当前角色：URL 应用 ----
-    var curApplyBtn = roleListContainer.querySelector('[data-action="apply-url"]');
-    if (curApplyBtn) {
-      curApplyBtn.addEventListener('click', function () {
-        var urlInput = roleListContainer.querySelector('[data-role="cur-url"]');
-        var url = urlInput ? urlInput.value.trim() : '';
-        if (!url) { alert('请粘贴图片 URL'); return; }
-        editingContactId = currentContactId;
-        editingAvatarData = url;
-        var img = roleListContainer.querySelector('[data-action="edit-avatar"] .rp-edit-avatar');
-        if (img) img.src = url;
-      });
-    }
-
-    // ---- 当前角色：保存 ----
-    var saveCurBtn = roleListContainer.querySelector('[data-action="save-current"]');
-    if (saveCurBtn) {
-      saveCurBtn.addEventListener('click', function () {
-        var nameInput = roleListContainer.querySelector('[data-role="cur-name"]');
-        var newName = nameInput ? nameInput.value.trim() : '';
-        if (!newName) { alert('昵称不能为空'); return; }
-
-        var cur = getCurrentContact();
-        if (!cur) return;
-        cur.name = newName;
-        if (editingContactId === cur.id && editingAvatarData) {
-          cur.avatar = editingAvatarData;
-        }
-        saveContacts();
-
-        applyCurrentContact();
-        broadcastContactChanged();
-
-        editingContactId = null;
-        editingAvatarData = null;
-        renderRolePanel();
       });
     }
 
