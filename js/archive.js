@@ -735,13 +735,11 @@
 
   // ==================== 初始化 ====================
   function init() {
-    // 首次进入：默认查看当前聊天联系人
+    // 首次进入：默认查看第一个联系人（不跟随聊天当前联系人，与点击联系人解耦）
     try {
       if (!localStorage.getItem(VIEW_KEY)) {
         var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-        var chatId = localStorage.getItem('my_current_contact');
-        var valid = chatId && Array.isArray(contacts) && contacts.some(function (c) { return c.id === chatId; });
-        localStorage.setItem(VIEW_KEY, valid ? chatId : (Array.isArray(contacts) && contacts.length ? contacts[0].id : ''));
+        localStorage.setItem(VIEW_KEY, Array.isArray(contacts) && contacts.length ? contacts[0].id : '');
       }
     } catch (e) {}
     bindEvents();
