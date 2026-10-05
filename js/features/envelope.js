@@ -53,6 +53,8 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
   var writeSend    = document.getElementById('envWriteSend');
   var writeText    = document.getElementById('envWriteText');
   var writeSync    = document.getElementById('envWriteSyncChat');
+  var writeToWrap  = document.getElementById('envWriteToList');
+  var writeToId    = null;   // 当前选中的收件人 id
 
   // 阅读弹层
   var readModal  = document.getElementById('envReadModal');
@@ -148,7 +150,7 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
   }
 
   // 从 home settings 或 chat 里读名字（尽量兼容）
-   function getSettingsNames() {
+  function getSettingsNames() {
     var partnerName = 'Ta';
     var myName = '我';
 
@@ -162,28 +164,16 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       }
     } catch (e) {}
 
-    // 2) 我的名字：优先 my_profile.name
-    var gotMyName = false;
+    // 2) 我的名字：从 home_custom_images 或类似键读（兼容常见字段）
     try {
-      var rawP = localStorage.getItem('my_profile');
-      if (rawP) {
-        var p = JSON.parse(rawP);
-        if (p && p.name) { myName = p.name; gotMyName = true; }
+      var raw = localStorage.getItem('home_custom_images');
+      if (raw) {
+        var data = JSON.parse(raw);
+        if (data && data.myName) myName = data.myName;
       }
     } catch (e) {}
 
-    // 3) 回退：home_custom_images.myName
-    if (!gotMyName) {
-      try {
-        var raw = localStorage.getItem('home_custom_images');
-        if (raw) {
-          var data = JSON.parse(raw);
-          if (data && data.myName) myName = data.myName;
-        }
-      } catch (e) {}
-    }
-
-    // 4) 如果外部有 settings 对象（Milk 风格），优先用它
+    // 3) 如果外部有 settings 对象（Milk 风格），优先用它
     if (window.settings && typeof window.settings === 'object') {
       if (window.settings.partnerName) partnerName = window.settings.partnerName;
       if (window.settings.myName)      myName      = window.settings.myName;
@@ -322,6 +312,7 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       }
       html += '<div class="env-card" data-id="' + escapeHtml(item.id) + '" data-type="sent">' +
         '<div class="env-card-date">寄出 · ' + formatDate(item.sentTime) + '</div>' +
+        (item.toName ? '<div class="env-card-to">寄给 ' + escapeHtml(item.toName) + '</div>' : '') +
         '<div class="env-card-text">' + escapeHtml(truncate(item.content, PREVIEW_LEN)) + '</div>' +
         '<div class="env-card-foot">' +
           statusHtml +
@@ -434,7 +425,11 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
     }
 
     var names = getSettingsNames();
-    var salutationName = (type === 'sent') ? names.partnerName : names.myName;
+    // 寄出的信：称呼收件人（优先信件里存的 toName，兼容旧信件回退当前聊天联系人）
+    // 收到的信：称呼我；落款用回信人（fromName，回退对方名字）
+    var salutationName = (type === 'sent')
+      ? (item.toName || names.partnerName)
+      : names.myName;
 
     if (readTitle) readTitle.textContent = (type === 'sent') ? '寄出的信' : '收到的信';
 
@@ -465,7 +460,9 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
     html += '<div class="env-read-content" id="envReadContent">' + escapeHtml(item.content) + '</div>';
 
     // 落款 + 日期
-    var signName = (type === 'sent') ? names.myName : names.partnerName;
+    var signName = (type === 'sent')
+      ? names.myName
+      : (item.fromName || names.partnerName);
     html += '<div class="env-read-signature">—— ' + escapeHtml(signName) + '</div>';
     var ts = (type === 'sent') ? item.sentTime : item.receivedTime;
     html += '<div class="env-read-date">' + formatDate(ts) + '</div>';
@@ -589,9 +586,56 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
   }
 
   // ==================== 写信 / 寄出 ====================
+  function loadContacts() {
+    try {
+      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+      return Array.isArray(contacts) ? contacts : [];
+    } catch (e) { return []; }
+  }
+
+  // 渲染写信弹层的收件人选择（胶囊列表）
+  function renderWriteTo() {
+    if (!writeToWrap) return;
+    var contacts = loadContacts();
+    if (contacts.length === 0) {
+      writeToWrap.innerHTML = '<span class="env-write-to-item active">Ta</span>';
+      writeToId = null;
+      return;
+    }
+    // 默认选中：当前聊天联系人；没有则第一个
+    var chatId = null;
+    try { chatId = localStorage.getItem('my_current_contact'); } catch (e) {}
+    var validChat = contacts.some(function (c) { return c.id === chatId; });
+    if (!validChat) chatId = null;
+    var targetId = writeToId && contacts.some(function (c) { return c.id === writeToId; })
+      ? writeToId
+      : (chatId || contacts[0].id);
+    writeToId = targetId;
+
+    var html = '';
+    contacts.forEach(function (c) {
+      var active = c.id === targetId ? ' active' : '';
+      var avatar = c.avatar
+        ? '<img src="' + escapeHtml(c.avatar) + '" alt="">'
+        : '';
+      html += '<span class="env-write-to-item' + active + '" data-to="' + escapeHtml(c.id) + '">' +
+        avatar + escapeHtml(c.name || 'Ta') + '</span>';
+    });
+    writeToWrap.innerHTML = html;
+    writeToWrap.querySelectorAll('.env-write-to-item').forEach(function (el) {
+      el.addEventListener('click', function () {
+        writeToId = el.getAttribute('data-to');
+        writeToWrap.querySelectorAll('.env-write-to-item').forEach(function (x) {
+          x.classList.toggle('active', x === el);
+        });
+      });
+    });
+  }
+
   function openWriteModal() {
     if (writeText) writeText.value = '';
     if (writeSync) writeSync.checked = false;
+    renderWriteTo();
     if (writeModal) writeModal.classList.add('active');
     setTimeout(function () { if (writeText) writeText.focus(); }, 100);
   }
@@ -656,7 +700,8 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
           originalContent: item.content,
           content: generateReplyContent(),
           receivedTime: now,
-          isNew: true
+          isNew: true,
+          fromName: item.toName || null   // 谁寄的就由谁回信
         };
         envelopeData.inbox.push(reply);
         newMails.push(reply);
@@ -738,6 +783,19 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
         return;
       }
 
+      // 收件人：写信弹层选择的联系人（未选则当前聊天联系人）
+      var contacts = loadContacts();
+      var toContact = null;
+      if (writeToId) {
+        toContact = contacts.find(function (c) { return c.id === writeToId; }) || null;
+      }
+      if (!toContact) {
+        try {
+          var chatId = localStorage.getItem('my_current_contact');
+          toContact = contacts.find(function (c) { return c.id === chatId; }) || contacts[0] || null;
+        } catch (e) {}
+      }
+
       var now = Date.now();
      var replyTime = now + randomInt(10 * 60 * 60 * 1000, 24 * 60 * 60 * 1000);
 
@@ -746,7 +804,9 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
         content: content,
         sentTime: now,
         replyTime: replyTime,
-        status: 'pending'
+        status: 'pending',
+        toId: toContact ? toContact.id : null,
+        toName: toContact ? (toContact.name || 'Ta') : 'Ta'
       });
 
       // 可选：同步到聊天记录
@@ -786,16 +846,6 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       });
     });
   }
-
-  // ==================== 监听 my_profile 变化 ====================
-  // 同标签页内，role-panel 保存后主动通知
-  window.addEventListener('myProfileChanged', function () {
-    // 重新渲染寄出箱 / 收件箱，让新名字生效
-    if (dataReady) {
-      renderSent();
-      renderInbox();
-    }
-  });
 
   // ==================== 初始化 ====================
   function init() {
