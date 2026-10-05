@@ -24,10 +24,10 @@
   <link rel="stylesheet" href="./css/theme.css">
   <link rel="stylesheet" href="./css/home.css">
   <link rel="stylesheet" href="./css/home-settings.css">
-  <link rel="stylesheet" href="./css/chat-header-blur.css">
   <link rel="stylesheet" href="./css/modals.css">
   <link rel="stylesheet" href="./css/card.css">
   <link rel="stylesheet" href="./css/chat.css">
+  <link rel="stylesheet" href="./css/chat-home.css">
   <link rel="stylesheet" href="./css/chat-settings.css">
   <link rel="stylesheet" href="./css/companion.css">
   <link rel="stylesheet" href="./css/important-day.css">
@@ -51,7 +51,7 @@
       <div class="px-5 pt-4 pb-1 flex-shrink-0">
         <div class="header-card flex flex-col items-center justify-center text-center" id="headerCard">
           <div class="glass-avatar p-0.5 w-12 h-12 flex items-center justify-center flex-shrink-0">
-            <img id="avatarImg" src="" alt="头像" class="w-full h-full object-cover rounded-full border border-white/80" style="background:#e8edf2;">
+            <img id="avatarImg" src="https://picsum.photos/100/100?random=1" alt="头像" class="w-full h-full object-cover rounded-full border border-white/80">
           </div>
           <div class="flex flex-col items-center justify-center mt-1">
             <h1 class="text-lg font-bold text-[#333] leading-tight tracking-wide">阿晏</h1>
@@ -68,14 +68,14 @@
 
         <div class="mt-3 flex justify-center">
           <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
-           <div class="photo-scroll-item">
-  <img id="photo1" src="" alt="展示图1" class="w-full h-full object-cover" style="background:#f8fafc;">
-</div>
-<div class="photo-scroll-item">
-  <img id="photo2" src="" alt="展示图2" class="w-full h-full object-cover" style="background:#f1f5f9;">
-</div>
-<div class="photo-scroll-item">
-  <img id="photo3" src="" alt="展示图3" class="w-full h-full object-cover" style="background:#e8edf2;">
+            <div class="photo-scroll-item">
+              <img id="photo1" src="https://picsum.photos/200/200?random=2" alt="展示图1" class="w-full h-full object-cover">
+            </div>
+            <div class="photo-scroll-item">
+              <img id="photo2" src="https://picsum.photos/200/200?random=3" alt="展示图2" class="w-full h-full object-cover">
+            </div>
+            <div class="photo-scroll-item">
+              <img id="photo3" src="https://picsum.photos/200/200?random=4" alt="展示图3" class="w-full h-full object-cover">
             </div>
           </div>
         </div>
@@ -214,12 +214,11 @@
 
       <!-- 回复 -->
       <div class="cat-panel active" id="panel-reply">
-      <div class="card-action-row">
-  <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
-  <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
-  <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
-  <input type="file" id="cardImportFileInput" accept=".json,application/json" style="display:none;">
-</div>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
         <div class="card-dedup-row">
           <div class="card-dedup-left" id="dedupToggle">
             <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
@@ -232,10 +231,11 @@
           <select class="card-group-select" id="groupSelect">
             <option>亲爱的的回复 · 0 条</option>
           </select>
-        <div class="card-group-buttons">
-  <button class="card-group-btn" id="btnNewGroup">新建分组</button>
-  <button class="card-group-btn" id="btnRenameGroup">重命名</button>
-</div>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="btnNewGroup">新建分组</button>
+            <button class="card-group-btn" id="btnRenameGroup">重命名</button>
+            <button class="card-group-btn" id="btnOrganizeGroup">整理</button>
+          </div>
           <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
         </div>
         <div class="card-list" id="cardList"></div>
@@ -247,19 +247,21 @@
       </div>
 
     <div class="cat-panel" id="panel-pat">
- <div class="card-action-row">
-  <button class="card-action-btn" id="patExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
-  <button class="card-action-btn" id="patAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
-</div>
+  <div class="card-action-row">
+    <button class="card-action-btn" id="patImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+    <button class="card-action-btn" id="patExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+    <button class="card-action-btn" id="patAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+  </div>
   <div class="card-group-section">
     <div class="card-group-label">拍一拍分组</div>
     <select class="card-group-select" id="patGroupSelect">
       <option>默认分组 · 0 条</option>
     </select>
     <div class="card-group-buttons">
-  <button class="card-group-btn" id="patNewGroupBtn">新建分组</button>
-  <button class="card-group-btn" id="patRenameGroupBtn">重命名</button>
-</div>
+      <button class="card-group-btn" id="patNewGroupBtn">新建分组</button>
+      <button class="card-group-btn" id="patRenameGroupBtn">重命名</button>
+      <button class="card-group-btn" id="patOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+    </div>
     <input type="text" class="card-search-input" id="patSearchInput" placeholder="找一句拍一拍...">
   </div>
   <div class="card-list" id="patList"></div>
@@ -271,19 +273,21 @@
 
       <!-- 地点 -->
       <div class="cat-panel" id="panel-place">
-       <div class="card-action-row">
-  <button class="card-action-btn" id="placeExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
-  <button class="card-action-btn" id="placeAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
-</div>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="placeImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="placeExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="placeAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
         <div class="card-group-section">
           <div class="card-group-label">地点分组</div>
           <select class="card-group-select" id="placeGroupSelect">
             <option>默认分组 · 0 条</option>
           </select>
-         <div class="card-group-buttons">
-  <button class="card-group-btn" id="placeNewGroupBtn">新建分组</button>
-  <button class="card-group-btn" id="placeRenameGroupBtn">重命名</button>
-</div>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="placeNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="placeRenameGroupBtn">重命名</button>
+            <button class="card-group-btn" id="placeOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          </div>
           <input type="text" class="card-search-input" id="placeSearchInput" placeholder="找一个熟悉的地方...">
         </div>
         <div class="card-list" id="placeList"></div>
@@ -295,19 +299,21 @@
 
       <!-- 心情 -->
       <div class="cat-panel" id="panel-mood">
-       <div class="card-action-row">
-  <button class="card-action-btn" id="moodExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
-  <button class="card-action-btn" id="moodAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
-</div>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="moodImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="moodExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="moodAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
         <div class="card-group-section">
           <div class="card-group-label">心情分组</div>
           <select class="card-group-select" id="moodGroupSelect">
             <option>默认分组 · 0 条</option>
           </select>
-        <div class="card-group-buttons">
-  <button class="card-group-btn" id="moodNewGroupBtn">新建分组</button>
-  <button class="card-group-btn" id="moodRenameGroupBtn">重命名</button>
-</div>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="moodNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="moodRenameGroupBtn">重命名</button>
+            <button class="card-group-btn" id="moodOrganizeBtn"><i class="fa-solid fa-broom"></i>整理</button>
+          </div>
           <input type="text" class="card-search-input" id="moodSearchInput" placeholder="找一句话、一种心情...">
         </div>
         <div class="card-list" id="moodList"></div>
@@ -319,11 +325,13 @@
 
       <!-- 表情包 -->
       <div class="cat-panel" id="panel-emoji">
-       <div class="card-action-row">
-  <button class="card-action-btn" id="emojiAddLinkBtn"><i class="fa-solid fa-plus"></i>添加链接</button>
-  <button class="card-action-btn" id="emojiUploadBtn"><i class="fa-solid fa-upload"></i>上传图片</button>
-  <input type="file" id="emojiFileInput" class="hidden-file-input" accept="image/*" multiple>
-</div>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="emojiImportLinkBtn"><i class="fa-solid fa-link"></i>导入链接</button>
+          <button class="card-action-btn" id="emojiExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="emojiAddLinkBtn"><i class="fa-solid fa-plus"></i>添加链接</button>
+          <button class="card-action-btn" id="emojiUploadBtn"><i class="fa-solid fa-upload"></i>上传图片</button>
+          <input type="file" id="emojiFileInput" class="hidden-file-input" accept="image/*" multiple>
+        </div>
         <div class="card-group-section">
           <input type="text" class="card-search-input" id="emojiSearchInput" placeholder="搜索图片名称">
         </div>
@@ -333,6 +341,9 @@
             全部分组 <i class="fa-solid fa-chevron-down" style="font-size:9px;margin-left:2px;"></i>
           </button>
         </div>
+        <button class="card-action-btn" id="emojiOrganizeBtn" style="width:100%;margin-bottom:12px;">
+          <i class="fa-solid fa-broom"></i>整理图片
+        </button>
         <div class="emoji-grid" id="emojiGrid"></div>
         <div class="emoji-footer-hint" id="emojiFooterHint">他的表情包 · 随机主动发送已开启 &gt;</div>
         <div class="emoji-footer-sub" id="emojiFooterSub">这里还没有图片，试试上传图片、添加链接或换一个搜索词。</div>
@@ -341,13 +352,22 @@
 
       <!-- 状态 -->
       <div class="cat-panel" id="panel-status">
-       <div class="card-action-row">
-  <button class="card-action-btn" id="statusExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
-  <button class="card-action-btn" id="statusAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
-</div>
-      <div class="card-group-section">
-  <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
-</div>
+        <div class="card-action-row">
+          <button class="card-action-btn" id="statusImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="statusExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="statusAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
+        <div class="card-group-section">
+          <div class="card-group-label">状态分组</div>
+          <select class="card-group-select" id="statusGroupSelect">
+            <option>默认状态 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="statusNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="statusOrganizeBtn">整理</button>
+          </div>
+          <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
+        </div>
         <div class="card-list" id="statusList"></div>
         <div class="card-list-placeholder" id="statusPlaceholder">
           <i class="fa-regular fa-circle-check"></i>
@@ -1388,6 +1408,28 @@
   </div>
 </div>
   
+  <!-- ==================== 传讯会话选择页（联系人 / 群聊） ==================== -->
+  <div class="page" id="pageChatHome">
+    <div class="chat-home-header">
+      <i class="fa-solid fa-chevron-left chat-home-back" id="chatHomeBackBtn" title="返回主页"></i>
+      <span class="chat-home-title">传讯</span>
+      <div class="chat-home-actions">
+        <i class="fa-solid fa-users chat-home-action" id="chatHomeGroupBtn" title="群聊管理"></i>
+        <i class="fa-solid fa-plus chat-home-action" id="chatHomeAddBtn" title="添加联系人"></i>
+      </div>
+    </div>
+    <div class="chat-home-tabs">
+      <button class="chat-home-tab active" id="chatHomeTabContacts">联系人</button>
+      <button class="chat-home-tab" id="chatHomeTabGroups">群聊</button>
+    </div>
+    <div class="chat-home-list" id="chatHomeContacts"></div>
+    <div class="chat-home-list" id="chatHomeGroups" style="display:none;"></div>
+    <div class="chat-home-empty" id="chatHomeEmpty" style="display:none;">
+      <i class="fa-regular fa-comment-dots"></i>
+      <p id="chatHomeEmptyText">还没有联系人 · 点右上角 ＋ 添加</p>
+    </div>
+  </div>
+
   <!-- ==================== 传讯页面 ==================== -->
   <div class="page" id="pageChat">
     <div class="chat-header">
@@ -1396,10 +1438,16 @@
         <div class="chat-name" id="chatName">Ta</div>
       </div>
       <div class="chat-actions">
-        <div class="chat-action-icon" title="月亮"><i class="fa-solid fa-moon"></i></div>
         <div class="chat-action-icon" title="电话" id="phoneIcon" style="display:none;"><i class="fa-solid fa-phone"></i></div>
-        <div class="chat-action-icon" title="视频通话"><i class="fa-solid fa-video"></i></div>
-        <div class="chat-action-icon" title="存钱罐" id="piggyIcon"><i class="fa-solid fa-piggy-bank"></i></div>
+      </div>
+    </div>
+
+    <!-- 顶部一行：返回键（左）＋ 昼夜/视频（右端同排） -->
+    <div class="chat-top-actions" id="chatTopActions">
+      <i class="fa-solid fa-chevron-left chat-back-btn" id="chatBackBtn" title="返回会话列表"></i>
+      <div class="chat-top-right">
+        <div class="chat-action-icon chat-top-btn" title="月亮"><i class="fa-solid fa-moon"></i></div>
+        <div class="chat-action-icon chat-top-btn" title="视频通话"><i class="fa-solid fa-video"></i></div>
       </div>
     </div>
 
@@ -1696,15 +1744,13 @@
   <script src="./js/role-panel.js"></script>
   <script src="./js/home-settings.js"></script>
   <script src="./js/home-settings-panel.js"></script>
-  <script src="./js/chat-header-blur.js"></script>
-  <script src="./js/piggy-bank.js"></script>
   <script src="./js/chat-avatars.js"></script>
   <script src="./js/chat-extras.js"></script>
   <script src="./js/theme-mode.js"></script>
   <script src="./js/video-call.js"></script>
   <script src="./js/group-chat.js"></script>
-  <script src=
-    "./js/chat-settings-panel.js"></script>
+  <script src="./js/session-chat.js"></script>
+  <script src="./js/chat-settings-panel.js"></script>
   <script src="./js/notify-keepalive.js"></script>
 
   <!-- 5) 陪伴 / 重要日 -->
