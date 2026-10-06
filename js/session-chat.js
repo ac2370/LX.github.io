@@ -412,9 +412,22 @@
     }
     if (!Array.isArray(groups)) groups = [];
 
+    // 读联系人，用于把 memberIds 解析成有效人数
+    var contacts = [];
+    try { contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]'); } catch (e) {}
+    if (!Array.isArray(contacts)) contacts = [];
+    var validIds = {};
+    contacts.forEach(function (c) { if (c && c.id) validIds[c.id] = true; });
+
     var html = '';
     groups.forEach(function (g) {
-      var memberCount = (g.members || []).length;
+      // 新结构用 memberIds（过滤已删联系人），旧结构兼容 members
+      var memberCount = 0;
+      if (Array.isArray(g.memberIds)) {
+        memberCount = g.memberIds.filter(function (cid) { return validIds[cid]; }).length;
+      } else if (Array.isArray(g.members)) {
+        memberCount = g.members.length;
+      }
       html +=
         '<div class="chat-home-item" data-gid="' + escapeHtml(g.id) + '">' +
         '  <img class="chat-home-item-avatar" src="' + escapeHtml(g.avatar || '') + '" alt="">' +
