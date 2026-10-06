@@ -242,7 +242,7 @@ body.theme-dark #pageChat .chat-avatar {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
 }
 body.theme-dark #pageChat .chat-messages {
-  background: var(--theme-chat-bg) !important;
+  background-color: var(--theme-chat-bg) !important;
 }
 #pageChat .chat-back-btn:active,
 #pageChat .chat-top-btn:active {
