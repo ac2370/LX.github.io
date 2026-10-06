@@ -39,8 +39,6 @@
     permissionGranted: false
   };
 
-  var silentLoopNodes = null;
-
   var contactCardsMap = {};
   var currentContactId = null;
 
@@ -146,7 +144,7 @@
     loadValue(STORE_KEY_NOTIFY_GRANTED, function (v) { if (typeof v === 'boolean') notifyState.permissionGranted = v; done(); });
   }
 
-   // ==================== 静音循环（真实音频 · iOS 兼容） ====================
+  // ==================== 静音循环（真实音频 · iOS 兼容） ====================
   var silentAudioEl = null;
 
   function startSilentLoop() {
@@ -157,39 +155,62 @@
       if (!silentAudioEl) {
         silentAudioEl = new Audio('./assets/silence.m4a');
         silentAudioEl.loop = true;
-        silentAudioEl.volume = 0.1;       // 稍微大一点，iOS 才会认可
+        silentAudioEl.volume = 0.1;
         silentAudioEl.preload = 'auto';
         silentAudioEl.setAttribute('playsinline', '');
         silentAudioEl.setAttribute('webkit-playsinline', '');
+
+        // 【兜底 1】自然播完 → 手动重播（解决 loop 在部分浏览器失效）
+        silentAudioEl.addEventListener('ended', function () {
+          try {
+            silentAudioEl.currentTime = 0;
+            var p = silentAudioEl.play();
+            if (p && typeof p.catch === 'function') p.catch(function () {});
+          } catch (e) {}
+        });
+
+        // 【兜底 2】意外暂停 → 自动恢复（仅静音循环开启时）
+        silentAudioEl.addEventListener('pause', function () {
+          if (!notifyState || !notifyState.silentLoop) return;
+          setTimeout(function () {
+            if (notifyState && notifyState.silentLoop && silentAudioEl && silentAudioEl.paused) {
+              try {
+                silentAudioEl.currentTime = 0;
+                silentAudioEl.play().catch(function () {});
+              } catch (e) {}
+            }
+          }, 300);
+        });
       }
 
       silentAudioEl.onplay = function () {
-  console.log('[静音循环] 音频已开始播放');
-};
-silentAudioEl.onerror = function (e) {
-  console.warn('[静音循环] 音频加载/播放错误', e);
-};
-silentAudioEl.onpause = function () {
-  console.log('[静音循环] 音频已暂停');
-};
+        console.log('[静音循环] 音频已开始播放');
+      };
+      silentAudioEl.onerror = function (e) {
+        console.warn('[静音循环] 音频加载/播放错误', e);
+      };
+      silentAudioEl.onpause = function () {
+        console.log('[静音循环] 音频已暂停');
+      };
 
-              // 设置媒体会话（让 iOS 控制中心显示图标 + 名字）
-        if ('mediaSession' in navigator) {
-          try {
-            navigator.mediaSession.metadata = new MediaMetadata({
-              title: '应许之地',
-              artist: '后台保活中',
-              album: 'LX.github.io',
-              artwork: [
-                { src: './icon.png', sizes: '192x192', type: 'image/png' },
-                { src: './icon.png', sizes: '512x512', type: 'image/png' }
-              ]
-            });
-          } catch (e) {
-            console.warn('[静音循环] MediaSession 设置失败', e);
-          }
+      // 设置媒体会话（让 iOS 控制中心显示图标 + 名字）
+      if ('mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: '应许之地',
+            artist: '后台保活中',
+            album: 'LX.github.io',
+            artwork: [
+              { src: './icon.png', sizes: '192x192', type: 'image/png' },
+              { src: './icon.png', sizes: '512x512', type: 'image/png' }
+            ]
+          });
+        } catch (e) {
+          console.warn('[静音循环] MediaSession 设置失败', e);
         }
+      }
 
+      silentAudioEl.loop = true;   // 每次播放前重新确保
       var p = silentAudioEl.play();
       if (p && typeof p.catch === 'function') {
         p.catch(function (err) {
@@ -213,7 +234,8 @@ silentAudioEl.onpause = function () {
     } catch (e) {
       console.warn('[静音循环] 启动失败:', e);
       return false;
-   }
+    }
+  }
 
   function stopSilentLoop() {
     if (!silentAudioEl) return;
@@ -221,21 +243,6 @@ silentAudioEl.onpause = function () {
       silentAudioEl.pause();
       silentAudioEl.currentTime = 0;
     } catch (e) {}
-    console.log('[静音循环] 已关闭');
-  }
-  }
-
-  function stopSilentLoop() {
-    if (!silentLoopNodes) return;
-    try {
-      silentLoopNodes.oscillator.stop();
-      silentLoopNodes.oscillator.disconnect();
-      silentLoopNodes.gainNode.disconnect();
-      if (silentLoopNodes.ctx && silentLoopNodes.ctx.state !== 'closed') {
-        silentLoopNodes.ctx.close().catch(function () {});
-      }
-    } catch (e) {}
-    silentLoopNodes = null;
     console.log('[静音循环] 已关闭');
   }
 
@@ -355,7 +362,6 @@ silentAudioEl.onpause = function () {
       '#chatSettingsPanel .cs-css-apply { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#chatSettingsPanel .cs-font-url-apply { background: ' + colorDark + ' !important; }',
       '.home-settings-btn i, .floating-settings i { color: ' + color + ' !important; }',
-      // ===== 全局主题色扩展（档案 / 朋友圈 / 信箱 / 陪伴 / 问卷 / 心情 / 词云） =====
       '#pageEnvelope .env-tab.active { color: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#pageEnvelope .env-write-btn { background: ' + color + ' !important; border-color: ' + color + ' !important; }',
       '#pageEnvelope .env-card-to { color: ' + color + ' !important; background: ' + colorLight + ' !important; }',
