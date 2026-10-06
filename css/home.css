@@ -138,14 +138,14 @@ body {
   box-shadow: 0 6px 16px rgba(0, 20, 30, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.7);
   padding: 16px 16px 26px;
-  height: min(280px, 26vh);
-  min-height: min(280px, 26vh);
+  height: min(200px, 20vh);
+  min-height: min(200px, 20vh);
 }
 /* 桌面/平板视口：头图适中，不撑满 */
 @media (min-width: 768px) {
   .header-card {
-    height: min(230px, 40vh);
-    min-height: min(230px, 40vh);
+    height: min(180px, 22vh);
+    min-height: min(180px, 22vh);
   }
 }
 .header-card::before {
