@@ -1,10 +1,16 @@
 /**
  * 群聊模式（独立模块）
- * - 新建群聊：自定义群名、添加多个成员（名字 + 头像）
- * - 切换群聊：顶部标题显示群名，聊天区样式区分
+ * - 新建群聊：从「已添加联系人」中多选成员（不再手填）
+ * - 群成员只存联系人 id，显示时实时从 my_contacts 查名字/头像
+ * - 联系人被删除 → 自动从所有群成员中移除
  * - 群聊中发送消息：多个成员随机回复
  * - 使用 localforage 持久化
- * - 完全独立，不影响任何现有逻辑
+ *
+ * 本次改造：
+ * - 成员从手填改为「从 my_contacts 勾选」
+ * - 群数据结构：memberIds: [contactId, ...]
+ * - 旧结构（成员是对象）初始化时清空
+ * - 退出群聊恢复顶栏改用 sessionChat 的当前会话
  */
 
 (function () {
@@ -17,12 +23,14 @@
 
   // ==================== 存储 ====================
   var STORE_KEY = 'group_chat_data';
+  var LS_CONTACTS_KEY = 'my_contacts';
 
   // ==================== 状态 ====================
   var state = {
-    groups: [],            // [{ id, name, avatar, members: [{id, name, avatar}], messages: [] }]
+    groups: [],            // [{ id, name, avatar, memberIds: [cid], messages: [] }]
     currentGroupId: null,  // 当前群聊 id，null 表示普通聊天
-    panel: null            // 群聊设置模态框
+    panel: null,           // 群聊设置模态框
+    pendingMemberIds: []   // 新建群时暂存的已选成员 id
   };
 
   // ==================== 持久化 ====================
@@ -38,12 +46,31 @@
     }
   }
 
+  // 判断群结构是否为旧结构（成员是对象数组而非 id 数组）
+  function isLegacyGroup(g) {
+    if (!g) return false;
+    if (!Array.isArray(g.members)) return false;
+    // 旧结构：members[0] 是对象（有 name/avatar 字段）
+    return typeof g.members[0] === 'object';
+  }
+
   function load(callback) {
     function apply(d) {
+      var needRewrite = false;
       if (d && typeof d === 'object') {
         state.groups = Array.isArray(d.groups) ? d.groups : [];
         state.currentGroupId = d.currentGroupId || null;
+
+        // 【3C】清空旧结构群聊：只要有任何一个是旧结构，全部清空
+        var hasLegacy = state.groups.some(isLegacyGroup);
+        if (hasLegacy) {
+          state.groups = [];
+          state.currentGroupId = null;
+          needRewrite = true;
+          console.log('[group-chat] 检测到旧结构群聊，已按约定清空');
+        }
       }
+      if (needRewrite) persist();
       if (callback) callback();
     }
     if (typeof localforage !== 'undefined') {
@@ -54,6 +81,53 @@
         apply(raw ? JSON.parse(raw) : null);
       } catch (e) { apply(null); }
     }
+  }
+
+  // ==================== 联系人读取 ====================
+  function loadContacts() {
+    try {
+      var arr = JSON.parse(localStorage.getItem(LS_CONTACTS_KEY) || '[]');
+      if (Array.isArray(arr)) return arr.filter(function (c) { return c && c.id; });
+    } catch (e) {}
+    return [];
+  }
+
+  function getContactById(id) {
+    if (!id) return null;
+    var contacts = loadContacts();
+    return contacts.find(function (c) { return c.id === id; }) || null;
+  }
+
+  // 群成员 id 列表 → 联系人对象列表（查不到的丢弃）
+  function resolveMembers(group) {
+    if (!group || !Array.isArray(group.memberIds)) return [];
+    var contacts = loadContacts();
+    var map = {};
+    contacts.forEach(function (c) { map[c.id] = c; });
+    var result = [];
+    group.memberIds.forEach(function (cid) {
+      if (map[cid]) result.push(map[cid]);
+    });
+    return result;
+  }
+
+  // 【2B】联系人被删除 → 从所有群成员里移除
+  function pruneDeletedMembers() {
+    var contacts = loadContacts();
+    var validIds = {};
+    contacts.forEach(function (c) { validIds[c.id] = true; });
+
+    var changed = false;
+    state.groups.forEach(function (g) {
+      if (!Array.isArray(g.memberIds)) return;
+      var next = g.memberIds.filter(function (cid) { return validIds[cid]; });
+      if (next.length !== g.memberIds.length) {
+        g.memberIds = next;
+        changed = true;
+      }
+    });
+    if (changed) persist();
+    return changed;
   }
 
   // ==================== 工具 ====================
@@ -69,7 +143,6 @@
   }
 
   function getMyAvatar() {
-    // 优先「我的角色」面板设置（角色面板 → 保存我的资料）
     try {
       var rawProfile = localStorage.getItem('my_profile');
       if (rawProfile) {
@@ -104,9 +177,9 @@
       '    <div class="group-new-box">' +
       '      <div class="group-new-title">新建群聊</div>' +
       '      <input type="text" class="group-new-input" id="groupNewName" placeholder="群聊名称...">' +
-      '      <div class="group-members-edit" id="groupNewMembers"></div>' +
-      '      <button class="group-add-member-btn" id="groupAddMemberBtn">' +
-      '        <i class="fa-solid fa-plus"></i> 添加成员' +
+      '      <div class="group-picked-members" id="groupPickedMembers"></div>' +
+      '      <button class="group-add-member-btn" id="groupPickMembersBtn">' +
+      '        <i class="fa-solid fa-user-plus"></i> 选择成员' +
       '      </button>' +
       '      <button class="group-save-btn" id="groupSaveBtn">' +
       '        <i class="fa-solid fa-check"></i> 创建群聊' +
@@ -125,56 +198,119 @@
       if (e.target === panel) closeGroupPanel();
     });
 
-    document.getElementById('groupAddMemberBtn').addEventListener('click', addMemberRow);
+    document.getElementById('groupPickMembersBtn').addEventListener('click', openMemberPicker);
     document.getElementById('groupSaveBtn').addEventListener('click', saveNewGroup);
 
     return panel;
   }
 
-  // ==================== 成员编辑行 ====================
-  function addMemberRow() {
-    var container = document.getElementById('groupNewMembers');
-    if (!container) return;
+  // ==================== 已选成员预览（新建群区） ====================
+  function renderPickedMembers() {
+    var box = document.getElementById('groupPickedMembers');
+    if (!box) return;
 
-    var row = document.createElement('div');
-    row.className = 'group-member-row';
+    var ids = state.pendingMemberIds || [];
+    if (ids.length === 0) {
+      box.innerHTML = '<div class="group-picked-empty">还没有选择成员</div>';
+      return;
+    }
 
-    var avatarId = 'gma_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    var nameId = 'gmn_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    var html = '';
+    ids.forEach(function (cid) {
+      var c = getContactById(cid);
+      if (!c) return;
+      var avatar = c.avatar
+        ? '<img src="' + escapeHtml(c.avatar) + '" alt="">'
+        : '<span class="group-picked-avatar-text">' + escapeHtml((c.name || '?').slice(0, 1)) + '</span>';
+      html += '<div class="group-picked-item" data-cid="' + escapeHtml(cid) + '">' +
+        '<div class="group-picked-avatar">' + avatar + '</div>' +
+        '<div class="group-picked-name">' + escapeHtml(c.name || '未命名') + '</div>' +
+        '<button class="group-picked-remove" data-cid="' + escapeHtml(cid) + '" title="移除"><i class="fa-solid fa-xmark"></i></button>' +
+        '</div>';
+    });
+    box.innerHTML = html;
 
-    row.innerHTML =
-      '<div class="group-member-avatar-wrap">' +
-      '  <img class="group-member-avatar" id="' + avatarId + '" src="https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000) + '" alt="成员头像">' +
-      '  <input type="file" class="group-member-file" data-avatar-id="' + avatarId + '" accept="image/*" style="display:none;">' +
-      '</div>' +
-      '<input type="text" class="group-member-name" id="' + nameId + '" placeholder="成员名字...">' +
-      '<input type="text" class="group-member-url" placeholder="或粘贴图片URL" data-avatar-id="' + avatarId + '">' +
-      '<button class="group-member-del" title="删除"><i class="fa-solid fa-xmark"></i></button>';
+    box.querySelectorAll('.group-picked-remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var cid = btn.getAttribute('data-cid');
+        state.pendingMemberIds = state.pendingMemberIds.filter(function (x) { return x !== cid; });
+        renderPickedMembers();
+      });
+    });
+  }
 
-    container.appendChild(row);
+  // ==================== 联系人多选弹层 ====================
+  function openMemberPicker() {
+    var old = document.getElementById('groupMemberPicker');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
 
-    // 点击头像上传
-    var avatarEl = row.querySelector('.group-member-avatar');
-    var fileEl = row.querySelector('.group-member-file');
-    avatarEl.addEventListener('click', function () { fileEl.click(); });
-    fileEl.addEventListener('change', function () {
-      var file = fileEl.files && fileEl.files[0];
-      if (!file) return;
-      var reader = new FileReader();
-      reader.onload = function (e) { avatarEl.src = e.target.result; };
-      reader.readAsDataURL(file);
+    var contacts = loadContacts();
+    if (contacts.length === 0) {
+      alert('还没有联系人，请先到传讯页右上角添加');
+      return;
+    }
+
+    var selected = {};
+    (state.pendingMemberIds || []).forEach(function (cid) { selected[cid] = true; });
+
+    var listHtml = '';
+    contacts.forEach(function (c) {
+      var avatar = c.avatar
+        ? '<img class="gmp-avatar" src="' + escapeHtml(c.avatar) + '" alt="">'
+        : '<span class="gmp-avatar gmp-avatar-text">' + escapeHtml((c.name || '?').slice(0, 1)) + '</span>';
+      listHtml +=
+        '<div class="gmp-item" data-cid="' + escapeHtml(c.id) + '">' +
+        '  <div class="gmp-check"><i class="fa-solid fa-check"></i></div>' +
+        avatar +
+        '  <div class="gmp-name">' + escapeHtml(c.name || '未命名') + '</div>' +
+        '</div>';
     });
 
-    // 粘贴 URL
-    var urlEl = row.querySelector('.group-member-url');
-    urlEl.addEventListener('change', function () {
-      var v = urlEl.value.trim();
-      if (v) avatarEl.src = v;
+    var modal = document.createElement('div');
+    modal.id = 'groupMemberPicker';
+    modal.className = 'gmp-modal';
+    modal.innerHTML =
+      '<div class="gmp-panel">' +
+        '<div class="gmp-title">选择群成员</div>' +
+        '<div class="gmp-list">' + listHtml + '</div>' +
+        '<div class="gmp-footer">' +
+          '<button class="gmp-cancel">取消</button>' +
+          '<button class="gmp-confirm">确定</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    requestAnimationFrame(function () { modal.classList.add('active'); });
+
+    // 初始化选中态
+    modal.querySelectorAll('.gmp-item').forEach(function (item) {
+      var cid = item.getAttribute('data-cid');
+      if (selected[cid]) item.classList.add('checked');
+      item.addEventListener('click', function () {
+        if (selected[cid]) {
+          delete selected[cid];
+          item.classList.remove('checked');
+        } else {
+          selected[cid] = true;
+          item.classList.add('checked');
+        }
+      });
     });
 
-    // 删除
-    row.querySelector('.group-member-del').addEventListener('click', function () {
-      row.remove();
+    function close() {
+      modal.classList.remove('active');
+      setTimeout(function () {
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+      }, 200);
+    }
+
+    modal.querySelector('.gmp-cancel').addEventListener('click', close);
+    modal.querySelector('.gmp-confirm').addEventListener('click', function () {
+      state.pendingMemberIds = Object.keys(selected);
+      close();
+      renderPickedMembers();
+    });
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) close();
     });
   }
 
@@ -184,43 +320,29 @@
     var name = nameEl.value.trim();
     if (!name) { alert('请输入群聊名称'); return; }
 
-    var memberRows = document.querySelectorAll('#groupNewMembers .group-member-row');
-    var members = [];
-    memberRows.forEach(function (row) {
-      var nameInput = row.querySelector('.group-member-name');
-      var avatarImg = row.querySelector('.group-member-avatar');
-      var memberName = nameInput ? nameInput.value.trim() : '';
-      var memberAvatar = avatarImg ? avatarImg.src : '';
-      if (memberName) {
-        members.push({
-          id: uid(),
-          name: memberName,
-          avatar: memberAvatar || 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000)
-        });
-      }
-    });
-
-    if (members.length === 0) {
-      // 至少放一个默认成员
-      members.push({
-        id: uid(),
-        name: '成员1',
-        avatar: 'https://picsum.photos/100/100?random=' + Math.floor(Math.random() * 1000)
-      });
+    var memberIds = (state.pendingMemberIds || []).slice();
+    if (memberIds.length < 2) {
+      alert('群聊至少需要 2 位成员');
+      return;
     }
+
+    // 第一个成员的头像作为群头像（取不到就默认）
+    var first = getContactById(memberIds[0]);
+    var groupAvatar = (first && first.avatar) || 'https://picsum.photos/100/100?random=1';
 
     var newGroup = {
       id: uid(),
       name: name,
-      avatar: members[0].avatar,
-      members: members,
+      avatar: groupAvatar,
+      memberIds: memberIds,
       messages: []
     };
     state.groups.push(newGroup);
 
     // 清空表单
     nameEl.value = '';
-    document.getElementById('groupNewMembers').innerHTML = '';
+    state.pendingMemberIds = [];
+    renderPickedMembers();
 
     persist();
     renderGroupList();
@@ -239,13 +361,16 @@
 
     list.innerHTML = '';
     state.groups.forEach(function (g) {
+      var members = resolveMembers(g);
+      var memberCount = members.length;
+
       var item = document.createElement('div');
       item.className = 'group-list-item' + (g.id === state.currentGroupId ? ' active' : '');
       item.innerHTML =
-        '<img class="group-list-avatar" src="' + g.avatar + '" alt="' + escapeHtml(g.name) + '">' +
+        '<img class="group-list-avatar" src="' + escapeHtml(g.avatar || '') + '" alt="' + escapeHtml(g.name) + '">' +
         '<div class="group-list-info">' +
         '  <div class="group-list-name">' + escapeHtml(g.name) + '</div>' +
-        '  <div class="group-list-count">' + g.members.length + ' 位成员</div>' +
+        '  <div class="group-list-count">' + memberCount + ' 位成员</div>' +
         '</div>' +
         '<button class="group-list-del" title="删除"><i class="fa-solid fa-trash-can"></i></button>';
 
@@ -279,28 +404,22 @@
 
     closeGroupPanel();
 
-    // 应用群聊模式
     applyGroupMode(g);
   }
 
   function applyGroupMode(g) {
-    // 在 #pageChat 上加 group-mode 类，用于样式区分
     var pageChat = document.getElementById('pageChat');
     if (pageChat) pageChat.classList.add('group-mode');
 
-    // 顶部标题改为群名
     var chatName = document.getElementById('chatName');
     if (chatName) chatName.textContent = g.name;
 
-    // 顶部头像改为群头像
     var chatAvatar = document.getElementById('chatAvatar');
     if (chatAvatar) chatAvatar.src = g.avatar;
 
-    // 清空聊天区，渲染群聊历史消息
     chatMessages.innerHTML = '';
     renderGroupMessages(g);
 
-    // 更新输入框 placeholder
     chatInput.placeholder = '在「' + g.name + '」中发言...';
   }
 
@@ -308,22 +427,27 @@
     var pageChat = document.getElementById('pageChat');
     if (pageChat) pageChat.classList.remove('group-mode');
 
-    // 恢复标题和头像（从当前联系人读取）
+    // 【6 改】恢复顶栏：用传讯当前会话的人，不再读 my_current_contact
     try {
-      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var currentId = localStorage.getItem('my_current_contact');
-      var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
+      var curId = null;
+      if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
+        curId = window.sessionChat.getCurrentContactId();
+      }
+      var contacts = loadContacts();
+      var cur = null;
+      if (curId) cur = contacts.find(function (c) { return c.id === curId; });
+      if (!cur) cur = contacts[0];
       if (cur) {
-        if (document.getElementById('chatName')) document.getElementById('chatName').textContent = cur.name;
-        if (document.getElementById('chatAvatar')) document.getElementById('chatAvatar').src = cur.avatar;
+        var nameEl = document.getElementById('chatName');
+        var avatarEl = document.getElementById('chatAvatar');
+        if (nameEl) nameEl.textContent = cur.name || 'Ta';
+        if (avatarEl) avatarEl.src = cur.avatar || '';
       }
     } catch (e) {}
 
-    // 移除退出按钮
     var exitBtn = document.getElementById('exitGroupBtn');
     if (exitBtn) exitBtn.remove();
 
-    // 清空并恢复单聊欢迎消息
     chatMessages.innerHTML = '';
     var welcome = document.createElement('div');
     welcome.className = 'message-row other';
@@ -370,10 +494,15 @@
       myAvatar.src = getMyAvatar();
       row.appendChild(myAvatar);
     } else {
-      // 对方成员
+      // 对方成员：msg.memberId 若在，实时取最新头像；否则用快照
+      var memberId = msg.memberId;
+      var live = memberId ? getContactById(memberId) : null;
+      var avatarSrc = (live && live.avatar) || msg.avatar || 'https://picsum.photos/100/100?random=1';
+      var displayName = (live && live.name) || msg.name || '成员';
+
       var avatar = document.createElement('img');
       avatar.className = 'chat-msg-avatar';
-      avatar.src = msg.avatar || 'https://picsum.photos/100/100?random=1';
+      avatar.src = avatarSrc;
       row.appendChild(avatar);
 
       var wrap = document.createElement('div');
@@ -381,7 +510,7 @@
 
       var nameEl = document.createElement('div');
       nameEl.className = 'group-msg-name';
-      nameEl.textContent = msg.name || '成员';
+      nameEl.textContent = displayName;
       wrap.appendChild(nameEl);
 
       var bubble = document.createElement('div');
@@ -416,36 +545,23 @@
     });
     persist();
 
-    // 触发群成员回复
     triggerGroupReplies(g);
   }
 
   // ==================== 群成员随机回复 ====================
   function triggerGroupReplies(g) {
-    if (!g || g.members.length === 0) return;
+    if (!g) return;
+    var members = resolveMembers(g);
+    if (members.length === 0) return;
 
-    // 随机 2-4 个成员回复
     var replyCount = 2 + Math.floor(Math.random() * 3);
-    var shuffled = g.members.slice().sort(function () { return Math.random() - 0.5; });
-    var repliers = shuffled.slice(0, Math.min(replyCount, g.members.length));
+    var shuffled = members.slice().sort(function () { return Math.random() - 0.5; });
+    var repliers = shuffled.slice(0, Math.min(replyCount, members.length));
 
-    // 回复短语池
     var replyPool = [
-      '哈哈哈',
-      '我也这么觉得',
-      '厉害啊',
-      '然后呢？',
-      '嗯嗯',
-      '有道理',
-      '收到！',
-      '真的假的',
-      '说得好',
-      '确实',
-      '哈哈哈哈哈',
-      '这波可以',
-      '我不信',
-      '牛！',
-      '让我康康'
+      '哈哈哈', '我也这么觉得', '厉害啊', '然后呢？', '嗯嗯',
+      '有道理', '收到！', '真的假的', '说得好', '确实',
+      '哈哈哈哈哈', '这波可以', '我不信', '牛！', '让我康康'
     ];
 
     repliers.forEach(function (member, index) {
@@ -454,6 +570,7 @@
         var text = replyPool[Math.floor(Math.random() * replyPool.length)];
         var msg = {
           type: 'other',
+          memberId: member.id,
           name: member.name,
           avatar: member.avatar,
           text: text
@@ -469,15 +586,8 @@
   }
 
   // ==================== 拦截发送（群聊模式） ====================
-  // 使用捕获阶段拦截
-  function interceptSend() {
-    var originalSend = sendBtn.onclick;
-    // 直接在捕获阶段处理
-  }
-
-  // 拦截发送按钮
   sendBtn.addEventListener('click', function (e) {
-    if (!state.currentGroupId) return; // 非群聊模式交给原逻辑
+    if (!state.currentGroupId) return;
     e.stopImmediatePropagation();
     e.preventDefault();
     var text = chatInput.value.trim();
@@ -487,7 +597,6 @@
     sendGroupMessage(text);
   }, true);
 
-  // 拦截回车
   chatInput.addEventListener('keydown', function (e) {
     if (!state.currentGroupId) return;
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -501,38 +610,11 @@
     }
   }, true);
 
-  // ==================== 绑定群聊图标 ====================
-  function bindGroupIcon() {
-    // 找到"群聊"图标（我们复用"存钱罐"旁边的图标位，或者新增一个）
-    // 由于您没有指定具体是哪个图标，我们使用一个独立的悬浮按钮
-    // 但为了不破坏现有结构，我们在传讯页顶栏加一个群聊图标（如果尚未存在）
-    var chatActions = document.querySelector('#pageChat .chat-actions');
-    if (!chatActions) return;
-    if (document.getElementById('groupChatIcon')) return;
-
-    var icon = document.createElement('div');
-    icon.className = 'chat-action-icon';
-    icon.id = 'groupChatIcon';
-    icon.title = '群聊';
-    icon.innerHTML = '<i class="fa-solid fa-users"></i>';
-    icon.addEventListener('click', function (e) {
-      e.stopImmediatePropagation();
-      e.preventDefault();
-      openGroupPanel();
-    }, true);
-
-    // 插到"主页"图标之前
-    var homeIcon = chatActions.querySelector('[title="主页"]');
-    if (homeIcon) {
-      chatActions.insertBefore(icon, homeIcon);
-    } else {
-      chatActions.appendChild(icon);
-    }
-  }
-
   // ==================== 打开/关闭面板 ====================
   function openGroupPanel() {
     createGroupPanel();
+    state.pendingMemberIds = [];
+    renderPickedMembers();
     renderGroupList();
     state.panel.classList.add('active');
   }
@@ -541,9 +623,31 @@
     if (state.panel) state.panel.classList.remove('active');
   }
 
+  // ==================== 联系人变化监听（删除即移除） ====================
+  function bindContactPrune() {
+    // storage 变化（跨标签）
+    window.addEventListener('storage', function (e) {
+      if (e.key === LS_CONTACTS_KEY) {
+        if (pruneDeletedMembers()) {
+          if (state.panel && state.panel.classList.contains('active')) {
+            renderGroupList();
+          }
+        }
+      }
+    });
+    // 同标签内，角色面板发 contactChanged
+    window.addEventListener('contactChanged', function () {
+      if (pruneDeletedMembers()) {
+        if (state.panel && state.panel.classList.contains('active')) {
+          renderGroupList();
+        }
+      }
+    });
+  }
+
   // ==================== 初始化 ====================
   function init() {
-    // 顶栏群聊图标已移除（入口收敛到会话选择页：群聊 Tab + 右上群聊管理）
+    bindContactPrune();
   }
 
   if (document.readyState === 'loading') {
@@ -554,14 +658,10 @@
     load(init);
   }
 
-  setTimeout(function () {
-    load(init);
-  }, 500);
-  setTimeout(function () {
-    load(init);
-  }, 1500);
+  setTimeout(function () { load(init); }, 500);
+  setTimeout(function () { load(init); }, 1500);
 
-  // 暴露给外部
+  // ==================== 暴露 ====================
   window.groupChat = {
     open: openGroupPanel,
     enter: enterGroup,
