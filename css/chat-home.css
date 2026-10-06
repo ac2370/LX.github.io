@@ -122,9 +122,6 @@
 #pageChatHome .chat-home-item:active {
   background: #f5f8fc;
 }
-#pageChatHome .chat-home-item-active {
-  background: #f2f7fc;
-}
 #pageChatHome .chat-home-item-avatar {
   width: 46px;
   height: 46px;
@@ -283,7 +280,6 @@ body.theme-dark #pageChatHome .chat-home-tab.active { color: var(--accent-color,
 body.theme-dark #pageChatHome .chat-home-list { background: var(--theme-page-bg); }
 body.theme-dark #pageChatHome .chat-home-item { background: var(--theme-card-bg); border-color: var(--theme-card-border); }
 body.theme-dark #pageChatHome .chat-home-item:active { background: rgba(42,48,56,0.8); }
-body.theme-dark #pageChatHome .chat-home-item-active { background: rgba(111,177,232,0.12); border-color: var(--accent-color, #6fb1e8); }
 body.theme-dark #pageChatHome .chat-home-item-name { color: var(--theme-text); }
 body.theme-dark #pageChatHome .chat-home-item-sub { color: var(--theme-text-muted); }
 body.theme-dark #pageChatHome .chat-home-item-chevron { color: var(--theme-text-faint); }
