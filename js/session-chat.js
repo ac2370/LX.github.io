@@ -6,9 +6,14 @@
      2. 单聊消息按联系人分桶（buckets['c:<id>']），落盘 chat_messages_v1
      3. 群聊复用 group-chat.js（消息本就按群分桶，落盘 group_chat_data）
      4. 进入 / 切换 / 返回会话，重建各自消息区，互不串扰
+   解耦说明（本次改动）：
+     - 联系人列表不再有"持久选中高亮"
+     - 进入会话不再写全局 my_current_contact，也不动角色面板当前角色
+     - 传讯自己的"当前会话"由 state.currentKey 维护，通过
+       window.sessionChat.getCurrentContactId() 供 chat-avatars 等读取
    依赖：
      - group-chat.js（window.groupChat.enter / exit / getCurrentGroup / getGroups）
-     - role-panel.js（my_contacts / my_current_contact / contactChanged 广播）
+     - role-panel.js（my_contacts / contactChanged 广播）
    ============================================================ */
 (function () {
   'use strict';
@@ -261,7 +266,7 @@
   }
 
   // ==================== 进入 / 退出会话 ====================
-   function enterContact(id, name, avatar) {
+  function enterContact(id, name, avatar) {
     if (!id) return;
 
     // 若当前处于群聊态，先退出
@@ -308,7 +313,7 @@
     try { contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]'); } catch (e) {}
     if (!Array.isArray(contacts)) contacts = [];
 
-       var html = '';
+    var html = '';
     contacts.forEach(function (c) {
       var sub = getContactSub(c.id);
       html +=
@@ -477,7 +482,7 @@
       var inChat = pageChat && pageChat.classList.contains('active');
 
       if (inChat) {
-        // 聊天页中切换联系人 → 切换会话桶（群聊态不动）
+        // 聊天页中，若角色面板切换了"当前角色"，切到该角色的会话桶（群聊态不动）
         var inGroup = pageChat.classList.contains('group-mode');
         var id = e.detail && e.detail.contactId;
         if (!inGroup && id && state.currentKey !== contactKey(id)) {
@@ -514,7 +519,7 @@
   setTimeout(function () { if (!state.loaded) load(init); }, 2000);
 
   // ==================== 暴露 ====================
-   window.sessionChat = {
+  window.sessionChat = {
     record: record,
     recordReply: recordReply,
     recordTo: recordTo,
