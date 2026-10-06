@@ -182,13 +182,13 @@ img { max-width: 100%; display: block; }
 .function-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px 6px;
+  gap: 12px 8px;
 }
 .function-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   text-decoration: none;
   color: inherit;
   -webkit-tap-highlight-color: transparent;
@@ -197,9 +197,9 @@ img { max-width: 100%; display: block; }
 }
 .function-item:active { opacity: 0.6; }
 .function-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -209,16 +209,27 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
 }
-@media (min-width: 400px) { .function-icon { width: 54px; height: 54px; } }
+.function-icon i {
+  font-size: 22px !important;
+}
+@media (min-width: 400px) {
+  .function-icon {
+    width: 62px;
+    height: 62px;
+  }
+  .function-icon i {
+    font-size: 24px !important;
+  }
+}
 .function-label {
-  font-size: 10px;
+  font-size: 11px;
   color: #333;
   font-weight: 500;
   text-align: center;
   line-height: 1.2;
   white-space: nowrap;
 }
-@media (min-width: 400px) { .function-label { font-size: 11px; } }
+@media (min-width: 400px) { .function-label { font-size: 12px; } }
 
 /* ============ 应用容器 ============ */
 .app-container {
