@@ -2071,3 +2071,17 @@ body.theme-dark .pat-group-target-select {
   border-color: var(--theme-input-border);
   color: var(--theme-text);
 }
+
+/* ============ 暗色模式：聊天区背景图蒙层 ============ */
+body.theme-dark #pageChat .chat-messages::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  z-index: 0;
+}
+body.theme-dark #pageChat .chat-messages .message-row {
+  position: relative;
+  z-index: 1;
+}
