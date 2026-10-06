@@ -8,7 +8,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #ffffff;
+  background-color: #e3f0fa;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
@@ -51,9 +51,9 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(230, 245, 255, 0.6) 100%);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* ============ 毛玻璃基础 ============ */
@@ -152,9 +152,9 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   z-index: 0;
 }
 .header-card > * { position: relative; z-index: 1; }
@@ -604,3 +604,10 @@ body.theme-dark #pageHome .main-content .glass { background: var(--theme-overlay
 /* 音乐播放器白底（浅色模式），暗色模式保持暗色 */
 #pageHome .main-content .glass { background: #ffffff; }
 body.theme-dark #pageHome .main-content .glass { background: var(--theme-overlay); }
+
+/* ============ 深色模式：头部卡片蒙层透明化 ============ */
+body.theme-dark .header-card::before {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
