@@ -2055,3 +2055,32 @@ body.theme-dark .pat-cancel {
 .msg-survey-row-self .msg-survey-meta {
   text-align: center;
 }
+
+/* ---------- 群聊拍一拍 · 成员下拉 ---------- */
+.pat-group-target {
+  padding: 0 4px 12px 4px;
+  border-bottom: 1px solid #f0f3f6;
+  margin-bottom: 10px;
+}
+.pat-group-target-label {
+  font-size: 11px;
+  color: #8899a6;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.pat-group-target-select {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #fafbfc;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+}
+body.theme-dark .pat-group-target { border-bottom-color: var(--theme-card-border); }
+body.theme-dark .pat-group-target-select {
+  background: var(--theme-input-bg);
+  border-color: var(--theme-input-border);
+  color: var(--theme-text);
+}
