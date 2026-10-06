@@ -8,6 +8,10 @@
      - moodCalendar:     { [contactId]: { [dateStr]: {...} } }
      - customMoodOptions: [ {...} ]  （全局共享）
      - moodTrash:        [ {...} ]   （全局共享，每条带 contactId）
+   解耦说明（本次改动）：
+     - "记录谁的心情"不再读全局 my_current_contact，
+       改为读手账自己的私有键 mood_view_contact（不存在则默认第一个联系人）
+     - 接上顶栏"切换联系人"按钮：点开选人 → 写入 mood_view_contact → 刷新
    ============================================================ */
 (function () {
   'use strict';
@@ -18,7 +22,7 @@
   var STORE_KEY_TRASH    = 'moodTrash';
 
   var LS_CONTACTS_KEY  = 'my_contacts';
-  var LS_CURRENT_KEY   = 'my_current_contact';
+  var MOOD_VIEW_KEY    = 'mood_view_contact';   // 手账页私有：当前记录谁
 
   var BUILTIN_MOODS = [
     { key: 'happy',    emoji: '😆', label: '开心', color: '#f8d878' },
@@ -110,9 +114,10 @@
     return [{ id: 'default_ta', name: 'Ta', avatar: 'https://picsum.photos/200/200?random=99' }];
   }
 
+  // 读取手账自己的"当前记录对象"：优先私有键，不存在 / 失效则默认第一个
   function loadCurrentContactId(contacts) {
     var cid = null;
-    try { cid = localStorage.getItem(LS_CURRENT_KEY); } catch (e) {}
+    try { cid = localStorage.getItem(MOOD_VIEW_KEY); } catch (e) {}
     if (cid && contacts.some(function (c) { return c.id === cid; })) return cid;
     return contacts[0].id;
   }
@@ -1078,6 +1083,53 @@
     switchView('calendar');
   }
 
+  // ==================== 切换联系人弹层 ====================
+  function openContactSwitcher() {
+    var modal = document.getElementById('moodSwitchModal');
+    if (!modal) return;
+    var list = document.getElementById('moodSwitchList');
+    if (!list) return;
+
+    var contacts = loadContacts();
+    var html = '';
+    contacts.forEach(function (c) {
+      var isCurrent = c.id === currentContactId;
+      html +=
+        '<div class="mood-sw-item' + (isCurrent ? ' current' : '') + '" data-id="' + escapeHtml(c.id) + '">' +
+        '<img class="mood-sw-avatar" src="' + escapeHtml(c.avatar || '') + '" alt="">' +
+        '<span class="mood-sw-name">' + escapeHtml(c.name || 'Ta') + '</span>' +
+        (isCurrent ? '<span class="mood-sw-check"><i class="fa-solid fa-check"></i></span>' : '') +
+        '</div>';
+    });
+    list.innerHTML = html;
+
+    list.querySelectorAll('.mood-sw-item').forEach(function (item) {
+      item.addEventListener('click', function () {
+        var id = item.getAttribute('data-id');
+        switchMoodContact(id);
+      });
+    });
+
+    modal.classList.add('active');
+  }
+
+  function closeContactSwitcher() {
+    var modal = document.getElementById('moodSwitchModal');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function switchMoodContact(id) {
+    if (!id) return;
+    try { localStorage.setItem(MOOD_VIEW_KEY, id); } catch (e) {}
+    closeContactSwitcher();
+    refreshCurrentContact();
+    // 重新生成 / 渲染该联系人的数据
+    checkPartnerDailyMood();
+    renderCalendar();
+    renderStats();
+    renderTrash();
+  }
+
   // ==================== 事件绑定 ====================
   function bindEvents() {
     // 主页入口
@@ -1101,6 +1153,22 @@
         if (window.showPage && window.pageHome) {
           window.showPage(window.pageHome);
         }
+      });
+    }
+
+    // 顶栏"切换联系人"按钮（原为装饰按钮，现接线）
+    var switchBtn = document.getElementById('moodSwitchBtn');
+    if (switchBtn) {
+      switchBtn.addEventListener('click', openContactSwitcher);
+    }
+    var switchCancel = document.getElementById('moodSwitchCancel');
+    if (switchCancel) {
+      switchCancel.addEventListener('click', closeContactSwitcher);
+    }
+    var switchModal = document.getElementById('moodSwitchModal');
+    if (switchModal) {
+      switchModal.addEventListener('click', function (e) {
+        if (e.target === switchModal) closeContactSwitcher();
       });
     }
 
@@ -1214,14 +1282,24 @@
       });
     }
 
-    // 监听 localStorage 变化（切换联系人）
+    // 监听 localStorage 变化（联系人列表变化 → 刷新）
     window.addEventListener('storage', function (e) {
-      if (e.key === LS_CURRENT_KEY || e.key === LS_CONTACTS_KEY) {
+      if (e.key === LS_CONTACTS_KEY) {
         // 只有当前在手账页面时才刷新
         var pageMood = document.getElementById('pageMood');
         if (pageMood && pageMood.classList.contains('active')) {
           enterMoodPage();
         }
+      }
+    });
+
+    // 角色面板删除联系人后，手账当前对象若失效则回退第一个
+    window.addEventListener('contactChanged', function () {
+      // 角色面板改"当前角色"不再影响手账；但联系人可能被删，
+      // 若手账当前记录对象已不存在，refreshCurrentContact 会自动回退第一个
+      var pageMood = document.getElementById('pageMood');
+      if (pageMood && pageMood.classList.contains('active')) {
+        refreshCurrentContact();
       }
     });
   }
