@@ -978,3 +978,14 @@ body.theme-dark .rp-close-full:active {
 .rp-bottom-actions {
   margin-top: 14px;
 }
+
+.proactive-contact-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8ee;
+  background: #fff;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+}
