@@ -101,14 +101,8 @@
     var isSelf = row.classList.contains('self');
     var existing = row.querySelector('.chat-msg-avatar');
 
-    // 已有头像（群聊行由 group-chat.js 自带头像）→ 只需补「我」的昵称标签
+        // 已有头像（群聊行由 group-chat.js 自带头像）→ 不再补「我」的昵称标签
     if (existing) {
-      if (isSelf && !row.querySelector('.chat-msg-my-name')) {
-        var nameTag = document.createElement('span');
-        nameTag.className = 'chat-msg-my-name';
-        nameTag.textContent = getMyName();
-        row.insertBefore(nameTag, existing);
-      }
       return;
     }
     if (row.querySelector('.chat-msg-my-name')) return;
@@ -123,14 +117,8 @@
         : 'https://picsum.photos/200/200?random=99';
     };
 
-    if (isSelf) {
+       if (isSelf) {
       row.appendChild(avatar);
-      if (!row.querySelector('.chat-msg-my-name')) {
-        var nameTag2 = document.createElement('span');
-        nameTag2.className = 'chat-msg-my-name';
-        nameTag2.textContent = getMyName();
-        row.insertBefore(nameTag2, avatar);
-      }
     } else {
       row.insertBefore(avatar, row.firstChild);
     }
