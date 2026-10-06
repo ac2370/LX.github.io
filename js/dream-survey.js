@@ -885,4 +885,362 @@
       var item = document.createElement('div');
       item.className = 'ds-lib-q' + (isChecked ? ' checked' : '');
 
-      var typeLabel = { single: '单选', multi: '
+      var typeLabel = { single: '单选', multi: '多选', text: '文字' }[q.type] || '文字';
+      var typeClass = q.type === 'multi' ? 'multi' : (q.type === 'text' ? 'text' : '');
+
+      item.innerHTML =
+        '<div class="ds-lib-check"><i class="fa-solid fa-check"></i></div>' +
+        '<div class="ds-lib-q-body">' +
+        '  <div class="ds-lib-q-text">' + escapeHtml(q.text) + '</div>' +
+        '  <div class="ds-lib-q-tags">' +
+        '    <span class="ds-lib-q-tag ' + typeClass + '">' + typeLabel + '</span>' +
+        '    <span class="ds-lib-q-tag">' + escapeHtml(cat.label) + '</span>' +
+        '  </div>' +
+        '</div>';
+
+      item.addEventListener('click', function () {
+        if (libSelected[key]) {
+          delete libSelected[key];
+          item.classList.remove('checked');
+        } else {
+          libSelected[key] = true;
+          item.classList.add('checked');
+        }
+        updateLibCount();
+      });
+
+      box.appendChild(item);
+    });
+  }
+
+  function updateLibCount() {
+    var count = Object.keys(libSelected).length;
+    var el = document.getElementById('dsLibCount');
+    if (el) el.textContent = '已选 ' + count + ' 道';
+
+    var addBtn = document.getElementById('dsLibAddBtn');
+    if (addBtn) addBtn.disabled = count === 0;
+  }
+
+  function addSelectedFromLib() {
+    if (!editingSurvey) {
+      ensureEditingSurvey();
+    }
+    if (!editingSurvey.qs) editingSurvey.qs = [];
+
+    var lib = window.DREAM_SURVEY_LIB || [];
+    var keys = Object.keys(libSelected);
+    var added = 0;
+
+    keys.forEach(function (key) {
+      var parts = key.split('_');
+      var catKey = parts[0];
+      var idx = parseInt(parts[1], 10);
+      var cat = lib.find(function (c) { return c.key === catKey; });
+      if (!cat) return;
+      var q = cat.questions[idx];
+      if (!q) return;
+
+      var copy = {
+        type: q.type,
+        text: q.text,
+        options: q.options ? q.options.slice() : []
+      };
+      if (q.type === 'multi') {
+        copy.multiMax = q.multiMax || 2;
+      }
+      editingSurvey.qs.push(copy);
+      added++;
+    });
+
+    if (added > 0) {
+      renderQsList();
+      updateCountLabel();
+      libSelected = {};
+      renderLibList();
+      updateLibCount();
+    } else {
+      alert('没有可添加的题目');
+    }
+  }
+
+  function bindLibEvents() {
+    var toggleBtn = document.getElementById('dsLibToggleBtn');
+    var panel = document.getElementById('dsLibPanel');
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener('click', function () {
+        libOpen = !libOpen;
+        panel.style.display = libOpen ? 'block' : 'none';
+        toggleBtn.classList.toggle('open', libOpen);
+        if (libOpen) {
+          renderLibCats();
+          renderLibList();
+          updateLibCount();
+        }
+      });
+    }
+
+    var addBtn = document.getElementById('dsLibAddBtn');
+    if (addBtn) {
+      addBtn.disabled = true;
+      addBtn.addEventListener('click', addSelectedFromLib);
+    }
+
+    var clearBtn = document.getElementById('dsLibClearBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        libSelected = {};
+        renderLibList();
+        updateLibCount();
+      });
+    }
+  }
+
+  // ==================== 事件绑定 ====================
+  function bindEvents() {
+    // 主页入口
+    var homeBtn = document.getElementById('btnDreamSurvey');
+    if (homeBtn) {
+      homeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        renderList();
+        goPage('pageDreamSurvey');
+      });
+    }
+
+    // 列表页返回
+    var backBtn = document.getElementById('dsBackBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', function () {
+        goPage('pageHome');
+      });
+    }
+
+    // 分类切换 tab
+    var tabMine = document.getElementById('dsTabMine');
+    var tabTheirs = document.getElementById('dsTabTheirs');
+
+    function switchListTab(tab) {
+      currentListTab = tab;
+      if (tabMine) tabMine.classList.toggle('active', tab === 'mine');
+      if (tabTheirs) tabTheirs.classList.toggle('active', tab === 'theirs');
+      renderList();
+    }
+
+    if (tabMine) {
+      tabMine.addEventListener('click', function () { switchListTab('mine'); });
+    }
+    if (tabTheirs) {
+      tabTheirs.addEventListener('click', function () { switchListTab('theirs'); });
+    }
+
+    // 新建按钮
+    var newBtn = document.getElementById('dsNewBtn');
+    if (newBtn) {
+      newBtn.addEventListener('click', function () {
+        var contacts = loadContacts();
+        editingSurvey = {
+          id: genId(),
+          title: '',
+          qs: [],
+          deadline: 0,
+          prob: 10,
+          status: 'draft',
+          createdAt: Date.now(),
+          sentAt: 0,
+          doneAt: 0,
+          contactId: contacts[0] ? contacts[0].id : ''
+        };
+        renderEdit();
+        goPage('pageDreamSurveyEdit');
+      });
+    }
+
+    // 编辑页返回
+    var editBackBtn = document.getElementById('dsEditBackBtn');
+    if (editBackBtn) {
+      editBackBtn.addEventListener('click', function () {
+        if (!confirm('放弃当前编辑吗？未保存的修改将丢失。')) return;
+        editingSurvey = null;
+        renderList();
+        goPage('pageDreamSurvey');
+      });
+    }
+
+    // 编辑页保存
+    var saveBtn = document.getElementById('dsSaveBtn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        if (!editingSurvey) return;
+        if (!editingSurvey.title || !editingSurvey.title.trim()) {
+          alert('请填写问卷标题');
+          return;
+        }
+        if (!editingSurvey.qs || editingSurvey.qs.length === 0) {
+          alert('至少添加一道题目');
+          return;
+        }
+        for (var i = 0; i < editingSurvey.qs.length; i++) {
+          var q = editingSurvey.qs[i];
+          if (!q.text || !q.text.trim()) {
+            alert('第 ' + (i + 1) + ' 题还没有题干');
+            return;
+          }
+          if (q.type !== 'text') {
+            var validOpts = (q.options || []).filter(function (o) { return o && o.trim(); });
+            if (validOpts.length < 2) {
+              alert('第 ' + (i + 1) + ' 题至少需要两个选项');
+              return;
+            }
+          }
+        }
+
+        upsertSurvey(editingSurvey);
+        editingSurvey = null;
+        renderList();
+        alert('已保存');
+        goPage('pageDreamSurvey');
+      });
+    }
+
+    // 归属联系人下拉框
+    var contactSelect = document.getElementById('dsContactSelect');
+    if (contactSelect) {
+      contactSelect.addEventListener('change', function () {
+        if (editingSurvey) editingSurvey.contactId = contactSelect.value;
+      });
+    }
+
+    // 标题输入
+    var titleInput = document.getElementById('dsTitleInput');
+    if (titleInput) {
+      titleInput.addEventListener('input', function () {
+        if (editingSurvey) editingSurvey.title = titleInput.value;
+      });
+    }
+
+    // 概率输入
+    var probInput = document.getElementById('dsProbInput');
+    if (probInput) {
+      probInput.addEventListener('input', function () {
+        var v = parseInt(probInput.value, 10);
+        if (isNaN(v)) v = 10;
+        if (v < 0) v = 0;
+        if (v > 100) v = 100;
+        if (editingSurvey) editingSurvey.prob = v;
+      });
+    }
+
+    // 添加题目
+    var addQBtn = document.getElementById('dsAddQBtn');
+    if (addQBtn) {
+      addQBtn.addEventListener('click', addNewQuestion);
+    }
+
+    // 高级模式
+    var advBtn = document.getElementById('dsAdvToggleBtn');
+    var advArea = document.getElementById('dsAdvArea');
+    var advTextarea = document.getElementById('dsAdvTextarea');
+    var advParseBtn = document.getElementById('dsAdvParseBtn');
+    if (advBtn && advArea) {
+      advBtn.addEventListener('click', function () {
+        var isActive = advArea.style.display !== 'none';
+        advArea.style.display = isActive ? 'none' : 'flex';
+        advBtn.classList.toggle('active', !isActive);
+        if (!isActive && advTextarea && editingSurvey) {
+          advTextarea.value = serializeQsToText(editingSurvey.qs);
+        }
+      });
+    }
+    if (advParseBtn && advTextarea) {
+      advParseBtn.addEventListener('click', function () {
+        var text = advTextarea.value || '';
+        var qs = parseAdvText(text);
+        if (qs.length === 0) {
+          alert('没有解析出任何题目，请检查格式');
+          return;
+        }
+        if (!editingSurvey) ensureEditingSurvey();
+        editingSurvey.qs = qs;
+        renderQsList();
+        updateCountLabel();
+        advArea.style.display = 'none';
+        advBtn.classList.remove('active');
+        alert('已解析 ' + qs.length + ' 道题');
+      });
+    }
+
+    // 详情页返回
+    var detailBackBtn = document.getElementById('dsDetailBackBtn');
+    if (detailBackBtn) {
+      detailBackBtn.addEventListener('click', function () {
+        renderList();
+        goPage('pageDreamSurvey');
+      });
+    }
+
+    // 作答页返回
+    var answerBackBtn = document.getElementById('dsAnswerBackBtn');
+    if (answerBackBtn) {
+      answerBackBtn.addEventListener('click', function () {
+        if (!confirm('放弃作答吗？未提交的内容将丢失。')) return;
+        answeringId = null;
+        answeringData = {};
+        renderList();
+        goPage('pageDreamSurvey');
+      });
+    }
+  }
+
+  // 把题目序列化回文本（用于高级模式回显）
+  function serializeQsToText(qs) {
+    if (!qs || qs.length === 0) return '';
+    var parts = [];
+    qs.forEach(function (q) {
+      var lines = [];
+      if (q.type === 'text') {
+        lines.push('【' + (q.text || '') + '】');
+        lines.push('一');
+      } else if (q.type === 'multi') {
+        lines.push('【' + (q.text || '') + '】（多选' + (q.multiMax ? '·最多' + q.multiMax : '') + '）');
+        (q.options || []).forEach(function (o) { lines.push(o); });
+      } else {
+        lines.push('【' + (q.text || '') + '】');
+        (q.options || []).forEach(function (o) { lines.push(o); });
+      }
+      parts.push(lines.join('\n'));
+    });
+    return parts.join('\n\n');
+  }
+
+  // ==================== 初始化 ====================
+  function init() {
+    bindEvents();
+    bindLibEvents();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // 暴露给外部
+  window.dreamSurvey = {
+    reload: renderList,
+    openList: function () { renderList(); goPage('pageDreamSurvey'); }
+  };
+
+  // 供外部（如聊天卡片点击）打开 Ta 的问卷作答页
+  window.openTaSurveyAnswer = function (id) {
+    if (!id) return;
+    currentListTab = 'theirs';
+    var tabMine = document.getElementById('dsTabMine');
+    var tabTheirs = document.getElementById('dsTabTheirs');
+    if (tabMine) tabMine.classList.remove('active');
+    if (tabTheirs) tabTheirs.classList.add('active');
+    openAnswerPage(id);
+  };
+
+  console.log('[dream-survey] 模块已加载');
+})();
