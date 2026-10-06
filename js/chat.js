@@ -417,10 +417,10 @@
   }
 
   // ==================== 创建消息行 ====================
-  function createMessageRow(type, content) {
+   function createMessageRow(type, content, msgId) {
     const row = document.createElement('div');
     row.className = 'message-row ' + type;
-
+     
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
 
@@ -450,8 +450,9 @@
 
     row.appendChild(bubble);
 
-    var sender = (type === 'self') ? 'me' : 'partner';
+       var sender = (type === 'self') ? 'me' : 'partner';
     decorateMessageRow(row, sender, contentType, Date.now());
+    if (msgId) row.dataset.msgid = msgId;
 
     return row;
   }
@@ -551,7 +552,10 @@
       content = text;
     }
 
-    var newRow = createMessageRow('self', content);
+      var msgId = (window.sessionChat && window.sessionChat.genMsgId)
+      ? window.sessionChat.genMsgId()
+      : ('m_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
+    var newRow = createMessageRow('self', content, msgId);
     newRow.dataset.read = 'false';
     chatMessages.appendChild(newRow);
     lastUserMessage = text;
@@ -559,7 +563,7 @@
     // 会话分桶：记录我方消息（异步回复将写入同一会话）
     if (window.sessionChat) {
       window.sessionChat.setReplyTarget(window.sessionChat.getCurrentKey());
-      window.sessionChat.record('self', content);
+      window.sessionChat.record('self', content, msgId);
     }
 
     chatInput.value = '';
@@ -613,10 +617,13 @@
       (!exclusiveCards || exclusiveCards.length === 0)
     ) {
       setTimeout(function () {
-        const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~');
+              var _mid = (window.sessionChat && window.sessionChat.genMsgId)
+          ? window.sessionChat.genMsgId()
+          : ('m_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
+        const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~', _mid);
         chatMessages.appendChild(row);
         if (window.sessionChat) {
-          try { window.sessionChat.recordReply('other', '字卡库还没有内容哦，先去添加字卡吧~'); } catch (e) {}
+          try { window.sessionChat.recordReply('other', '字卡库还没有内容哦，先去添加字卡吧~', _mid); } catch (e) {}
         }
         scrollToBottom();
       }, 800);
@@ -698,13 +705,16 @@
         }
 
         // 依次显示
-        replies.forEach(function (item, index) {
+              replies.forEach(function (item, index) {
           setTimeout(function () {
+            var msgId = (window.sessionChat && window.sessionChat.genMsgId)
+              ? window.sessionChat.genMsgId()
+              : ('m_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
             var row;
             if (item.type === 'text') {
-              row = createMessageRow('other', item.content);
+              row = createMessageRow('other', item.content, msgId);
             } else if (item.type === 'image') {
-              row = createMessageRow('other', { type: 'image', url: item.url });
+              row = createMessageRow('other', { type: 'image', url: item.url }, msgId);
             }
             if (row) {
               chatMessages.appendChild(row);
@@ -714,9 +724,9 @@
               if (window.sessionChat) {
                 try {
                   if (item.type === 'text') {
-                    window.sessionChat.recordReply('other', item.content);
+                    window.sessionChat.recordReply('other', item.content, msgId);
                   } else if (item.type === 'image') {
-                    window.sessionChat.recordReply('other', { type: 'image', url: item.url });
+                    window.sessionChat.recordReply('other', { type: 'image', url: item.url }, msgId);
                   }
                 } catch (e) {}
               }
@@ -744,12 +754,15 @@
   }
 
   // ==================== 追加对方文字到聊天（供外部调用） ====================
-  window.appendTaTextToChat = function (text) {
+   window.appendTaTextToChat = function (text) {
     if (!text || typeof text !== 'string') return;
-    var row = createMessageRow('other', text);
+    var msgId = (window.sessionChat && window.sessionChat.genMsgId)
+      ? window.sessionChat.genMsgId()
+      : ('m_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
+    var row = createMessageRow('other', text, msgId);
     chatMessages.appendChild(row);
     if (window.sessionChat) {
-      try { window.sessionChat.record('other', text); } catch (e) {}
+      try { window.sessionChat.record('other', text, msgId); } catch (e) {}
     }
     scrollToBottom();
 
@@ -1120,7 +1133,7 @@
     chatInput.focus();
   }
 
-  function doFav(row, btn) {
+   function doFav(row, btn) {
     var isFav = row.dataset.favorited === 'true';
     var next = !isFav;
     row.dataset.favorited = next ? 'true' : 'false';
@@ -1130,6 +1143,12 @@
       icon.className = 'fa-' + (next ? 'solid' : 'regular') + ' fa-star';
     }
     btn.classList.toggle('active', next);
+
+    // 同步写存储（按 msgId）
+    var msgId = row.dataset.msgid;
+    if (msgId && window.sessionChat && typeof window.sessionChat.toggleFav === 'function') {
+      try { window.sessionChat.toggleFav(msgId, next); } catch (e) {}
+    }
   }
 
   function doWithdraw(row) {
