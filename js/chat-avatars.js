@@ -4,6 +4,11 @@
  * - 每条"发送"消息右侧显示我的头像
  * - 不影响任何现有聊天逻辑
  * - 通过 MutationObserver 监听消息列表变化，自动为每条消息加上头像
+ *
+ * 解耦说明（本次改动）：
+ * - "对方是谁"不再读全局 my_current_contact，
+ *   改为读传讯模块自己的当前会话 window.sessionChat.getCurrentContactId()
+ * - 监听 sessionChanged 事件（传讯切换会话时触发）刷新头像
  */
 
 (function () {
@@ -12,19 +17,38 @@
   var chatMessages = document.getElementById('chatMessages');
   if (!chatMessages) return;
 
+  // ==================== 当前聊天对象 id（来自传讯模块） ====================
+  function getCurrentContactId() {
+    // 优先传讯模块自己的当前会话
+    if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
+      try {
+        var id = window.sessionChat.getCurrentContactId();
+        if (id) return id;
+      } catch (e) {}
+    }
+    // 兜底：从聊天页顶栏头像/昵称无从取 id 时，退回 my_contacts 第一个
+    return null;
+  }
+
   // ==================== 获取对方头像 ====================
   function getContactAvatar() {
-    var chatAvatar = document.getElementById('chatAvatar');
-    if (chatAvatar && chatAvatar.src) return chatAvatar.src;
-    // 从 localStorage 读取当前联系人
+    // 1) 传讯当前会话联系人
+    var curId = getCurrentContactId();
     try {
       var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var currentId = localStorage.getItem('my_current_contact');
-      if (Array.isArray(contacts)) {
-        var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
+      if (Array.isArray(contacts) && contacts.length > 0) {
+        var cur = null;
+        if (curId) {
+          cur = contacts.find(function (c) { return c.id === curId; });
+        }
+        // 找不到（或群聊态无单聊 id）时退回第一个，避免头像空白
+        if (!cur) cur = contacts[0];
         if (cur && cur.avatar) return cur.avatar;
       }
     } catch (e) {}
+    // 2) 回退：聊天页顶栏头像
+    var chatAvatar = document.getElementById('chatAvatar');
+    if (chatAvatar && chatAvatar.src) return chatAvatar.src;
     return 'https://picsum.photos/200/200?random=99';
   }
 
@@ -120,7 +144,7 @@
       addAvatarToRow(row);
     });
   }
-  
+
   // ==================== 监听 DOM 变化 ====================
    var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (mutation) {
@@ -146,11 +170,16 @@
   observer.observe(chatMessages, { childList: true, subtree: true });
 
   // ==================== 监听联系人或头像变化 ====================
-  // 当主页头像 / 我的资料 / 联系人变化时，重新应用所有头像
+  // 当主页头像 / 我的资料 / 联系人列表变化时，重新应用所有头像
   window.addEventListener('storage', function (e) {
-    if (e.key === 'home_custom_images' || e.key === 'my_profile' || e.key === 'my_contacts' || e.key === 'my_current_contact') {
+    if (e.key === 'home_custom_images' || e.key === 'my_profile' || e.key === 'my_contacts') {
       refreshAllAvatars();
     }
+  });
+
+  // 传讯切换会话时（session-chat 广播），刷新头像
+  window.addEventListener('sessionChanged', function () {
+    refreshAllAvatars();
   });
 
   function refreshAllAvatars() {
@@ -159,7 +188,6 @@
     scanAllMessages();
   }
 
-  // 监听 cardDatabase 就绪（无关但保留）
   // 主动刷新（供外部调用）
   window.refreshChatAvatars = refreshAllAvatars;
 
