@@ -461,14 +461,30 @@
   function renderGroupMessages(g) {
     if (!g) return;
     g.messages.forEach(function (msg) {
-      var row = createGroupMessageRow(msg.type, msg);
-      chatMessages.appendChild(row);
+      var row;
+      if (msg && msg.type === 'system') {
+        row = createGroupSystemRow(msg.text || '');
+      } else {
+        row = createGroupMessageRow(msg.type, msg);
+      }
+      if (row) chatMessages.appendChild(row);
     });
     requestAnimationFrame(function () {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     });
   }
 
+    // 群聊系统条（居中灰条，如"你拍了拍 小明：xxx"）
+  function createGroupSystemRow(text) {
+    var row = document.createElement('div');
+    row.className = 'message-row system-call-event';
+    var bubble = document.createElement('div');
+    bubble.className = 'call-record-bubble';
+    bubble.innerHTML = '<i class="fa-solid fa-hand"></i><span>' + escapeHtml(text) + '</span>';
+    row.appendChild(bubble);
+    return row;
+  }
+  
   // ==================== 群聊消息行（带成员头像和名字） ====================
   function createGroupMessageRow(type, msg) {
     var row = document.createElement('div');
@@ -667,7 +683,24 @@
     enter: enterGroup,
     exit: exitGroupMode,
     getCurrentGroup: getCurrentGroup,
-    getGroups: function () { return state.groups.slice(); }
+    getGroups: function () { return state.groups.slice(); },
+    // 追加一条系统消息到指定群（用于拍一拍等），并落盘 + 渲染
+    appendSystemMessage: function (groupId, text) {
+      var g = state.groups.find(function (x) { return x.id === groupId; });
+      if (!g) return false;
+      var msg = { type: 'system', text: text };
+      g.messages.push(msg);
+      // 若正在看这个群，实时渲染
+      if (state.currentGroupId === groupId && chatMessages) {
+        var row = createGroupSystemRow(text);
+        chatMessages.appendChild(row);
+        requestAnimationFrame(function () {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+      }
+      persist();
+      return true;
+    }
   };
 
 })();
