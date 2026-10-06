@@ -122,6 +122,7 @@
 #pageChatHome .chat-home-item:active {
   background: #f5f8fc;
 }
+/* 注：原「.chat-home-item-active」持久高亮已移除（联系人列表不再有选中态） */
 #pageChatHome .chat-home-item-avatar {
   width: 46px;
   height: 46px;
