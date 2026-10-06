@@ -597,9 +597,61 @@
     }
   });
 
+    // 主动消息：发给「非当前会话」的联系人（简化逻辑）
+  function triggerAutoReplyForOther(contactId, settings) {
+    if (!contactId) return;
+    if (!settings.normalReply) return;
+
+    // 1. 抽一条文字回复
+    var picked = pickOneTextReply();
+    if (!picked) {
+      // 兜底：从可用字卡里抽
+      var pool = getAllReplyCards().concat(getPublicReplyCards(), getExclusiveReplyCards());
+      var fb = randomPick(pool);
+      if (!fb) return;
+      picked = { text: fb };
+    }
+    var text = picked.text;
+    if (!text) return;
+
+    // 2. 写进该联系人的会话桶
+    var key = 'c:' + contactId;
+    if (window.sessionChat && typeof window.sessionChat.recordTo === 'function') {
+      try {
+        window.sessionChat.recordTo(key, 'other', text);
+      } catch (e) {
+        console.warn('[chat] 主动消息写桶失败', e);
+        return;
+      }
+    } else {
+      return;
+    }
+
+    // 3. 弹横幅（用该联系人的名字/头像）
+    try {
+      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+      var c = contacts.find(function (x) { return x.id === contactId; });
+      var name = c ? (c.name || 'Ta') : 'Ta';
+      if (window.chatNotify && typeof window.chatNotify.show === 'function') {
+        window.chatNotify.show(name, text);
+      }
+    } catch (e) {}
+  }
+
   // ==================== 自动回复核心逻辑 ====================
-function triggerAutoReply(targetContactId) {
+  function triggerAutoReply(targetContactId) {
     const settings = getSettings();
+
+    // ========== 主动消息分支：目标是「非当前会话」的联系人 ==========
+    // 简化逻辑：只抽 1 条文字，写进他的桶 + 弹通知，不动当前 DOM
+    if (targetContactId && window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
+      var currentCid = window.sessionChat.getCurrentContactId();
+      if (targetContactId !== currentCid) {
+        triggerAutoReplyForOther(targetContactId, settings);
+        return;
+      }
+    }
+    // ========== 以下走原逻辑（发给当前会话） ==========
 
     if (!settings.normalReply) {
       dlog('[传讯] 正常字卡回复已关闭');
