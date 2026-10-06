@@ -6,11 +6,15 @@
      2. 单聊消息按联系人分桶（buckets['c:<id>']），落盘 chat_messages_v1
      3. 群聊复用 group-chat.js（消息本就按群分桶，落盘 group_chat_data）
      4. 进入 / 切换 / 返回会话，重建各自消息区，互不串扰
-   解耦说明（本次改动）：
+   解耦说明：
      - 联系人列表不再有"持久选中高亮"
      - 进入会话不再写全局 my_current_contact，也不动角色面板当前角色
-     - 传讯自己的"当前会话"由 state.currentKey 维护，通过
-       window.sessionChat.getCurrentContactId() 供 chat-avatars 等读取
+     - 传讯自己的"当前会话"由 state.currentKey 维护
+   本次新增（为词云选人 + 收藏持久化做准备）：
+     - 每条消息加唯一 msgId
+     - DOM 行挂 data-msgid，便于反查
+     - genMsgId / toggleFav / getMessagesOf / getFavoritedOf
+     - record / recordReply 支持传入 msgId（不传则自动生成，兼容老调用）
    依赖：
      - group-chat.js（window.groupChat.enter / exit / getCurrentGroup / getGroups）
      - role-panel.js（my_contacts / contactChanged 广播）
@@ -75,9 +79,14 @@
     return state.buckets[key];
   }
 
+  // ==================== msgId 生成 ====================
+  function genMsgId() {
+    return 'm_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+  }
+
   // ==================== 消息记录 ====================
-  function normalize(kind, content) {
-    var m = { t: Date.now(), type: kind };
+  function normalize(kind, content, msgId) {
+    var m = { t: Date.now(), type: kind, msgId: msgId || genMsgId() };
     if (typeof content === 'string') {
       m.kind = 'text';
       m.text = content;
@@ -103,34 +112,70 @@
   }
 
   // 同步记录（我发的 / 当前会话产生的），写当前会话
-  function record(kind, content) {
-    // 群聊消息由 group-chat.js 自管，这里只处理单聊
-    if (!state.currentKey || state.currentKey.indexOf('c:') !== 0) return;
-    getBucket(state.currentKey).push(normalize(kind, content));
+  // 返回本次生成的 msgId（不传 msgId 时自动生成，兼容旧调用）
+  function record(kind, content, msgId) {
+    if (!state.currentKey || state.currentKey.indexOf('c:') !== 0) return null;
+    var m = normalize(kind, content, msgId);
+    getBucket(state.currentKey).push(m);
     persist();
+    return m.msgId;
   }
 
   // 异步回复记录：写入「发送消息时的会话」，若用户正看着该会话则即时渲染
-  function recordReply(kind, content) {
-    if (!state.replyTarget || state.replyTarget.indexOf('c:') !== 0) return;
-    getBucket(state.replyTarget).push(normalize(kind, content));
+  function recordReply(kind, content, msgId) {
+    if (!state.replyTarget || state.replyTarget.indexOf('c:') !== 0) return null;
+    var m = normalize(kind, content, msgId);
+    getBucket(state.replyTarget).push(m);
     persist();
     if (state.currentKey === state.replyTarget) {
       renderCurrent();
     }
+    return m.msgId;
   }
 
   // 写入指定单聊会话的桶（不改变当前会话/回复目标），若正看着该会话则即时渲染
-  function recordTo(key, kind, content) {
-    if (!key || key.indexOf('c:') !== 0) return false;
-    getBucket(key).push(normalize(kind, content));
+  function recordTo(key, kind, content, msgId) {
+    if (!key || key.indexOf('c:') !== 0) return null;
+    var m = normalize(kind, content, msgId);
+    getBucket(key).push(m);
     persist();
     if (state.currentKey === key) renderCurrent();
-    return true;
+    return m.msgId;
   }
 
   function setReplyTarget(key) {
     state.replyTarget = key || state.currentKey;
+  }
+
+  // ==================== 收藏（按 msgId 改桶里消息） ====================
+  // key 不传则用当前会话
+  function toggleFav(msgId, isFav, key) {
+    if (!msgId) return false;
+    var k = key || state.currentKey;
+    if (!k || k.indexOf('c:') !== 0) return false;
+    var bucket = getBucket(k);
+    for (var i = 0; i < bucket.length; i++) {
+      if (bucket[i].msgId === msgId) {
+        bucket[i].fav = !!isFav;
+        persist();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // ==================== 读取（给 stats 等外部用） ====================
+  // 读某联系人全部消息（返回浅拷贝，避免外部直接改内部数组）
+  function getMessagesOf(contactId) {
+    if (!contactId) return [];
+    var bucket = state.buckets[contactKey(contactId)];
+    if (!Array.isArray(bucket)) return [];
+    return bucket.slice();
+  }
+
+  // 读某联系人收藏的消息
+  function getFavoritedOf(contactId) {
+    return getMessagesOf(contactId).filter(function (m) { return m && m.fav; });
   }
 
   // ==================== 时间格式化（与 chat.js 一致） ====================
@@ -160,8 +205,10 @@
     row.dataset.sender = m.type === 'self' ? 'me' : 'partner';
     row.dataset.type = m.kind || 'text';
     row.dataset.time = String(m.t || Date.now());
-    row.dataset.favorited = 'false';
+    row.dataset.favorited = m.fav ? 'true' : 'false';
     row.dataset.read = 'false';
+    // 挂 msgId，便于反查
+    if (m.msgId) row.dataset.msgid = m.msgId;
 
     // 系统行（拍一拍 / 通话记录）：保持 call-record-bubble 外观，不带时间戳
     if (m.kind === 'pat' || m.kind === 'call') {
@@ -169,7 +216,6 @@
       var sysBubble = document.createElement('div');
       sysBubble.className = 'call-record-bubble';
       if (m.kind === 'pat') {
-        var patName = m.by === 'me' ? '我' : 'Ta';
         sysBubble.innerHTML =
           '<i class="fa-solid fa-hand"></i>' +
           '<span>' + escapeHtml(m.by === 'me' ? ('你拍了拍 ' + (m.name || 'Ta')) : ((m.name || 'Ta') + ' 拍了拍你')) +
@@ -279,7 +325,6 @@
 
     // 【解耦】传讯页进入会话时，不再写全局 my_current_contact，
     // 也不动角色面板的"当前角色"标记——角色面板的当前角色独立管理。
-    // 聊天页顶栏头像昵称由传讯自己的当前会话决定。
     updateChatHeader(name, avatar);
     if (typeof window.refreshChatAvatars === 'function') {
       try { window.refreshChatAvatars(); } catch (e) {}
@@ -396,7 +441,6 @@
   function showEmpty(tab, isEmpty) {
     var emptyEl = document.getElementById('chatHomeEmpty');
     if (!emptyEl) return;
-    // 只显示当前激活 tab 的空态
     var tabContacts = document.getElementById('chatHomeTabContacts');
     var activeTab = (tabContacts && tabContacts.classList.contains('active')) ? 'contacts' : 'groups';
     if (!isEmpty || activeTab !== tab) { emptyEl.style.display = 'none'; return; }
@@ -437,7 +481,6 @@
 
   // ==================== 返回 / 入口 ====================
   function bindNav() {
-    // 会话选择页 → 主页
     var backBtn = document.getElementById('chatHomeBackBtn');
     if (backBtn) {
       backBtn.addEventListener('click', function () {
@@ -445,7 +488,6 @@
       });
     }
 
-    // 聊天页 → 会话选择页
     var chatBackBtn = document.getElementById('chatBackBtn');
     if (chatBackBtn) {
       chatBackBtn.addEventListener('click', function () {
@@ -454,7 +496,6 @@
       });
     }
 
-    // 右上：群聊管理
     var groupBtn = document.getElementById('chatHomeGroupBtn');
     if (groupBtn) {
       groupBtn.addEventListener('click', function () {
@@ -464,7 +505,6 @@
       });
     }
 
-    // 右上：添加联系人（打开角色面板，在面板里增删角色）
     var addBtn = document.getElementById('chatHomeAddBtn');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
@@ -482,7 +522,6 @@
       var inChat = pageChat && pageChat.classList.contains('active');
 
       if (inChat) {
-        // 聊天页中，若角色面板切换了"当前角色"，切到该角色的会话桶（群聊态不动）
         var inGroup = pageChat.classList.contains('group-mode');
         var id = e.detail && e.detail.contactId;
         if (!inGroup && id && state.currentKey !== contactKey(id)) {
@@ -494,7 +533,6 @@
         return;
       }
 
-      // 会话选择页：刷新列表
       var pageHome = document.getElementById('pageChatHome');
       if (pageHome && pageHome.classList.contains('active')) {
         refresh();
@@ -534,7 +572,12 @@
       if (!state.currentKey || state.currentKey.indexOf('c:') !== 0) return null;
       return state.currentKey.slice(2);
     },
-    getBuckets: function () { return state.buckets; }
+    getBuckets: function () { return state.buckets; },
+    // ---------- 本次新增 ----------
+    genMsgId: genMsgId,
+    toggleFav: toggleFav,
+    getMessagesOf: getMessagesOf,
+    getFavoritedOf: getFavoritedOf
   };
 
 })();
