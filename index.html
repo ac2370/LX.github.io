@@ -39,6 +39,324 @@
   <link rel="stylesheet" href="./css/dream-survey.css?v=20261005">
   <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="./css/archive.css?v=20261005">
+
+  <style>
+/* ============================================================
+   iOS 锁屏开屏动画（ilk）
+   注意：已删掉原版对 html/body 的破坏性规则，只作用于 #ilk_root
+   ============================================================ */
+#ilk_root {
+  position: fixed !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  width: auto !important; height: auto !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important;
+  z-index: 2147483647 !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  background: #000 !important;
+  color: #fff !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  font-size: 16px !important;
+  line-height: normal !important;
+  text-align: left !important;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent !important;
+  pointer-events: auto !important;
+  opacity: 1;
+  transition: opacity .46s ease .06s;
+  --ilk-wall: url("https://i.postimg.cc/c4gs0HcH/IMG-8425.jpg");
+  --ilk-safe-t: env(safe-area-inset-top, 0px);
+  --ilk-safe-b: env(safe-area-inset-bottom, 0px);
+}
+/* 锁死字体，防止项目"字体设置"覆盖 */
+#ilk_root, #ilk_root * {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+}
+
+#ilk_root.ilk-bye { opacity: 0 !important; pointer-events: none !important; }
+
+#ilk_root *, #ilk_root *::before, #ilk_root *::after {
+  box-sizing: border-box !important;
+  margin: 0; padding: 0; border: 0 !important; outline: 0;
+  background: none;
+  font-style: normal !important; font-weight: 400;
+  text-transform: none !important; text-decoration: none !important;
+  list-style: none !important; float: none !important;
+  min-width: 0; min-height: 0; max-width: none; max-height: none;
+  box-shadow: none; border-radius: 0; vertical-align: baseline; animation: none;
+}
+#ilk_root button, #ilk_root input {
+  appearance: none !important; -webkit-appearance: none !important;
+  font-family: inherit !important; color: inherit;
+}
+
+#ilk_root .ilk-wall {
+  position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+  z-index: 0;
+  background: var(--ilk-wall) center center / cover no-repeat;
+  transform: scale(1.09);
+  transition: transform 2.6s cubic-bezier(.2,.7,.2,1);
+}
+#ilk_root .ilk-wall.ilk-settled { transform: scale(1); }
+#ilk_root .ilk-wall::after {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 62%, rgba(0,0,0,.34) 100%);
+}
+
+#ilk_root .ilk-boot {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200; background: #000;
+  opacity: 1; transition: opacity .66s ease; pointer-events: none;
+}
+#ilk_root .ilk-boot.ilk-off { opacity: 0; }
+
+#ilk_root .ilk-scrim {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  background: rgba(0,0,0,.34);
+  -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);
+  opacity: 0; visibility: hidden;
+  transition: opacity .34s ease, visibility .34s;
+}
+#ilk_root .ilk-scrim.ilk-on { opacity: 1; visibility: visible; }
+
+#ilk_root .ilk-sb {
+  flex: 0 0 auto;
+  height: calc(var(--ilk-safe-t) + 44px);
+  padding: calc(var(--ilk-safe-t) + 12px) 22px 0;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 15px; font-weight: 600; letter-spacing: .02em; color: #fff;
+  user-select: none;
+}
+#ilk_root .ilk-sb-l { min-width: 52px; font-variant-numeric: tabular-nums; }
+#ilk_root .ilk-sb-r { display: flex; align-items: center; gap: 5px; }
+#ilk_root .ilk-sb-r svg { display: block; flex: 0 0 auto; }
+
+#ilk_root .ilk-island {
+  position: absolute; top: calc(var(--ilk-safe-t) + 9px); left: 50%;
+  transform: translateX(-50%);
+  width: 112px; height: 32px; border-radius: 18px;
+  background: #000; z-index: 30; display: none; pointer-events: none;
+}
+@media (max-width: 520px) and (min-height: 600px) { #ilk_root .ilk-island { display: block; } }
+
+#ilk_root .ilk-lock {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  transform-origin: 50% 46%;
+  transition: transform .62s cubic-bezier(.2,.8,.2,1), filter .5s ease, opacity .5s ease;
+}
+#ilk_root .ilk-lock.ilk-pushed {
+  transform: scale(.93); filter: brightness(.62); opacity: .85;
+}
+#ilk_root .ilk-lock-main {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2px 16px 0;
+}
+#ilk_root .ilk-padlock { opacity: .92; filter: drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
+#ilk_root .ilk-date {
+  margin-top: 8px;
+  font-size: clamp(14px, 4.2vw, 20px); font-weight: 600; letter-spacing: .02em;
+  white-space: nowrap; color: rgba(255,255,255,.96);
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+#ilk_root .ilk-time {
+  margin-top: -4px;
+  font-size: clamp(62px, 21vw, 104px); font-weight: 500; line-height: 1.14;
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+  color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,.28);
+}
+#ilk_root .ilk-notifs {
+  margin-top: auto; width: 100%; max-width: 440px;
+  display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px;
+}
+#ilk_root .ilk-lock-bottom {
+  flex: 0 0 auto; position: relative;
+  padding: 0 28px calc(var(--ilk-safe-b) + 26px);
+  display: flex; align-items: center; justify-content: space-between;
+}
+#ilk_root .ilk-glass {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.15);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2);
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.2,1,.3,1), background .2s ease;
+}
+#ilk_root .ilk-glass:active { transform: scale(.9); background: rgba(255,255,255,.26); }
+#ilk_root .ilk-glass svg { display: block; opacity: .95; }
+#ilk_root .ilk-homebar {
+  position: absolute; left: 50%; bottom: calc(var(--ilk-safe-b) + 9px);
+  transform: translateX(-50%);
+  width: min(140px, 36vw); height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,.85);
+}
+
+#ilk_root .ilk-stage {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 24;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 12px; pointer-events: none;
+}
+#ilk_root .ilk-stage.ilk-in { pointer-events: auto; }
+#ilk_root .ilk-stage.ilk-gone { display: none; }
+#ilk_root .ilk-alert {
+  position: relative; width: 270px; max-width: 84vw;
+  border-radius: 14px; overflow: hidden; text-align: center;
+  background: rgba(22,22,24,.26);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  backdrop-filter: blur(26px) saturate(180%);
+  box-shadow:
+    inset 0 .5px 0 rgba(255,255,255,.16),
+    0 0 0 .5px rgba(255,255,255,.12),
+    0 22px 60px rgba(0,0,0,.34);
+  opacity: 0; transform: scale(1.18);
+  transition: opacity .3s ease, transform .44s cubic-bezier(.18,.9,.28,1), height .38s cubic-bezier(.32,.72,0,1);
+}
+#ilk_root .ilk-stage.ilk-in .ilk-alert { opacity: 1; transform: scale(1); }
+#ilk_root .ilk-stage.ilk-done .ilk-alert { opacity: 0; transform: scale(.94); pointer-events: none; }
+
+#ilk_root .ilk-panel {
+  position: absolute; left: 0; top: 0; width: 100%; z-index: 2;
+  opacity: 0; visibility: hidden; transform: scale(.975);
+  transition: opacity .26s ease, transform .32s cubic-bezier(.2,.9,.3,1), visibility .26s;
+}
+#ilk_root .ilk-panel.ilk-on { opacity: 1; visibility: visible; transform: scale(1); }
+#ilk_root .ilk-body { padding: 13px 16px 12px; }
+#ilk_root .ilk-title {
+  font-size: 17px; font-weight: 600; line-height: 1.32; letter-spacing: .04em;
+  color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+#ilk_root .ilk-amsg {
+  margin-top: 4px; font-size: 13px; line-height: 1.46;
+  color: rgba(255,255,255,.95); text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+#ilk_root .ilk-anote {
+  margin-top: 9px; font-size: 11.5px; line-height: 1.62; letter-spacing: .07em;
+  color: rgba(255,255,255,.72); text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+#ilk_root .ilk-acts { display: flex; position: relative; }
+#ilk_root .ilk-acts::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  transform: scaleY(.5); transform-origin: top;
+  background: rgba(255,255,255,.2);
+}
+#ilk_root .ilk-btn {
+  flex: 1 1 0; min-width: 0; position: relative;
+  background: transparent; padding: 12px 8px;
+  font-size: 17px; font-weight: 500; letter-spacing: .08em; line-height: 1.2;
+  color: #2C63D8; cursor: pointer; transition: background .16s ease;
+}
+#ilk_root .ilk-btn + .ilk-btn::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+  transform: scaleX(.5); transform-origin: left;
+  background: rgba(255,255,255,.2);
+}
+
+#ilk_root .ilk-notif {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px; border-radius: 22px;
+  cursor: pointer; user-select: none;
+  background: rgba(28,28,30,.32);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  box-shadow:
+    0 8px 26px rgba(0,0,0,.26),
+    inset 0 .5px 0 rgba(255,255,255,.16),
+    0 0 0 .5px rgba(255,255,255,.1);
+}
+#ilk_root .ilk-notif.ilk-banner {
+  position: absolute; top: calc(var(--ilk-safe-t) + 12px); left: 50%; z-index: 60;
+  width: min(440px, calc(100vw - 20px));
+  opacity: 0; visibility: hidden;
+  transform: translate(-50%, -190%) scale(.94);
+  transition: opacity .3s ease, transform .62s cubic-bezier(.2,1.14,.32,1), visibility .3s;
+  pointer-events: none;
+}
+#ilk_root .ilk-notif.ilk-banner.ilk-in {
+  opacity: 1; visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+  pointer-events: auto;
+}
+#ilk_root .ilk-notif.ilk-banner.ilk-in.ilk-press {
+  transform: translate(-50%, 0) scale(.975);
+}
+#ilk_root .ilk-notif.ilk-banner.ilk-out {
+  opacity: 0;
+  transform: translate(-50%, -180%) scale(.96);
+  transition: opacity .26s ease, transform .42s cubic-bezier(.4,0,.7,.2), visibility .26s;
+  pointer-events: none;
+}
+#ilk_root .ilk-notif.ilk-listed {
+  position: relative; width: 100%;
+  opacity: 0; transform: translateY(10px) scale(.98);
+  transition: opacity .34s ease, transform .44s cubic-bezier(.2,1,.3,1);
+}
+#ilk_root .ilk-notif.ilk-listed.ilk-shown { opacity: 1; transform: none; }
+#ilk_root .ilk-notif.ilk-listed:active { transform: scale(.985); }
+
+#ilk_root .ilk-ava {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; overflow: hidden;
+  background: rgba(255,255,255,.06);
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.1);
+}
+#ilk_root .ilk-ava img {
+  width: 100% !important; height: 100% !important; max-width: none !important;
+  object-fit: cover; display: block; border-radius: 0;
+}
+#ilk_root .ilk-nmain { flex: 1 1 auto; min-width: 0; }
+#ilk_root .ilk-nhead {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+}
+#ilk_root .ilk-napp {
+  font-size: 12.5px; font-weight: 600; letter-spacing: .06em; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#ilk_root .ilk-ntime {
+  flex: 0 0 auto; font-size: 11.5px; letter-spacing: .04em;
+  color: rgba(255,255,255,.6); text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+#ilk_root .ilk-ntext {
+  margin-top: 2px; font-size: 13.5px; line-height: 1.4; letter-spacing: .02em;
+  color: rgba(255,255,255,.94); text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+@media (max-width: 420px) {
+  #ilk_root .ilk-lock-main { padding-left: 14px; padding-right: 14px; }
+  #ilk_root .ilk-lock-bottom { padding-left: 24px; padding-right: 24px; }
+  #ilk_root .ilk-notif { padding: 10px 12px; gap: 9px; border-radius: 20px; }
+  #ilk_root .ilk-ava { width: 36px; height: 36px; }
+  #ilk_root .ilk-sb { padding-left: 18px; padding-right: 18px; }
+}
+@media (max-width: 360px) {
+  #ilk_root .ilk-alert { width: 252px; }
+  #ilk_root .ilk-title { font-size: 16px; }
+  #ilk_root .ilk-amsg { font-size: 12.5px; }
+  #ilk_root .ilk-btn { font-size: 16px; letter-spacing: .04em; }
+  #ilk_root .ilk-date { font-size: 13.5px; }
+  #ilk_root .ilk-napp { font-size: 12px; }
+  #ilk_root .ilk-ntext { font-size: 13px; }
+  #ilk_root .ilk-ntime { font-size: 11px; }
+}
+@media (max-height: 720px) { #ilk_root .ilk-time { font-size: clamp(56px, 16vh, 88px); } }
+@media (max-height: 600px) {
+  #ilk_root .ilk-time { font-size: clamp(46px, 13vh, 70px); }
+  #ilk_root .ilk-date { font-size: 13.5px; }
+  #ilk_root .ilk-notifs { gap: 6px; }
+  #ilk_root .ilk-lock-bottom { padding-bottom: calc(var(--ilk-safe-b) + 16px); }
+  #ilk_root .ilk-notif { padding: 9px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #ilk_root, #ilk_root .ilk-wall, #ilk_root .ilk-alert, #ilk_root .ilk-panel,
+  #ilk_root .ilk-notif, #ilk_root .ilk-lock, #ilk_root .ilk-scrim, #ilk_root .ilk-boot {
+    transition-duration: .01s !important; transition-delay: 0s !important;
+  }
+}
+</style>
 </head>
 <body>
 
@@ -1803,5 +2121,274 @@
   <script src="./js/dream-survey-from-me.js?v=20261005"></script>
   <script src="./js/dream-survey.js?v=20261010"></script>
   <script src="./js/archive.js?v=20261005"></script>
+
+  <template id="ilk_template">
+  <div class="ilk-wall" data-ilk="wall"></div>
+
+  <div class="ilk-lock" data-ilk="lock">
+    <div class="ilk-sb">
+      <div class="ilk-sb-l" data-ilk="clock">3:47</div>
+      <div class="ilk-sb-r">
+        <svg width="18" height="12" viewBox="0 0 18 12" fill="#fff" aria-hidden="true">
+          <rect x="0" y="7.5" width="3" height="4.5" rx="1"/>
+          <rect x="5" y="5" width="3" height="7" rx="1"/>
+          <rect x="10" y="2.5" width="3" height="9.5" rx="1"/>
+          <rect x="15" y="0" width="3" height="12" rx="1"/>
+        </svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="#fff" aria-hidden="true">
+          <path d="M8 11.4 5.85 8.75a3.4 3.4 0 0 1 4.3 0L8 11.4Z"/>
+          <path d="M8 6.5c-1.5 0-2.9.52-4.02 1.4L2.55 6.2A8.7 8.7 0 0 1 8 4.3c2.05 0 3.93.7 5.45 1.9L12.02 7.9A6.45 6.45 0 0 0 8 6.5Z"/>
+          <path d="M8 1.9c-2.62 0-5.02.92-6.9 2.45L0 2.95A11.3 11.3 0 0 1 8 0c3.06 0 5.86 1.12 8 2.95L14.9 4.35A10.5 10.5 0 0 0 8 1.92"/>
+        </svg>
+        <svg width="27" height="13" viewBox="0 0 27 13" aria-hidden="true">
+          <rect x="5" y="5" width="22" height="12" rx="3.6" fill="none" stroke="rgba(255,255,255,.45)"/>
+          <rect x="2" y="2" width="7.6" height="9" rx="2.4" fill="#fff"/>
+          <path d="M24.4 4.3c1.3.45 1.3 3.95 0 4.4V4.3Z" fill="rgba(255,255,255,.45)"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="ilk-lock-main">
+      <svg class="ilk-padlock" width="14" height="18" viewBox="0 0 14 18" fill="#fff" aria-hidden="true">
+        <path d="M7 0a4.1 4.1 0 0 0-4.1 4.1V6h2.2V4.1a1.9 1.9 0 1 1 3.8 0V6h2.2V4.1A4.1 4.1 0 0 0 7 0Z"/>
+        <rect x="1" y="6.4" width="12" height="11.2" rx="3.1"/>
+      </svg>
+
+      <div class="ilk-date" data-ilk="date"></div>
+      <div class="ilk-time" data-ilk="bigclock">3:47</div>
+
+      <div class="ilk-notifs" data-ilk="notifs"></div>
+    </div>
+
+    <div class="ilk-lock-bottom">
+      <button class="ilk-glass" type="button" aria-label="手电筒">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+          <path d="M8.4 2h7.2v2.6l-2.1 2.1V20a1.5 1.5 0 0 1-3 0V6.7L8.4 4.6V2Z"/>
+        </svg>
+      </button>
+      <div class="ilk-homebar"></div>
+      <button class="ilk-glass" type="button" aria-label="相机">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+          <path d="M9.2 3h5.6l1.2 2h3.4A2.6 2.6 0 0 1 22 7.6v9.8A2.6 2.6 0 0 1 19.4 20H4.6A2.6 2.6 0 0 1 2 17.4V7.6A2.6 2.6 0 0 1 4.6 5H8l1.2-2Zm2.8 4.9a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm0 1.9a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="ilk-island" aria-hidden="true"></div>
+  <div class="ilk-scrim" data-ilk="scrim"></div>
+
+  <div class="ilk-stage" data-ilk="stage">
+    <div class="ilk-alert" data-ilk="alert" role="alertdialog">
+      <div class="ilk-panel ilk-on" data-panel="ask">
+        <div class="ilk-body">
+          <div class="ilk-title">系统提示</div>
+          <div class="ilk-amsg">一滴眼泪的重量是否大于1g？</div>
+        </div>
+        <div class="ilk-acts">
+          <button class="ilk-btn ilk-strong" type="button" data-act="yes">是</button>
+          <button class="ilk-btn" type="button" data-act="no">否</button>
+        </div>
+      </div>
+      <div class="ilk-panel" data-panel="wrong">
+        <div class="ilk-body">
+          <div class="ilk-title">系统提示</div>
+          <div class="ilk-amsg">回答错误</div>
+        </div>
+        <div class="ilk-acts">
+          <button class="ilk-btn" type="button" data-act="back">返回</button>
+        </div>
+      </div>
+      <div class="ilk-panel" data-panel="right">
+        <div class="ilk-body">
+          <div class="ilk-title">系统提示</div>
+          <div class="ilk-amsg">回答正确</div>
+          <div class="ilk-anote">一滴泪的重量取决于落在谁的心上</div>
+        </div>
+        <div class="ilk-acts">
+          <button class="ilk-btn ilk-strong" type="button" data-act="done">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ilk-notif ilk-banner" data-ilk="banner" role="button" tabindex="-1" aria-label="信息">
+    <div class="ilk-ava">
+      <img src="https://backup.fukit.cn/autoupload/f/ya8f/20260801/1vXo/1080X1080/24d5312fdfb6967b2734693cfef45ddd.jpg" alt="">
+    </div>
+    <div class="ilk-nmain">
+      <div class="ilk-nhead">
+        <span class="ilk-napp">信息</span>
+        <span class="ilk-ntime">现在</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ilk-boot" data-ilk="boot"></div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+  var hostWin = window, hostDoc = document;
+
+  if (!hostDoc.body) {
+    hostDoc.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else { boot(); }
+
+  function boot() {
+    try { if (hostWin._ilkDestroy) hostWin._ilkDestroy(); } catch (e) {}
+    var stale = hostDoc.getElementById('ilk_root');
+    if (stale) stale.remove();
+
+    var tpl = document.getElementById('ilk_template');
+    if (!tpl) return;
+
+    var root = hostDoc.createElement('div');
+    root.id = 'ilk_root';
+    root.innerHTML = tpl.innerHTML;
+    hostDoc.body.appendChild(root);
+
+    var q = function(name) { return root.querySelector('[data-ilk="' + name + '"]'); };
+    var qa = function(name) { return [].slice.call(root.querySelectorAll('[data-ilk="' + name + '"]')); };
+
+    var timers = [];
+    var wait = function(ms, fn) { var t = setTimeout(fn, ms); timers.push(t); return t; };
+
+    var blockScroll = function(e) {
+      if (e.target.closest('.ilk-scroll')) e.preventDefault();
+    };
+    root.addEventListener('touchmove', blockScroll, { passive: false });
+
+    var WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    var clocks = qa('clock');
+    var bigClock = q('bigclock');
+    var dateEl = q('date');
+    function tick() {
+      var now = new Date();
+      var t = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+      clocks.forEach(function(el) { el.textContent = t; });
+      if (bigClock) bigClock.textContent = t;
+      if (dateEl) {
+        dateEl.textContent = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日' + WEEK[now.getDay()];
+      }
+    }
+    tick();
+    var clockTimer = setInterval(tick, 1000);
+
+    var wall = q('wall');
+    var bootLayer = q('boot');
+    function bootOff() {
+      if (!bootLayer || !bootLayer.isConnected) return;
+      bootLayer.classList.add('ilk-off');
+      if (wall) wall.classList.add('ilk-settled');
+      wait(800, function() { if (bootLayer) bootLayer.remove(); });
+    }
+    var pre = new Image();
+    pre.onload = pre.onerror = function() { requestAnimationFrame(bootOff); };
+    pre.src = 'https://i.postimg.cc/c4gs0HcC/IMG-8425.jpg';
+    wait(1400, bootOff);
+
+    var stage = q('stage');
+    var scrim = q('scrim');
+    var lock = q('lock');
+    var alertB = q('alert');
+    var panels = [].slice.call(alertB.querySelectorAll('.ilk-panel'));
+
+    function fit() {
+      var on = alertB.querySelector('.ilk-panel.ilk-on');
+      if (on) alertB.style.height = on.offsetHeight + 'px';
+    }
+    function show(name) {
+      panels.forEach(function(p) {
+        p.classList.toggle('ilk-on', p.dataset.panel === name);
+      });
+      fit();
+    }
+    show('ask');
+
+    if (hostDoc.fonts && hostDoc.fonts.ready) {
+      hostDoc.fonts.ready.then(fit).catch(function() {});
+    }
+    var rt;
+    var onResize = function() { clearTimeout(rt); rt = setTimeout(fit, 140); };
+    hostWin.addEventListener('resize', onResize);
+
+    wait(1250, function() {
+      scrim.classList.add('ilk-on');
+      stage.classList.add('ilk-in');
+      fit();
+    });
+
+    alertB.addEventListener('click', function(e) {
+      var btn = e.target.closest('.ilk-btn');
+      if (!btn) return;
+      switch (btn.dataset.act) {
+        case 'yes': show('right'); break;
+        case 'no': show('wrong'); break;
+        case 'back': show('ask'); break;
+        case 'done':
+          stage.classList.add('ilk-done');
+          scrim.classList.remove('ilk-on');
+          wait(420, function() { stage.classList.add('ilk-gone'); });
+          wait(620, dropBanner);
+          break;
+      }
+    });
+
+    var banner = q('banner');
+    var state = 'idle';
+
+    function dropBanner() {
+      state = 'in';
+      banner.classList.remove('ilk-out');
+      banner.classList.add('ilk-in');
+      banner.tabIndex = 0;
+    }
+    function bannerOut() {
+      state = 'out';
+      banner.classList.remove('ilk-in', 'ilk-press');
+      banner.classList.add('ilk-out');
+      banner.tabIndex = -1;
+    }
+
+    banner.addEventListener('pointerdown', function() {
+      if (state === 'in') banner.classList.add('ilk-press');
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function(ev) {
+      banner.addEventListener(ev, function() { banner.classList.remove('ilk-press'); });
+    });
+
+    // 【改】点横幅 → 整个开屏退场，露出主页
+    function onBannerClick() {
+      if (state !== 'in') return;
+      bannerOut();
+      wait(480, function() {
+        root.classList.add('ilk-bye');
+        wait(600, function() { teardown(); });
+      });
+    }
+
+    banner.addEventListener('click', onBannerClick);
+    banner.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onBannerClick();
+      }
+    });
+
+    function teardown() {
+      clearInterval(clockTimer);
+      timers.forEach(clearTimeout);
+      clearTimeout(rt);
+      hostWin.removeEventListener('resize', onResize);
+      root.removeEventListener('touchmove', blockScroll);
+      if (root.isConnected) root.remove();
+      try { delete hostWin._ilkDestroy; } catch (e) { hostWin._ilkDestroy = null; }
+    }
+    hostWin._ilkDestroy = teardown;
+  }
+})();
+</script>
 </body>
 </html>
