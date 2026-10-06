@@ -78,8 +78,13 @@
     var exclusivePool = [];
     try {
       if (window.contactCards) {
-        var contactId = null;
-        try { contactId = localStorage.getItem('my_current_contact'); } catch (e) {}
+             var contactId = null;
+        if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
+          contactId = window.sessionChat.getCurrentContactId();
+        }
+        if (!contactId) {
+          try { contactId = localStorage.getItem('my_current_contact'); } catch (e) {}
+        }
         if (contactId) {
           var patGroups = [];
           if (typeof window.contactCards.getForPat === 'function') {
@@ -144,7 +149,13 @@
     if (chatAvatar && chatAvatar.src) return chatAvatar.src;
     try {
       var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var currentId = localStorage.getItem('my_current_contact');
+      var currentId = null;
+      if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
+        currentId = window.sessionChat.getCurrentContactId();
+      }
+      if (!currentId) {
+        try { currentId = localStorage.getItem('my_current_contact'); } catch (e) {}
+      }
       if (Array.isArray(contacts)) {
         var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
         if (cur && cur.avatar) return cur.avatar;
@@ -582,13 +593,150 @@
     var patClose  = modal.querySelector('#patClose');
     var patCancel = modal.querySelector('#patCancel');
 
+       // ==================== 群聊拍一拍：辅助 ====================
+    // 当前选中的群成员 id
+    var groupPatTargetId = null;
+
+    function isGroupMode() {
+      var pageChat = document.getElementById('pageChat');
+      return pageChat && pageChat.classList.contains('group-mode');
+    }
+
+    function getCurrentGroupObj() {
+      if (window.groupChat && typeof window.groupChat.getCurrentGroup === 'function') {
+        try { return window.groupChat.getCurrentGroup(); } catch (e) {}
+      }
+      return null;
+    }
+
+    // 群成员 memberIds → 联系人对象列表
+    function resolveGroupMembers(g) {
+      if (!g || !Array.isArray(g.memberIds)) return [];
+      var contacts = [];
+      try { contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]'); } catch (e) {}
+      var map = {};
+      contacts.forEach(function (c) { if (c && c.id) map[c.id] = c; });
+      var result = [];
+      g.memberIds.forEach(function (cid) {
+        if (map[cid]) result.push(map[cid]);
+      });
+      return result;
+    }
+
+    // 群聊拍一拍字卡池：只用 用户池 + 公共池（不用专属）
+    function getGroupPatPool() {
+      var userPool = [];
+      if (typeof window.getAllPatCards === 'function') {
+        userPool = window.getAllPatCards() || [];
+      } else if (typeof window.getPatCards === 'function') {
+        userPool = window.getPatCards() || [];
+      }
+      if (!Array.isArray(userPool)) userPool = [];
+
+      var publicPool = [];
+      if (window.publicCards && typeof window.publicCards.isReady === 'function' && window.publicCards.isReady()) {
+        try { publicPool = window.publicCards.getSelectedCards('pat') || []; } catch (e) { publicPool = []; }
+      }
+      if (!Array.isArray(publicPool)) publicPool = [];
+
+      var seen = Object.create(null);
+      var result = [];
+      userPool.concat(publicPool).forEach(function (t) {
+        if (!t || seen[t]) return;
+        seen[t] = 1;
+        result.push(t);
+      });
+      return result;
+    }
+
+    // ==================== 打开拍一拍面板 ====================
     function openPatModal() {
-      // 关键改动：从 getPatPool() 读，用户池 + 公共池合并
-      var cards = getPatPool();
+      var groupMode = isGroupMode();
+      var g = groupMode ? getCurrentGroupObj() : null;
+
+      // ---------- 群聊模式 ----------
+      if (groupMode && g) {
+        var members = resolveGroupMembers(g);
+
+        if (members.length === 0) {
+          patTitle.textContent = '拍一拍';
+          patBody.innerHTML =
+            '<div class="pat-empty">' +
+            '<i class="fa-solid fa-hand"></i>' +
+            '<div>群里还没有成员</div>' +
+            '</div>';
+          modal.classList.add('active');
+          return;
+        }
+
+        if (!groupPatTargetId || !members.some(function (m) { return m.id === groupPatTargetId; })) {
+          groupPatTargetId = members[0].id;
+        }
+
+        var cards = getGroupPatPool();
+
+        var selectHtml =
+          '<div class="pat-group-target">' +
+          '  <div class="pat-group-target-label">拍谁</div>' +
+          '  <select class="pat-group-target-select" id="patGroupTargetSelect">';
+        members.forEach(function (m) {
+          selectHtml += '<option value="' + escapeHtml(m.id) + '"' +
+            (m.id === groupPatTargetId ? ' selected' : '') + '>' +
+            escapeHtml(m.name || '成员') + '</option>';
+        });
+        selectHtml += '  </select></div>';
+
+        patTitle.textContent = '拍一拍';
+
+        if (cards.length === 0) {
+          patBody.innerHTML = selectHtml +
+            '<div class="pat-empty">' +
+            '<i class="fa-solid fa-hand"></i>' +
+            '<div>还没有拍一拍字卡</div>' +
+            '<div class="pat-empty-hint">去字卡库 → 拍一拍 添加几句吧</div>' +
+            '</div>';
+        } else {
+          var html = selectHtml;
+          cards.forEach(function (text, idx) {
+            html += '<div class="pat-item" data-idx="' + idx + '">' +
+              '<i class="fa-solid fa-hand-point-right pat-item-icon"></i>' +
+              '<span class="pat-item-text">' + escapeHtml(text) + '</span>' +
+              '</div>';
+          });
+          patBody.innerHTML = html;
+
+          var sel = document.getElementById('patGroupTargetSelect');
+          if (sel) {
+            sel.addEventListener('change', function () {
+              groupPatTargetId = sel.value;
+            });
+          }
+
+          patBody.querySelectorAll('.pat-item').forEach(function (el) {
+            el.addEventListener('click', function () {
+              var i = parseInt(el.getAttribute('data-idx'), 10);
+              var picked = cards[i];
+              if (!picked) return;
+              var target = members.find(function (m) { return m.id === groupPatTargetId; });
+              var targetName = target ? (target.name || '成员') : '成员';
+              if (window.groupChat && typeof window.groupChat.appendSystemMessage === 'function') {
+                window.groupChat.appendSystemMessage(g.id, '你拍了拍 ' + targetName + '：' + picked);
+              }
+              closePatModal();
+            });
+          });
+        }
+
+        modal.classList.add('active');
+        return;
+      }
+
+      // ---------- 单聊模式（原逻辑） ----------
+      var cards2 = getPatPool();
 
       patTitle.textContent = '拍一拍 ' + getContactName();
 
-      if (cards.length === 0) {
+      if (cards2.length === 0) {
         patBody.innerHTML =
           '<div class="pat-empty">' +
             '<i class="fa-solid fa-hand"></i>' +
@@ -596,19 +744,19 @@
             '<div class="pat-empty-hint">去字卡库 → 拍一拍 添加几句吧</div>' +
           '</div>';
       } else {
-        var html = '';
-        cards.forEach(function (text, idx) {
-          html += '<div class="pat-item" data-idx="' + idx + '">' +
+        var html2 = '';
+        cards2.forEach(function (text, idx) {
+          html2 += '<div class="pat-item" data-idx="' + idx + '">' +
             '<i class="fa-solid fa-hand-point-right pat-item-icon"></i>' +
             '<span class="pat-item-text">' + escapeHtml(text) + '</span>' +
             '</div>';
         });
-        patBody.innerHTML = html;
+        patBody.innerHTML = html2;
 
         patBody.querySelectorAll('.pat-item').forEach(function (el) {
           el.addEventListener('click', function () {
             var i = parseInt(el.getAttribute('data-idx'), 10);
-            var picked = cards[i];
+            var picked = cards2[i];
             if (picked) sendPat(picked);
             closePatModal();
           });
