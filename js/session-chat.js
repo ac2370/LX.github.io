@@ -261,7 +261,7 @@
   }
 
   // ==================== 进入 / 退出会话 ====================
-  function enterContact(id, name, avatar) {
+   function enterContact(id, name, avatar) {
     if (!id) return;
 
     // 若当前处于群聊态，先退出
@@ -272,19 +272,17 @@
     state.currentKey = contactKey(id);
     state.replyTarget = state.currentKey;
 
-    // 同步当前联系人：优先走角色面板（内存 + 存储 + 顶栏 + 广播），无角色面板时自实现兜底
-    if (window.rolePanel && typeof window.rolePanel.setCurrentContact === 'function') {
-      try { window.rolePanel.setCurrentContact(id); } catch (e) {}
-    } else {
-      try { localStorage.setItem('my_current_contact', id); } catch (e) {}
-      updateChatHeader(name, avatar);
-      if (typeof window.refreshChatAvatars === 'function') {
-        try { window.refreshChatAvatars(); } catch (e) {}
-      }
-      try {
-        window.dispatchEvent(new CustomEvent('contactChanged', { detail: { contactId: id } }));
-      } catch (e) {}
+    // 【解耦】传讯页进入会话时，不再写全局 my_current_contact，
+    // 也不动角色面板的"当前角色"标记——角色面板的当前角色独立管理。
+    // 聊天页顶栏头像昵称由传讯自己的当前会话决定。
+    updateChatHeader(name, avatar);
+    if (typeof window.refreshChatAvatars === 'function') {
+      try { window.refreshChatAvatars(); } catch (e) {}
     }
+    // 广播"传讯会话已切换"（供 chat-avatars 等读取方刷新）
+    try {
+      window.dispatchEvent(new CustomEvent('sessionChanged', { detail: { contactId: id } }));
+    } catch (e) {}
 
     renderCurrent();
 
@@ -310,15 +308,11 @@
     try { contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]'); } catch (e) {}
     if (!Array.isArray(contacts)) contacts = [];
 
-    var curId = null;
-    try { curId = localStorage.getItem('my_current_contact'); } catch (e) {}
-
-    var html = '';
+       var html = '';
     contacts.forEach(function (c) {
       var sub = getContactSub(c.id);
-      var activeCls = (c.id === curId) ? ' chat-home-item-active' : '';
       html +=
-        '<div class="chat-home-item' + activeCls + '" data-cid="' + escapeHtml(c.id) + '">' +
+        '<div class="chat-home-item" data-cid="' + escapeHtml(c.id) + '">' +
         '  <img class="chat-home-item-avatar" src="' + escapeHtml(c.avatar || '') + '" alt="">' +
         '  <div class="chat-home-item-main">' +
         '    <div class="chat-home-item-name">' + escapeHtml(c.name || 'Ta') + '</div>' +
@@ -520,7 +514,7 @@
   setTimeout(function () { if (!state.loaded) load(init); }, 2000);
 
   // ==================== 暴露 ====================
-  window.sessionChat = {
+   window.sessionChat = {
     record: record,
     recordReply: recordReply,
     recordTo: recordTo,
@@ -530,6 +524,11 @@
     refresh: refresh,
     renderCurrent: renderCurrent,
     getCurrentKey: function () { return state.currentKey; },
+    // 当前单聊会话的联系人 id（群聊 / 无会话时返回 null）
+    getCurrentContactId: function () {
+      if (!state.currentKey || state.currentKey.indexOf('c:') !== 0) return null;
+      return state.currentKey.slice(2);
+    },
     getBuckets: function () { return state.buckets; }
   };
 
