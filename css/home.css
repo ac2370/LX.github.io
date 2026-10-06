@@ -622,3 +622,20 @@ body.theme-dark .header-card::before {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+
+/* ============ 主页间距放宽（覆盖 Tailwind 的 mt-*） ============ */
+#pageHome .main-content .search-glass {
+  margin-top: 16px !important;
+}
+#pageHome .main-content > .mt-3 {
+  margin-top: 22px !important;
+}
+#pageHome .function-grid {
+  margin-top: 26px !important;
+  margin-bottom: 16px !important;
+  gap: 22px 10px;
+}
+#pageHome .function-item {
+  gap: 6px;
+}
+
