@@ -598,7 +598,7 @@
   });
 
   // ==================== 自动回复核心逻辑 ====================
-  function triggerAutoReply() {
+function triggerAutoReply(targetContactId) {
     const settings = getSettings();
 
     if (!settings.normalReply) {
