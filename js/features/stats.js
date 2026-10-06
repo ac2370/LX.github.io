@@ -1,8 +1,12 @@
 /**
  * 词云（消息统计 & 收藏）页面
- * - 数据源：DOM（#chatMessages .message-row）
+ * - 数据源：sessionChat.getMessagesOf(选中的联系人)（不再读 DOM）
  * - 4 个 tab：统计 / 搜索 / 收藏 / 词云
- * - 独立页面 #pageStats，不用弹窗
+ * - 独立页面 #pageStats
+ * 本次改动：
+ * - 数据源从 DOM 改为存储（sessionChat）
+ * - 顶部加"切换联系人"按钮，私有键 stats_view_contact
+ * - 收藏从存储读、取消收藏写存储
  */
 
 (function () {
@@ -13,6 +17,9 @@
     console.warn('[stats] 找不到 #pageStats');
     return;
   }
+
+  var LS_CONTACTS_KEY = 'my_contacts';
+  var STATS_VIEW_KEY  = 'stats_view_contact';
 
   // ==================== 工具 ====================
   function escapeHtml(str) {
@@ -29,34 +36,61 @@
     return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  // ==================== 从 DOM 读消息 ====================
-  function readAllMessages() {
-    var chatMessages = document.getElementById('chatMessages');
-    if (!chatMessages) return [];
+  // ==================== 联系人 ====================
+  function loadContacts() {
+    try {
+      var arr = JSON.parse(localStorage.getItem(LS_CONTACTS_KEY) || '[]');
+      if (Array.isArray(arr) && arr.length > 0) return arr;
+    } catch (e) {}
+    return [];
+  }
 
-    var rows = chatMessages.querySelectorAll('.message-row');
+  function getCurrentViewContactId() {
+    var contacts = loadContacts();
+    var id = null;
+    try { id = localStorage.getItem(STATS_VIEW_KEY); } catch (e) {}
+    if (id && contacts.some(function (c) { return c.id === id; })) return id;
+    return contacts[0] ? contacts[0].id : null;
+  }
+
+  function getContactInfo(id) {
+    if (!id) return null;
+    var contacts = loadContacts();
+    return contacts.find(function (c) { return c.id === id; }) || null;
+  }
+
+  function updateSwitchLabel() {
+    var el = document.getElementById('statsSwitchLabel');
+    if (!el) return;
+    var c = getContactInfo(getCurrentViewContactId());
+    el.textContent = c ? (c.name || 'Ta') : '—';
+  }
+
+  // ==================== 从存储读消息 ====================
+  // 返回统一结构：{ sender, type, time, favorited, text, imageUrl, msgId }
+  function readMessagesOfContact(contactId) {
+    if (!contactId) return [];
+    if (!window.sessionChat || typeof window.sessionChat.getMessagesOf !== 'function') return [];
+    var raw = [];
+    try { raw = window.sessionChat.getMessagesOf(contactId) || []; } catch (e) { return []; }
+
     var result = [];
+    raw.forEach(function (m) {
+      if (!m) return;
+      // 过滤系统行（拍一拍 / 通话记录）
+      if (m.kind === 'pat' || m.kind === 'call') return;
 
-    rows.forEach(function (row) {
-      if (row.id === 'typingRow') return;
-
-      var sender = row.dataset.sender || (row.classList.contains('self') ? 'me' : 'partner');
-      var type = row.dataset.type || 'text';
-      var time = Number(row.dataset.time) || 0;
-      var favorited = row.dataset.favorited === 'true';
-
-      if (type === 'system') return;
-      if (row.classList.contains('system-call-event')) return;
-
+      var sender = (m.type === 'self') ? 'me' : 'partner';
+      var type = m.kind || 'text';
       var text = '';
       var imageUrl = '';
 
       if (type === 'image') {
-        var img = row.querySelector('.message-bubble img');
-        imageUrl = img ? img.src : '';
+        imageUrl = m.url || '';
+      } else if (type === 'quote') {
+        text = (m.quote ? ('> ' + m.quote + ' ') : '') + (m.text || '');
       } else {
-        var bubble = row.querySelector('.message-bubble');
-        text = bubble ? bubble.textContent.trim() : '';
+        text = m.text || '';
       }
 
       if (!text && !imageUrl) return;
@@ -64,39 +98,135 @@
       result.push({
         sender: sender,
         type: type,
-        time: time,
-        favorited: favorited,
+        time: m.t || 0,
+        favorited: !!m.fav,
         text: text,
         imageUrl: imageUrl,
-        row: row
+        msgId: m.msgId || ''
       });
     });
 
     return result;
   }
 
+  function readAllMessages() {
+    return readMessagesOfContact(getCurrentViewContactId());
+  }
+
   // ==================== 名字/头像 ====================
   function getMyName() {
+    try {
+      var raw = localStorage.getItem('my_profile');
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && p.name) return p.name;
+      }
+    } catch (e) {}
     var el = document.getElementById('myNickname');
     if (el && el.textContent.trim()) return el.textContent.trim();
-    var h1 = document.querySelector('#headerCard h1');
-    if (h1 && h1.textContent.trim()) return h1.textContent.trim();
     return '我';
   }
+
   function getPartnerName() {
-    var el = document.getElementById('chatName');
-    if (el && el.textContent.trim()) return el.textContent.trim();
-    return 'Ta';
+    var c = getContactInfo(getCurrentViewContactId());
+    return c ? (c.name || 'Ta') : 'Ta';
   }
+
   function getMyAvatar() {
+    try {
+      var raw = localStorage.getItem('my_profile');
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && p.avatar) return p.avatar;
+      }
+    } catch (e) {}
     var el = document.getElementById('avatarImg');
     if (el && el.src) return el.src;
     return 'https://picsum.photos/100/100?random=1';
   }
+
   function getPartnerAvatar() {
-    var el = document.getElementById('chatAvatar');
-    if (el && el.src) return el.src;
+    var c = getContactInfo(getCurrentViewContactId());
+    if (c && c.avatar) return c.avatar;
     return 'https://picsum.photos/200/200?random=99';
+  }
+
+  // ==================== 切换联系人弹层 ====================
+  function openContactSwitcher() {
+    var old = document.getElementById('statsContactSwitcher');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var contacts = loadContacts();
+    if (contacts.length === 0) {
+      alert('还没有联系人');
+      return;
+    }
+    var curId = getCurrentViewContactId();
+
+    var listHtml = '';
+    contacts.forEach(function (c) {
+      var isCurrent = c.id === curId;
+      listHtml +=
+        '<div class="stats-sw-item' + (isCurrent ? ' current' : '') + '" data-id="' + escapeHtml(c.id) + '">' +
+        '<img class="stats-sw-avatar" src="' + escapeHtml(c.avatar || 'https://picsum.photos/100/100?random=1') + '" alt="">' +
+        '<span class="stats-sw-name">' + escapeHtml(c.name || 'Ta') + '</span>' +
+        (isCurrent ? '<span class="stats-sw-check"><i class="fa-solid fa-check"></i></span>' : '') +
+        '</div>';
+    });
+
+    var modal = document.createElement('div');
+    modal.id = 'statsContactSwitcher';
+    modal.className = 'stats-sw-modal';
+    modal.innerHTML =
+      '<div class="stats-sw-panel">' +
+        '<div class="stats-sw-title">选择联系人</div>' +
+        '<div class="stats-sw-list">' + listHtml + '</div>' +
+        '<button class="stats-sw-cancel">取消</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    requestAnimationFrame(function () { modal.classList.add('active'); });
+
+    modal.querySelectorAll('.stats-sw-item').forEach(function (item) {
+      item.addEventListener('click', function () {
+        var id = item.getAttribute('data-id');
+        switchViewContact(id);
+      });
+    });
+    var cancelBtn = modal.querySelector('.stats-sw-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', closeContactSwitcher);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeContactSwitcher();
+    });
+  }
+
+  function closeContactSwitcher() {
+    var modal = document.getElementById('statsContactSwitcher');
+    if (modal) {
+      modal.classList.remove('active');
+      setTimeout(function () {
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+      }, 250);
+    }
+  }
+
+  function switchViewContact(id) {
+    if (!id) return;
+    try { localStorage.setItem(STATS_VIEW_KEY, id); } catch (e) {}
+    closeContactSwitcher();
+    updateSwitchLabel();
+    // 重渲染当前激活的 tab
+    var activeTab = pageStats.querySelector('.stats-tab.active');
+    if (activeTab) {
+      var name = activeTab.getAttribute('data-tab');
+      if (name === 'overview') renderOverview();
+      else if (name === 'favorites') renderFavorites();
+      else if (name === 'wordcloud') renderWordCloud();
+      else if (name === 'search') {
+        // 搜索不自动跑，清空结果
+        var box = document.getElementById('statsSearchResults');
+        if (box) box.innerHTML = '';
+      }
+    }
   }
 
   // ==================== Tab 切换 ====================
@@ -108,13 +238,13 @@
       pageStats.querySelectorAll('.stats-view').forEach(function (v) {
         v.classList.remove('active');
       });
-     var VIEW_ID_MAP = {
-  overview: 'statsViewOverview',
-  search: 'statsViewSearch',
-  favorites: 'statsViewFavorites',
-  wordcloud: 'statsViewWordCloud'
-};
-var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
+      var VIEW_ID_MAP = {
+        overview: 'statsViewOverview',
+        search: 'statsViewSearch',
+        favorites: 'statsViewFavorites',
+        wordcloud: 'statsViewWordCloud'
+      };
+      var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
       if (view) view.classList.add('active');
 
       if (name === 'overview') renderOverview();
@@ -207,16 +337,18 @@ var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
     });
   }
 
-  document.getElementById('statsViewPartner').addEventListener('click', function () {
+  var svPartner = document.getElementById('statsViewPartner');
+  var svMe = document.getElementById('statsViewMe');
+  if (svPartner) svPartner.addEventListener('click', function () {
     currentRankView = 'partner';
-    document.getElementById('statsViewPartner').classList.add('active');
-    document.getElementById('statsViewMe').classList.remove('active');
+    svPartner.classList.add('active');
+    if (svMe) svMe.classList.remove('active');
     renderRankList('partner', readAllMessages());
   });
-  document.getElementById('statsViewMe').addEventListener('click', function () {
+  if (svMe) svMe.addEventListener('click', function () {
     currentRankView = 'me';
-    document.getElementById('statsViewMe').classList.add('active');
-    document.getElementById('statsViewPartner').classList.remove('active');
+    svMe.classList.add('active');
+    if (svPartner) svPartner.classList.remove('active');
     renderRankList('me', readAllMessages());
   });
 
@@ -285,7 +417,8 @@ var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
     });
   }
 
-  document.getElementById('statsSearchBtn').addEventListener('click', runSearch);
+  var searchBtn = document.getElementById('statsSearchBtn');
+  if (searchBtn) searchBtn.addEventListener('click', runSearch);
 
   // ==================== Tab 3：收藏 ====================
   function renderFavorites() {
@@ -321,14 +454,20 @@ var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
         '<button class="stats-fav-unfav" title="取消收藏"><i class="fa-solid fa-star"></i></button>';
 
       div.querySelector('.stats-fav-unfav').addEventListener('click', function () {
-        m.row.dataset.favorited = 'false';
+        // 写存储 + 重渲染
+        if (m.msgId && window.sessionChat && typeof window.sessionChat.toggleFav === 'function') {
+          try {
+            window.sessionChat.toggleFav(m.msgId, false, 'c:' + getCurrentViewContactId());
+          } catch (e) {}
+        }
         renderFavorites();
       });
 
       list.appendChild(div);
     });
   }
-    // ==================== Tab 4：词云 ====================
+
+  // ==================== Tab 4：词云 ====================
   var STOP_WORDS = {
     '的':1,'了':1,'是':1,'我':1,'你':1,'他':1,'她':1,'它':1,'们':1,'在':1,'有':1,'和':1,'就':1,'都':1,'也':1,'还':1,'又':1,'再':1,'只':1,'被':1,'把':1,'让':1,'给':1,'对':1,'从':1,'向':1,'往':1,'与':1,'或':1,'但':1,'而':1,'且':1,'并':1,'等':1,'着':1,'过':1,'地':1,'得':1,'呢':1,'吧':1,'啊':1,'吗':1,'呀':1,'哦':1,'噢':1,'嗯':1,'嘛':1,'啦':1,'哟':1,'哈':1,'嘿':1,'不':1,'没':1,'很':1,'太':1,'更':1,'最':1,'挺':1,'真':1,'好':1,'那':1,'这':1,'上':1,'下':1,'来':1,'去':1,'会':1,'能':1,'要':1,'想':1,'个':1,'一':1,'二':1,'三':1,'点':1,'些':1,
     '图片':1,'表情':1,'语音':1,'撤回':1,'消息':1,'视频':1,'通话':1
@@ -365,7 +504,7 @@ var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
     return tokens.filter(function (t) { return !STOP_WORDS[t.word]; });
   }
 
-    function renderWordCloud() {
+  function renderWordCloud() {
     var msgs = readAllMessages().filter(function (m) { return m.text; });
     if (currentWCView === 'partner') {
       msgs = msgs.filter(function (m) { return m.sender === 'partner'; });
@@ -387,15 +526,12 @@ var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
     arr.sort(function (a, b) { return b.freq - a.freq; });
     var top = arr.slice(0, 60);
 
-      var canvas = document.getElementById('statsWCCanvas');
+    var canvas = document.getElementById('statsWCCanvas');
     var emptyEl = document.getElementById('statsWCEmpty');
 
-    // 不管有没有词，canvas 都显示（容器固定高度）
     canvas.style.display = 'block';
-    // 空状态元素可能存在也可能不存在，做个防御
     if (emptyEl) emptyEl.classList.remove('active');
 
-    // 清空画布（即使没词也要清）
     var parent = canvas.parentElement;
     var rect = parent.getBoundingClientRect();
     var W = rect.width || parent.offsetWidth || Math.min(window.innerWidth - 36, 400);
@@ -410,40 +546,36 @@ var view = document.getElementById(VIEW_ID_MAP[name] || ('statsView' + name));
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, W, H);
 
-    // 没有词就直接清空返回（不再弹「暂无数据」）
     if (top.length === 0) {
       return;
     }
 
-    // 用 Canvas 绘制
     requestAnimationFrame(function () {
       drawWordCloud(canvas, top);
     });
   }
-  
-function drawWordCloud(canvas, words) {
-  var parent = canvas.parentElement;
-  // 用 getBoundingClientRect 更可靠
-  var rect = parent.getBoundingClientRect();
-  var W = rect.width;
-  var H = rect.height;
 
-  // 兜底：如果还是 0，用窗口宽度估算
-  if (!W || W < 50) W = Math.min(window.innerWidth - 36, 400);
-  if (!H || H < 50) H = W;
+  function drawWordCloud(canvas, words) {
+    var parent = canvas.parentElement;
+    var rect = parent.getBoundingClientRect();
+    var W = rect.width;
+    var H = rect.height;
 
-  var dpr = window.devicePixelRatio || 1;
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
+    if (!W || W < 50) W = Math.min(window.innerWidth - 36, 400);
+    if (!H || H < 50) H = W;
 
-  var ctx = canvas.getContext('2d');
-  ctx.setTransform(1, 0, 0, 1, 0, 0);   // 先重置
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, W, H);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+
+    var ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
     var maxFreq = words[0].freq;
     var minFreq = words[words.length - 1].freq;
@@ -473,7 +605,6 @@ function drawWordCloud(canvas, words) {
       var w = metrics.width + 6;
       var h = size + 6;
 
-      var placed = false;
       for (var attempt = 0; attempt < 300; attempt++) {
         var x = Math.random() * (W - w) + w / 2;
         var y = Math.random() * (H - h) + h / 2;
@@ -489,49 +620,50 @@ function drawWordCloud(canvas, words) {
           ctx.fillText(item.word, x, y);
           ctx.restore();
           placedRects.push({ x: x, y: y, w: w, h: h });
-          placed = true;
           break;
         }
       }
     });
   }
 
-  // 词云视图切换
-  document.getElementById('statsWCPartner').addEventListener('click', function () {
+  var wcPartner = document.getElementById('statsWCPartner');
+  var wcMe = document.getElementById('statsWCMe');
+  var wcAll = document.getElementById('statsWCAll');
+  if (wcPartner) wcPartner.addEventListener('click', function () {
     currentWCView = 'partner';
-    document.getElementById('statsWCPartner').classList.add('active');
-    document.getElementById('statsWCMe').classList.remove('active');
-    document.getElementById('statsWCAll').classList.remove('active');
+    wcPartner.classList.add('active');
+    if (wcMe) wcMe.classList.remove('active');
+    if (wcAll) wcAll.classList.remove('active');
     renderWordCloud();
   });
-  document.getElementById('statsWCMe').addEventListener('click', function () {
+  if (wcMe) wcMe.addEventListener('click', function () {
     currentWCView = 'me';
-    document.getElementById('statsWCMe').classList.add('active');
-    document.getElementById('statsWCPartner').classList.remove('active');
-    document.getElementById('statsWCAll').classList.remove('active');
+    wcMe.classList.add('active');
+    if (wcPartner) wcPartner.classList.remove('active');
+    if (wcAll) wcAll.classList.remove('active');
     renderWordCloud();
   });
-  document.getElementById('statsWCAll').addEventListener('click', function () {
+  if (wcAll) wcAll.addEventListener('click', function () {
     currentWCView = 'all';
-    document.getElementById('statsWCAll').classList.add('active');
-    document.getElementById('statsWCMe').classList.remove('active');
-    document.getElementById('statsWCPartner').classList.remove('active');
+    wcAll.classList.add('active');
+    if (wcMe) wcMe.classList.remove('active');
+    if (wcPartner) wcPartner.classList.remove('active');
     renderWordCloud();
   });
+
   // ==================== 入口绑定 ====================
   function openStatsPage() {
-    // 用 router 切页（如果有 showPage）
+    updateSwitchLabel();
     if (typeof window.showPage === 'function') {
       window.showPage(pageStats);
     } else {
-      // 兜底：手动切
       document.querySelectorAll('.page').forEach(function (p) {
         p.classList.remove('active');
       });
       pageStats.classList.add('active');
     }
-    // 默认渲染统计 tab
-    document.querySelector('.stats-tab[data-tab="overview"]').click();
+    var firstTab = pageStats.querySelector('.stats-tab[data-tab="overview"]');
+    if (firstTab) firstTab.click();
   }
 
   var btn = document.getElementById('btnWordCloud');
@@ -551,14 +683,23 @@ function drawWordCloud(canvas, words) {
     });
   }
 
+  // 切换联系人按钮
+  var switchBtn = document.getElementById('statsSwitchBtn');
+  if (switchBtn) {
+    switchBtn.addEventListener('click', openContactSwitcher);
+  }
+
   // 暴露给外部
   window.stats = {
     open: openStatsPage,
     readAllMessages: readAllMessages,
+    readMessagesOfContact: readMessagesOfContact,
     renderOverview: renderOverview,
     renderFavorites: renderFavorites,
     renderWordCloud: renderWordCloud,
-    runSearch: runSearch
+    runSearch: runSearch,
+    openContactSwitcher: openContactSwitcher,
+    switchViewContact: switchViewContact
   };
 
 })();
