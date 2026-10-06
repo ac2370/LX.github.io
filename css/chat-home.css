@@ -226,12 +226,16 @@
 #pageChat .chat-top-actions #chatContactArea {
   position: absolute;
   left: 50%;
-  top: 0;    
+  top: -8px;                    /* 往上提 8px */
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   pointer-events: auto;
+}
+#pageChat .chat-top-actions #chatContactArea .chat-avatar {
+  width: 56px;                  /* 头像从 64 缩到 56，整块更矮 */
+  height: 56px;
 }
 body.theme-dark #pageChat .chat-avatar {
   border-color: rgba(255, 255, 255, 0.18) !important;
