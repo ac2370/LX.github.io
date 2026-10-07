@@ -2089,7 +2089,7 @@ body.theme-dark #pageChat .chat-messages .message-row {
 /* ============ 对方"思念送達中"浮层 ============ */
 .typing-float-row {
   flex-shrink: 0;
-  background: #fafbfc;
+  background: #f2f4f7;
   padding: 6px 0;
 }
 .typing-float {
