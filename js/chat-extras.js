@@ -78,12 +78,16 @@
     var exclusivePool = [];
     try {
       if (window.contactCards) {
-             var contactId = null;
-        if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
-          contactId = window.sessionChat.getCurrentContactId();
-        }
-        if (!contactId) {
-          try { contactId = localStorage.getItem('my_current_contact'); } catch (e) {}
+    var contactId = null;
+      if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
+        contactId = window.sessionChat.getCurrentContactId();
+      }
+        // 没有当前会话人时，用第一个联系人（无则跳过专属 pat）
+      if (!contactId) {
+        try {
+    var cs = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+      if (Array.isArray(cs) && cs.length > 0) contactId = cs[0].id;
+          } catch (e) {}
         }
         if (contactId) {
           var patGroups = [];
@@ -149,15 +153,13 @@
     if (chatAvatar && chatAvatar.src) return chatAvatar.src;
     try {
       var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var currentId = null;
+          var currentId = null;
       if (window.sessionChat && typeof window.sessionChat.getCurrentContactId === 'function') {
         currentId = window.sessionChat.getCurrentContactId();
       }
-      if (!currentId) {
-        try { currentId = localStorage.getItem('my_current_contact'); } catch (e) {}
-      }
-      if (Array.isArray(contacts)) {
-        var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
+      if (Array.isArray(contacts) && contacts.length > 0) {
+        // 优先按 currentId 找；找不到用第一个
+        var cur = (currentId && contacts.find(function (c) { return c.id === currentId; })) || contacts[0];
         if (cur && cur.avatar) return cur.avatar;
       }
     } catch (e) {}
