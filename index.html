@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="./css/home-settings.css?v=20261005">
   <link rel="stylesheet" href="./css/modals.css?v=20261005">
   <link rel="stylesheet" href="./css/card.css?v=20261005">
-  <link rel="stylesheet" href="./css/chat.css?v=20261016">
+  <link rel="stylesheet" href="./css/chat.css?v=20261018">
   <link rel="stylesheet" href="./css/chat-home.css?v=20261016">
   <link rel="stylesheet" href="./css/chat-settings.css?v=20261005">
   <link rel="stylesheet" href="./css/companion.css?v=20261005">
@@ -1819,6 +1819,17 @@
     </button>
   </div>
 </div>
+
+    <!-- 对方"思念送達中"浮层（挤在消息区和输入栏之间） -->
+    <div class="typing-float" id="typingFloat" style="display:none;">
+      <img class="typing-float-avatar" id="typingFloatAvatar" src="" alt="">
+      <span class="typing-float-text">思念送達中</span>
+      <span class="typing-float-dots">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </span>
+    </div>
     
     <div class="chat-input-bar">
       <div class="input-left-icons">
@@ -1932,6 +1943,16 @@
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggleTypingBubble" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+                    <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">显示"思念送達中"提示</div>
+              <div class="setting-row-desc">发送消息后，在输入框上方显示对方"思念送達中"</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleTypingFloat" checked>
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -2092,7 +2113,7 @@
   <!-- 4) 各功能模块 -->
   <script src="./js/default-cards-data.js?v=20261005"></script>
   <script src="./js/card.js?v=20261005"></script>
-  <script src="./js/chat.js?v=20261012"></script>
+  <script src="./js/chat.js?v=20261018"></script>
   <script src="./js/public-cards.js?v=20261005"></script>
   <script src="./js/public-cards-panel.js?v=20261005"></script>
   <script src="./js/reply-settings.js?v=20261012"></script>
@@ -2106,7 +2127,7 @@
   <script src="./js/video-call.js?v=20261005"></script>
   <script src="./js/group-chat.js?v=20261012"></script>
   <script src="./js/session-chat.js?v=20261017"></script>
-  <script src="./js/chat-settings-panel.js?v=20261017"></script>
+  <script src="./js/chat-settings-panel.js?v=20261018"></script>
   <script src="./js/notify-keepalive.js?v=20261012"></script>
 
   <!-- 5) 陪伴 / 重要日 -->
