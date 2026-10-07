@@ -572,6 +572,28 @@
   }
 
   // ==================== 群成员随机回复 ====================
+    // 群成员回复文本：优先从"用户字卡 + 公共字卡"抽；空则回退硬编码
+  var GROUP_REPLY_FALLBACK = [
+    '哈哈哈', '我也这么觉得', '厉害啊', '然后呢？', '嗯嗯',
+    '有道理', '收到！', '真的假的', '说得好', '确实',
+    '哈哈哈哈哈', '这波可以', '我不信', '牛！', '让我康康'
+  ];
+
+  function pickGroupReplyText() {
+    var pool = [];
+    try {
+      if (typeof window.getChatReplyPool === 'function') {
+        pool = window.getChatReplyPool() || [];
+      }
+    } catch (e) {}
+    if (!Array.isArray(pool)) pool = [];
+    pool = pool.filter(function (t) { return t && typeof t === 'string'; });
+
+    if (pool.length > 0) {
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+    return GROUP_REPLY_FALLBACK[Math.floor(Math.random() * GROUP_REPLY_FALLBACK.length)];
+  }
    function triggerGroupReplies(g) {
     if (!g) return;
     var members = resolveMembers(g);
@@ -584,16 +606,10 @@
     var shuffled = members.slice().sort(function () { return Math.random() - 0.5; });
     var repliers = shuffled.slice(0, Math.min(replyCount, members.length));
 
-    var replyPool = [
-      '哈哈哈', '我也这么觉得', '厉害啊', '然后呢？', '嗯嗯',
-      '有道理', '收到！', '真的假的', '说得好', '确实',
-      '哈哈哈哈哈', '这波可以', '我不信', '牛！', '让我康康'
-    ];
-
-    repliers.forEach(function (member, index) {
+   repliers.forEach(function (member, index) {
       var delay = 800 + index * 900 + Math.random() * 800;
       setTimeout(function () {
-        var text = replyPool[Math.floor(Math.random() * replyPool.length)];
+        var text = pickGroupReplyText();
         var msg = {
           type: 'other',
           memberId: member.id,
