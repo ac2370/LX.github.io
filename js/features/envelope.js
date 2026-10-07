@@ -150,19 +150,16 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
   }
 
   // 从 home settings 或 chat 里读名字（尽量兼容）
-  function getSettingsNames() {
-    var partnerName = 'Ta';
-    var myName = '我';
-
-    // 1) 优先从 localStorage 里的 my_contacts / my_current_contact 取对方名字
-    try {
-      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var currentId = localStorage.getItem('my_current_contact');
-      if (Array.isArray(contacts)) {
-        var cur = contacts.find(function (c) { return c.id === currentId; }) || contacts[0];
-        if (cur && cur.name) partnerName = cur.name;
-      }
-    } catch (e) {}
+ function getSettingsNames() {
+  var partnerName = 'Ta';
+  var myName = '我';
+  try {
+    var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+    if (Array.isArray(contacts) && contacts.length > 0) {
+      var cur = contacts[0];
+      if (cur && cur.name) partnerName = cur.name;
+    }
+  } catch (e) {}
 
     // 2) 我的名字：从 home_custom_images 或类似键读（兼容常见字段）
     try {
@@ -603,13 +600,10 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
       return;
     }
     // 默认选中：当前聊天联系人；没有则第一个
-    var chatId = null;
-    try { chatId = localStorage.getItem('my_current_contact'); } catch (e) {}
-    var validChat = contacts.some(function (c) { return c.id === chatId; });
-    if (!validChat) chatId = null;
+       // 默认选中：第一个联系人（无 my_current_contact 概念）
     var targetId = writeToId && contacts.some(function (c) { return c.id === writeToId; })
       ? writeToId
-      : (chatId || contacts[0].id);
+      : contacts[0].id;
     writeToId = targetId;
 
     var html = '';
@@ -790,10 +784,7 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
         toContact = contacts.find(function (c) { return c.id === writeToId; }) || null;
       }
       if (!toContact) {
-        try {
-          var chatId = localStorage.getItem('my_current_contact');
-          toContact = contacts.find(function (c) { return c.id === chatId; }) || contacts[0] || null;
-        } catch (e) {}
+        toContact = contacts[0] || null;
       }
 
       var now = Date.now();
