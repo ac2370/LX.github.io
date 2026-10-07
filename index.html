@@ -64,7 +64,7 @@
   pointer-events: auto !important;
   opacity: 1;
   transition: opacity .46s ease .06s;
-  pre.src = 'https://i.postimg.cc/c4gs0HcH/IMG-8425.jpg';
+  --ilk-wall: url("https://i.postimg.cc/DwR0vv08/IMG-3165.jpg");
   --ilk-safe-t: env(safe-area-inset-top, 0px);
   --ilk-safe-b: env(safe-area-inset-bottom, 0px);
 }
@@ -2212,11 +2212,12 @@
     </div>
   </div>
 
-     <div class="ilk-notif ilk-banner" data-ilk="banner" role="button" tabindex="-1" aria-label="信息">
+      <div class="ilk-notif ilk-banner" data-ilk="banner" role="button" tabindex="-1" aria-label="信息">
     <div class="ilk-ava">
-      <img src="https://backup.fukit.cn/autoupload/f/ya8f/20260801/1vXo/1080X1080/24d5312fdfb6967b2734693cfef45ddd.jpg" alt="">
+      <img src="https://i.postimg.cc/gJW0hgvF/IMG-3173.jpg" alt="">
     </div>
     <div class="ilk-nmain">
+      <div class="ilk-nhead">
         <span class="ilk-napp">信息</span>
         <span class="ilk-ntime">现在</span>
       </div>
@@ -2283,10 +2284,7 @@
       if (wall) wall.classList.add('ilk-settled');
       wait(800, function() { if (bootLayer) bootLayer.remove(); });
     }
-    var pre = new Image();
-    pre.onload = pre.onerror = function() { requestAnimationFrame(bootOff); };
-    pre.src = 'https://i.postimg.cc/c4gs0HcC/IMG-8425.jpg';
-    wait(1400, bootOff);
+   pre.src = 'https://i.postimg.cc/DwR0vv08/IMG-3165.jpg';
 
     var stage = q('stage');
     var scrim = q('scrim');
