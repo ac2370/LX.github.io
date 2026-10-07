@@ -45,6 +45,7 @@
     minCount:        0,
     maxCount:        3,
     typingBubble:    true,
+    typingFloat:     true,
     // 已读状态
     readStatus:      false,
     readNoReply:     false,
@@ -139,6 +140,7 @@
     inputMinCount:        { key: 'minCount',     type: 'int',  min: 0,  max: 10 },
     inputMaxCount:        { key: 'maxCount',     type: 'int',  min: 0,  max: 10 },
     toggleTypingBubble:   { key: 'typingBubble', type: 'bool' },
+    toggleTypingFloat:    { key: 'typingFloat',  type: 'bool' },
     toggleReadStatus:     { key: 'readStatus',   type: 'bool' },
     toggleReadNoReply:    { key: 'readNoReply',  type: 'bool' },
     toggleQuote:          { key: 'quote',        type: 'bool' },
