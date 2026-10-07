@@ -611,15 +611,17 @@
     return true;
   }
   
-   function showTypingFloat() {
+  function showTypingFloat(avatarUrl) {
     if (!isTypingFloatEnabled()) return;
     var rowEl = document.getElementById('typingFloatRow');
     if (!rowEl) return;
     var avatarEl = document.getElementById('typingFloatAvatar');
     if (avatarEl) {
-      var src = '';
-      var chatAvatar = document.getElementById('chatAvatar');
-      if (chatAvatar && chatAvatar.src) src = chatAvatar.src;
+      var src = avatarUrl || '';
+      if (!src) {
+        var chatAvatar = document.getElementById('chatAvatar');
+        if (chatAvatar && chatAvatar.src) src = chatAvatar.src;
+      }
       avatarEl.src = src || 'https://picsum.photos/200/200?random=99';
     }
     rowEl.style.display = 'block';
@@ -1137,6 +1139,10 @@
   };
 
   window.triggerChatAutoReply = triggerAutoReply;
+
+  window.showTypingFloat = showTypingFloat;
+  window.hideTypingFloat = hideTypingFloat;
+  window.isTypingFloatEnabled = isTypingFloatEnabled;
 
   window.addEventListener('chatAutoReply', function () {
     triggerAutoReply();
