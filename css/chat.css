@@ -2095,12 +2095,12 @@ body.theme-dark #pageChat .chat-messages .message-row {
   gap: 6px;
   padding: 5px 12px 5px 5px;
   margin: 0 16px 8px 16px;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  background: rgba(242, 244, 247, 0.82);
+  backdrop-filter: blur(14px) saturate(120%);
+  -webkit-backdrop-filter: blur(14px) saturate(120%);
   border-radius: 9999px;
-  box-shadow: 0 3px 12px rgba(150, 180, 210, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 2px 8px rgba(150, 180, 210, 0.08);
+  border: 1px solid rgba(230, 238, 244, 0.9);
   width: fit-content;
 }
 .typing-float-avatar {
