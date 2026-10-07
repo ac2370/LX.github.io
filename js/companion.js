@@ -49,25 +49,17 @@
     } catch (e) { return []; }
   }
 
-  function getDefaultCompanionContact() {
-    var contacts = loadContacts();
-    if (contacts.length === 0) return null;
+ function getDefaultCompanionContact() {
+  var contacts = loadContacts();
+  if (contacts.length === 0) return null;
 
-    if (companionContactId) {
-      var found = contacts.find(function (c) { return c.id === companionContactId; });
-      if (found) return found;
-    }
-
-    try {
-      var currentId = localStorage.getItem('my_current_contact');
-      if (currentId) {
-        var cur = contacts.find(function (c) { return c.id === currentId; });
-        if (cur) return cur;
-      }
-    } catch (e) {}
-
-    return contacts[0];
+  if (companionContactId) {
+    var found = contacts.find(function (c) { return c.id === companionContactId; });
+    if (found) return found;
   }
+
+  return contacts[0];
+}
 
   function updatePartnerCard(contact) {
     var avatarEl = document.getElementById('companionPartnerAvatar');
@@ -96,12 +88,12 @@
   }
 
   window.addEventListener('storage', function (e) {
-    if (e.key === 'my_contacts' || e.key === 'my_current_contact') {
+    if (e.key === 'my_contacts') {
       if (!companionContactId) {
         initCompanionPartner();
-      }
-    }
-  });
+     }
+   }
+ });
 
   function refreshCompanionPartner() {
     var contact = getDefaultCompanionContact();
