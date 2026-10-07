@@ -19,6 +19,7 @@
   var STORE_KEY_RANDOM_CALL = 'chat_notify_random_call';
   var STORE_KEY_SILENT_LOOP = 'chat_notify_silent_loop';
   var STORE_KEY_NOTIFY_GRANTED = 'chat_notify_permission_granted';
+  var STORE_KEY_TYPING_FLOAT = 'chat_typing_float_enabled';  
 
   var STORE_KEY_CONTACT_CARDS = 'contact_exclusive_cards';
 
@@ -1456,6 +1457,15 @@
         persistNotifyState();
       });
     }
+        // 输入中提示开关
+    var typingFloatToggle = document.getElementById('toggleTypingFloat');
+    if (typingFloatToggle) {
+      typingFloatToggle.addEventListener('change', function () {
+        var on = typingFloatToggle.checked;
+        window.__typingFloatEnabled = on;
+        persist(STORE_KEY_TYPING_FLOAT, on);
+      });
+    }
        var randomCallToggle = document.getElementById('dsRandomCallToggle');
     if (randomCallToggle) {
       randomCallToggle.addEventListener('change', function () {
@@ -1542,6 +1552,12 @@
           loadBubble(function () {
             loadContactCardsMap(function () {
               loadNotifyState(function () {
+                 // 加载"输入中提示"开关
+                loadValue(STORE_KEY_TYPING_FLOAT, function (v) {
+                  window.__typingFloatEnabled = (v === false) ? false : true;
+                  var t = document.getElementById('toggleTypingFloat');
+                  if (t) t.checked = window.__typingFloatEnabled;
+                });
                 applyTheme();
                 applyFont();
                 applyFontUrl();
