@@ -566,7 +566,7 @@
       window.sessionChat.record('self', content, msgId);
     }
 
-    chatInput.value = '';
+       chatInput.value = '';
     updateSendBtnState();
     scrollToBottom();
 
@@ -583,6 +583,9 @@
     }
 
     if (!shouldIgnore) {
+      // 显示"思念送達中"浮层
+      showTypingFloat();
+      scheduleTypingFloatSafety();
       triggerAutoReply();
     } else {
       dlog('[传讯] 已读不回命中，跳过回复');
@@ -597,6 +600,47 @@
     }
   });
 
+    // ==================== 对方"思念送達中"浮层 ====================
+  var typingFloatTimer = null;
+
+  function isTypingFloatEnabled() {
+    // 默认开：localforage 里 chat_typing_float_enabled，false 才关
+    // 用一个同步缓存，避免每次读异步
+    if (window.__typingFloatEnabled === undefined) return true;
+    return window.__typingFloatEnabled !== false;
+  }
+
+  function showTypingFloat() {
+    if (!isTypingFloatEnabled()) return;
+    var el = document.getElementById('typingFloat');
+    if (!el) return;
+    var avatarEl = document.getElementById('typingFloatAvatar');
+    if (avatarEl) {
+      var src = '';
+      var chatAvatar = document.getElementById('chatAvatar');
+      if (chatAvatar && chatAvatar.src) src = chatAvatar.src;
+      avatarEl.src = src || 'https://picsum.photos/200/200?random=99';
+    }
+    el.style.display = 'flex';
+    if (typingFloatTimer) { clearTimeout(typingFloatTimer); typingFloatTimer = null; }
+    // 滚到底，确保浮层可见
+    scrollToBottom();
+  }
+
+  function hideTypingFloat() {
+    var el = document.getElementById('typingFloat');
+    if (el) el.style.display = 'none';
+    if (typingFloatTimer) { clearTimeout(typingFloatTimer); typingFloatTimer = null; }
+  }
+
+  // 兜底：万一某条路径没隐藏，最多挂 60 秒自动收
+  function scheduleTypingFloatSafety() {
+    if (typingFloatTimer) clearTimeout(typingFloatTimer);
+    typingFloatTimer = setTimeout(function () {
+      hideTypingFloat();
+    }, 60000);
+  }
+  
     // 主动消息：发给「非当前会话」的联系人（简化逻辑）
   function triggerAutoReplyForOther(contactId, settings) {
     if (!contactId) return;
@@ -678,6 +722,7 @@
           try { window.sessionChat.recordReply('other', '字卡库还没有内容哦，先去添加字卡吧~', _mid); } catch (e) {}
         }
         scrollToBottom();
+        hideTypingFloat();
       }, 800);
       return;
     }
@@ -688,7 +733,7 @@
 
     dlog('[传讯] 将在 ' + (waitMs / 1000).toFixed(1) + ' 秒后回复');
 
-    const showTyping = settings.typingBubble !== false;
+    const showTyping = (settings.typingBubble !== false) && !isTypingFloatEnabled();
 
     setTimeout(function () {
       let typingRow = null;
@@ -757,16 +802,13 @@
         }
 
         // 依次显示
-              replies.forEach(function (item, index) {
+        replies.forEach(function (item, index) {
           setTimeout(function () {
-            var msgId = (window.sessionChat && window.sessionChat.genMsgId)
-              ? window.sessionChat.genMsgId()
-              : ('m_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
             var row;
             if (item.type === 'text') {
-              row = createMessageRow('other', item.content, msgId);
+              row = createMessageRow('other', item.content);
             } else if (item.type === 'image') {
-              row = createMessageRow('other', { type: 'image', url: item.url }, msgId);
+              row = createMessageRow('other', { type: 'image', url: item.url });
             }
             if (row) {
               chatMessages.appendChild(row);
@@ -776,9 +818,9 @@
               if (window.sessionChat) {
                 try {
                   if (item.type === 'text') {
-                    window.sessionChat.recordReply('other', item.content, msgId);
+                    window.sessionChat.recordReply('other', item.content);
                   } else if (item.type === 'image') {
-                    window.sessionChat.recordReply('other', { type: 'image', url: item.url }, msgId);
+                    window.sessionChat.recordReply('other', { type: 'image', url: item.url });
                   }
                 } catch (e) {}
               }
@@ -797,6 +839,11 @@
                 }
                 window.chatNotify.show('Ta', notifyContent);
               }
+            }
+
+            // 【新增】最后一条渲染完 → 隐藏浮层
+            if (index === replies.length - 1) {
+              setTimeout(function () { hideTypingFloat(); }, 300);
             }
           }, index * 500);
         });
