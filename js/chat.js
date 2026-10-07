@@ -611,10 +611,10 @@
     return true;
   }
   
-  function showTypingFloat() {
+   function showTypingFloat() {
     if (!isTypingFloatEnabled()) return;
-    var el = document.getElementById('typingFloat');
-    if (!el) return;
+    var rowEl = document.getElementById('typingFloatRow');
+    if (!rowEl) return;
     var avatarEl = document.getElementById('typingFloatAvatar');
     if (avatarEl) {
       var src = '';
@@ -622,15 +622,14 @@
       if (chatAvatar && chatAvatar.src) src = chatAvatar.src;
       avatarEl.src = src || 'https://picsum.photos/200/200?random=99';
     }
-    el.style.display = 'flex';
+    rowEl.style.display = 'block';
     if (typingFloatTimer) { clearTimeout(typingFloatTimer); typingFloatTimer = null; }
-    // 滚到底，确保浮层可见
     scrollToBottom();
   }
 
-  function hideTypingFloat() {
-    var el = document.getElementById('typingFloat');
-    if (el) el.style.display = 'none';
+   function hideTypingFloat() {
+    var rowEl = document.getElementById('typingFloatRow');
+    if (rowEl) rowEl.style.display = 'none';
     if (typingFloatTimer) { clearTimeout(typingFloatTimer); typingFloatTimer = null; }
   }
 
