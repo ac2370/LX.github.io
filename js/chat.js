@@ -604,12 +604,13 @@
   var typingFloatTimer = null;
 
   function isTypingFloatEnabled() {
-    // 默认开：localforage 里 chat_typing_float_enabled，false 才关
-    // 用一个同步缓存，避免每次读异步
-    if (window.__typingFloatEnabled === undefined) return true;
-    return window.__typingFloatEnabled !== false;
+    if (typeof window.getReplySettings === 'function') {
+      var s = window.getReplySettings();
+      return s.typingFloat !== false;
+    }
+    return true;
   }
-
+  
   function showTypingFloat() {
     if (!isTypingFloatEnabled()) return;
     var el = document.getElementById('typingFloat');
