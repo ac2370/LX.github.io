@@ -1139,6 +1139,28 @@
   };
 
   window.triggerChatAutoReply = triggerAutoReply;
+    // 供群聊取"用户字卡 + 公共字卡"（不含专属）
+  window.getChatReplyPool = function () {
+    var pool = [];
+    try {
+      var all = getAllReplyCards();
+      if (Array.isArray(all)) pool = pool.concat(all);
+    } catch (e) {}
+    try {
+      var pub = getPublicReplyCards();
+      if (Array.isArray(pub)) pool = pool.concat(pub);
+    } catch (e) {}
+    // 去重 + 只留字符串
+    var seen = Object.create(null);
+    var result = [];
+    pool.forEach(function (t) {
+      if (!t || typeof t !== 'string') return;
+      if (seen[t]) return;
+      seen[t] = 1;
+      result.push(t);
+    });
+    return result;
+  };
 
   window.showTypingFloat = showTypingFloat;
   window.hideTypingFloat = hideTypingFloat;
