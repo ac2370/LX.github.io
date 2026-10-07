@@ -616,16 +616,15 @@
     return { reply: [], pat: [] };
   }
   
-  function getCurrentContact() {
-    try {
-      var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
-      var id = localStorage.getItem('my_current_contact');
-      if (Array.isArray(contacts) && contacts.length > 0) {
-        return contacts.find(function (c) { return c.id === id; }) || contacts[0];
-      }
-    } catch (e) {}
-    return null;
-  }
+ function getCurrentContact() {
+  try {
+    var contacts = JSON.parse(localStorage.getItem('my_contacts') || '[]');
+    if (Array.isArray(contacts) && contacts.length > 0) {
+      return contacts[0];
+    }
+  } catch (e) {}
+  return null;
+}
 
   function renderContactCardsPanel() {
     var pickerRow = document.getElementById('contactPickerRow');
