@@ -561,14 +561,24 @@
     });
     persist();
 
+    // 显示"思念送達中"浮层（随机挑一个群成员的头像）
+    if (window.showTypingFloat) {
+      var members = resolveMembers(g);
+      var pick = members.length > 0 ? members[Math.floor(Math.random() * members.length)] : null;
+      window.showTypingFloat(pick ? pick.avatar : '');
+    }
+
     triggerGroupReplies(g);
   }
 
   // ==================== 群成员随机回复 ====================
-  function triggerGroupReplies(g) {
+   function triggerGroupReplies(g) {
     if (!g) return;
     var members = resolveMembers(g);
-    if (members.length === 0) return;
+    if (members.length === 0) {
+      if (window.hideTypingFloat) window.hideTypingFloat();
+      return;
+    }
 
     var replyCount = 2 + Math.floor(Math.random() * 3);
     var shuffled = members.slice().sort(function () { return Math.random() - 0.5; });
@@ -597,6 +607,13 @@
           chatMessages.scrollTop = chatMessages.scrollHeight;
         });
         persist();
+
+        // 【新增】最后一条回复渲染完 → 隐藏浮层
+        if (index === repliers.length - 1) {
+          setTimeout(function () {
+            if (window.hideTypingFloat) window.hideTypingFloat();
+          }, 300);
+        }
       }, delay);
     });
   }
