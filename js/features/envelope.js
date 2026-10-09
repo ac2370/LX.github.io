@@ -648,8 +648,35 @@ var TEST_REPLY_DELAY_MS = 10 * 60 * 60 * 1000;   // 10 小时
   }
 
   // ==================== 回信生成 ====================
-  function generateReplyContent() {
-    var pool = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
+function generateReplyContent() {
+    var pool = [];
+    // 1) 自己回复栏
+    try {
+      if (typeof window.getReplyCards === 'function') {
+        var u = window.getReplyCards() || [];
+        if (Array.isArray(u) && u.length > 0) pool = pool.concat(u);
+      }
+    } catch (e) {}
+    // 2) 内置默认字卡
+    if (pool.length === 0) {
+      try {
+        var d = window.DEFAULT_CARD_DATA;
+        if (d && d.reply && typeof d.reply === 'object') {
+          Object.keys(d.reply).forEach(function (g) {
+            if (Array.isArray(d.reply[g])) pool = pool.concat(d.reply[g]);
+          });
+        }
+      } catch (e) {}
+    }
+    // 3) 公共字卡库（已勾选的回复卡）
+    if (pool.length === 0) {
+      try {
+        if (window.publicCards && typeof window.publicCards.getSelectedCards === 'function') {
+          var pub = window.publicCards.getSelectedCards('reply');
+          if (Array.isArray(pub) && pub.length > 0) pool = pub;
+        }
+      } catch (e) {}
+    }
     if (!Array.isArray(pool) || pool.length === 0) {
       return '收到了你的信，我很开心。';
     }
