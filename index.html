@@ -2263,8 +2263,8 @@ function fitRootHeight() {
     hostWin.innerHeight || 0,
     hostDoc.documentElement.clientHeight || 0
   );
-  root.style.setProperty('height', h + 'px', 'important');
-  root.style.setProperty('min-height', h + 'px', 'important');
+  root.style.setProperty('height', 'calc(' + h + 'px + env(safe-area-inset-bottom, 0px))', 'important');
+  root.style.setProperty('min-height', 'calc(' + h + 'px + env(safe-area-inset-bottom, 0px))', 'important');
   root.style.setProperty('bottom', 'auto', 'important');
 }
 fitRootHeight();
