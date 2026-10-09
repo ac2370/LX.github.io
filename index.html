@@ -660,7 +660,6 @@ body {
       <!-- 表情包 -->
       <div class="cat-panel" id="panel-emoji">
         <div class="card-action-row">
-          <button class="card-action-btn" id="emojiImportLinkBtn"><i class="fa-solid fa-link"></i>导入链接</button>
           <button class="card-action-btn" id="emojiExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
           <button class="card-action-btn" id="emojiAddLinkBtn"><i class="fa-solid fa-plus"></i>添加链接</button>
           <button class="card-action-btn" id="emojiUploadBtn"><i class="fa-solid fa-upload"></i>上传图片</button>
@@ -668,12 +667,6 @@ body {
         </div>
         <div class="card-group-section">
           <input type="text" class="card-search-input" id="emojiSearchInput" placeholder="搜索图片名称">
-        </div>
-        <div class="card-group-buttons">
-          <button class="card-group-btn" id="emojiNewGroupBtn">新建分组</button>
-          <button class="card-group-btn" id="emojiAllGroupBtn">
-            全部分组 <i class="fa-solid fa-chevron-down" style="font-size:9px;margin-left:2px;"></i>
-          </button>
         </div>
         <div class="emoji-grid" id="emojiGrid"></div>
         <div class="emoji-footer-hint" id="emojiFooterHint">他的表情包 · 随机主动发送已开启 &gt;</div>
@@ -693,9 +686,6 @@ body {
           <select class="card-group-select" id="statusGroupSelect">
             <option>默认状态 · 0 条</option>
           </select>
-          <div class="card-group-buttons">
-            <button class="card-group-btn" id="statusNewGroupBtn">新建分组</button>
-          </div>
           <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
         </div>
         <div class="card-list" id="statusList"></div>
