@@ -336,6 +336,23 @@
 
     renderCurrent();
 
+     // 【新增】恢复发给该联系人的问卷卡片（退出重进后不丢失）
+    try {
+      var svList = [];
+      var svRaw = localStorage.getItem('dream_survey_list');
+      if (svRaw) svList = JSON.parse(svRaw) || [];
+      svList.forEach(function (sv) {
+        if (!sv || sv.contactId !== id) return;
+        if (sv.status !== 'sent' && sv.status !== 'done') return;
+        if (typeof window.appendMySurveyCardToChat === 'function') {
+          window.appendMySurveyCardToChat(sv);
+        }
+        if (typeof window.syncMySurveyCard === 'function') {
+          window.syncMySurveyCard(sv.id);
+        }
+      });
+    } catch (e) {}
+     
     // 同步 chat 输入框 placeholder
     var chatInput = document.getElementById('chatInput');
     if (chatInput) chatInput.placeholder = '输入消息...';
