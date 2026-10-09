@@ -1281,3 +1281,6 @@ body.theme-dark .ds-q-text { color: var(--theme-text); }
 body.theme-dark .ds-q-type-select { background: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-text); }
 body.theme-dark .ds-q-opt-input { background: var(--theme-input-bg); border-color: var(--theme-input-border); color: var(--theme-text); }
 body.theme-dark .ds-q-opt-mark { color: var(--theme-text-muted); }
+
+.ds-detail-q-ans { margin-top: 6px; padding: 8px 10px; background: #f2f6fa; border-radius: 8px; font-size: 13px; color: #333; line-height: 1.5; }
+.ds-detail-q-opt.chosen { color: #2C63D8; font-weight: 600; background: rgba(44,99,216,0.08); }
