@@ -960,35 +960,21 @@ body {
   background: transparent !important;
 }
 
-/* ============================================================
-   输入栏：不做布局改动，只换颜色
-   ============================================================ */
+/* 输入栏：只覆盖颜色，布局完全交给 chat.css */
 .chat-input-bar {
   background: var(--ov-panel-bg) !important;
-  border: 1px solid var(--ov-panel-border) !important;
-  border-radius: 24px !important;
-  backdrop-filter: blur(18px) !important;
-  -webkit-backdrop-filter: blur(18px) !important;
+  border-color: var(--ov-panel-border) !important;
 }
-
 .chat-input {
-  background: transparent !important;
   color: var(--ov-text-primary) !important;
-  font-family: var(--ov-font-serif) !important;
 }
 .chat-input::placeholder {
   color: var(--ov-text-muted) !important;
 }
-
-.input-left-icons {
-  /* 不动 flex / gap，保持原布局 */
-  color: var(--ov-text-secondary) !important;
-}
 .input-left-icons i {
   color: var(--ov-text-secondary) !important;
 }
-
-.send-btn {
+.send-btn:not(:disabled) {
   background: var(--ov-text-primary) !important;
   color: var(--ov-bg-page) !important;
 }
