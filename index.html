@@ -150,9 +150,8 @@ html, body {
 #ilk_root .ilk-lock-main {
   flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; align-items: center;
-  /* 原顶部空间由 .ilk-sb 撑开（safe + 44px）；现已删 .ilk-sb，补回安全区，
-     否则日期/大时钟会被灵动岛/状态栏硬件区域压住 */
-  padding: calc(var(--ilk-safe-t) + 44px) 16px 0;
+  /* 灵动岛 + 状态栏的高度由 safe-area 提供；额外加一点呼吸空间即可 */
+  padding: calc(var(--ilk-safe-t) + 4px) 16px 0;
 }
 /* 【删】.ilk-padlock 挂锁规则已整块移除 */
 #ilk_root .ilk-date {
@@ -2245,6 +2244,24 @@ html, body {
     root.id = 'ilk_root';
     root.innerHTML = tpl.innerHTML;
     hostDoc.body.appendChild(root);
+    // 【新增】PWA 下 dvh/lvh 不可靠：用 JS 量出物理视口高度，写死给 #ilk_root
+function fitRootHeight() {
+  var h = (hostWin.visualViewport && hostWin.visualViewport.height)
+        || hostWin.innerHeight
+        || hostDoc.documentElement.clientHeight;
+  root.style.setProperty('height', h + 'px', 'important');
+  root.style.setProperty('min-height', h + 'px', 'important');
+  root.style.setProperty('bottom', 'auto', 'important');
+}
+fitRootHeight();
+
+// 视口一变就重算
+hostWin.addEventListener('resize', fitRootHeight);
+hostWin.addEventListener('orientationchange', fitRootHeight);
+if (hostWin.visualViewport) {
+  hostWin.visualViewport.addEventListener('resize', fitRootHeight);
+  hostWin.visualViewport.addEventListener('scroll', fitRootHeight);
+}
 
     var q = function(name) { return root.querySelector('[data-ilk="' + name + '"]'); };
     var qa = function(name) { return [].slice.call(root.querySelectorAll('[data-ilk="' + name + '"]')); };
