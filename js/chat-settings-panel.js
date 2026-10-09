@@ -1024,46 +1024,28 @@
       console.warn('[chat-settings-panel] 清空聊天失败', e);
     }
 
-    updateStorageStats();
-    alert('已清空全部聊天记录。');
-  }
-
-  function resetCardLibrary() {
-    if (!confirm('确定恢复默认字卡库吗？\n\n你自建的所有字卡、分组、以及公共字卡的勾选都会被重置。\n这个操作不可撤销。')) return;
-
-    var keysToClear = [
-      'cardDatabase_v3',
-      'cardDatabase_modes',
-      'my_word_cards',
-      'my_card_groups_v2',
-      'public_card_groups',
-      'contact_exclusive_cards'
-    ];
-
-    var done = 0;
-    var total = keysToClear.length;
-
+    // === 新增：清掉 localforage（IndexedDB）里的聊天数据 ===
     function finish() {
-      done++;
-      if (done >= total) {
-        updateStorageStats();
-        alert('已恢复默认字卡库。\n\n页面即将刷新以应用更改。');
-        setTimeout(function () { window.location.reload(); }, 800);
-      }
+      try { updateStorageStats(); } catch (e) {}
+      alert('已清空全部聊天记录。');
+      setTimeout(function () { window.location.reload(); }, 600);
     }
-
-    keysToClear.forEach(function (k) {
-      try {
-        if (typeof localforage !== 'undefined') {
-          localforage.removeItem(k).then(finish).catch(finish);
-        } else {
-          localStorage.removeItem(k);
-          finish();
-        }
-      } catch (e) {
-        finish();
-      }
-    });
+    if (typeof localforage !== 'undefined' && localforage.keys) {
+      localforage.keys().then(function (keys) {
+        var jobs = [];
+        (keys || []).forEach(function (k) {
+          for (var j = 0; j < chatKeyPatterns.length; j++) {
+            if (k.indexOf(chatKeyPatterns[j]) === 0) {
+              jobs.push(localforage.removeItem(k).catch(function(){}));
+              break;
+            }
+          }
+        });
+        Promise.all(jobs).then(finish).catch(finish);
+      }).catch(finish);
+    } else {
+      finish();
+    }
   }
   
   // ==================== 创建面板 ====================
