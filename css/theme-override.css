@@ -1,24 +1,10 @@
 /* ============================================================
-   theme-override.css  （修正版）
-   应许之地 · 全局视觉覆盖
-   - 不动 JS，不动路由，不动 localforage，不动功能逻辑
+   theme-override.css
+   应许之地 · 全局视觉覆盖（修正版）
+   - 不动 JS，不动路由，不动功能逻辑
    - 只覆盖颜色 / 字体 / 圆角 / 阴影 / 弹窗 / 顶栏 / 卡片
-   - 昼夜模式跟随 body.theme-dark（theme-mode.js 已确认就是切这个类）
-   - 开屏动画 #ilk_root 不改动（本文件没有任何规则命中它）
-   - 档案页（.arc-*）不改动（按你的要求已全部剔除）
-
-   【本次修正（相对 DeepSeek 原方案）】
-   1. 不再 display:none .bg-dream —— 你主页上传的壁纸保留；
-      想要纯渐变背景，取消底部"可选开关"的注释即可。
-   2. 字体改为纯系统栈（不再依赖未加载的 Google Fonts）；
-      Montserrat / Italianno 仅在你有字体文件时可自行启用（见变量注释）。
-   3. 开屏排除选择器修正为 #ilk_root（原方案 .ilk-root * 匹配不到）。
-   4. 档案页规则全部删除。
-   5. 全局 body * transition 收窄为"只作用于被本文件覆盖的组件"，
-      避免原有按钮缩放/位移动效失效、避免滚动卡顿。
-   6. .stats-* 非法选择器 → [class*="stats-"]。
-   7. 补充覆盖：聊天气泡 / 会话列表 / 群聊 / 存钱罐 / 聊天选项 /
-      首页设置 / 陪伴 / 陪伴中 / 重要日列表 / 梦向问卷按钮等主要缺口。
+   - 昼夜模式跟随 body.theme-dark
+   - 所有选择器都限定在具体页面，避免误伤聊天页菜单
    ============================================================ */
 
 /* ============================================================
@@ -29,6 +15,7 @@
   --ov-bg-page: #e8e9ee;
   --ov-bg-grad-1: rgba(120, 150, 200, 0.18);
   --ov-bg-grad-2: rgba(180, 160, 220, 0.12);
+
   /* 面板 / 卡片 */
   --ov-panel-bg: rgba(248, 249, 252, 0.88);
   --ov-panel-bg-solid: #f5f6fa;
@@ -36,101 +23,113 @@
   --ov-panel-shadow: 0 30px 80px rgba(80, 90, 120, 0.25);
   --ov-panel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --ov-panel-topline: rgba(0, 0, 0, 0.15);
+
   --ov-card-bg: rgba(0, 0, 0, 0.035);
   --ov-card-bg-hover: rgba(0, 0, 0, 0.06);
   --ov-card-border: rgba(0, 0, 0, 0.08);
   --ov-card-border-hover: rgba(0, 0, 0, 0.16);
+
   /* 文字 */
   --ov-text-primary: #1a1a1f;
   --ov-text-secondary: rgba(0, 0, 0, 0.65);
   --ov-text-muted: rgba(0, 0, 0, 0.35);
   --ov-text-faint: rgba(0, 0, 0, 0.22);
+
   /* 线条 / 点 */
   --ov-line-subtle: rgba(0, 0, 0, 0.06);
   --ov-line-soft: rgba(0, 0, 0, 0.12);
   --ov-line-strong: rgba(0, 0, 0, 0.4);
   --ov-dot-bg: #1a1a1f;
   --ov-dot-glow: rgba(0, 0, 0, 0.4);
+
   /* 标签 */
   --ov-tag-border: rgba(0, 0, 0, 0.12);
   --ov-tag-text: rgba(0, 0, 0, 0.55);
   --ov-tag-bg: rgba(255, 255, 255, 0.4);
+
   /* 遮罩 */
   --ov-overlay-bg: rgba(255, 255, 255, 0.55);
   --ov-overlay-blur: 4px;
+
   /* 滚动条 */
   --ov-scrollbar: rgba(0, 0, 0, 0.15);
+
   /* 关闭按钮 */
   --ov-close-border: rgba(0, 0, 0, 0.15);
   --ov-close-text: rgba(0, 0, 0, 0.5);
   --ov-close-hover-border: rgba(0, 0, 0, 0.5);
   --ov-close-hover-text: #000;
+
   /* 强调光 */
   --ov-glow-title: rgba(120, 150, 200, 0.25);
   --ov-glow-detail: rgba(120, 150, 200, 0.15);
-  /* 强调色（用于"自己发的消息气泡"等） */
-  --ov-accent: #2c63d8;
+
   /* 圆角 / 阴影规格 */
   --ov-radius-panel: 8px;
   --ov-radius-card: 4px;
   --ov-radius-pill: 100px;
-  /* 字体（纯系统栈，无需外部加载）
-     若你以后想用真正的 Montserrat / Italianno：
-     ① 引入字体文件（如 <link> 或 @font-face）；
-     ② 把下面 sans/script 第一个字体名改回 Montserrat / Italianno。 */
-  --ov-font-serif: 'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', serif;
-  --ov-font-sans: 'Avenir Next', 'Helvetica Neue', 'Segoe UI', -apple-system, 'PingFang SC', sans-serif;
-  --ov-font-script: 'Kaiti SC', 'STKaiti', 'KaiTi', cursive;
+
+  /* 字体 */
+  --ov-font-serif: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  --ov-font-sans: 'Montserrat', -apple-system, sans-serif;
+  --ov-font-script: 'Italianno', cursive, serif;
 }
+
 body.theme-dark {
   --ov-bg-page: #0a0a0c;
   --ov-bg-grad-1: rgba(120, 150, 200, 0.1);
   --ov-bg-grad-2: rgba(180, 160, 220, 0.06);
+
   --ov-panel-bg: rgba(18, 20, 26, 0.78);
   --ov-panel-bg-solid: #12141a;
   --ov-panel-border: rgba(255, 255, 255, 0.14);
   --ov-panel-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
   --ov-panel-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --ov-panel-topline: rgba(255, 255, 255, 0.45);
+
   --ov-card-bg: rgba(255, 255, 255, 0.025);
   --ov-card-bg-hover: rgba(255, 255, 255, 0.06);
   --ov-card-border: rgba(255, 255, 255, 0.05);
   --ov-card-border-hover: rgba(255, 255, 255, 0.18);
+
   --ov-text-primary: #ffffff;
   --ov-text-secondary: rgba(255, 255, 255, 0.65);
   --ov-text-muted: rgba(255, 255, 255, 0.35);
   --ov-text-faint: rgba(255, 255, 255, 0.22);
+
   --ov-line-subtle: rgba(255, 255, 255, 0.07);
   --ov-line-soft: rgba(255, 255, 255, 0.16);
   --ov-line-strong: rgba(255, 255, 255, 0.4);
   --ov-dot-bg: #ffffff;
   --ov-dot-glow: rgba(255, 255, 255, 0.5);
+
   --ov-tag-border: rgba(255, 255, 255, 0.1);
   --ov-tag-text: rgba(255, 255, 255, 0.55);
   --ov-tag-bg: transparent;
+
   --ov-overlay-bg: rgba(0, 0, 0, 0.55);
   --ov-overlay-blur: 3px;
+
   --ov-scrollbar: rgba(255, 255, 255, 0.15);
+
   --ov-close-border: rgba(255, 255, 255, 0.15);
   --ov-close-text: rgba(255, 255, 255, 0.6);
   --ov-close-hover-border: rgba(255, 255, 255, 0.5);
   --ov-close-hover-text: #ffffff;
+
   --ov-glow-title: rgba(180, 200, 255, 0.35);
   --ov-glow-detail: rgba(180, 200, 255, 0.25);
-  --ov-accent: #3a6ea8;
 }
 
 /* ============================================================
-   2. 字体全局覆盖（系统宋体为主，图标字体全部排除）
+   2. 字体全局覆盖（不动 ILK 开屏）
    ============================================================ */
-html, body {
-  font-family: var(--ov-font-serif) !important;
-}
 body,
-body *:not(i):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regular):not(.fa-brands) {
-  font-family: var(--ov-font-serif) !important;
+body *:not(i):not([class*="fa-"]):not(#ilk_root):not(#ilk_root *) {
+  font-family: var(--ov-font-serif);
 }
-/* 英文 / 数字 / 小标签用无衬线 */
+
+/* 英文 / 数字 / 小标签用 Montserrat */
 .card-num,
 .card-tag,
 .detail-num,
@@ -138,18 +137,35 @@ body *:not(i):not(.fa):not(.fas):not(.far):not(.fab):not(.fa-solid):not(.fa-regu
 .list-num,
 .modal-sub,
 .modal-footer,
-[class*="stats-"],
-.search-glass input::placeholder,
-[class*="topbar-subtitle"],
-[class*="slogan"],
-[class*="hint"],
-[class*="label"] {
+.card-status-counts,
+.card-status-slogan,
+.card-topbar-subtitle,
+.companion-hero-text,
+.feed-header-sub,
+.env-empty-hint,
+.feed-empty-hint,
+.mood-trash-tip,
+.ds-empty-hint,
+.stats-empty-hint,
+.imp-empty-hint,
+.auto-save-hint,
+.input-hint {
   font-family: var(--ov-font-sans) !important;
 }
-/* 大标题用花体（楷体回退，无需外部字体） */
+
+/* 大标题花体 */
 .modal-title,
-[class*="big-title"],
-[class*="hero-title"] {
+.edit-profile-title,
+.role-panel-title,
+.reply-settings-title,
+.add-title,
+.manage-title,
+.mood-custom-title,
+.env-write-title,
+.env-read-title,
+.feed-post-title,
+.mood-sw-title,
+.mood-import-title {
   font-family: var(--ov-font-script) !important;
 }
 
@@ -161,21 +177,28 @@ body {
   background-image:
     radial-gradient(circle at 50% 0%, var(--ov-bg-grad-1) 0%, transparent 55%),
     radial-gradient(circle at 80% 100%, var(--ov-bg-grad-2) 0%, transparent 50%) !important;
+  background-attachment: fixed !important;
   color: var(--ov-text-primary) !important;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
-/* 说明：原方案把 .bg-dream / .bg-overlay 隐藏，会导致你主页上传的壁纸消失。
-   修正版【保留】壁纸：.bg-dream 继续显示，新渐变背景作为其后的底色，
-   在其它透明页面（聊天、会话列表等）透出。
-   —— 如果你想彻底换成纯渐变背景（主页壁纸不再显示），
-      把下面两行取消注释即可： */
-/* .bg-dream,
-   .bg-overlay {
-     display: none !important;
-   } */
+
+/* 原来主页的 .bg-dream 和 .bg-overlay 让位给新背景 */
+.bg-dream,
+.bg-overlay {
+  background: transparent !important;
+  background-image: none !important;
+  display: none !important;
+}
+
+/* ILK 开屏节点不受影响 */
+#ilk_root,
+#ilk_root * {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  transition: none !important;
+}
 
 /* ============================================================
-   4. 顶栏统一（档案 .arc-* 已按要求剔除）
+   4. 顶栏统一（所有 xxx-topbar / header）
    ============================================================ */
 .card-topbar,
 .companion-topbar,
@@ -185,11 +208,13 @@ body {
 .mood-topbar,
 .chat-home-header,
 .stats-topbar,
+.arc-topbar,
 .ds-topbar {
   background: transparent !important;
   border-bottom: 1px solid var(--ov-line-subtle) !important;
   padding-bottom: 10px !important;
 }
+
 /* 标题统一 */
 .card-topbar-title,
 .companion-topbar-title,
@@ -199,6 +224,7 @@ body {
 .mood-topbar-title,
 .chat-home-title,
 .stats-topbar-title,
+.arc-topbar-title,
 .ds-topbar-title {
   font-family: var(--ov-font-serif) !important;
   font-size: 15px !important;
@@ -207,19 +233,7 @@ body {
   color: var(--ov-text-primary) !important;
   text-shadow: 0 0 10px var(--ov-glow-title) !important;
 }
-/* 副标题（如 LITTLE WORDS, LOTS OF YOU.） */
-.card-topbar-subtitle,
-.companion-hero-text,
-.env-empty-hint,
-.feed-empty-hint,
-.mood-trash-tip,
-.ds-empty-hint {
-  font-family: var(--ov-font-sans) !important;
-  font-size: 9px !important;
-  letter-spacing: 2px !important;
-  color: var(--ov-text-muted) !important;
-  text-transform: uppercase !important;
-}
+
 /* 顶栏图标 */
 .card-topbar i,
 .companion-topbar i,
@@ -229,6 +243,7 @@ body {
 .mood-topbar i,
 .chat-home-header i,
 .stats-topbar i,
+.arc-topbar i,
 .ds-topbar i {
   color: var(--ov-text-secondary) !important;
   transition: color 0.3s ease;
@@ -241,6 +256,7 @@ body {
 .mood-topbar i:hover,
 .chat-home-header i:hover,
 .stats-topbar i:hover,
+.arc-topbar i:hover,
 .ds-topbar i:hover {
   color: var(--ov-text-primary) !important;
 }
@@ -248,6 +264,7 @@ body {
 /* ============================================================
    5. 主页组件
    ============================================================ */
+
 /* 头像卡片 */
 .header-card {
   background: var(--ov-panel-bg) !important;
@@ -261,15 +278,17 @@ body {
   background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 40%) !important;
   backdrop-filter: none !important;
 }
-/* 头像圆环（暗色下不再刺眼的白） */
-.glass-avatar {
-  background: rgba(255, 255, 255, 0.6) !important;
-  border-color: rgba(255, 255, 255, 0.85) !important;
+#headerCard h1 {
+  color: var(--ov-text-primary) !important;
+  font-family: var(--ov-font-serif) !important;
+  letter-spacing: 2px !important;
 }
-body.theme-dark .glass-avatar {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.18) !important;
+#headerCard p {
+  color: var(--ov-text-muted) !important;
+  font-family: var(--ov-font-sans) !important;
+  letter-spacing: 1px !important;
 }
+
 /* 搜索框 */
 .search-glass {
   background: var(--ov-card-bg) !important;
@@ -295,14 +314,16 @@ body.theme-dark .glass-avatar {
 .search-glass i {
   color: var(--ov-text-muted) !important;
 }
+
 /* 照片轮播 */
 .photo-scroll-item {
   background: var(--ov-card-bg) !important;
   border: 1px solid var(--ov-card-border) !important;
   border-radius: var(--ov-radius-card) !important;
 }
+
 /* 音乐播放器 glass */
-.glass {
+#pageHome .glass {
   background: var(--ov-panel-bg) !important;
   border: 1px solid var(--ov-panel-border) !important;
   border-radius: var(--ov-radius-panel) !important;
@@ -310,12 +331,7 @@ body.theme-dark .glass-avatar {
   backdrop-filter: blur(18px) !important;
   -webkit-backdrop-filter: blur(18px) !important;
 }
-#pageHome .main-content .glass {
-  background: var(--ov-panel-bg) !important;
-}
-body.theme-dark #pageHome .main-content .glass {
-  background: var(--ov-panel-bg) !important;
-}
+
 /* 歌曲名 / 歌手 */
 #songTitle {
   color: var(--ov-text-primary) !important;
@@ -327,11 +343,13 @@ body.theme-dark #pageHome .main-content .glass {
   font-family: var(--ov-font-sans) !important;
   letter-spacing: 1px;
 }
+
 /* 播放按钮 */
 .play-btn {
   background: var(--ov-text-primary) !important;
   color: var(--ov-bg-page) !important;
 }
+
 /* 功能格 */
 .function-icon {
   background: var(--ov-card-bg) !important;
@@ -353,6 +371,7 @@ body.theme-dark #pageHome .main-content .glass {
   font-family: var(--ov-font-serif) !important;
   letter-spacing: 1px;
 }
+
 /* 底部 Tab */
 .bottom-tab {
   background: var(--ov-panel-bg) !important;
@@ -364,6 +383,7 @@ body.theme-dark #pageHome .main-content .glass {
 }
 .tab-btn {
   color: var(--ov-text-muted) !important;
+  transition: color 0.2s ease, transform 0.15s ease;
 }
 .tab-btn.active {
   color: var(--ov-text-primary) !important;
@@ -377,6 +397,7 @@ body.theme-dark #pageHome .main-content .glass {
 /* ============================================================
    6. 弹窗统一（所有 modal / panel / sheet）
    ============================================================ */
+
 /* 遮罩统一 */
 .edit-profile-modal,
 .role-panel-modal,
@@ -391,12 +412,13 @@ body.theme-dark #pageHome .main-content .glass {
 .env-write-modal,
 .env-read-modal,
 .feed-post-modal,
-.mood-switch-modal,
+.mood-sw-modal,
 .mood-import-overlay {
   background: var(--ov-overlay-bg) !important;
   backdrop-filter: blur(var(--ov-overlay-blur)) !important;
   -webkit-backdrop-filter: blur(var(--ov-overlay-blur)) !important;
 }
+
 /* 面板统一 */
 .edit-profile-panel,
 .role-panel,
@@ -421,12 +443,12 @@ body.theme-dark #pageHome .main-content .glass {
   -webkit-backdrop-filter: blur(22px) !important;
   color: var(--ov-text-primary) !important;
 }
+
 /* 弹窗标题 */
 .edit-profile-title,
 .role-panel-title,
 .reply-settings-title,
 .simple-title,
-.playlist-sheet-deco,
 .add-title,
 .manage-title,
 .mood-editor-date,
@@ -443,14 +465,14 @@ body.theme-dark #pageHome .main-content .glass {
   letter-spacing: 2px !important;
   text-shadow: 0 0 12px var(--ov-glow-title) !important;
 }
+
 /* 弹窗关闭按钮 */
 .reply-settings-close,
 .env-write-close,
 .env-read-close,
 .feed-post-close,
 .mood-editor-close,
-.mood-detail-close,
-.modal-close {
+.mood-detail-close {
   border: 1px solid var(--ov-close-border) !important;
   background: transparent !important;
   color: var(--ov-close-text) !important;
@@ -462,18 +484,19 @@ body.theme-dark #pageHome .main-content .glass {
 .env-read-close:hover,
 .feed-post-close:hover,
 .mood-editor-close:hover,
-.mood-detail-close:hover,
-.modal-close:hover {
+.mood-detail-close:hover {
   border-color: var(--ov-close-hover-border) !important;
   color: var(--ov-close-hover-text) !important;
   transform: rotate(90deg) !important;
 }
-/* 弹窗 Tab（档案 .arc-tab 已剔除） */
+
+/* 弹窗 Tab */
 .reply-tab-btn,
 .env-tab,
 .ds-tab,
 .stats-tab,
 .mood-view-tab,
+.arc-tab,
 .mood-editor-tab {
   background: transparent !important;
   border: none !important;
@@ -490,11 +513,13 @@ body.theme-dark #pageHome .main-content .glass {
 .ds-tab.active,
 .stats-tab.active,
 .mood-view-tab.active,
+.arc-tab.active,
 .mood-editor-tab.active {
   color: var(--ov-text-primary) !important;
   border-bottom-color: var(--ov-dot-bg) !important;
   text-shadow: 0 0 10px var(--ov-glow-title) !important;
 }
+
 /* 弹窗里的分区标题 */
 .setting-section-title,
 .ds-section-title,
@@ -502,13 +527,16 @@ body.theme-dark #pageHome .main-content .glass {
 .mood-editor-field-label,
 .ds-field-label,
 .edit-field-label,
-.companion-section-title {
+.mood-custom-field-label,
+.add-title,
+.card-group-label {
   font-family: var(--ov-font-sans) !important;
   font-size: 9px !important;
   letter-spacing: 2px !important;
   color: var(--ov-text-muted) !important;
   text-transform: uppercase !important;
 }
+
 /* 设置行 */
 .setting-row {
   border-bottom: 1px solid var(--ov-line-subtle) !important;
@@ -529,12 +557,12 @@ body.theme-dark #pageHome .main-content .glass {
 .setting-divider {
   background: var(--ov-line-subtle) !important;
 }
-/* 输入框 */
+
+/* 输入框（弹窗里的） */
 .input-with-unit,
 .proactive-contact-select,
 .ds-input,
 .ds-input-num,
-.ds-adv-textarea,
 .add-input,
 .edit-input,
 .stats-search-input,
@@ -557,7 +585,6 @@ body.theme-dark #pageHome .main-content .glass {
 }
 .input-with-unit:focus-within,
 .ds-input:focus,
-.ds-adv-textarea:focus,
 .add-input:focus,
 .edit-input:focus,
 .stats-search-input:focus,
@@ -573,6 +600,23 @@ body.theme-dark #pageHome .main-content .glass {
   box-shadow: 0 0 0 3px rgba(120, 150, 200, 0.1) !important;
 }
 .input-with-unit input,
+.proactive-contact-select,
+.ds-input,
+.add-input,
+.edit-input,
+.stats-search-input,
+.mood-editor-input,
+.mood-editor-textarea,
+.env-write-textarea,
+.feed-post-textarea,
+.simple-textarea,
+.card-search-input {
+  color: var(--ov-text-primary) !important;
+  font-family: var(--ov-font-serif) !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
 .input-with-unit input::placeholder,
 .proactive-contact-select::placeholder,
 .ds-input::placeholder,
@@ -587,9 +631,8 @@ body.theme-dark #pageHome .main-content .glass {
 .card-search-input::placeholder {
   color: var(--ov-text-muted) !important;
   font-family: var(--ov-font-serif) !important;
-  background: transparent !important;
-  border: none !important;
 }
+
 /* 开关 */
 .toggle-slider {
   background: var(--ov-card-bg) !important;
@@ -602,6 +645,7 @@ body.theme-dark #pageHome .main-content .glass {
 .toggle-slider::before {
   background: var(--ov-panel-bg-solid) !important;
 }
+
 /* 弹窗按钮 */
 .env-write-btn,
 .env-write-btn-cancel,
@@ -623,6 +667,7 @@ body.theme-dark #pageHome .main-content .glass {
   letter-spacing: 1.5px !important;
   transition: all 0.3s ease !important;
 }
+
 /* 主按钮：实心 */
 .env-write-btn-send,
 .feed-post-btn-submit,
@@ -631,7 +676,8 @@ body.theme-dark #pageHome .main-content .glass {
 .mood-import-btn-confirm,
 .add-btn-confirm,
 .edit-btn-save,
-.simple-btn-confirm {
+.simple-btn-confirm,
+.stats-search-btn {
   background: var(--ov-text-primary) !important;
   color: var(--ov-bg-page) !important;
   border: none !important;
@@ -644,10 +690,12 @@ body.theme-dark #pageHome .main-content .glass {
 .mood-import-btn-confirm:hover,
 .add-btn-confirm:hover,
 .edit-btn-save:hover,
-.simple-btn-confirm:hover {
+.simple-btn-confirm:hover,
+.stats-search-btn:hover {
   transform: scale(1.02) !important;
   box-shadow: 0 0 30px var(--ov-glow-title) !important;
 }
+
 /* 取消按钮：幽灵态 */
 .env-write-btn-cancel,
 .feed-post-btn-cancel,
@@ -680,6 +728,7 @@ body.theme-dark #pageHome .main-content .glass {
 /* ============================================================
    7. 字卡收纳盒
    ============================================================ */
+
 /* 分类格 */
 .cat-grid-item {
   background: var(--ov-card-bg) !important;
@@ -713,6 +762,7 @@ body.theme-dark #pageHome .main-content .glass {
   color: var(--ov-bg-page) !important;
   font-family: var(--ov-font-sans) !important;
 }
+
 /* 操作按钮 */
 .card-action-btn,
 .card-group-btn {
@@ -730,24 +780,19 @@ body.theme-dark #pageHome .main-content .glass {
   border-color: var(--ov-card-border-hover) !important;
   color: var(--ov-text-primary) !important;
 }
+
 /* 卡片列表 */
-.card-list .card-item {
+#pageCard .card-list .card-item {
   background: var(--ov-card-bg) !important;
   border: 1px solid var(--ov-card-border) !important;
   border-radius: var(--ov-radius-card) !important;
   transition: all 0.35s ease !important;
 }
-.card-list .card-item:hover {
+#pageCard .card-list .card-item:hover {
   background: var(--ov-card-bg-hover) !important;
   border-color: var(--ov-card-border-hover) !important;
 }
-/* 表情 / 字卡宫格 */
-.emoji-grid-item,
-.word-card-item {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-}
+
 /* 占位提示 */
 .card-list-placeholder {
   color: var(--ov-text-muted) !important;
@@ -756,6 +801,7 @@ body.theme-dark #pageHome .main-content .glass {
 .card-list-placeholder i {
   color: var(--ov-text-faint) !important;
 }
+
 /* 底部状态栏 */
 .card-status-bar {
   background: transparent !important;
@@ -817,15 +863,17 @@ body.theme-dark #pageHome .main-content .glass {
 }
 
 /* ============================================================
-   9. 朋友圈 / 信箱 / 问卷 / 统计
+   9. 朋友圈 / 信箱 / 问卷 / 统计（严格限定页面）
    ============================================================ */
-.feed-header-card,
-.env-write-panel,
-.env-read-panel,
-.feed-post-panel,
-.ds-section,
-.stats-section,
-.stats-overview-cards > * {
+
+/* 面板 */
+#pageFeed .feed-header-card,
+#pageEnvelope .env-write-panel,
+#pageEnvelope .env-read-panel,
+#pageFeed .feed-post-panel,
+#pageDreamSurveyEdit .ds-section,
+#pageStats .stats-section,
+#pageStats .stats-overview-cards > * {
   background: var(--ov-panel-bg) !important;
   border: 1px solid var(--ov-panel-border) !important;
   border-radius: var(--ov-radius-panel) !important;
@@ -833,25 +881,27 @@ body.theme-dark #pageHome .main-content .glass {
   backdrop-filter: blur(18px) !important;
   -webkit-backdrop-filter: blur(18px) !important;
 }
-/* 列表项 */
-.feed-list > *,
-.env-list > *,
-.ds-list > *,
-.stats-rank-list > *,
-.stats-fav-list > * {
+
+/* 列表项（严格限定页面 ID，避免误伤聊天页菜单） */
+#pageFeed .feed-list > *,
+#pageEnvelope .env-list > *,
+#pageDreamSurvey .ds-list > *,
+#pageStats .stats-rank-list > *,
+#pageStats .stats-fav-list > * {
   background: var(--ov-card-bg) !important;
   border: 1px solid var(--ov-card-border) !important;
   border-radius: var(--ov-radius-card) !important;
   transition: all 0.3s ease !important;
 }
-.feed-list > *:hover,
-.env-list > *:hover,
-.ds-list > *:hover,
-.stats-rank-list > *:hover,
-.stats-fav-list > *:hover {
+#pageFeed .feed-list > *:hover,
+#pageEnvelope .env-list > *:hover,
+#pageDreamSurvey .ds-list > *:hover,
+#pageStats .stats-rank-list > *:hover,
+#pageStats .stats-fav-list > *:hover {
   background: var(--ov-card-bg-hover) !important;
   border-color: var(--ov-card-border-hover) !important;
 }
+
 /* 空状态 */
 .feed-empty,
 .env-empty,
@@ -867,34 +917,18 @@ body.theme-dark #pageHome .main-content .glass {
 .imp-empty i {
   color: var(--ov-text-faint) !important;
 }
-/* 梦向问卷：题目操作按钮 / 问卷库 / 高级模式 */
-.ds-add-q-btn,
-.ds-adv-btn,
-.ds-adv-parse-btn,
-.ds-lib-toggle,
-.ds-lib-btn {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  color: var(--ov-text-secondary) !important;
-  font-family: var(--ov-font-sans) !important;
-}
 
 /* ============================================================
-   10. 聊天页
+   10. 聊天页（关键：不动布局，只换颜色）
    ============================================================ */
-/* 聊天页 / 会话列表页：去掉自身底色，露出全局渐变背景 */
-#pageChat,
-#pageChatHome {
-  background: transparent !important;
-}
-/* 顶栏 */
-.chat-top-bg {
-  background: transparent !important;
-}
+
+/* 顶栏背景透明 */
+.chat-top-bg,
 .chat-top-actions {
   background: transparent !important;
 }
+
+/* 顶栏图标 */
 .chat-back-btn,
 .chat-action-icon {
   color: var(--ov-text-secondary) !important;
@@ -904,11 +938,15 @@ body.theme-dark #pageHome .main-content .glass {
 .chat-action-icon:hover {
   color: var(--ov-text-primary) !important;
 }
+
+/* 头像下的名字 */
 .chat-name {
   color: var(--ov-text-primary) !important;
   font-family: var(--ov-font-serif) !important;
   letter-spacing: 2px !important;
 }
+
+/* 聊天开始提示条 */
 .chat-start-bar {
   background: var(--ov-card-bg) !important;
   border: 1px solid var(--ov-card-border) !important;
@@ -916,28 +954,23 @@ body.theme-dark #pageHome .main-content .glass {
   color: var(--ov-text-muted) !important;
   font-family: var(--ov-font-sans) !important;
 }
-/* 消息区背景 */
+
+/* 消息区背景透明 */
 .chat-messages {
   background: transparent !important;
 }
-/* 聊天气泡（补充覆盖：统一为新玻璃风） */
-#pageChat .message-row.other .message-bubble {
-  background: var(--ov-card-bg-hover) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  color: var(--ov-text-primary) !important;
-}
-#pageChat .message-row.self .message-bubble {
-  background: var(--ov-accent) !important;
-  color: #ffffff !important;
-}
-/* 输入栏 */
+
+/* ============================================================
+   输入栏：不做布局改动，只换颜色
+   ============================================================ */
 .chat-input-bar {
   background: var(--ov-panel-bg) !important;
   border: 1px solid var(--ov-panel-border) !important;
-  border-radius: var(--ov-radius-pill) !important;
+  border-radius: 24px !important;
   backdrop-filter: blur(18px) !important;
   -webkit-backdrop-filter: blur(18px) !important;
 }
+
 .chat-input {
   background: transparent !important;
   color: var(--ov-text-primary) !important;
@@ -946,150 +979,34 @@ body.theme-dark #pageHome .main-content .glass {
 .chat-input::placeholder {
   color: var(--ov-text-muted) !important;
 }
+
+.input-left-icons {
+  /* 不动 flex / gap，保持原布局 */
+  color: var(--ov-text-secondary) !important;
+}
 .input-left-icons i {
   color: var(--ov-text-secondary) !important;
 }
+
 .send-btn {
   background: var(--ov-text-primary) !important;
   color: var(--ov-bg-page) !important;
 }
-/* 会话选择页：标签 / 列表 / 空状态 */
-.chat-home-tab {
-  background: transparent !important;
-  border: none !important;
-  border-bottom: 2px solid transparent !important;
-  color: var(--ov-text-muted) !important;
-  font-family: var(--ov-font-serif) !important;
-  font-size: 12px !important;
-  letter-spacing: 1px !important;
-  padding: 8px 4px !important;
-}
-.chat-home-tab.active {
-  color: var(--ov-text-primary) !important;
-  border-bottom-color: var(--ov-dot-bg) !important;
-  text-shadow: 0 0 10px var(--ov-glow-title) !important;
-}
-.chat-home-list > * {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  transition: all 0.3s ease !important;
-}
-.chat-home-list > *:hover {
-  background: var(--ov-card-bg-hover) !important;
-  border-color: var(--ov-card-border-hover) !important;
-}
-.chat-home-empty {
-  color: var(--ov-text-muted) !important;
-}
-.chat-home-empty i {
-  color: var(--ov-text-faint) !important;
-}
 
 /* ============================================================
-   11. 补充覆盖：群聊 / 存钱罐 / 聊天选项 / 首页设置
-       （类名均取自原 theme.css 暗色覆盖，已在站内存在）
+   11. 消息操作菜单（明确排除，不加任何装饰）
    ============================================================ */
-.group-modal-panel,
-.piggy-panel-inner,
-.chat-option-inner,
-.home-settings-panel-inner {
-  background: var(--ov-panel-bg) !important;
-  border: 1px solid var(--ov-panel-border) !important;
-  border-radius: var(--ov-radius-panel) !important;
-  box-shadow: var(--ov-panel-shadow), var(--ov-panel-inset) !important;
-  backdrop-filter: blur(22px) !important;
-  -webkit-backdrop-filter: blur(22px) !important;
-  color: var(--ov-text-primary) !important;
-}
-.group-modal-title,
-.piggy-title,
-.chat-option-title,
-.home-settings-title {
-  font-family: var(--ov-font-serif) !important;
-  color: var(--ov-text-primary) !important;
-  font-weight: 400 !important;
-  letter-spacing: 2px !important;
-  text-shadow: 0 0 12px var(--ov-glow-title) !important;
-}
-.group-modal-input,
-.piggy-add-input,
-.hs-input {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  color: var(--ov-text-primary) !important;
-  font-family: var(--ov-font-serif) !important;
-}
-.group-modal-cancel,
-.chat-option-btn,
-.chat-option-cancel,
-.hs-btn-cancel {
-  background: transparent !important;
-  color: var(--ov-text-secondary) !important;
-  border: 1px solid var(--ov-line-soft) !important;
-  border-radius: var(--ov-radius-card) !important;
+.msg-action-menu,
+.msg-action-menu *,
+.msg-action-btn {
+  background: inherit;
+  border: inherit;
+  border-radius: inherit;
+  font-family: var(--ov-font-sans) !important;
 }
 
 /* ============================================================
-   12. 补充覆盖：陪伴 / 陪伴中 / 重要日
-       （只统一文字与基础卡片，背景保留各自页面原实现）
-   ============================================================ */
-.companion-partner-card,
-.companion-scene-btn,
-.companion-pill,
-.companion-bg-custom-btn {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  color: var(--ov-text-secondary) !important;
-}
-.companion-scene-btn:hover,
-.companion-partner-card:hover {
-  background: var(--ov-card-bg-hover) !important;
-  border-color: var(--ov-card-border-hover) !important;
-}
-.companion-custom-input {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  color: var(--ov-text-primary) !important;
-  font-family: var(--ov-font-serif) !important;
-}
-/* 开始陪伴：只在非禁用态实心，避免禁用态失去视觉提示 */
-.companion-start-btn:not(.disabled) {
-  background: var(--ov-text-primary) !important;
-  color: var(--ov-bg-page) !important;
-  border: none !important;
-  border-radius: var(--ov-radius-card) !important;
-}
-/* 陪伴中 */
-.cpa-status-title {
-  color: var(--ov-text-primary) !important;
-  font-family: var(--ov-font-serif) !important;
-}
-.cpa-date,
-.cpa-status-sub,
-.cpa-timer-label,
-.cpa-timer-value {
-  color: var(--ov-text-secondary) !important;
-}
-.cpa-music-pill {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  color: var(--ov-text-secondary) !important;
-}
-/* 重要日列表项 */
-.imp-list > * {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
-  color: var(--ov-text-secondary) !important;
-}
-
-/* ============================================================
-   13. 滚动条统一
+   12. 滚动条统一
    ============================================================ */
 *::-webkit-scrollbar {
   width: 4px;
@@ -1108,55 +1025,16 @@ body.theme-dark #pageHome .main-content .glass {
 }
 
 /* ============================================================
-   14. 过渡（昼夜切换时颜色平滑）
-       只作用于被本文件覆盖的组件 —— 不干扰原有按钮缩放 /
-       位移动效，不拖累整站性能；开屏动画 #ilk_root 完全不受影响。
+   13. 过渡（昼夜切换颜色平滑）
    ============================================================ */
-.header-card,
-.search-glass,
-.glass,
-.function-icon,
-.bottom-tab,
-.card-topbar,
-.companion-topbar,
-.imp-topbar,
-.env-topbar,
-.feed-topbar,
-.mood-topbar,
-.chat-home-header,
-.stats-topbar,
-.ds-topbar,
-.chat-top-actions,
-.chat-input-bar,
-.edit-profile-panel,
-.role-panel,
-.reply-settings-panel,
-.simple-panel,
-.playlist-sheet-panel,
-.add-panel,
-.manage-panel,
-.mood-editor-panel,
-.mood-detail-panel,
-.mood-custom-panel,
-.env-write-panel,
-.env-read-panel,
-.feed-post-panel,
-.mood-sw-panel,
-.mood-import-panel,
-.mood-card,
-.mood-stats-card,
-.feed-header-card,
-.ds-section,
-.stats-section,
-.group-modal-panel,
-.piggy-panel-inner,
-.chat-option-inner,
-.home-settings-panel-inner {
+body,
+body *:not(#ilk_root):not(#ilk_root *) {
   transition-property: background-color, border-color, color, box-shadow;
   transition-duration: 0.3s;
   transition-timing-function: ease;
 }
-
-/* ============================================================
-   End of theme-override.css
-   ============================================================ */
+/* 动画元素不参与过渡 */
+[class*="spinning"],
+[class*="animation"] {
+  transition: none !important;
+}
