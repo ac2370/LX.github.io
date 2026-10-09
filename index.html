@@ -11,9 +11,11 @@
   <!-- PWA / 添加到主屏幕：全屏无地址栏 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<!-- 【改】状态栏：default 会白底黑字 → 改为 black 纯黑底白字，与 ilk 黑屏统一 -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="应许之地">
-<meta name="theme-color" content="#ffffff">
+<!-- 【改】theme-color 同步为黑，Android/Chrome PWA 生效 -->
+<meta name="theme-color" content="#000000">
 
   <!-- CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -120,17 +122,7 @@
 }
 #ilk_root .ilk-scrim.ilk-on { opacity: 1; visibility: visible; }
 
-#ilk_root .ilk-sb {
-  flex: 0 0 auto;
-  height: calc(var(--ilk-safe-t) + 44px);
-  padding: calc(var(--ilk-safe-t) + 12px) 22px 0;
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: 15px; font-weight: 600; letter-spacing: .02em; color: #fff;
-  user-select: none;
-}
-#ilk_root .ilk-sb-l { min-width: 52px; font-variant-numeric: tabular-nums; }
-#ilk_root .ilk-sb-r { display: flex; align-items: center; gap: 5px; }
-#ilk_root .ilk-sb-r svg { display: block; flex: 0 0 auto; }
+/* 【删】.ilk-sb 顶部状态栏规则已整块移除（左时钟/右信号WiFi电量 不再需要） */
 
 #ilk_root .ilk-island {
   position: absolute; top: calc(var(--ilk-safe-t) + 9px); left: 50%;
@@ -152,9 +144,11 @@
 #ilk_root .ilk-lock-main {
   flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; align-items: center;
-  padding: 2px 16px 0;
+  /* 【改】原顶部空间由 .ilk-sb 撑开（safe + 44px）；现已删 .ilk-sb，补回安全区，
+     否则日期/大时钟会被灵动岛/状态栏硬件区域压住 */
+  padding: calc(var(--ilk-safe-t) + 44px) 16px 0;
 }
-#ilk_root .ilk-padlock { opacity: .92; filter: drop-shadow(0 1px 3px rgba(0,0,0,.4)); }
+/* 【删】.ilk-padlock 挂锁规则已整块移除 */
 #ilk_root .ilk-date {
   margin-top: 8px;
   font-size: clamp(14px, 4.2vw, 20px); font-weight: 600; letter-spacing: .02em;
@@ -330,7 +324,6 @@
   #ilk_root .ilk-lock-bottom { padding-left: 24px; padding-right: 24px; }
   #ilk_root .ilk-notif { padding: 10px 12px; gap: 9px; border-radius: 20px; }
   #ilk_root .ilk-ava { width: 36px; height: 36px; }
-  #ilk_root .ilk-sb { padding-left: 18px; padding-right: 18px; }
 }
 @media (max-width: 360px) {
   #ilk_root .ilk-alert { width: 252px; }
@@ -1755,7 +1748,6 @@
     </div>
   </div>
 </div>
-  
   <!-- ==================== 传讯会话选择页（联系人 / 群聊） ==================== -->
   <div class="page" id="pageChatHome">
     <div class="chat-home-header">
@@ -2102,8 +2094,7 @@
       <button class="manage-cancel" id="manageCancel">取消</button>
     </div>
   </div>
-
-  <!-- ==================== 脚本引入 ==================== -->
+    <!-- ==================== 脚本引入 ==================== -->
   <!-- 1) 依赖其它模块的底层逻辑：先加载 -->
   <script src="./js/reply.js?v=20261005"></script>
 
@@ -2143,6 +2134,7 @@
   <script src="./js/dream-survey.js?v=20261010"></script>
   <script src="./js/dream-survey-from-ta.js?v=20261005"></script>
   <script src="./js/dream-survey-from-me.js?v=20261005"></script>
+  <!-- 【注意】下面这行是重复引用，交接书遗留事项 #5 提到过；此处按原样保留，未删。 -->
   <script src="./js/dream-survey.js?v=20261010"></script>
   <script src="./js/archive.js?v=20261005"></script>
 
@@ -2150,33 +2142,10 @@
   <div class="ilk-wall" data-ilk="wall"></div>
 
   <div class="ilk-lock" data-ilk="lock">
-    <div class="ilk-sb">
-      <div class="ilk-sb-l" data-ilk="clock">3:47</div>
-      <div class="ilk-sb-r">
-        <svg width="18" height="12" viewBox="0 0 18 12" fill="#fff" aria-hidden="true">
-          <rect x="0" y="7.5" width="3" height="4.5" rx="1"/>
-          <rect x="5" y="5" width="3" height="7" rx="1"/>
-          <rect x="10" y="2.5" width="3" height="9.5" rx="1"/>
-          <rect x="15" y="0" width="3" height="12" rx="1"/>
-        </svg>
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="#fff" aria-hidden="true">
-          <path d="M8 11.4 5.85 8.75a3.4 3.4 0 0 1 4.3 0L8 11.4Z"/>
-          <path d="M8 6.5c-1.5 0-2.9.52-4.02 1.4L2.55 6.2A8.7 8.7 0 0 1 8 4.3c2.05 0 3.93.7 5.45 1.9L12.02 7.9A6.45 6.45 0 0 0 8 6.5Z"/>
-          <path d="M8 1.9c-2.62 0-5.02.92-6.9 2.45L0 2.95A11.3 11.3 0 0 1 8 0c3.06 0 5.86 1.12 8 2.95L14.9 4.35A10.5 10.5 0 0 0 8 1.92"/>
-        </svg>
-        <svg width="27" height="13" viewBox="0 0 27 13" aria-hidden="true">
-          <rect x="5" y="5" width="22" height="12" rx="3.6" fill="none" stroke="rgba(255,255,255,.45)"/>
-          <rect x="2" y="2" width="7.6" height="9" rx="2.4" fill="#fff"/>
-          <path d="M24.4 4.3c1.3.45 1.3 3.95 0 4.4V4.3Z" fill="rgba(255,255,255,.45)"/>
-        </svg>
-      </div>
-    </div>
+    <!-- 【删】原顶部状态栏 .ilk-sb（左时钟 + 右信号/WiFi/电量 SVG）整块已移除 -->
 
     <div class="ilk-lock-main">
-      <svg class="ilk-padlock" width="14" height="18" viewBox="0 0 14 18" fill="#fff" aria-hidden="true">
-        <path d="M7 0a4.1 4.1 0 0 0-4.1 4.1V6h2.2V4.1a1.9 1.9 0 1 1 3.8 0V6h2.2V4.1A4.1 4.1 0 0 0 7 0Z"/>
-        <rect x="1" y="6.4" width="12" height="11.2" rx="3.1"/>
-      </svg>
+      <!-- 【删】原挂锁 svg.ilk-padlock 已移除 -->
 
       <div class="ilk-date" data-ilk="date"></div>
       <div class="ilk-time" data-ilk="bigclock">3:47</div>
@@ -2285,6 +2254,7 @@
     root.addEventListener('touchmove', blockScroll, { passive: false });
 
     var WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    // 【注意】.ilk-sb 已删，clocks 现在返回空数组；tick() 里 clocks.forEach 对空数组安全，不会报错
     var clocks = qa('clock');
     var bigClock = q('bigclock');
     var dateEl = q('date');
