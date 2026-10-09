@@ -836,11 +836,11 @@
      ============================================================ */
   var LS_PARTNER_PAT_TS = 'partner_pat_last_ts';
 
-  var PARTNER_PAT = {
+    var PARTNER_PAT = {
     idleCheckMin: 3 * 60 * 1000,
     idleCheckMax: 5 * 60 * 1000,
-    idleProbability: 0.30,
-    afterSendProbability: 0.10,
+    idleProbability: 0,
+    afterSendProbability: 0,
     minGapMs: 60 * 1000
   };
 
@@ -904,32 +904,6 @@
         window.sessionChat.record('other', { kind: 'pat', by: 'partner', text: text, name: contactName });
       } catch (e) {}
     }
-
-    var delay = 2000 + Math.floor(Math.random() * 3000);
-    setTimeout(function () {
-      var replies = (typeof window.getReplyCards === 'function') ? window.getReplyCards() : [];
-      if (!Array.isArray(replies) || replies.length === 0) return;
-
-      var replyText = randomPick(replies);
-      if (!replyText) return;
-
-      var row = document.createElement('div');
-      row.className = 'message-row other';
-      var bubble = document.createElement('div');
-      bubble.className = 'message-bubble';
-      bubble.textContent = replyText;
-      row.appendChild(bubble);
-      chatMessages.appendChild(row);
-      scrollToBottom();
-
-      if (window.sessionChat) {
-        try { window.sessionChat.recordReply('other', replyText); } catch (e) {}
-      }
-
-      if (window.chatNotify && typeof window.chatNotify.show === 'function') {
-        try { window.chatNotify.show(contactName, replyText); } catch (e) {}
-      }
-    }, delay);
   }
 
   function scheduleIdlePartnerPat() {
@@ -977,12 +951,17 @@
   setTimeout(init, 200);
   setTimeout(init, 800);
 
-  window.chatExtras = {
+   window.chatExtras = {
     enterBurstMode: enterBurstMode,
     exitBurstMode: exitBurstMode,
     sendImage: sendImage,
     openStickerPanel: openStickerPanel,
-    triggerPartnerPat: function () { tryTriggerPartnerPat('manual'); },
+    triggerPartnerPat: function () { firePartnerPat(); },
+    firePartnerPat: function () {
+      var pats = getPatPool();
+      var patText = pats.length > 0 ? randomPick(pats) : '轻轻拍了拍你';
+      sendPartnerPat(patText);
+    },
     getPatPool: getPatPool
   };
 
