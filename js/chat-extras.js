@@ -279,9 +279,13 @@
         alert('暂存列表为空');
         return;
       }
-      burstQueue.forEach(function (item) {
-        sendOneMessage(item);
-      });
+     burstQueue.forEach(function (item) {
+  if (item.type === 'image') {
+    sendOneMessage({ type: 'image', url: item.url });
+  } else {
+    sendOneMessage(item.text);
+  }
+});
       burstQueue = [];
       renderBurstQueue();
       exitBurstMode();
