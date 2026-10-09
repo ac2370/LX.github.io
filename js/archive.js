@@ -107,8 +107,18 @@
     return randomPickFrom(all);
   };
   // 从「回复」分组抽 1~3 条作为 desc（只读用户自己的回复栏，空则返回 ''）
-  window.getArchiveDesc = function () {
+    window.getArchiveDesc = function () {
     var all = [];
+    // 优先从公共字卡库（已勾选的回复卡）抽
+    if (window.publicCards && typeof window.publicCards.getSelectedCards === 'function') {
+      try {
+        if (typeof window.publicCards.isReady !== 'function' || window.publicCards.isReady()) {
+          var pub = window.publicCards.getSelectedCards('reply');
+          if (Array.isArray(pub)) all = all.concat(pub);
+        }
+      } catch (e) {}
+    }
+    // 兜底：自己回复栏
     var db = window.cardDatabase || {};
     if (db.reply) all = all.concat(flattenGroups(db.reply));
     if (!all.length) return '';
