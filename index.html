@@ -49,8 +49,11 @@
    ============================================================ */
 #ilk_root {
   position: fixed !important;
-  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-  width: auto !important; height: auto !important;
+  top: 0 !important; left: 0 !important;
+  right: 0 !important; bottom: 0 !important;
+  width: auto !important;
+  height: 100vh !important;           /* 回退 */
+  height: 100lvh !important; 
   margin: 0 !important; padding: 0 !important; border: 0 !important;
   z-index: 2147483647 !important;
   overflow: hidden !important;
@@ -183,6 +186,7 @@
 #ilk_root .ilk-glass:active { transform: scale(.9); background: rgba(255,255,255,.26); }
 #ilk_root .ilk-glass svg { display: block; opacity: .95; }
 #ilk_root .ilk-homebar {
+  display: none !important;
   position: absolute; left: 50%; bottom: calc(var(--ilk-safe-b) + 9px);
   transform: translateX(-50%);
   width: min(140px, 36vw); height: 5px; border-radius: 3px;
@@ -2168,7 +2172,6 @@
     </div>
   </div>
 
-  <div class="ilk-island" aria-hidden="true"></div>
   <div class="ilk-scrim" data-ilk="scrim"></div>
 
   <div class="ilk-stage" data-ilk="stage">
