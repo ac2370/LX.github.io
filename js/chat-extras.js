@@ -786,7 +786,6 @@
       var sysBubble = document.createElement('div');
       sysBubble.className = 'call-record-bubble';
       sysBubble.innerHTML =
-        '<i class="fa-solid fa-hand"></i>' +
         '<span>你拍了拍 ' + escapeHtml(contactName) + '：' + escapeHtml(text) + '</span>';
       sysRow.appendChild(sysBubble);
       chatMessages.appendChild(sysRow);
@@ -891,7 +890,6 @@
     var sysBubble = document.createElement('div');
     sysBubble.className = 'call-record-bubble';
     sysBubble.innerHTML =
-      '<i class="fa-solid fa-hand"></i>' +
       '<span>' + escapeHtml(contactName) + ' 拍了拍你：' + escapeHtml(text) + '</span>';
     sysRow.appendChild(sysBubble);
     chatMessages.appendChild(sysRow);
