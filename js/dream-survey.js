@@ -564,6 +564,14 @@
     html += '<div class="ds-detail-qs">';
     (s.qs || []).forEach(function (q, idx) {
       var typeLabel = { single: '单选', multi: '多选', text: '文字' }[q.type] || '单选';
+            // 查这道题的答案
+      var ans = null;
+      if (Array.isArray(s.answers)) {
+        for (var ai = 0; ai < s.answers.length; ai++) {
+          if (s.answers[ai] && s.answers[ai].qIdx === idx) { ans = s.answers[ai].value; break; }
+        }
+      }
+
 
       html += '<div class="ds-detail-q">';
       html += '  <div class="ds-detail-q-head">';
@@ -572,12 +580,24 @@
       html += '    <span class="ds-detail-q-type">' + typeLabel + '</span>';
       html += '  </div>';
 
-      if (q.type === 'text') {
-        html += '  <div class="ds-detail-q-empty">Ta 将自由作答</div>';
+          if (q.type === 'text') {
+        if (ans !== null && ans !== '') {
+          html += '  <div class="ds-detail-q-ans">' + escapeHtml(String(ans)) + '</div>';
+        } else {
+          html += '  <div class="ds-detail-q-empty">Ta 将自由作答</div>';
+        }
+
       } else if (q.options && q.options.length) {
         html += '  <div class="ds-detail-q-opts">';
         q.options.forEach(function (opt, oi) {
-          html += '    <div class="ds-detail-q-opt">' + String.fromCharCode(65 + oi) + '. ' + escapeHtml(opt || '（空）') + '</div>';
+          var chosen = false;
+          if (ans !== null && ans !== '') {
+            var picked = String(ans).split('、').map(function (x) { return x.trim(); });
+            chosen = picked.indexOf(String(opt).trim()) >= 0;
+          }
+          html += '    <div class="ds-detail-q-opt' + (chosen ? ' chosen' : '') + '">' +
+                  (chosen ? '✓ ' : '') + String.fromCharCode(65 + oi) + '. ' + escapeHtml(opt || '（空）') +
+                  '</div>';
         });
         html += '  </div>';
       } else {
