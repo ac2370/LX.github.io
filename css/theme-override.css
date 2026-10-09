@@ -851,22 +851,22 @@ body.theme-dark #pageHome .main-content .glass {
   -webkit-backdrop-filter: blur(18px) !important;
 }
 
-/* 列表项 */
-.feed-list > *,
-.env-list > *,
-.ds-list > *,
-.stats-rank-list > *,
-.stats-fav-list > * {
+/* 列表项（严格限定，不要误伤聊天页） */
+#pageFeed .feed-list > *,
+#pageEnvelope .env-list > *,
+#pageDreamSurvey .ds-list > *,
+#pageStats .stats-rank-list > *,
+#pageStats .stats-fav-list > * {
   background: var(--ov-card-bg) !important;
   border: 1px solid var(--ov-card-border) !important;
   border-radius: var(--ov-radius-card) !important;
   transition: all 0.3s ease !important;
 }
-.feed-list > *:hover,
-.env-list > *:hover,
-.ds-list > *:hover,
-.stats-rank-list > *:hover,
-.stats-fav-list > *:hover {
+#pageFeed .feed-list > *:hover,
+#pageEnvelope .env-list > *:hover,
+#pageDreamSurvey .ds-list > *:hover,
+#pageStats .stats-rank-list > *:hover,
+#pageStats .stats-fav-list > *:hover {
   background: var(--ov-card-bg-hover) !important;
   border-color: var(--ov-card-border-hover) !important;
 }
@@ -929,24 +929,50 @@ body.theme-dark #pageHome .main-content .glass {
 .chat-input-bar {
   background: var(--ov-panel-bg) !important;
   border: 1px solid var(--ov-panel-border) !important;
-  border-radius: var(--ov-radius-pill) !important;
+  border-radius: 24px !important;          /* ← 改回原来的圆角，不要胶囊 */
   backdrop-filter: blur(18px) !important;
   -webkit-backdrop-filter: blur(18px) !important;
+  padding: 6px 8px !important;             /* ← 补回原来的内边距 */
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
+
 .chat-input {
   background: transparent !important;
   color: var(--ov-text-primary) !important;
   font-family: var(--ov-font-serif) !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  border: none !important;
+  outline: none !important;
+  padding: 6px 4px !important;
 }
 .chat-input::placeholder {
   color: var(--ov-text-muted) !important;
 }
+
+.input-left-icons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+}
 .input-left-icons i {
   color: var(--ov-text-secondary) !important;
+  font-size: 16px !important;
 }
+
 .send-btn {
   background: var(--ov-text-primary) !important;
   color: var(--ov-bg-page) !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* ============================================================
