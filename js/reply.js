@@ -31,7 +31,7 @@
   place:   window.cardDatabase.place,
   mood:    window.cardDatabase.mood,
   sticker: window.cardDatabase.sticker,
-  status:  window.cardDatabase.status
+  status:  window.cardDatabase.status,
   location: window.cardDatabase.location || { '默认分组': [] },
 };
     if (hasLocalforage) {
