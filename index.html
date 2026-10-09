@@ -47,9 +47,12 @@
    注意：已删掉原版对 html/body 的破坏性规则，只作用于 #ilk_root
    ============================================================ */
 
-/* 兜底：整页背景黑，防止 #ilk_root 边缘差几像素时露出白/灰 */
-html, body {
-  background: #e3f0fa;   /* 或 #fff，跟 home.css 的 body 背景一致 */
+/* 兜底：只给 html（画布）背景；body 必须透明，否则会盖住 z-index:-2 的背景图层 */
+html {
+  background: #e3f0fa;
+}
+body {
+  background: transparent;
 }
 
 #ilk_root {
@@ -365,8 +368,8 @@ html, body {
 
   <!-- ==================== 主页 ==================== -->
   <div class="page active" id="pageHome">
-    <div class="bg-dream" id="bgDream"></div>
-    <div class="bg-overlay"></div>
+       <div class="bg-dream" id="bgDream"></div>
+
 
     <div class="app-container w-full max-w-[430px] mx-auto relative">
       <div class="px-2 pt-8 pb-1 flex-shrink-0">
