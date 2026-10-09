@@ -1,2185 +1,2428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>应许之地</title>
+
+  <!-- 主屏幕图标 -->
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icon.png">
+  <!-- PWA / 添加到主屏幕：全屏无地址栏 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- 状态栏：black-translucent 透明沉浸式，让壁纸铺到灵动岛/状态栏底下 -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="应许之地">
+<meta name="theme-color" content="#000000">
+
+  <!-- CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+
+  <!-- 本地样式（全部放在 css/ 目录） -->
+  <link rel="stylesheet" href="./css/theme.css?v=20261005">
+  <link rel="stylesheet" href="./css/home.css?v=20261017">
+  <link rel="stylesheet" href="./css/home-settings.css?v=20261022">
+  <link rel="stylesheet" href="./css/modals.css?v=20261005">
+  <link rel="stylesheet" href="./css/card.css?v=20261005">
+  <link rel="stylesheet" href="./css/chat.css?v=20261020">
+  <link rel="stylesheet" href="./css/chat-home.css?v=20261016">
+  <link rel="stylesheet" href="./css/chat-settings.css?v=20261005">
+  <link rel="stylesheet" href="./css/companion.css?v=20261005">
+  <link rel="stylesheet" href="./css/important-day.css?v=20261005">
+  <link rel="stylesheet" href="./css/mood.css?v=20261005">
+  <link rel="stylesheet" href="./css/envelope.css?v=20261005">
+  <link rel="stylesheet" href="./css/feed.css?v=20261005">
+  <link rel="stylesheet" href="./css/public-cards.css?v=20261005">
+  <link rel="stylesheet" href="./css/stats.css?v=20261010">
+  <link rel="stylesheet" href="./css/dream-survey.css?v=20261005">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./css/archive.css?v=20261005">
+
+  <style>
 /* ============================================================
-   chat.css —— 传讯页面样式合集
-   包含：
-     - 传讯消息头像
-     - 存钱罐面板
-     - 连发模式 + 图片选项 + 表情包面板
-     - 群聊模式
-     - 布局修复（防止传讯顶栏溢出）
-     - 站内消息横幅
-     - 视频通话弹窗 + 通话记录气泡 + 主动来电横幅
-     - 拍一拍弹窗
-     - 已读回执
+   iOS 锁屏开屏动画（ilk）
+   注意：已删掉原版对 html/body 的破坏性规则，只作用于 #ilk_root
    ============================================================ */
 
-/* ============ 聊天消息头像 ============ */
-#pageChat .message-row {
-  align-items: flex-start;
-}
-.chat-msg-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
-  background: #f3f5f7;
-  margin-top: 2px;
-}
-#pageChat .message-row.other .chat-msg-avatar {
-  margin-right: 6px;
-}
-#pageChat .message-row.self .chat-msg-avatar {
-  margin-left: 6px;
-}
-
-/* ============ 存钱罐面板 ============ */
-.piggy-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 460;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(20, 30, 40, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.piggy-panel.active { display: flex; }
-
-.piggy-panel-inner {
-  width: 100%;
-  max-width: 420px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-  overflow: hidden;
-  animation: popIn 0.22s ease;
-}
-
-.piggy-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px 20px;
-  border-bottom: 1px solid #f0f3f6;
-}
-.piggy-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.piggy-title i { color: #f8b4b4; }
-.piggy-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  background: #f5f6f8;
-  border: none;
-  color: #55606b;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-.piggy-close:active { background: #e8ecf0; }
-
-.piggy-body {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  gap: 10px;
-  padding: 16px 16px 20px 16px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.piggy-body::-webkit-scrollbar { display: none; }
-
-.piggy-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: #fafbfc;
-  border-radius: 16px;
-  padding: 12px 10px;
-  border: 1px solid #eef1f4;
-}
-.piggy-col-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: #55606b;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-left: 2px;
-}
-.piggy-col-title i { color: #f8b4b4; font-size: 12px; }
-
-.piggy-list {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 80px;
-  max-height: 200px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(180, 190, 200, 0.5) transparent;
-  margin-bottom: 6px;
-}
-.piggy-list::-webkit-scrollbar { width: 3px; }
-.piggy-list::-webkit-scrollbar-thumb {
-  background: rgba(180, 190, 200, 0.5);
-  border-radius: 3px;
-}
-
-.piggy-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  background: #ffffff;
-  border-radius: 10px;
-  margin-bottom: 5px;
-  border: 1px solid #f0f3f6;
-}
-.piggy-item-info { flex: 1; min-width: 0; }
-.piggy-item-title {
-  font-size: 12px;
-  color: #333;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.piggy-item-sub {
-  font-size: 11px;
-  color: #e58b8b;
-  font-weight: 700;
-  margin-top: 1px;
-}
-.piggy-item-del {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 9999px;
-  background: #fdf0f0;
-  color: #e58b8b;
-  border: none;
-  font-size: 9px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-.piggy-item-del:active { background: #f8d8d8; }
-
-.piggy-empty {
-  text-align: center;
-  padding: 16px 4px;
-  font-size: 11px;
-  color: #c0ccd6;
-  line-height: 1.5;
-}
-
-.piggy-total {
-  font-size: 11px;
-  color: #8899a6;
-  font-weight: 700;
-  text-align: right;
-  padding: 4px 4px 8px 4px;
-  border-bottom: 1px dashed #eef1f4;
-  margin-bottom: 8px;
-}
-
-.piggy-add-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.piggy-add-input {
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 10px;
-  border: 1px solid #e2e8ee;
-  background: #ffffff;
-  font-size: 11px;
-  color: #333;
-  outline: none;
-  box-sizing: border-box;
-  transition: border 0.2s ease;
-}
-.piggy-add-input:focus {
-  border-color: #f8b4b4;
-  box-shadow: 0 0 0 2px rgba(248, 180, 180, 0.15);
-}
-.piggy-add-input::placeholder { color: #b6c2cd; }
-.piggy-add-btn {
-  width: 100%;
-  padding: 7px 0;
-  border-radius: 10px;
-  background: #f8b4b4;
-  color: #fff;
-  border: none;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.piggy-add-btn:active {
-  background: #e58b8b;
-  transform: scale(0.97);
-}
-
-/* ============ 连发模式按钮 ============ */
-#burstModeBtn {
-  color: #8fa8bd;
-  font-size: 18px;
-  cursor: pointer;
-  transition: color 0.15s ease, transform 0.15s ease;
-  flex-shrink: 0;
-  padding: 2px 4px;
-}
-#burstModeBtn:active {
-  transform: scale(0.9);
-  color: #6a8ca8;
-}
-#burstModeBtn.active {
-  color: #f8b4b4;
-  transform: scale(1.1);
-}
-
-/* ============ 连发模式提示框 ============ */
-.burst-hint {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  margin: 0 14px 4px 14px;
-  background: #fff9f0;
-  border: 1px dashed #f8c98a;
-  border-radius: 12px;
-  font-size: 12px;
-  color: #c68a3a;
-  font-weight: 600;
-  animation: fadeIn 0.2s ease;
-}
-.burst-hint i { color: #f8b4b4; }
-
-/* ============ 连发暂存列表 ============ */
-.burst-queue {
-  display: none;
-  flex-direction: column;
-  gap: 5px;
-  max-height: 160px;
-  overflow-y: auto;
-  padding: 6px 14px 4px 14px;
-  scrollbar-width: none;
-}
-.burst-queue::-webkit-scrollbar { display: none; }
-
-.burst-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  background: #fafbfc;
-  border: 1px dashed #cbd4dc;
-  border-radius: 10px;
-  font-size: 13px;
-  color: #55606b;
-  animation: fadeIn 0.15s ease;
-}
-.burst-chip-num {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 9999px;
-  background: #f8b4b4;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.burst-chip-text {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.burst-chip-img {
-  width: 28px;
-  height: 28px;
-  object-fit: cover;
-  border-radius: 6px;
-  flex-shrink: 0;
-}
-.burst-chip-time {
-  flex-shrink: 0;
-  font-size: 10px;
-  color: #a8b4c0;
-  font-weight: 500;
-}
-.burst-chip-tag {
-  flex-shrink: 0;
-  font-size: 10px;
-  color: #c68a3a;
-  font-weight: 600;
-  background: #fff5e6;
-  padding: 1px 5px;
-  border-radius: 6px;
-}
-.burst-chip-del {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 9999px;
-  background: #fdf0f0;
-  color: #e58b8b;
-  font-size: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-.burst-chip-del:active { background: #f8d8d8; }
-
-/* ============ 连发 √ / ✕ 按钮组 ============ */
-.burst-action-group {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  margin-right: 8px;
-}
-.burst-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 9999px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease;
-}
-.burst-btn:active { transform: scale(0.9); }
-.burst-confirm {
-  background: #6fb1e8;
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
-}
-.burst-confirm:active { background: #5a9ed6; }
-.burst-cancel {
-  background: #f5f6f8;
-  color: #8899a6;
-  border: 1px solid #eef1f4;
-}
-.burst-cancel:active { background: #e8ecf0; }
-
-/* ============ 图片/表情包底部面板 ============ */
-.chat-option-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 470;
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(20, 30, 40, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.chat-option-panel.active { display: flex; }
-
-.chat-option-inner {
-  width: 100%;
-  max-width: 430px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-radius: 28px 28px 0 0;
-  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
-  padding: 20px 20px 24px 20px;
-  animation: slideUp 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  max-height: 75vh;
-}
-
-.chat-option-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.chat-option-btn {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: #fafbfc;
-  border: 1px solid #eef1f4;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #333;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-bottom: 10px;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.chat-option-btn:active {
-  background: #f2f6fa;
-  transform: scale(0.98);
-}
-.chat-option-btn i {
-  color: #f8b4b4;
-  font-size: 16px;
-  width: 20px;
-  text-align: center;
-}
-
-.chat-option-cancel {
-  width: 100%;
-  padding: 12px 0;
-  text-align: center;
-  color: #8899a6;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  background: none;
-  border: none;
-  margin-top: 6px;
-}
-.chat-option-cancel:active { color: #55606b; }
-
-/* 表情包面板 */
-.chat-sticker-inner { padding-bottom: 18px; }
-.sticker-grid {
-  flex: 1;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
-  min-height: 120px;
-  max-height: 50vh;
-  scrollbar-width: none;
-}
-.sticker-grid::-webkit-scrollbar { display: none; }
-
-.sticker-item {
-  aspect-ratio: 1;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #f5f6f8;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-  border: 1px solid #eef1f4;
-}
-.sticker-item:active { transform: scale(0.94); }
-.sticker-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.sticker-empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 40px 20px;
-  color: #c0ccd6;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-/* ============ 群聊设置模态框 ============ */
-.group-chat-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 480;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: rgba(20, 30, 40, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-}
-.group-chat-modal.active { display: flex; }
-
-.group-chat-panel {
-  width: 100%;
-  max-width: 400px;
-  max-height: 85vh;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 50px rgba(0, 20, 30, 0.2);
-  overflow: hidden;
-  animation: popIn 0.22s ease;
-}
-body.theme-dark .group-chat-panel {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border);
-}
-
-.group-chat-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px 20px;
-  border-bottom: 1px solid #f0f3f6;
-}
-body.theme-dark .group-chat-header {
-  border-bottom-color: var(--theme-card-border);
-}
-.group-chat-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-body.theme-dark .group-chat-title { color: var(--theme-text); }
-.group-chat-title i { color: #f8b4b4; }
-.group-chat-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  background: #f5f6f8;
-  border: none;
-  color: #55606b;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-.group-chat-close:active { background: #e8ecf0; }
-
-.group-chat-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px 20px 20px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.group-chat-body::-webkit-scrollbar { display: none; }
-
-.group-new-box {
-  background: #fafbfc;
-  border-radius: 18px;
-  padding: 14px;
-  margin-bottom: 18px;
-  border: 1px solid #eef1f4;
-}
-body.theme-dark .group-new-box {
-  background: rgba(42, 48, 56, 0.6);
-  border-color: var(--theme-card-border);
-}
-.group-new-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #55606b;
-  margin-bottom: 10px;
-}
-body.theme-dark .group-new-title { color: var(--theme-text-soft); }
-
-.group-new-input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid #e2e8ee;
-  background: #ffffff;
-  font-size: 13px;
-  color: #333;
-  outline: none;
-  box-sizing: border-box;
-  margin-bottom: 10px;
-  transition: border 0.2s ease;
-}
-body.theme-dark .group-new-input {
-  background: var(--theme-input-bg);
-  border-color: var(--theme-input-border);
-  color: var(--theme-text);
-}
-.group-new-input:focus {
-  border-color: #f8b4b4;
-  box-shadow: 0 0 0 3px rgba(248, 180, 180, 0.15);
-}
-.group-new-input::placeholder { color: #b6c2cd; }
-
-.group-members-edit {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.group-member-row {
-  display: grid;
-  grid-template-columns: 44px 1fr 1fr 28px;
-  gap: 6px;
-  align-items: center;
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 6px 8px;
-  border: 1px solid #eef1f4;
-}
-body.theme-dark .group-member-row {
-  background: rgba(42, 48, 56, 0.8);
-  border-color: var(--theme-card-border);
-}
-
-.group-member-avatar-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  overflow: hidden;
-  cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
-  background: #f5f6f8;
-}
-.group-member-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.group-member-name,
-.group-member-url {
-  padding: 6px 8px;
-  border-radius: 8px;
-  border: 1px solid #e2e8ee;
-  background: #ffffff;
-  font-size: 12px;
-  color: #333;
-  outline: none;
-  box-sizing: border-box;
-  min-width: 0;
-  transition: border 0.2s ease;
-}
-body.theme-dark .group-member-name,
-body.theme-dark .group-member-url {
-  background: var(--theme-input-bg);
-  border-color: var(--theme-input-border);
-  color: var(--theme-text);
-}
-.group-member-name:focus,
-.group-member-url:focus { border-color: #f8b4b4; }
-.group-member-name::placeholder,
-.group-member-url::placeholder { color: #b6c2cd; }
-
-.group-member-del {
-  width: 26px;
-  height: 26px;
-  border-radius: 9999px;
-  background: #fdf0f0;
-  color: #e58b8b;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  cursor: pointer;
-}
-.group-member-del:active { background: #f8d8d8; }
-
-.group-add-member-btn,
-.group-save-btn {
-  width: 100%;
-  padding: 10px 0;
-  border-radius: 12px;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.group-add-member-btn {
-  background: #f5f6f8;
-  color: #55606b;
-  border: 1px solid #eef1f4;
-  margin-bottom: 8px;
-}
-body.theme-dark .group-add-member-btn {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-}
-.group-add-member-btn:active {
-  background: #e8ecf0;
-  transform: scale(0.98);
-}
-.group-save-btn {
-  background: #f8b4b4;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.35);
-}
-.group-save-btn:active {
-  background: #e58b8b;
-  transform: scale(0.98);
-}
-
-.group-list-title {
-  font-size: 12px;
-  color: #8899a6;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  margin-bottom: 10px;
-  padding-left: 2px;
-}
-body.theme-dark .group-list-title { color: var(--theme-text-muted); }
-
-.group-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.group-empty {
-  text-align: center;
-  padding: 20px;
-  color: #c0ccd6;
-  font-size: 12px;
-}
-
-.group-list-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1.5px solid transparent;
-  background: #fafbfc;
-  cursor: pointer;
-  transition: background 0.15s ease, border 0.15s ease;
-}
-body.theme-dark .group-list-item {
-  background: rgba(42, 48, 56, 0.6);
-}
-.group-list-item:active { background: #f2f6fa; }
-.group-list-item.active {
-  border-color: #f8b4b4;
-  background: #fdf5f5;
-}
-
-.group-list-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 6px rgba(150, 180, 210, 0.2);
-}
-.group-list-info { flex: 1; min-width: 0; }
-.group-list-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.theme-dark .group-list-name { color: var(--theme-text); }
-.group-list-count {
-  font-size: 11px;
-  color: #8899a6;
-  margin-top: 2px;
-}
-body.theme-dark .group-list-count { color: var(--theme-text-muted); }
-
-.group-list-del {
-  width: 28px;
-  height: 28px;
-  border-radius: 9999px;
-  background: #fdf0f0;
-  color: #e58b8b;
-  border: none;
-  font-size: 11px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.group-list-del:active { background: #f8d8d8; }
-
-/* ============ 群聊模式 - 页面样式区分 ============ */
-#pageChat.group-mode {
-  background: linear-gradient(160deg, #e8f0f8 0%, #f5e8f0 100%);
-}
-body.theme-dark #pageChat.group-mode {
-  background: linear-gradient(160deg, #1e242b 0%, #2a2028 100%);
-}
-#pageChat.group-mode .chat-header {
-  background: linear-gradient(90deg, #eaf3fb 0%, #fceef5 100%);
-}
-body.theme-dark #pageChat.group-mode .chat-header {
-  background: linear-gradient(90deg, #1e242b 0%, #2a2028 100%);
-}
-#pageChat.group-mode .chat-messages {
+/* 兜底：只给 html（画布）背景；body 必须透明，否则会盖住 z-index:-2 的背景图层 */
+html {
+  background: #e3f0fa;
+}
+body {
   background: transparent;
 }
-#pageChat.group-mode .message-row.other .message-bubble {
-  background: #fff;
-  border: 1px solid #f0e8f4;
-}
-body.theme-dark #pageChat.group-mode .message-row.other .message-bubble {
-  background: #2a3038;
-  border-color: #3a424a;
-}
-#pageChat.group-mode .message-row.self .message-bubble {
-  background: #d8ecfb;
-}
 
-/* 群聊消息行：成员名字 */
-.group-msg-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-width: 62%;
-}
-.group-msg-name {
-  font-size: 11px;
-  color: #8899a6;
-  font-weight: 600;
-  padding-left: 4px;
-  margin-bottom: 2px;
-}
-body.theme-dark .group-msg-name { color: var(--theme-text-muted); }
-
-/* 退出群聊按钮 */
-.exit-group-btn {
-  margin-top: 10px;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  background: #ffffff;
-  border: 1px solid #eef1f4;
-  color: #8899a6;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition: background 0.15s ease;
-}
-.exit-group-btn:active { background: #f2f6fa; }
-body.theme-dark .exit-group-btn {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-  border-color: var(--theme-card-border);
-}
-
-/* 群聊图标（自动插入到传讯顶栏） */
-#groupChatIcon {
-  color: #8fb8d8;
-}
-
-/* ============================================================
-   布局修复：防止传讯顶栏图标溢出到底部
-   ============================================================ */
-#pageChat {
-  display: none;
-  flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-  position: relative;
-}
-#pageChat.active {
-  display: flex;
-}
-#pageChat .chat-header {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 10;
-  overflow: visible;
-}
-#pageChat .chat-messages {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-#pageChat .chat-input-bar {
-  flex-shrink: 0;
-  position: relative;
-  z-index: 10;
-}
-#pageChat > .chat-actions {
-  display: none !important;
-}
-#pageChat .chat-input-bar ~ .chat-actions {
-  display: none !important;
-}
-#pageChat .chat-messages .chat-actions {
-  display: none !important;
-}
-
-/* ============================================================
-   站内消息横幅
-   ============================================================ */
-.chat-notify-banner {
-  position: fixed;
-  top: -120px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-  width: calc(100% - 24px);
-  max-width: 400px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 40px rgba(0, 20, 30, 0.25);
-  cursor: pointer;
-  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  user-select: none;
-}
-.chat-notify-banner.active { top: 12px; }
-body.theme-dark .chat-notify-banner {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border, #333a42);
-}
-
-.chat-notify-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 8px rgba(150, 180, 210, 0.3);
-  flex-shrink: 0;
-}
-body.theme-dark .chat-notify-avatar { border-color: var(--theme-card-border, #333a42); }
-
-.chat-notify-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.chat-notify-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.theme-dark .chat-notify-name { color: #e8eef4; }
-
-.chat-notify-content {
-  font-size: 12px;
-  color: #8899a6;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.theme-dark .chat-notify-content { color: #b8c2cc; }
-
-/* ============================================================
-   视频通话弹窗
-   ============================================================ */
-.video-call-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 600;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(20, 30, 40, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.video-call-modal.active { display: flex; }
-
-.video-call-panel {
-  width: 100%;
-  max-width: 340px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 20px 60px rgba(0, 20, 30, 0.3);
-  padding: 32px 24px 24px 24px;
-  text-align: center;
-  animation: popIn 0.25s ease;
-}
-body.theme-dark .video-call-panel {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border);
-}
-
-.video-call-avatar-wrap { margin-bottom: 16px; }
-.video-call-avatar {
-  width: 96px;
-  height: 96px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 3px solid #ffffff;
-  box-shadow: 0 8px 24px rgba(150, 180, 210, 0.3);
-  margin: 0 auto;
-  animation: callPulse 2s ease-in-out infinite;
-}
-@keyframes callPulse {
-  0%, 100% { transform: scale(1); box-shadow: 0 8px 24px rgba(150, 180, 210, 0.3); }
-  50% { transform: scale(1.04); box-shadow: 0 12px 32px rgba(150, 180, 210, 0.5); }
-}
-
-.video-call-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 6px;
-}
-body.theme-dark .video-call-name { color: var(--theme-text); }
-
-.video-call-status {
-  font-size: 13px;
-  color: #8899a6;
-  margin-bottom: 4px;
-}
-body.theme-dark .video-call-status { color: var(--theme-text-muted); }
-
-.video-call-timer {
-  font-size: 20px;
-  font-weight: 700;
-  color: #6fb1e8;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 24px;
-  letter-spacing: 1px;
-}
-
-.video-call-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-.video-call-btn {
-  flex: 1;
-  max-width: 120px;
-  padding: 12px 0;
-  border-radius: 16px;
-  border: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-}
-.video-call-btn:active { transform: scale(0.95); }
-.video-call-btn i { font-size: 18px; }
-
-.video-call-cancel {
-  background: #f5f6f8;
-  color: #55606b;
-  border: 1px solid #eef1f4;
-}
-body.theme-dark .video-call-cancel {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-}
-
-.video-call-hangup {
-  background: #f8b4b4;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(248, 180, 180, 0.4);
-}
-.video-call-hangup:active { background: #e58b8b; }
-
-/* ============ 通话记录气泡（系统提示条） ============ */
-.message-row.call-record,
-.message-row.system-call-event {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 100% !important;
-  margin: 8px 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-}
-
-.message-row.call-record .chat-msg-avatar,
-.message-row.system-call-event .chat-msg-avatar,
-.message-row.call-record > img.chat-msg-avatar,
-.message-row.system-call-event > img.chat-msg-avatar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  opacity: 0 !important;
-  position: absolute !important;
-  pointer-events: none !important;
-}
-
-.message-row.call-record > .message-bubble,
-.message-row.system-call-event > .message-bubble {
-  display: none !important;
-}
-
-.call-record-bubble {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 6px 14px !important;
-  background: #f0f3f6 !important;
-  border-radius: 14px !important;
-  font-size: 11px !important;
-  color: #8899a6 !important;
-  font-weight: 500 !important;
-  line-height: 1.4 !important;
-  text-align: center !important;
-  max-width: 80% !important;
+#ilk_root {
+  position: fixed !important;
+  top: 0 !important; left: 0 !important;
+  right: 0 !important;
+  /* 【改】不再用 bottom:0 拉伸（bottom:0 会被"布局视口"限制，避开系统条）；
+     改为靠 height 撑满物理屏，配合 dvh / lvh 兜底 */
+  bottom: auto !important;
   width: auto !important;
-  flex: 0 0 auto !important;
-  white-space: nowrap !important;
-  box-shadow: none !important;
-  border: none !important;
+  height: 100vh !important;           /* 回退 */
+  height: 100dvh !important;          /* 动态视口，iOS 16.4+ */
+  min-height: 100vh !important;       /* 再兜底 */
+  min-height: 100lvh !important;      /* 最大视口，含系统条占位 */
+  margin: 0 !important; padding: 0 !important; border: 0 !important;
+  z-index: 2147483647 !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  background: #000 !important;
+  color: #fff !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
+  font-size: 16px !important;
+  line-height: normal !important;
+  text-align: left !important;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent !important;
+  pointer-events: auto !important;
+  opacity: 1;
+  transition: opacity .46s ease .06s;
+  --ilk-wall: url("https://i.postimg.cc/DwR0vv08/IMG-3165.jpg");
+  --ilk-safe-t: env(safe-area-inset-top, 0px);
+  --ilk-safe-b: env(safe-area-inset-bottom, 0px);
+}
+/* 锁死字体，防止项目"字体设置"覆盖 */
+#ilk_root, #ilk_root * {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif !important;
 }
 
-.call-record-bubble i {
-  color: #f8b4b4 !important;
-  font-size: 11px !important;
-  flex-shrink: 0 !important;
+#ilk_root.ilk-bye { opacity: 0 !important; pointer-events: none !important; }
+
+#ilk_root *, #ilk_root *::before, #ilk_root *::after {
+  box-sizing: border-box !important;
+  margin: 0; padding: 0; border: 0 !important; outline: 0;
+  background: none;
+  font-style: normal !important; font-weight: 400;
+  text-transform: none !important; text-decoration: none !important;
+  list-style: none !important; float: none !important;
+  min-width: 0; min-height: 0; max-width: none; max-height: none;
+  box-shadow: none; border-radius: 0; vertical-align: baseline; animation: none;
+}
+#ilk_root button, #ilk_root input {
+  appearance: none !important; -webkit-appearance: none !important;
+  font-family: inherit !important; color: inherit;
 }
 
-body.theme-dark .call-record-bubble {
-  background: #2a3038 !important;
-  color: var(--theme-text-muted) !important;
-}
-body.theme-dark .call-record-bubble i {
-  color: #f8b4b4 !important;
-}
-
-/* ============ 主动来电横幅 ============ */
-.incoming-banner {
-  position: fixed;
-  top: -120px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 700;
-  width: calc(100% - 32px);
-  max-width: 400px;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 12px 40px rgba(0, 20, 30, 0.25);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-body.theme-dark .incoming-banner {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border);
-}
-.incoming-banner.active { top: 16px; }
-
-.incoming-banner-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(150, 180, 210, 0.3);
-  flex-shrink: 0;
-}
-body.theme-dark .incoming-banner-avatar {
-  border-color: var(--theme-card-border);
-}
-
-.incoming-banner-info { flex: 1; min-width: 0; }
-.incoming-banner-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-body.theme-dark .incoming-banner-name { color: var(--theme-text); }
-
-.incoming-banner-text {
-  font-size: 11px;
-  color: #8899a6;
-  margin-top: 2px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-body.theme-dark .incoming-banner-text { color: var(--theme-text-muted); }
-.incoming-banner-text i { color: #6fb1e8; }
-
-.incoming-banner-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.incoming-banner-btn {
-  width: 38px;
-  height: 38px;
-  border-radius: 9999px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  cursor: pointer;
-  transition: transform 0.12s ease;
-}
-.incoming-banner-btn:active { transform: scale(0.9); }
-
-.incoming-banner-accept {
-  background: #6fb1e8;
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(111, 177, 232, 0.4);
-  animation: bannerShake 1s ease-in-out infinite;
-}
-@keyframes bannerShake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-8deg); }
-  75% { transform: rotate(8deg); }
-}
-
-.incoming-banner-decline {
-  background: #f8b4b4;
-  color: #fff;
-  box-shadow: 0 3px 10px rgba(248, 180, 180, 0.4);
-}
-
-/* ============================================================
-   传讯页面基础样式
-   ============================================================ */
-#pageChat {
-  background: #ffffff;
-  height: 100vh;
-  height: 100dvh;
-  max-width: 430px;
-  margin: 0 auto;
-}
-#pageChat .chat-header {
-  flex-shrink: 0;
-  padding: 14px 16px 10px 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #fafbfc;
-  border-bottom: 1px solid #eef1f4;
-}
-#pageChat .chat-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: 9999px;
-  object-fit: cover;
-  border: 2px solid #e8eef4;
-  box-shadow: 0 4px 12px rgba(150, 180, 210, 0.15);
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-#pageChat .chat-avatar:active { transform: scale(0.95); }
-#pageChat .chat-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #333;
-  margin-top: 8px;
-  cursor: pointer;
-  padding: 4px 10px;
-  border-radius: 10px;
-  transition: background 0.15s ease;
-  user-select: none;
-}
-#pageChat .chat-name:active { background: #f0f4f8; }
-
-#pageChat .chat-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  margin-top: 12px;
-  width: 100%;
-}
-#pageChat .chat-action-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #8fb8d8;
-  font-size: 17px;
-  cursor: pointer;
-  transition: color 0.15s ease, transform 0.15s ease;
-}
-#pageChat .chat-action-icon:active {
-  transform: scale(0.9);
-  color: #6fa3cc;
-}
-#pageChat .chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: calc(142px + env(safe-area-inset-top, 0px)) 16px 24px 16px;
-  background-color: #f2f4f7;
-  /* 白色底图：极淡的浅蓝灰纹理（图2 白底淡花纹质感，不依赖外部图片） */
-  background-image:
-    radial-gradient(ellipse 90px 60px at 18% 22%, rgba(196,214,232,0.14), transparent 70%),
-    radial-gradient(ellipse 110px 70px at 82% 58%, rgba(205,222,238,0.12), transparent 70%),
-    radial-gradient(ellipse 70px 45px at 45% 88%, rgba(188,208,228,0.14), transparent 70%),
-    radial-gradient(circle 2px at 25% 40%, rgba(178,200,222,0.25), transparent 3px),
-    radial-gradient(circle 2px at 60% 20%, rgba(185,205,225,0.22), transparent 3px),
-    radial-gradient(circle 2px at 75% 80%, rgba(178,200,222,0.22), transparent 3px),
-    radial-gradient(circle 2px at 35% 65%, rgba(185,205,225,0.20), transparent 3px);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  position: relative;
-}
-#pageChat .chat-messages::-webkit-scrollbar { display: none; }
-
-#myAvatarForChat { display: none; }
-
-#pageChat .sos-btn {
-  position: fixed;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;
-  width: 46px;
-  height: 46px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1.5px solid #f5a3a3;
-  color: #e57373;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(245, 163, 163, 0.25);
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-#pageChat .sos-btn:active {
-  transform: translateY(-50%) scale(0.94);
-  background: rgba(255, 245, 245, 1);
-}
-#pageChat .sos-btn i { font-size: 14px; margin-bottom: 1px; }
-
-#pageChat .home-return-btn {
-  position: fixed;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 31;
-  width: 46px;
-  height: 46px;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e8eef4;
-  color: #7a8a99;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  box-shadow: 0 4px 14px rgba(150, 180, 210, 0.2);
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
-}
-#pageChat .home-return-btn:active {
-  transform: translateY(-50%) scale(0.94);
-  background: rgba(245, 248, 252, 1);
-  color: #55606b;
-}
-
-#pageChat .message-row {
-  display: flex;
-  margin-bottom: 14px;
-}
-#pageChat .message-row.self { justify-content: flex-end; }
-#pageChat .message-row.other { justify-content: flex-start; }
-#pageChat .message-bubble {
-  display: inline-block;
-  width: auto;
-  max-width: 100%;
-  min-width: 0;
-  flex-shrink: 0;
-
-  padding: 10px 14px;
-  border-radius: 18px;
-  font-size: 14px;
-  line-height: 1.45;
-
-  /* 竖排防护 */
-  writing-mode: horizontal-tb !important;
-  text-orientation: mixed;
-  word-wrap: break-word;
-  word-break: normal;
-  overflow-wrap: break-word;
-  white-space: pre-wrap;
-  box-sizing: border-box;
-}
-#pageChat .message-row.self .message-bubble {
-  background: #d8ecfb;
-  color: #1a3a52;
-  border-bottom-right-radius: 4px;
-}
-#pageChat .message-row.other .message-bubble {
-  background: #f3f5f7;
-  color: #333;
-  border-bottom-left-radius: 4px;
-}
-
-.quote-block {
-  display: block;
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  background: rgba(255, 255, 255, 0.6);
-  border-left: 3px solid #b8d4ec;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #6a8ca8;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.typing-bubble {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 16px;
-  background: #f3f5f7;
-  border-radius: 18px;
-  border-bottom-left-radius: 4px;
-}
-.typing-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: #b6c2cd;
-  animation: typingBounce 1.2s infinite ease-in-out;
-}
-.typing-dot:nth-child(2) { animation-delay: 0.15s; }
-.typing-dot:nth-child(3) { animation-delay: 0.3s; }
-@keyframes typingBounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-  30% { transform: translateY(-4px); opacity: 1; }
-}
-
-#pageChat .chat-input-bar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #fafbfc;
-  border-top: 1px solid #eef1f4;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-}
-#pageChat .input-left-icons {
-  display: flex;
-  gap: 12px;
-  flex-shrink: 0;
-}
-#pageChat .input-left-icons i {
-  color: #8fa8bd;
-  font-size: 18px;
-  cursor: pointer;
-  transition: color 0.15s ease, transform 0.15s ease;
-}
-#pageChat .input-left-icons i:active {
-  color: #6a8ca8;
-  transform: scale(0.92);
-}
-#pageChat .chat-input {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 14px;
-  border-radius: 22px;
-  border: 1px solid #e2e8ee;
-  background: #ffffff;
-  font-size: 14px;
-  color: #333;
-  outline: none;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
-}
-#pageChat .chat-input::placeholder { color: #b6c2cd; }
-#pageChat .chat-input:focus {
-  border-color: #b8d4ec;
-  box-shadow: 0 0 0 3px rgba(184, 212, 236, 0.2);
-}
-#pageChat .send-btn {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 9999px;
-  background: #6fb1e8;
-  color: #fff;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  cursor: pointer;
-  transition: transform 0.12s ease, background 0.15s ease;
-  box-shadow: 0 3px 10px rgba(111, 177, 232, 0.35);
-}
-#pageChat .send-btn:active {
-  transform: scale(0.92);
-  background: #5a9ed6;
-}
-#pageChat .send-btn:disabled {
-  background: #c6d9ea;
-  box-shadow: none;
-  cursor: default;
-}
-
-/* ============================================================
-   拍一拍弹窗
-   ============================================================ */
-.pat-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 520;
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  background: rgba(20, 30, 40, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-.pat-modal.active {
-  display: flex;
-  animation: patFadeIn 0.18s ease;
-}
-@keyframes patFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.pat-panel {
-  width: 100%;
-  max-width: 430px;
-  max-height: 72vh;
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 28px 28px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 -8px 30px rgba(0, 20, 30, 0.18);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: patSlideUp 0.25s ease;
-}
-@keyframes patSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-body.theme-dark .pat-panel {
-  background: rgba(38, 44, 52, 0.97);
-  border-color: var(--theme-card-border);
-}
-
-.pat-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px 20px;
-  border-bottom: 1px solid #f0f3f6;
-}
-body.theme-dark .pat-header {
-  border-bottom-color: var(--theme-card-border);
-}
-.pat-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
-  letter-spacing: 0.5px;
-}
-body.theme-dark .pat-title { color: var(--theme-text); }
-
-.pat-close {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  background: #f5f6f8;
-  border: none;
-  color: #55606b;
-  font-size: 13px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-.pat-close:active {
-  background: #e8ecf0;
-  transform: scale(0.92);
-}
-body.theme-dark .pat-close {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-}
-
-.pat-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 20px 16px 20px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.pat-body::-webkit-scrollbar { display: none; }
-
-.pat-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #c0ccd6;
-  font-size: 13px;
-  line-height: 1.8;
-}
-.pat-empty i {
-  font-size: 32px;
-  color: #dde6ee;
-  display: block;
-  margin-bottom: 12px;
-}
-.pat-empty-hint {
-  font-size: 11px;
-  color: #b6c2cd;
-  margin-top: 4px;
-}
-body.theme-dark .pat-empty { color: var(--theme-text-faint); }
-body.theme-dark .pat-empty i { color: #4a5560; }
-
-.pat-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  border-radius: 14px;
-  background: #fafbfc;
-  border: 1px solid #eef1f4;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-}
-.pat-item:active {
-  background: #f2f6fa;
-  transform: scale(0.98);
-}
-.pat-item:hover {
-  border-color: #f8d8d8;
-  background: #fffafa;
-}
-body.theme-dark .pat-item {
-  background: rgba(42, 48, 56, 0.9);
-  border-color: var(--theme-card-border);
-}
-body.theme-dark .pat-item:active {
-  background: rgba(52, 58, 66, 0.9);
-}
-body.theme-dark .pat-item:hover {
-  border-color: rgba(248, 180, 180, 0.35);
-}
-
-.pat-item-icon {
-  flex-shrink: 0;
-  color: #f8b4b4;
-  font-size: 13px;
-}
-.pat-item-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  color: #333;
-  line-height: 1.5;
-  word-break: break-word;
-}
-body.theme-dark .pat-item-text { color: var(--theme-text); }
-
-.pat-footer {
-  flex-shrink: 0;
-  padding: 10px 20px 20px 20px;
-  border-top: 1px solid #f0f3f6;
-}
-body.theme-dark .pat-footer {
-  border-top-color: var(--theme-card-border);
-}
-.pat-btn {
-  width: 100%;
-  padding: 12px 0;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.15s ease, transform 0.1s ease;
-}
-.pat-btn:active { transform: scale(0.97); }
-.pat-cancel {
-  background: #f5f6f8;
-  color: #55606b;
-  border: 1px solid #eef1f4;
-}
-body.theme-dark .pat-cancel {
-  background: rgba(42, 48, 56, 0.9);
-  color: var(--theme-text-soft);
-  border-color: var(--theme-card-border);
-}
-
-/* ============================================================
-   消息体：气泡 + 时间戳 + 回执
-   ============================================================ */
-.message-body {
-  display: flex;
-  flex-direction: column;
-  max-width: 72%;
-  /* 关键：让内部元素按内容宽度对齐，不被拉伸 */
-  align-items: flex-start;
-  min-width: 0;
-}
-
-/* 我发的：整体靠右 */
-.message-row.self .message-body {
-  align-items: flex-end;
-}
-
-/* 对方发的：整体靠左 */
-.message-row.other .message-body {
-  align-items: flex-start;
-}
-
-/* 时间戳 + 回执 同一行 */
-.message-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #b6c2cd;
-  margin-top: 4px;
-  padding: 0 4px;
-  letter-spacing: 0.3px;
-  user-select: none;
-}
-
-/* 已读回执（单勾）—— 跟在时间戳右边 */
-.message-read-receipt {
-  display: inline-flex;
-  align-items: center;
-  font-size: 11px;
-  line-height: 1;
-  color: var(--accent-color, #6fb1e8);
-  opacity: 0.85;
-}
-
-.message-read-receipt i {
-  font-size: 11px;
-}
-
-/* 关闭时间戳显示：只隐藏时间文字，回执仍显示 */
-#chatMessages.hide-message-time .message-time .message-time-text {
-  display: none;
-}
-
-/* ============ 消息操作菜单 ============ */
-.msg-action-menu {
-  position: fixed;
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(0, 20, 30, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  animation: msgMenuIn 0.18s ease;
-}
-@keyframes msgMenuIn {
-  from { opacity: 0; transform: translateY(4px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-.msg-action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: transparent;
-  border: none;
-  color: #55606b;
-  font-size: 15px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
-}
-.msg-action-btn:active {
-  transform: scale(0.92);
-  background: #f2f6fa;
-}
-.msg-action-btn.active {
-  color: #f8b4b4;
-}
-.msg-action-btn.active i {
-  font-weight: 900;
-}
-
-/* ============ 引用预览条 ============ */
-.quote-preview-bar {
-  flex-shrink: 0;
-  padding: 0 14px 6px 14px;
-  background: #fafbfc;
-}
-.quote-preview-inner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: #ffffff;
-  border: 1px solid #eef1f4;
-  border-left: 3px solid #b8d4ec;
-  border-radius: 10px;
-}
-.quote-preview-icon {
-  color: #8fb8d8;
-  font-size: 11px;
-  flex-shrink: 0;
-}
-.quote-preview-text {
-  flex: 1;
-  min-width: 0;
-  font-size: 12px;
-  color: #6a8ca8;
-  line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.quote-preview-close {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 9999px;
-  background: #f5f6f8;
-  border: none;
-  color: #8899a6;
-  font-size: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.quote-preview-close:active {
-  background: #e8ecf0;
-}
-
-/* ============================================================
-   Ta 的问卷 · 聊天卡片
-   ============================================================ */
-.msg-survey-row {
-  display: flex !important;
-  justify-content: flex-start !important;
-  padding: 0 !important;
-}
-
-.msg-survey-bubble {
-  display: block !important;
-  max-width: 78% !important;
-  padding: 14px 16px !important;
-  border-radius: 18px !important;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%) !important;
-  border: 1px solid #d0e2f5 !important;
-  cursor: pointer !important;
-  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.12) !important;
-  color: #333 !important;
-}
-.msg-survey-bubble:active {
-  transform: scale(0.98);
-  box-shadow: 0 4px 14px rgba(90, 158, 214, 0.22);
-}
-
-.msg-survey-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-}
-.msg-survey-head i {
-  color: #5a9ed6;
-  font-size: 13px;
-}
-.msg-survey-tag {
-  font-size: 10px;
-  font-weight: 700;
-  color: #5a9ed6;
-  background: rgba(90, 158, 214, 0.15);
-  padding: 2px 8px;
-  border-radius: 6px;
-  letter-spacing: 0.5px;
-}
-
-.msg-survey-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1a3a52;
-  line-height: 1.45;
-  margin-bottom: 6px;
-  word-break: break-word;
-}
-
-.msg-survey-meta {
-  font-size: 11px;
-  color: #7a8a99;
-  margin-bottom: 8px;
-}
-
-/* 卡片底部：进度 + 状态 */
-.msg-survey-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.msg-survey-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 8px;
-}
-.msg-survey-status i {
-  font-size: 10px;
-}
-.msg-survey-status.pending {
-  color: #5a9ed6;
-  background: rgba(90, 158, 214, 0.15);
-}
-.msg-survey-status.doing {
-  color: #c68a3a;
-  background: rgba(198, 138, 58, 0.15);
-}
-.msg-survey-status.done {
-  color: #4CAF7D;
-  background: rgba(76, 175, 125, 0.15);
-}
-
-/* ============================================================
-   我方问卷卡片（发出方向）
-   ============================================================ */
-.msg-survey-row-self {
-  justify-content: flex-end !important;
-}
-.msg-survey-row-self .msg-survey-bubble {
-  background: linear-gradient(135deg, #e6f0fa 0%, #d0e2f5 100%) !important;
-  border-color: #b8d4ec !important;
-  cursor: default !important;
-}
-.msg-survey-row-self .msg-survey-bubble:active {
-  transform: none !important;
-  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.12) !important;
-}
-.msg-survey-status.doing {
-  color: #c68a3a;
-  background: rgba(198, 138, 58, 0.15);
-}
-
-/* 我方问卷卡片：标题和题数居中 */
-.msg-survey-row-self .msg-survey-title,
-.msg-survey-row-self .msg-survey-meta {
-  text-align: center;
-}
-
-/* ---------- 群聊拍一拍 · 成员下拉 ---------- */
-.pat-group-target {
-  padding: 0 4px 12px 4px;
-  border-bottom: 1px solid #f0f3f6;
-  margin-bottom: 10px;
-}
-.pat-group-target-label {
-  font-size: 11px;
-  color: #8899a6;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-.pat-group-target-select {
-  width: 100%;
-  padding: 9px 12px;
-  border-radius: 12px;
-  border: 1px solid #e2e8ee;
-  background: #fafbfc;
-  font-size: 13px;
-  color: #333;
-  outline: none;
-}
-body.theme-dark .pat-group-target { border-bottom-color: var(--theme-card-border); }
-body.theme-dark .pat-group-target-select {
-  background: var(--theme-input-bg);
-  border-color: var(--theme-input-border);
-  color: var(--theme-text);
-}
-
-/* ============ 暗色模式：聊天区背景图蒙层 ============ */
-body.theme-dark #pageChat .chat-messages::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  pointer-events: none;
+#ilk_root .ilk-wall {
+  position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
   z-index: 0;
+  background: var(--ilk-wall) center center / cover no-repeat;
+  transform: scale(1.09);
+  transition: transform 2.6s cubic-bezier(.2,.7,.2,1);
 }
-body.theme-dark #pageChat .chat-messages .message-row {
-  position: relative;
-  z-index: 1;
+#ilk_root .ilk-wall.ilk-settled { transform: scale(1); }
+#ilk_root .ilk-wall::after {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 62%, rgba(0,0,0,.34) 100%);
 }
 
-/* ============ 对方"思念送達中"浮层 ============ */
-.typing-float-row {
-  flex-shrink: 0;
-  background: #f2f4f7;
-  padding: 6px 0;
+#ilk_root .ilk-boot {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200; background: #000;
+  opacity: 1; transition: opacity .66s ease; pointer-events: none;
 }
-.typing-float {
-  flex-shrink: 0;
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px 5px 5px;
-  margin: 0 16px;
-  background: rgba(242, 244, 247, 0.82);
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
-  border-radius: 9999px;
-  box-shadow: 0 2px 8px rgba(150, 180, 210, 0.08);
-  border: 1px solid rgba(230, 238, 244, 0.9);
-  width: fit-content;
-}
-.typing-float-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 9999px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 3px rgba(150, 180, 210, 0.15);
-  background: #f3f5f7;
-}
-.typing-float-text {
-  font-size: 11.5px;
-  color: #9aa5b1;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-  line-height: 1;
-}
-.typing-float-dots {
-  display: inline-flex;
-  align-items: center;
-  gap: 2.5px;
-  margin-left: 1px;
-}
-.typing-float .typing-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 9999px;
-  background: #b6c2cd;
-  animation: typingBounce 1.3s infinite ease-in-out;
-}
-.typing-float .typing-dot:nth-child(2) { animation-delay: 0.18s; }
-.typing-float .typing-dot:nth-child(3) { animation-delay: 0.36s; }
+#ilk_root .ilk-boot.ilk-off { opacity: 0; }
 
-body.theme-dark .typing-float {
-  background: rgba(42, 48, 56, 0.9);
-  border-color: var(--theme-card-border);
+#ilk_root .ilk-scrim {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  background: rgba(0,0,0,.34);
+  -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);
+  opacity: 0; visibility: hidden;
+  transition: opacity .34s ease, visibility .34s;
 }
-body.theme-dark .typing-float-text { color: var(--theme-text-muted); }
-body.theme-dark .typing-float .typing-dot { background: #7a8a99; }
+#ilk_root .ilk-scrim.ilk-on { opacity: 1; visibility: visible; }
 
-/* ============================================================
-   4. 聊天气泡（毛玻璃立体感）
-   ============================================================ */
-.message-received {
-  border-radius: 20px !important;
-  background: rgba(211, 225, 239, 0.25) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+/* 【删】.ilk-sb 顶部状态栏规则已整块移除（左时钟/右信号WiFi电量 不再需要） */
+/* 【删】.ilk-island 假灵动岛规则 + 对应 @media 已整块移除 */
+
+#ilk_root .ilk-lock {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
+  display: flex; flex-direction: column;
+  transform-origin: 50% 46%;
+  transition: transform .62s cubic-bezier(.2,.8,.2,1), filter .5s ease, opacity .5s ease;
+}
+#ilk_root .ilk-lock.ilk-pushed {
+  transform: scale(.93); filter: brightness(.62); opacity: .85;
+}
+#ilk_root .ilk-lock-main {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; align-items: center;
+  /* 想下移多少就加多少：+4px → +20px（示例，按需调） */
+  padding: calc(var(--ilk-safe-t) + 20px) 16px 0;
+}
+/* 【删】.ilk-padlock 挂锁规则已整块移除 */
+#ilk_root .ilk-date {
+  margin-top: 8px;
+  font-size: clamp(14px, 4.2vw, 20px); font-weight: 600; letter-spacing: .02em;
+  white-space: nowrap; color: rgba(255,255,255,.96);
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+#ilk_root .ilk-time {
+  margin-top: -4px;
+  font-size: clamp(62px, 21vw, 104px); font-weight: 500; line-height: 1.14;
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+  color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,.28);
+}
+#ilk_root .ilk-notifs {
+  margin-top: auto; width: 100%; max-width: 440px;
+  display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px;
+}
+#ilk_root .ilk-lock-bottom {
+  flex: 0 0 auto; position: relative;
+  padding: 0 28px calc(var(--ilk-safe-b) + 26px);
+  display: flex; align-items: center; justify-content: space-between;
+}
+#ilk_root .ilk-glass {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.15);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 0 0 .5px rgba(255,255,255,.2);
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.2,1,.3,1), background .2s ease;
+}
+#ilk_root .ilk-glass:active { transform: scale(.9); background: rgba(255,255,255,.26); }
+#ilk_root .ilk-glass svg { display: block; opacity: .95; }
+#ilk_root .ilk-homebar {
+  display: none !important;
+  position: absolute; left: 50%; bottom: calc(var(--ilk-safe-b) + 9px);
+  transform: translateX(-50%);
+  width: min(140px, 36vw); height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,.85);
+}
+
+#ilk_root .ilk-stage {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 24;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 12px; pointer-events: none;
+}
+#ilk_root .ilk-stage.ilk-in { pointer-events: auto; }
+#ilk_root .ilk-stage.ilk-gone { display: none; }
+#ilk_root .ilk-alert {
+  position: relative; width: 270px; max-width: 84vw;
+  border-radius: 14px; overflow: hidden; text-align: center;
+  background: rgba(22,22,24,.26);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  backdrop-filter: blur(26px) saturate(180%);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 4px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.05) !important;
-  color: #1a1a1a !important;
-  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5) !important;
-  position: relative;
-  overflow: visible !important;
+    inset 0 .5px 0 rgba(255,255,255,.16),
+    0 0 0 .5px rgba(255,255,255,.12),
+    0 22px 60px rgba(0,0,0,.34);
+  opacity: 0; transform: scale(1.18);
+  transition: opacity .3s ease, transform .44s cubic-bezier(.18,.9,.28,1), height .38s cubic-bezier(.32,.72,0,1);
 }
-.message-sent {
-  border-radius: 20px !important;
-  background: rgba(0, 0, 0, 0.25) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+#ilk_root .ilk-stage.ilk-in .ilk-alert { opacity: 1; transform: scale(1); }
+#ilk_root .ilk-stage.ilk-done .ilk-alert { opacity: 0; transform: scale(.94); pointer-events: none; }
+
+#ilk_root .ilk-panel {
+  position: absolute; left: 0; top: 0; width: 100%; z-index: 2;
+  opacity: 0; visibility: hidden; transform: scale(.975);
+  transition: opacity .26s ease, transform .32s cubic-bezier(.2,.9,.3,1), visibility .26s;
+}
+#ilk_root .ilk-panel.ilk-on { opacity: 1; visibility: visible; transform: scale(1); }
+#ilk_root .ilk-body { padding: 13px 16px 12px; }
+#ilk_root .ilk-title {
+  font-size: 17px; font-weight: 600; line-height: 1.32; letter-spacing: .04em;
+  color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+#ilk_root .ilk-amsg {
+  margin-top: 4px; font-size: 13px; line-height: 1.46;
+  color: rgba(255,255,255,.95); text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+#ilk_root .ilk-anote {
+  margin-top: 9px; font-size: 11.5px; line-height: 1.62; letter-spacing: .07em;
+  color: rgba(255,255,255,.72); text-shadow: 0 1px 3px rgba(0,0,0,.55);
+}
+#ilk_root .ilk-acts { display: flex; position: relative; }
+#ilk_root .ilk-acts::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  transform: scaleY(.5); transform-origin: top;
+  background: rgba(255,255,255,.2);
+}
+#ilk_root .ilk-btn {
+  flex: 1 1 0; min-width: 0; position: relative;
+  background: transparent; padding: 12px 8px;
+  font-size: 17px; font-weight: 500; letter-spacing: .08em; line-height: 1.2;
+  color: #2C63D8; cursor: pointer; transition: background .16s ease;
+}
+#ilk_root .ilk-btn + .ilk-btn::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+  transform: scaleX(.5); transform-origin: left;
+  background: rgba(255,255,255,.2);
+}
+
+#ilk_root .ilk-notif {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px; border-radius: 22px;
+  cursor: pointer; user-select: none;
+  background: rgba(28,28,30,.32);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
   box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.3),
-    0 2px 6px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -2px 6px rgba(0, 0, 0, 0.2) !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
-  position: relative;
-  overflow: visible !important;
+    0 8px 26px rgba(0,0,0,.26),
+    inset 0 .5px 0 rgba(255,255,255,.16),
+    0 0 0 .5px rgba(255,255,255,.1);
 }
+#ilk_root .ilk-notif.ilk-banner {
+  position: absolute; top: calc(var(--ilk-safe-t) + 12px); left: 50%; z-index: 60;
+  width: min(440px, calc(100vw - 20px));
+  opacity: 0; visibility: hidden;
+  transform: translate(-50%, -190%) scale(.94);
+  transition: opacity .3s ease, transform .62s cubic-bezier(.2,1.14,.32,1), visibility .3s;
+  pointer-events: none;
+}
+#ilk_root .ilk-notif.ilk-banner.ilk-in {
+  opacity: 1; visibility: visible;
+  transform: translate(-50%, 0) scale(1);
+  pointer-events: auto;
+}
+#ilk_root .ilk-notif.ilk-banner.ilk-in.ilk-press {
+  transform: translate(-50%, 0) scale(.975);
+}
+#ilk_root .ilk-notif.ilk-banner.ilk-out {
+  opacity: 0;
+  transform: translate(-50%, -180%) scale(.96);
+  transition: opacity .26s ease, transform .42s cubic-bezier(.4,0,.7,.2), visibility .26s;
+  pointer-events: none;
+}
+#ilk_root .ilk-notif.ilk-listed {
+  position: relative; width: 100%;
+  opacity: 0; transform: translateY(10px) scale(.98);
+  transition: opacity .34s ease, transform .44s cubic-bezier(.2,1,.3,1);
+}
+#ilk_root .ilk-notif.ilk-listed.ilk-shown { opacity: 1; transform: none; }
+#ilk_root .ilk-notif.ilk-listed:active { transform: scale(.985); }
+
+#ilk_root .ilk-ava {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; overflow: hidden;
+  background: rgba(255,255,255,.06);
+  box-shadow: 0 0 0 .5px rgba(255,255,255,.1);
+}
+#ilk_root .ilk-ava img {
+  width: 100% !important; height: 100% !important; max-width: none !important;
+  object-fit: cover; display: block; border-radius: 0;
+}
+#ilk_root .ilk-nmain { flex: 1 1 auto; min-width: 0; }
+#ilk_root .ilk-nhead {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+}
+#ilk_root .ilk-napp {
+  font-size: 12.5px; font-weight: 600; letter-spacing: .06em; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#ilk_root .ilk-ntime {
+  flex: 0 0 auto; font-size: 11.5px; letter-spacing: .04em;
+  color: rgba(255,255,255,.6); text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+#ilk_root .ilk-ntext {
+  margin-top: 2px; font-size: 13.5px; line-height: 1.4; letter-spacing: .02em;
+  color: rgba(255,255,255,.94); text-shadow: 0 1px 3px rgba(0,0,0,.5);
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+@media (max-width: 420px) {
+  #ilk_root .ilk-lock-main { padding-left: 14px; padding-right: 14px; }
+  #ilk_root .ilk-lock-bottom { padding-left: 24px; padding-right: 24px; }
+  #ilk_root .ilk-notif { padding: 10px 12px; gap: 9px; border-radius: 20px; }
+  #ilk_root .ilk-ava { width: 36px; height: 36px; }
+}
+@media (max-width: 360px) {
+  #ilk_root .ilk-alert { width: 252px; }
+  #ilk_root .ilk-title { font-size: 16px; }
+  #ilk_root .ilk-amsg { font-size: 12.5px; }
+  #ilk_root .ilk-btn { font-size: 16px; letter-spacing: .04em; }
+  #ilk_root .ilk-date { font-size: 13.5px; }
+  #ilk_root .ilk-napp { font-size: 12px; }
+  #ilk_root .ilk-ntext { font-size: 13px; }
+  #ilk_root .ilk-ntime { font-size: 11px; }
+}
+@media (max-height: 720px) { #ilk_root .ilk-time { font-size: clamp(56px, 16vh, 88px); } }
+@media (max-height: 600px) {
+  #ilk_root .ilk-time { font-size: clamp(46px, 13vh, 70px); }
+  #ilk_root .ilk-date { font-size: 13.5px; }
+  #ilk_root .ilk-notifs { gap: 6px; }
+  #ilk_root .ilk-lock-bottom { padding-bottom: calc(var(--ilk-safe-b) + 16px); }
+  #ilk_root .ilk-notif { padding: 9px 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #ilk_root, #ilk_root .ilk-wall, #ilk_root .ilk-alert, #ilk_root .ilk-panel,
+  #ilk_root .ilk-notif, #ilk_root .ilk-lock, #ilk_root .ilk-scrim, #ilk_root .ilk-boot {
+    transition-duration: .01s !important; transition-delay: 0s !important;
+  }
+}
+    /* 主页整体下移：数字按需调 */
+#pageHome .app-container {
+  padding-top: 46px;
+}
+    /* 所有功能页整体下移 46px，与主页保持一致 */
+#pageCard .card-topbar { padding-top: calc(16px + 46px); }
+#pageCompanion .companion-topbar { padding-top: calc(16px + 46px); }
+#pageImportantDay .imp-topbar { padding-top: calc(16px + 46px); }
+#pageEnvelope .env-topbar { padding-top: calc(14px + 46px); }
+#pageFeed .feed-topbar { padding-top: calc(14px + 46px); }
+#pageMood .mood-topbar { padding-top: calc(14px + 46px); }
+#pageChatHome .chat-home-header { padding-top: calc(14px + 46px); }
+#pageStats .stats-topbar { padding-top: calc(16px + 46px); }
+#pageArchive .arc-topbar { padding-top: calc(14px + 46px); }
+#pageDreamSurvey .ds-topbar,
+#pageDreamSurveyEdit .ds-topbar,
+#pageDreamSurveyDetail .ds-topbar,
+#pageDreamSurveyAnswer .ds-topbar { padding-top: calc(14px + 46px); }
+</style>
+</head>
+<body>
+
+  <!-- ==================== 主页 ==================== -->
+  <div class="page active" id="pageHome">
+       <div class="bg-dream" id="bgDream"></div>
+
+
+    <div class="app-container w-full max-w-[430px] mx-auto relative">
+      <div class="px-2 pt-8 pb-1 flex-shrink-0">
+        <div class="header-card flex flex-col items-center justify-center text-center" id="headerCard">
+          <div class="glass-avatar p-0.5 w-20 h-20 flex items-center justify-center flex-shrink-0">
+            <img id="avatarImg" src="" alt="头像" class="w-full h-full object-cover rounded-full border border-white/80">
+          </div>
+          <div class="flex flex-col items-center justify-center mt-1">
+            <h1 class="text-lg font-bold text-[#333] leading-tight tracking-wide">阿晏</h1>
+            <p class="text-[11px] text-[#5a6b7a] font-medium tracking-wide leading-tight">地球online</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-content px-5">
+        <div class="search-glass flex items-center px-4 py-2.5 gap-3 mt-1">
+          <i class="fa-solid fa-magnifying-glass text-[#8899a6] text-sm"></i>
+          <input type="text" placeholder="Search" class="flex-1 bg-transparent border-none outline-none text-[#333] text-sm placeholder-[#8899a6] font-normal tracking-wide">
+        </div>
+
+        <div class="mt-3 flex justify-center">
+          <div class="scroll-x flex gap-2.5 py-0.5 justify-center min-w-full">
+            <div class="photo-scroll-item">
+              <img id="photo1" src="" alt="展示图1" class="w-full h-full object-cover">
+            </div>
+            <div class="photo-scroll-item">
+              <img id="photo2" src="" alt="展示图2" class="w-full h-full object-cover">
+            </div>
+            <div class="photo-scroll-item">
+              <img id="photo3" src="" alt="展示图3" class="w-full h-full object-cover">
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ 音乐播放器 ============ -->
+        <div class="glass flex items-center gap-3 p-2.5 pr-3 mt-3">
+          <div class="vinyl-cover w-12 h-12" id="vinylCover">
+            <img id="albumCover" src="" alt="" class="vinyl-img" style="display:none;">
+            <i id="albumIcon" class="fa-solid fa-music text-[#8899a6] text-base"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[#333] font-semibold text-sm truncate" id="songTitle">My love</h4>
+            <p class="text-[#8899a6] text-[10px] truncate mt-0.5" id="songArtist">颜人中</p>
+          </div>
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button class="w-7 h-7 flex items-center justify-center text-[#555] active:opacity-60 transition" id="uploadBtn">
+              <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
+            </button>
+            <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="prevBtn">
+              <i class="fa-solid fa-backward-step text-sm"></i>
+            </button>
+            <button class="play-btn w-8 h-8 rounded-full flex items-center justify-center shadow-md active:scale-95 transition" id="playBtn">
+              <i class="fa-solid fa-play text-xs pl-0.5" id="playIcon"></i>
+            </button>
+            <button class="w-7 h-7 flex items-center justify-center text-[#333] active:opacity-60 transition" id="nextBtn">
+              <i class="fa-solid fa-forward-step text-sm"></i>
+            </button>
+          </div>
+        </div>
+
+        <audio id="audioPlayer" preload="metadata"></audio>
+
+        <div class="function-grid mt-4 mb-2">
+          <a class="function-item" id="btnArchive" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-folder-open text-[#222] text-lg"></i></div>
+            <span class="function-label">档案</span>
+          </a>
+          <a class="function-item" id="btnCompanion" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-hand-holding-heart text-[#222] text-lg"></i></div>
+            <span class="function-label">陪伴</span>
+          </a>
+          <a class="function-item" id="btnImportantDay" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-regular fa-calendar-days text-[#222] text-lg"></i></div>
+            <span class="function-label">重要日</span>
+          </a>
+          <a class="function-item" id="btnMood" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-book-open text-[#222] text-lg"></i></div>
+            <span class="function-label">心晴手账</span>
+          </a>
+          <a class="function-item" id="btnEnvelope" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-envelope text-[#222] text-lg"></i></div>
+            <span class="function-label">信箱</span>
+          </a>   
+          <a class="function-item" id="btnFeed" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-users text-[#222] text-lg"></i></div>
+            <span class="function-label">朋友圈</span>
+          </a>
+          <a class="function-item" id="btnDreamSurvey" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-list-check text-[#222] text-lg"></i></div>
+            <span class="function-label">梦向问卷</span>
+          </a>
+          <a class="function-item" id="btnWordCloud" style="cursor: pointer;">
+            <div class="function-icon"><i class="fa-solid fa-cloud text-[#222] text-lg"></i></div>
+            <span class="function-label">词云</span>
+          </a>
+        </div>
+
+        <div class="h-8"></div>
+      </div>
+
+      <div class="fixed bottom-4 left-5 right-5 max-w-[430px] mx-auto z-50 pointer-events-none">
+        <div class="bottom-tab flex items-center justify-around px-2 py-3 pointer-events-auto" id="bottomTabBar">
+          <button class="tab-btn flex flex-col items-center justify-center w-full py-1 active" data-tab="message" id="tabMessage">
+            <i class="fa-regular fa-comment-dots text-xl"></i>
+            <span class="text-[10px] font-medium mt-1 tracking-wide">传讯</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="card" id="tabCard">
+            <i class="fa-regular fa-clone text-xl"></i>
+            <span class="text-[10px] font-medium mt-1 tracking-wide">字卡</span>
+          </button>
+          <button class="tab-btn flex flex-col items-center justify-center w-full py-1" data-tab="settings" id="tabSettingsHome">
+            <i class="fa-solid fa-gear text-xl"></i>
+            <span class="text-[10px] font-medium mt-1 tracking-wide">设置</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="h-0 w-full safe-bottom"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 字卡收纳盒页面 ==================== -->
+  <div class="page card-page" id="pageCard">
+    <div class="card-topbar">
+      <div class="card-topbar-row">
+        <i class="fa-solid fa-chevron-left" id="cardBackBtn"></i>
+        <span class="card-topbar-title">字卡收纳盒</span>
+        <i class="fa-solid fa-pen-to-square" id="cardEditBtn"></i>
+      </div>
+      <div class="card-topbar-subtitle">LITTLE WORDS, LOTS OF YOU.</div>
+    </div>
+
+    <div class="card-body">
+      <div class="cat-grid-card" id="catGrid">
+        <div class="cat-grid-item active" data-cat="reply" id="catReply">
+          <i class="fa-regular fa-comment-dots"></i>
+          <span class="cat-label">回复</span>
+          <span class="cat-grid-badge" id="badgeReply">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="pat" id="catPat">
+          <i class="fa-solid fa-hand"></i>
+          <span class="cat-label">拍一拍</span>
+          <span class="cat-grid-badge" id="badgePat">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="place" id="catPlace">
+          <i class="fa-solid fa-location-dot"></i>
+          <span class="cat-label">地点</span>
+          <span class="cat-grid-badge" id="badgePlace">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="mood" id="catMood">
+          <i class="fa-regular fa-heart"></i>
+          <span class="cat-label">心情</span>
+          <span class="cat-grid-badge" id="badgeMood">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="emoji" id="catEmoji">
+          <i class="fa-regular fa-image"></i>
+          <span class="cat-label">表情包</span>
+          <span class="cat-grid-badge" id="badgeEmoji">0</span>
+        </div>
+        <div class="cat-grid-item" data-cat="status" id="catStatus">
+          <i class="fa-regular fa-circle-check"></i>
+          <span class="cat-label">状态</span>
+          <span class="cat-grid-badge" id="badgeStatus">0</span>
+        </div>
+      </div>
+
+      <!-- 回复 -->
+      <div class="cat-panel active" id="panel-reply">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="btnImport"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="btnExport"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="btnAddCard"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
+        <div class="card-dedup-row">
+          <div class="card-dedup-left" id="dedupToggle">
+            <div class="card-dedup-checkbox checked" id="dedupCheckbox"></div>
+            <span>自动去重</span>
+          </div>
+          <span class="card-dedup-now" id="dedupNowBtn">立即去重</span>
+        </div>
+        <div class="card-group-section">
+          <div class="card-group-label">回复分组</div>
+          <select class="card-group-select" id="groupSelect">
+            <option>亲爱的的回复 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="btnNewGroup">新建分组</button>
+            <button class="card-group-btn" id="btnRenameGroup">重命名</button>
+          </div>
+          <input type="text" class="card-search-input" id="cardSearchInput" placeholder="找一句话、一种心情...">
+        </div>
+        <div class="card-list" id="cardList"></div>
+        <div class="card-list-placeholder" id="cardListPlaceholder">
+          <i class="fa-regular fa-note-sticky"></i>
+          把想听到的话，放进这里。
+        </div>
+        <div id="builtinGroupsList"></div>
+      </div>
+
+    <div class="cat-panel" id="panel-pat">
+  <div class="card-action-row">
+    <button class="card-action-btn" id="patImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+    <button class="card-action-btn" id="patExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+    <button class="card-action-btn" id="patAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+  </div>
+  <div class="card-group-section">
+    <div class="card-group-label">拍一拍分组</div>
+    <select class="card-group-select" id="patGroupSelect">
+      <option>默认分组 · 0 条</option>
+    </select>
+    <div class="card-group-buttons">
+      <button class="card-group-btn" id="patNewGroupBtn">新建分组</button>
+      <button class="card-group-btn" id="patRenameGroupBtn">重命名</button>
+    </div>
+    <input type="text" class="card-search-input" id="patSearchInput" placeholder="找一句拍一拍...">
+  </div>
+  <div class="card-list" id="patList"></div>
+  <div class="card-list-placeholder" id="patPlaceholder">
+    <i class="fa-solid fa-hand"></i>
+    添加几句拍一拍的话吧。
+  </div>
+</div>
+
+      <!-- 地点 -->
+      <div class="cat-panel" id="panel-place">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="placeImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="placeExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="placeAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
+        <div class="card-group-section">
+          <div class="card-group-label">地点分组</div>
+          <select class="card-group-select" id="placeGroupSelect">
+            <option>默认分组 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="placeNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="placeRenameGroupBtn">重命名</button>
+          </div>
+          <input type="text" class="card-search-input" id="placeSearchInput" placeholder="找一个熟悉的地方...">
+        </div>
+        <div class="card-list" id="placeList"></div>
+        <div class="card-list-placeholder" id="placePlaceholder">
+          <i class="fa-solid fa-location-dot"></i>
+          先放进一个地点吧。
+        </div>
+      </div>
+
+      <!-- 心情 -->
+      <div class="cat-panel" id="panel-mood">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="moodImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="moodExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="moodAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
+        <div class="card-group-section">
+          <div class="card-group-label">心情分组</div>
+          <select class="card-group-select" id="moodGroupSelect">
+            <option>默认分组 · 0 条</option>
+          </select>
+          <div class="card-group-buttons">
+            <button class="card-group-btn" id="moodNewGroupBtn">新建分组</button>
+            <button class="card-group-btn" id="moodRenameGroupBtn">重命名</button>
+          </div>
+          <input type="text" class="card-search-input" id="moodSearchInput" placeholder="找一句话、一种心情...">
+        </div>
+        <div class="card-list" id="moodList"></div>
+        <div class="card-list-placeholder" id="moodPlaceholder">
+          <i class="fa-regular fa-heart"></i>
+          把他的心情，写成一张张小字卡。
+        </div>
+      </div>
+
+      <!-- 表情包 -->
+      <div class="cat-panel" id="panel-emoji">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="emojiExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="emojiAddLinkBtn"><i class="fa-solid fa-plus"></i>添加链接</button>
+          <button class="card-action-btn" id="emojiUploadBtn"><i class="fa-solid fa-upload"></i>上传图片</button>
+          <input type="file" id="emojiFileInput" class="hidden-file-input" accept="image/*" multiple>
+        </div>
+        <div class="card-group-section">
+          <input type="text" class="card-search-input" id="emojiSearchInput" placeholder="搜索图片名称">
+        </div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+        <div class="emoji-footer-hint" id="emojiFooterHint">他的表情包 · 随机主动发送已开启 &gt;</div>
+        <div class="emoji-footer-sub" id="emojiFooterSub">这里还没有图片，试试上传图片、添加链接或换一个搜索词。</div>
+        <div class="emoji-footer-count" id="emojiFooterCount">0 张 · 自动去重 · 轻点查看 / 管理</div>
+      </div>
+
+      <!-- 状态 -->
+      <div class="cat-panel" id="panel-status">
+        <div class="card-action-row">
+          <button class="card-action-btn" id="statusImportBtn"><i class="fa-solid fa-plus"></i>导入</button>
+          <button class="card-action-btn" id="statusExportBtn"><i class="fa-solid fa-arrow-right"></i>导出</button>
+          <button class="card-action-btn" id="statusAddBtn"><i class="fa-solid fa-plus"></i>添加</button>
+        </div>
+        <div class="card-group-section">
+          <div class="card-group-label">状态分组</div>
+          <select class="card-group-select" id="statusGroupSelect">
+            <option>默认状态 · 0 条</option>
+          </select>
+          <input type="text" class="card-search-input" id="statusSearchInput" placeholder="搜索状态...">
+        </div>
+        <div class="card-list" id="statusList"></div>
+        <div class="card-list-placeholder" id="statusPlaceholder">
+          <i class="fa-regular fa-circle-check"></i>
+          添加一些状态，让 Ta 更生动。
+        </div>
+      </div>
+    </div>
+
+    <div class="card-status-bar">
+      <div class="card-status-counts" id="cardStatusCounts">0 条回复 · 0 个表情 · 0 个地点 · 0 种心情</div>
+      <div class="card-status-slogan">SIDE BY SIDE · PRIVATE STUDY · NO REPOST</div>
+    </div>
+  </div>
+
+  <!-- ==================== 陪伴页面 ==================== -->
+  <div class="page" id="pageCompanion">
+    <div class="companion-container">
+
+      <div class="companion-topbar">
+        <button class="companion-back-btn" id="companionBackBtn">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span class="companion-topbar-title">陪伴模式</span>
+        <div class="companion-topbar-placeholder"></div>
+      </div>
+
+      <div class="companion-body">
+
+        <div class="companion-hero">
+          <div class="companion-hero-text">选择陪伴对象与场景，开始一起专注</div>
+        </div>
+
+        <div class="companion-section">
+          <div class="companion-pills" id="companionMusicPills">
+            <button class="companion-pill companion-music-pill" id="companionPickMusicBtn">
+              🎵 选择音乐
+            </button>
+            <div class="companion-now-playing" id="companionNowPlaying" style="display: none;">
+              正在播放：<span id="companionNowPlayingName">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="companion-section">
+          <div class="companion-section-title">选择陪伴对象</div>
+          <div class="companion-partner-card" id="companionPartnerCard">
+            <div class="companion-partner-avatar" id="companionPartnerAvatar">TA</div>
+            <div class="companion-partner-name" id="companionPartnerName">未命名</div>
+            <div class="companion-partner-hint">
+              <i class="fa-solid fa-chevron-down"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="companion-section">
+          <div class="companion-section-title">选择陪伴场景</div>
+          <div class="companion-scenes">
+            <button class="companion-scene-btn" data-scene="study">
+              <i class="fa-solid fa-book"></i>
+              <span>学习</span>
+            </button>
+            <button class="companion-scene-btn" data-scene="work">
+              <i class="fa-solid fa-briefcase"></i>
+              <span>工作</span>
+            </button>
+            <button class="companion-scene-btn" data-scene="rest">
+              <i class="fa-solid fa-mug-hot"></i>
+              <span>休息</span>
+            </button>
+            <button class="companion-scene-btn" data-scene="sport">
+              <i class="fa-solid fa-person-running"></i>
+              <span>运动</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="companion-section">
+          <div class="companion-section-title">
+            <i class="fa-solid fa-pencil"></i> 自定义陪伴内容
+          </div>
+          <input type="text" class="companion-custom-input" id="companionCustomInput" placeholder="例如：看一部电影、写周报、午休...">
+        </div>
+
+        <div class="companion-section">
+          <div class="companion-section-header">
+            <div class="companion-section-title" style="margin-bottom:0;">陪伴背景（简约浅色）</div>
+            <button class="companion-bg-custom-btn" id="companionBgCustomBtn">自定义图片</button>
+          </div>
+          <div class="companion-bg-options" id="companionBgOptions">
+            <button class="companion-bg-block" data-bg="aurora" style="background: linear-gradient(135deg, #d4e8fc 0%, #e0d4fc 100%);">
+              <span>极光</span>
+            </button>
+            <button class="companion-bg-block" data-bg="deepsea" style="background: linear-gradient(135deg, #b8d4ec 0%, #8fb8d8 100%);">
+              <span>深海</span>
+            </button>
+            <button class="companion-bg-block" data-bg="sunset" style="background: linear-gradient(135deg, #fcdcd4 0%, #fcd4e0 100%);">
+              <span>日落</span>
+            </button>
+            <button class="companion-bg-block" data-bg="forest" style="background: linear-gradient(135deg, #d4ecd8 0%, #b8dcc4 100%);">
+              <span>森林</span>
+            </button>
+            <button class="companion-bg-block" data-bg="night" style="background: linear-gradient(135deg, #c4ccd8 0%, #98a4b8 100%);">
+              <span>深夜</span>
+            </button>
+            <button class="companion-bg-block" data-bg="rose" style="background: linear-gradient(135deg, #fcd4dc 0%, #f8b8c8 100%);">
+              <span>玫瑰</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="companion-start-btn disabled" id="companionStartBtn">
+          <i class="fa-solid fa-play"></i> 开始陪伴
+        </button>
+
+        <div class="companion-footer-space"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 陪伴中 页面 ==================== -->
+  <div class="page" id="pageCompanionActive">
+    <div class="cpa-container">
+
+      <div class="cpa-topbar">
+        <button class="cpa-back-btn" id="cpaBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="cpa-topbar-title">陪伴中</span>
+        <div class="cpa-topbar-placeholder"></div>
+      </div>
+
+      <div class="cpa-date" id="cpaDate">2026.10.02</div>
+
+      <div class="cpa-avatar-wrap">
+        <div class="cpa-avatar-glow"></div>
+        <div class="cpa-avatar" id="cpaAvatar">TA</div>
+      </div>
+
+      <div class="cpa-status">
+        <div class="cpa-status-title" id="cpaStatusTitle">TA 和你一起学习</div>
+        <div class="cpa-status-sub">不打扰，只是安静陪着</div>
+      </div>
+
+      <div class="cpa-music-row">
+        <button class="cpa-music-pill" id="cpaMusicPill">🎵 选择音乐</button>
+      </div>
+
+      <div class="cpa-focus">
+        <div class="cpa-focus-labels">
+          <span>闲散</span>
+          <span>专注</span>
+        </div>
+        <div class="cpa-focus-bar">
+          <div class="cpa-focus-fill" style="width: 60%;"></div>
+        </div>
+      </div>
+
+      <div class="cpa-timer-card">
+        <div class="cpa-timer-left">
+          <div class="cpa-timer-label">已陪伴时长</div>
+          <div class="cpa-timer-status">
+            <span class="cpa-timer-dot"></span>
+            <span>实时连接中</span>
+          </div>
+        </div>
+        <div class="cpa-timer-value" id="cpaTimerValue">0小时0分钟0秒</div>
+      </div>
+
+      <div class="cpa-footer">
+        <button class="cpa-end-btn" id="cpaEndBtn">
+          <i class="fa-solid fa-xmark"></i>
+          <span>结束陪伴</span>
+        </button>
+      </div>
+
+      <div class="cpa-footer-space"></div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 重要日 页面 ==================== -->
+  <div class="page" id="pageImportantDay">
+    <div class="imp-container">
+
+      <div class="imp-topbar">
+        <button class="imp-back-btn" id="impBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="imp-topbar-title">重要日</span>
+        <button class="imp-add-btn" id="impAddBtn">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+
+      <div class="imp-list" id="impList"></div>
+
+      <div class="imp-empty" id="impEmpty">
+        <div class="imp-empty-icon">
+          <i class="fa-regular fa-calendar-days"></i>
+        </div>
+        <div class="imp-empty-text">还没有记录重要日</div>
+        <div class="imp-empty-hint">点击右上角 + 添加</div>
+      </div>
+
+      <div class="imp-footer-space"></div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 信箱 页面 ==================== -->
+<div class="page" id="pageEnvelope">
+  <div class="env-container">
+
+    <!-- 顶部导航栏 -->
+    <div class="env-topbar">
+      <button class="env-back-btn" id="envBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="env-topbar-title">信箱</span>
+      <div class="env-topbar-placeholder"></div>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="env-tabs">
+      <button class="env-tab active" data-tab="sent" id="envTabSent">
+        <i class="fa-solid fa-paper-plane"></i> 寄出的信
+      </button>
+      <button class="env-tab" data-tab="inbox" id="envTabInbox">
+        <i class="fa-solid fa-inbox"></i> 收到的信
+      </button>
+    </div>
+
+    <!-- 列表区 -->
+    <div class="env-body">
+
+      <!-- 寄出箱 -->
+      <div class="env-list-view active" id="envViewSent">
+        <div class="env-list" id="envSentList"></div>
+        <div class="env-empty" id="envSentEmpty">
+          <i class="fa-regular fa-envelope-open"></i>
+          <div class="env-empty-text">还没有寄出信件</div>
+          <div class="env-empty-hint">点下方"提笔写信"开始吧</div>
+        </div>
+      </div>
+
+      <!-- 收件箱 -->
+      <div class="env-list-view" id="envViewInbox">
+        <div class="env-list" id="envInboxList"></div>
+        <div class="env-empty" id="envInboxEmpty">
+          <i class="fa-regular fa-envelope"></i>
+          <div class="env-empty-text">还没有收到信件</div>
+          <div class="env-empty-hint">耐心等待 Ta 的回信…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 底部按钮 -->
+    <div class="env-footer">
+      <button class="env-write-btn" id="envWriteBtn">
+        <i class="fa-solid fa-pen-nib"></i> 提笔写信
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== 信箱 - 写信弹层 ==================== -->
+<div class="env-write-modal" id="envWriteModal">
+  <div class="env-write-panel">
+    <div class="env-write-header">
+      <span class="env-write-title">写一封信</span>
+      <button class="env-write-close" id="envWriteClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="env-write-body">
+      <div class="env-write-to">
+        <span class="env-write-to-label">寄给</span>
+        <div class="env-write-to-list" id="envWriteToList"></div>
+      </div>
+      <textarea class="env-write-textarea" id="envWriteText" placeholder="亲爱的，今天想跟你说..."></textarea>
+      <label class="env-write-check">
+        <input type="checkbox" id="envWriteSyncChat">
+        <span class="env-check-mark"><i class="fa-solid fa-check"></i></span>
+        <span class="env-check-label">同时发送到聊天记录</span>
+      </label>
+    </div>
+    <div class="env-write-footer">
+      <button class="env-write-btn-cancel" id="envWriteCancel">取消</button>
+      <button class="env-write-btn-send" id="envWriteSend">封 · 寄出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 信箱 - 阅读弹层 ==================== -->
+<div class="env-read-modal" id="envReadModal">
+  <div class="env-read-panel">
+    <div class="env-read-header">
+      <span class="env-read-title" id="envReadTitle">信件</span>
+      <button class="env-read-close" id="envReadClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="env-read-body" id="envReadBody">
+      <!-- 内容由 JS 填充 -->
+    </div>
+    <div class="env-read-footer" id="envReadFooter">
+      <!-- 按钮由 JS 填充 -->
+    </div>
+  </div>
+</div>
+
+  <!-- ==================== 朋友圈 页面 ==================== -->
+<div class="page" id="pageFeed">
+  <div class="feed-container">
+
+       <!-- 顶部导航栏 -->
+    <div class="feed-topbar">
+      <button class="feed-back-btn" id="feedBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="feed-topbar-title">朋友圈</span>
+      <div class="feed-topbar-right">
+        <button class="feed-icon-btn" id="feedSettingsBtn" title="通知">
+          <i class="fa-solid fa-bell"></i>
+        </button>
+        <button class="feed-icon-btn" id="feedAddBtn" title="发一条">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 主体滚动区 -->
+    <div class="feed-body">
+
+         <!-- 头部卡片：封面 + 换背景 + 右下角头像/名字 -->
+      <div class="feed-header-card">
+                <div class="feed-cover" id="feedCover">
+          <!-- 点击封面可更换背景；右下角仅一个低调的相机提示图标 -->
+          <span class="feed-cover-hint" aria-hidden="true">
+            <i class="fa-solid fa-camera"></i>
+          </span>
+        </div>
+        <div class="feed-header-info">
+          <img class="feed-header-avatar" id="feedHeaderAvatar" src="https://picsum.photos/200/200?random=99" alt="">
+          <div class="feed-header-text">
+            <div class="feed-header-name" id="feedHeaderName">Ta</div>
+            <div class="feed-header-sub">Ta 的朋友圈</div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- 动态列表 -->
+      <div class="feed-list" id="feedList"></div>
+
+      <!-- 空状态 -->
+      <div class="feed-empty" id="feedEmpty">
+        <i class="fa-regular fa-image"></i>
+        <div class="feed-empty-text">还没有动态</div>
+        <div class="feed-empty-hint">点上方输入框发一条吧</div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== 朋友圈 - 发帖弹层 ==================== -->
+<div class="feed-post-modal" id="feedPostModal">
+  <div class="feed-post-panel">
+    <div class="feed-post-header">
+      <span class="feed-post-title">发表动态</span>
+      <button class="feed-post-close" id="feedPostClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="feed-post-body">
+      <textarea class="feed-post-textarea" id="feedPostText" placeholder="今天想记录什么？"></textarea>
+    </div>
+    <div class="feed-post-footer">
+      <button class="feed-post-btn-cancel" id="feedPostCancel">取消</button>
+      <button class="feed-post-btn-submit" id="feedPostSubmit">发表</button>
+    </div>
+  </div>
+</div>
+
+  <!-- ==================== 词云（消息统计 & 收藏） 页面 ==================== -->
+<div class="page" id="pageStats">
+  <div class="stats-container">
+
+    <!-- 顶部导航 -->
+    <div class="stats-topbar">
+      <button class="stats-back-btn" id="statsBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+           <span class="stats-topbar-title">消息统计 &amp; 收藏</span>
+      <button class="stats-switch-btn" id="statsSwitchBtn" title="切换联系人">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+        <span id="statsSwitchLabel">—</span>
+      </button>
+    </div>
+
+    <!-- Tab 切换 -->
+    <div class="stats-tabs">
+      <button class="stats-tab active" data-tab="overview" id="statsTabOverview">
+        <i class="fa-solid fa-chart-simple"></i> 统计
+      </button>
+      <button class="stats-tab" data-tab="search" id="statsTabSearch">
+        <i class="fa-solid fa-magnifying-glass"></i> 搜索
+      </button>
+      <button class="stats-tab" data-tab="favorites" id="statsTabFavorites">
+        <i class="fa-solid fa-star"></i> 收藏
+      </button>
+      <button class="stats-tab" data-tab="wordcloud" id="statsTabWordCloud">
+        <i class="fa-solid fa-cloud"></i> 词云
+      </button>
+    </div>
+
+    <!-- 主体 -->
+    <div class="stats-body">
+
+      <!-- 1) 统计 -->
+      <div class="stats-view active" id="statsViewOverview">
+        <div class="stats-overview-cards" id="statsOverviewCards"></div>
+        <div class="stats-section">
+          <div class="stats-section-header">
+            <div class="stats-section-title">高频消息 TOP5</div>
+            <div class="stats-view-toggle">
+              <button class="stats-view-btn active" data-view="partner" id="statsViewPartner">对方</button>
+              <button class="stats-view-btn" data-view="me" id="statsViewMe">我方</button>
+            </div>
+          </div>
+          <div class="stats-rank-list" id="statsRankList"></div>
+        </div>
+      </div>
+
+      <!-- 2) 搜索 -->
+      <div class="stats-view" id="statsViewSearch">
+        <div class="stats-search-form">
+          <input type="text" class="stats-search-input" id="statsSearchKeyword" placeholder="输入关键词...">
+          <div class="stats-search-dates">
+            <input type="date" class="stats-search-date" id="statsSearchFrom">
+            <span class="stats-search-date-sep">至</span>
+            <input type="date" class="stats-search-date" id="statsSearchTo">
+          </div>
+          <button class="stats-search-btn" id="statsSearchBtn">
+            <i class="fa-solid fa-magnifying-glass"></i> 搜索
+          </button>
+        </div>
+        <div class="stats-search-results" id="statsSearchResults"></div>
+      </div>
+
+      <!-- 3) 收藏 -->
+      <div class="stats-view" id="statsViewFavorites">
+        <div class="stats-fav-list" id="statsFavList"></div>
+        <div class="stats-empty" id="statsFavEmpty">
+          <i class="fa-regular fa-star"></i>
+          <div>收藏夹空空如也</div>
+          <div class="stats-empty-hint">点击消息旁的 ☆ 星标即可收藏</div>
+        </div>
+      </div>
+
+      <!-- 4) 词云 -->
+      <div class="stats-view" id="statsViewWordCloud">
+  <div class="stats-wc-toggle">
+    <button class="stats-view-btn" data-view="partner" id="statsWCPartner">对方</button>
+    <button class="stats-view-btn" data-view="me" id="statsWCMe">我方</button>
+    <button class="stats-view-btn active" data-view="all" id="statsWCAll">全部</button>
+  </div>
+  <div class="stats-wc-canvas-wrap">
+    <canvas id="statsWCCanvas"></canvas>
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+    <!-- ==================== 梦向问卷 列表页 ==================== -->
+  <div class="page ds-page" id="pageDreamSurvey">
+    <div class="ds-container">
+
+            <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title">梦向问卷</span>
+        <button class="ds-topbar-add" id="dsNewBtn" title="新建问卷">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+
+      <!-- 分类切换 -->
+      <div class="ds-tabs">
+        <button class="ds-tab active" data-tab="mine" id="dsTabMine">
+          <i class="fa-solid fa-paper-plane"></i> 我的问卷
+        </button>
+        <button class="ds-tab" data-tab="theirs" id="dsTabTheirs">
+          <i class="fa-solid fa-inbox"></i> Ta 的问卷
+        </button>
+      </div>
+
+      <div class="ds-body">
+        <div class="ds-list" id="dsList"></div>
+        <div class="ds-empty" id="dsEmpty">
+          <i class="fa-solid fa-list-check"></i>
+          <div class="ds-empty-text">还没有问卷</div>
+          <div class="ds-empty-hint">点右上角 + 新建一份吧</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 梦向问卷 编辑页 ==================== -->
+  <div class="page ds-page" id="pageDreamSurveyEdit">
+    <div class="ds-container">
+
+      <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsEditBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title" id="dsEditTitle">新建问卷</span>
+        <button class="ds-topbar-save" id="dsSaveBtn" title="保存">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+
+      <div class="ds-body ds-edit-body">
+
+        <!-- 基本信息 -->
+        <div class="ds-section">
+          <div class="ds-field-label">问卷标题</div>
+          <input type="text" class="ds-input" id="dsTitleInput" placeholder="例如：关于你的一天" maxlength="30">
+        </div>
+
+        <div class="ds-section">
+          <div class="ds-field-label">归属联系人</div>
+          <select class="ds-input ds-contact-select" id="dsContactSelect"></select>
+        </div>
+
+        <div class="ds-section">
+          <div class="ds-field-row">
+            <div class="ds-field-half">
+              <div class="ds-field-label">提前交卷概率</div>
+              <div class="ds-input-unit">
+                <input type="number" class="ds-input ds-input-num" id="dsProbInput" value="10" min="0" max="100">
+                <span class="ds-unit">%</span>
+              </div>
+            </div>
+            <div class="ds-field-half">
+              <div class="ds-field-label">题目数量</div>
+              <div class="ds-input ds-input-static" id="dsCountLabel">0 题</div>
+            </div>
+          </div>
+        </div>
+
+              <!-- 题干区（C 方案：结构化 + 高级模式 + 问卷库） -->
+        <div class="ds-section">
+          <div class="ds-section-header">
+            <div class="ds-section-title">题目</div>
+            <button class="ds-adv-btn" id="dsAdvToggleBtn">
+              <i class="fa-solid fa-code"></i> 高级模式
+            </button>
+          </div>
+
+          <!-- 结构化编辑 -->
+          <div class="ds-qs" id="dsQsList"></div>
+
+          <!-- 问卷库（折叠面板） -->
+          <div class="ds-lib-wrap">
+            <button class="ds-lib-toggle" id="dsLibToggleBtn" type="button">
+              <i class="fa-solid fa-book-open"></i>
+              <span>从问卷库添加</span>
+              <i class="fa-solid fa-chevron-down ds-lib-arrow" id="dsLibArrow"></i>
+            </button>
+
+            <div class="ds-lib-panel" id="dsLibPanel" style="display:none;">
+              <!-- 分类 tab -->
+              <div class="ds-lib-cats" id="dsLibCats"></div>
+
+              <!-- 题目列表 -->
+              <div class="ds-lib-list" id="dsLibList"></div>
+
+              <!-- 底部操作 -->
+              <div class="ds-lib-footer">
+                <span class="ds-lib-count" id="dsLibCount">已选 0 道</span>
+                <div class="ds-lib-actions">
+                  <button class="ds-lib-btn ds-lib-clear" id="dsLibClearBtn" type="button">清空</button>
+                  <button class="ds-lib-btn ds-lib-add" id="dsLibAddBtn" type="button">添加选中</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="ds-add-q-btn" id="dsAddQBtn">
+            <i class="fa-solid fa-plus"></i> 添加题目
+          </button>
+          
+          <!-- 高级模式（文本框解析） -->
+          <div class="ds-adv-area" id="dsAdvArea" style="display:none;">
+            <div class="ds-adv-hint">
+              按以下格式书写，用空行分隔题目：<br>
+              <code>【问题】<br>选项1<br>选项2</code> → 单选<br>
+              <code>【问题】（多选）<br>选项1<br>选项2</code> → 多选<br>
+              <code>【问题】<br>一</code> → 文字题<br>
+              裸行 → 文字题题干
+            </div>
+            <textarea class="ds-adv-textarea" id="dsAdvTextarea" placeholder="【问题】&#10;选项A&#10;选项B&#10;&#10;【问题】（多选）&#10;选项A&#10;选项B&#10;&#10;【随便聊点什么】&#10;一"></textarea>
+            <button class="ds-adv-parse-btn" id="dsAdvParseBtn">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> 解析并应用
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 梦向问卷 详情页 ==================== -->
+   <div class="page ds-page" id="pageDreamSurveyDetail">
+    <div class="ds-container">
+
+      <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsDetailBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title" id="dsDetailTitle">问卷详情</span>
+        <button class="ds-topbar-add" id="dsDetailEditBtn" title="编辑">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+      </div>
+
+      <div class="ds-body ds-detail-body" id="dsDetailBody"></div>
+
+      <!-- 底部操作栏（发出 / 已发出提示 / 已交卷提示） -->
+      <div class="ds-detail-footer" id="dsDetailFooter"></div>
+
+    </div>
+  </div>
+
+   <!-- ==================== 梦向问卷 Ta 的问卷 · 作答页 ==================== -->
+  <div class="page ds-page" id="pageDreamSurveyAnswer">
+    <div class="ds-container">
+
+      <div class="ds-topbar">
+        <button class="ds-back-btn" id="dsAnswerBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="ds-topbar-title" id="dsAnswerTitle">Ta 的问卷</span>
+        <div style="width:34px;"></div>
+      </div>
+
+      <div class="ds-body ds-answer-body" id="dsAnswerBody"></div>
+
+    </div>
+  </div>
+
+    <!-- ==================== 档案 页面 ==================== -->
+  <div class="page" id="pageArchive">
+    <div class="arc-container">
+
+      <!-- 顶栏 -->
+      <div class="arc-topbar">
+        <button class="arc-back-btn" id="arcBackBtn">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <span class="arc-topbar-title">档案</span>
+        <button class="arc-save-btn" id="arcSaveBtn" title="保存">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+
+      <!-- 切换 tab -->
+      <div class="arc-tabs">
+        <button class="arc-tab active" data-tab="me" id="arcTabMe">
+          <i class="fa-solid fa-user"></i> 我的档案
+        </button>
+        <button class="arc-tab" data-tab="ta" id="arcTabTa">
+          <i class="fa-solid fa-heart"></i> Ta 的档案
+        </button>
+      </div>
+
+      <!-- 主体 -->
+      <div class="arc-body">
+        <div id="cenConfig_stage" class="cen-intro-mode">
+
+          <!-- 结绳线条 SVG -->
+          <svg class="cen-knot-line" width="450" height="100" viewBox="0 0 450 100"
+               style="position: absolute; left: calc(8% + 10px); top: calc(50% - 35px); transform: translateY(-50%); z-index: 0; overflow: visible;">
+            <path d="M -150,50 L 0,50 C 80,50 120,20 150,20 C 180,20 180,80 150,80 C 120,80 120,50 200,50 L 450,50"
+                  fill="none" stroke="rgba(160,180,255,0.5)" stroke-width="0.8" />
+          </svg>
+
+          <div id="cen_rain_layer">
+            <div class="cen-rain-track rain-1"></div>
+            <div class="cen-rain-track rain-2"></div>
+            <div class="cen-rain-track rain-3"></div>
+            <div class="cen-rain-track rain-4"></div>
+            <div class="cen-rain-track rain-5"></div>
+          </div>
+
+          <div class="cen-wind-chime chime-1">
+            <div class="cen-chime-rope"></div>
+            <div class="cen-chime-bell"><div class="cen-chime-clapper"></div></div>
+            <div class="cen-chime-leaf"></div>
+          </div>
+          <div class="cen-wind-chime chime-2">
+            <div class="cen-chime-rope"></div>
+            <div class="cen-chime-bell"><div class="cen-chime-clapper"></div></div>
+            <div class="cen-chime-leaf"></div>
+          </div>
+
+          <div id="cen_intro_big_text">
+            <div class="cen-float-line" style="font-size: 16px; margin-bottom: 2px;">
+              <span style="animation: cenFadeFloat 3.7s ease-in-out infinite; animation-delay: -0.4s; --y-offset: -8px; margin-right: 6px;">试</span>
+              <span style="animation: cenFadeFloat 4.3s ease-in-out infinite; animation-delay: -1.2s; --y-offset: -4px; margin-right: 6px;">着</span>
+            </div>
+            <div class="cen-float-line" style="font-size: 36px; transform: translateY(-25px); margin: 0 0 4px 0; font-weight: bold;">
+              <span style="animation: cenFadeFloat 2.9s ease-in-out infinite; animation-delay: -0.7s; --y-offset: -6px; margin-right: 4px;">多</span>
+              <span style="animation: cenFadeFloat 3.4s ease-in-out infinite; animation-delay: -2.1s; --y-offset: -9px; margin-right: 4px;">了</span>
+              <span style="animation: cenFadeFloat 4.8s ease-in-out infinite; animation-delay: -0.2s; --y-offset: -3px; margin-right: 4px;">解</span>
+              <span style="animation: cenFadeFloat 3.1s ease-in-out infinite; animation-delay: -1.5s; --y-offset: -7px; margin-right: 4px;">我</span>
+            </div>
+            <div class="cen-float-line" style="font-size: 28px; margin-left: 65px;">
+              <span style="animation: cenExtremeGlow 3.9s ease-in-out infinite; animation-delay: -2.8s; --y-offset: -5px; margin-right: 4px; color: #4a6aff;">—</span>
+              <span style="animation: cenExtremeGlow 4.5s ease-in-out infinite; animation-delay: -0.9s; --y-offset: -8px; margin-right: 4px; color: #4a6aff;">点</span>
+              <span style="animation: cenExtremeGlow 3.3s ease-in-out infinite; animation-delay: -1.7s; --y-offset: -4px; margin-right: 4px; color: #4a6aff;">吧</span>
+            </div>
+          </div>
+
+          <div id="cen_intro_poetry">你的名字是一颗我没有勇气咬开的糖</div>
+
+          <div id="intro_particles">
+            <div class="intro-dust-layer"></div>
+            <div class="intro-dust-layer delayed"></div>
+          </div>
+
+          <div id="cen_main_container">
+
+            <div id="cen_left_wrapper" style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+              <div style="position: relative; width: 160px; height: 240px;">
+                <div id="Tuan_init_rotator" style="width: 100%; height: 100%; transform-style: preserve-3d; cursor: grab; background: transparent;">
+
+                  <div class="cen-pins-wrapper">
+                    <div class="cen-paperclip cen-pin-1"></div>
+                    <div class="cen-paperclip cen-pin-2"></div>
+                  </div>
+
+                  <div class="hide-in-intro" style="position: absolute; inset:0; border-radius:12px; border: 1px solid rgba(160,180,255,0.4); pointer-events:none; box-shadow: 0 0 15px rgba(160,180,255,0.2);"></div>
+
+                  <div id="cen_main_photo" onclick="cenTriggerPlayAnim()"
+                       style="position: absolute; inset: 6px; border-radius: 6px; transform: translateZ(20px); pointer-events: auto; display: flex; align-items: center; justify-content: center; user-select: none; background-size: cover; background-position: center;">
+                    <div class="cen-click-hint hide-in-intro" style="font-size: 9px;">Tap to Explore</div>
+                    <input type="file" id="arcPhotoInput" accept="image/*" style="display:none;">
+                  </div>
+
+                  <div style="position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; transform: translateZ(40px); pointer-events: none;">
+                  <span id="arcPhotoName" style="color: #2a2a3a; font-size: 18px; font-weight: 700; letter-spacing: 4px; text-shadow: 0 2px 8px rgba(160,180,255,0.5);">人物姓名</span>
+                  </div>
+
+                  <div id="cen_mouth_zone" class="hide-in-intro" style="position: absolute; top: 48%; left: 50%; width: 40px; height: 30px; transform: translate(-50%, -50%) translateZ(45px); cursor: pointer; z-index: 10;"></div>
+
+                  <div id="cen_speech_bubble" class="hide-in-intro"
+                       style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, 10px) translateZ(50px); opacity: 0; filter: blur(8px); pointer-events: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; white-space: nowrap; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.4s ease;">
+                    怎么了...？
+                    <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid #ffffff;"></div>
+                  </div>
+
+                  <div class="hide-in-intro" style="position: absolute; inset: 0; border-radius: 12px; background: rgba(160,180,255,0.05); transform: rotateY(180deg) translateZ(1px); backface-visibility: hidden; border: 1px solid rgba(160,180,255,0.2);"></div>
+
+                  <div id="reset_btn_cen" class="hide-in-intro"
+                       style="width: 20px; height: 20px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; backdrop-filter: blur(4px); position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#4a6aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                      <path d="M3 3v5h5"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="cen_right_panel">
+              <div class="cen-floating-box"
+                   style="width: 170px; height: 260px; border: 1px solid rgba(160,180,255,0.3); box-shadow: inset 0 25px 20px -20px rgba(160,180,255,0.2), inset 0 0 6px rgba(160,180,255,0.1), 0 0 20px rgba(160,180,255,0.15); padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; background: rgba(255,255,255,0.5);">
+
+                <div class="cen-particle-layer">
+                  <div class="cen-dust"></div>
+                  <div class="cen-dust-group-2"></div>
+                </div>
+
+                <div style="position: absolute; inset: 0; z-index: -2; background: rgba(160,180,255,0.03);"></div>
+                <div style="position: absolute; top: 0; right: 0; width: 20px; height: 20px; background: linear-gradient(135deg, transparent 50%, rgba(160,180,255,0.15) 50%);"></div>
+
+              <div id="arcQuoteTitle" style="color: #2a2a3a; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; border-bottom: 1px solid rgba(160,180,255,0.3); padding-bottom: 6px;">
+                  如果某天我真的杳无音讯
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 6px; color: #4a4a5a; font-size: 11px; line-height: 1.4; position: relative; z-index: 1;">
+                                 <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">LOCATION</span>
+                    <span contenteditable="true" class="arc-field" data-field="location" style="color: #2a2a3a; letter-spacing: 0.5px; outline:none; min-height:14px;">输入地点</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">STATUS</span>
+                    <span contenteditable="true" class="arc-field" data-field="status" style="color: #2a2a3a; letter-spacing: 0.5px; outline:none; min-height:14px;">输入状态</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">MOOD</span>
+                    <span contenteditable="true" class="arc-field" data-field="mood" style="color: #2a2a3a; letter-spacing: 0.5px; outline:none; min-height:14px;">输入心情</span>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 2px; margin-top: 2px;">
+                    <span style="color: #4a6aff; font-size: 9px; opacity: 0.7;">DESC</span>
+                    <span contenteditable="true" class="arc-field" data-field="desc" style="color: #2a2a3a; letter-spacing: 0.5px; text-align: justify; overflow-y: auto; max-height: 50px; padding-right: 4px; outline:none;">
+                      背景设定留白，文本过长可滑动展开。
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="cen_bottom_panels" style="width: 345px; display: flex; flex-direction: column; gap: 6px; z-index: 1;">
+            <details class="cen-glow-box">
+              <summary>BASIC INFO</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="basicInfo">在此填入更多基础维度的详细数据与设定参数。</div>
+              </div>
+            </details>
+            <details class="cen-glow-box">
+              <summary>HISTORY</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="history">记录人物过往的履历、事件节点与背景故事。</div>
+              </div>
+            </details>
+            <details class="cen-glow-box">
+              <summary>PREFERENCES</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="preferences">关于日习惯、偏好物品以及厌恶事物的明细。</div>
+              </div>
+            </details>
+            <details class="cen-glow-box">
+              <summary>RELATIONS</summary>
+              <div class="cen-glow-content">
+                <div contenteditable="true" class="cen-text-protect arc-field-block" data-field="relations">展示与外部社会、其他角色的阵营关系及纽带。</div>
+              </div>
+            </details>
+          </div>
+
+          <div class="cen-back-btn" onclick="cenReturnToIntro()">RETURN</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  <!-- ==================== 心晴手账 页面 ==================== -->
+<div class="page" id="pageMood">
+  <div class="mood-container">
+
+    <!-- 顶部导航 -->
+    <div class="mood-topbar">
+      <button class="mood-back-btn" id="moodBackBtn">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <span class="mood-topbar-title">心晴手账</span>
+      <button class="mood-topbar-action" id="moodSwitchBtn" title="切换联系人">
+        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+      </button>
+    </div>
+
+    <!-- 切换联系人弹层 -->
+    <div class="mood-sw-modal" id="moodSwitchModal">
+      <div class="mood-sw-panel">
+        <div class="mood-sw-title">切换联系人</div>
+        <div class="mood-sw-list" id="moodSwitchList"></div>
+        <button class="mood-sw-cancel" id="moodSwitchCancel">取消</button>
+      </div>
+    </div>
+
+    <!-- 当前角色指示 -->
+    <div class="mood-current-contact" id="moodCurrentContact">
+      <img class="mood-current-avatar" id="moodCurrentAvatar" src="" alt="">
+      <span class="mood-current-name">正在记录与 <b id="moodCurrentName">Ta</b> 的心情</span>
+    </div>
+
+    <!-- 视图切换 -->
+    <div class="mood-view-tabs">
+      <button class="mood-view-tab active" data-view="calendar" id="moodTabCalendar">
+        <i class="fa-regular fa-calendar-days"></i> 日历
+      </button>
+      <button class="mood-view-tab" data-view="stats" id="moodTabStats">
+        <i class="fa-solid fa-chart-simple"></i> 统计
+      </button>
+      <button class="mood-view-tab" data-view="trash" id="moodTabTrash">
+        <i class="fa-solid fa-trash-can"></i> 回收站
+      </button>
+    </div>
+
+    <!-- 主体 -->
+    <div class="mood-body">
+
+      <!-- 日历视图 -->
+      <div class="mood-view active" id="moodViewCalendar">
+        <div class="mood-card">
+          <div class="mood-calendar-header">
+            <button class="mood-month-nav" id="moodPrevMonth">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span class="mood-month-label" id="moodMonthLabel">2026年10月</span>
+            <button class="mood-month-nav" id="moodNextMonth">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+          <div class="mood-weekdays">
+            <div class="mood-weekday">一</div>
+            <div class="mood-weekday">二</div>
+            <div class="mood-weekday">三</div>
+            <div class="mood-weekday">四</div>
+            <div class="mood-weekday">五</div>
+            <div class="mood-weekday">六</div>
+            <div class="mood-weekday">日</div>
+          </div>
+          <div class="mood-calendar-grid" id="moodCalendarGrid"></div>
+          <div class="mood-legend">
+            <div class="mood-legend-item">
+              <span class="mood-legend-dot me"></span> 我的心情
+            </div>
+            <div class="mood-legend-item">
+              <span class="mood-legend-dot partner"></span> Ta 的心情
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计视图 -->
+      <div class="mood-view" id="moodViewStats">
+        <div class="mood-stats-card" id="moodStatsContent"></div>
+      </div>
+
+      <!-- 回收站视图 -->
+      <div class="mood-view" id="moodViewTrash">
+        <div class="mood-trash-tip">删除的记录会先放进这里，可随时恢复</div>
+        <div id="moodTrashList"></div>
+      </div>
+
+    </div>
+
+    <!-- 底部工具栏 -->
+    <div class="mood-toolbar">
+      <button class="mood-toolbar-btn" id="moodExportBtn">
+        <i class="fa-solid fa-file-export"></i> 导出
+      </button>
+      <button class="mood-toolbar-btn" id="moodImportBtn">
+        <i class="fa-solid fa-file-import"></i> 导入
+      </button>
+      <input type="file" id="moodImportFileInput" accept=".json,application/json" style="display:none;">
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 编辑弹层 ==================== -->
+<div class="mood-editor-overlay" id="moodEditorOverlay">
+  <div class="mood-editor-panel">
+    <div class="mood-editor-header">
+      <span class="mood-editor-date" id="moodEditorDate">2026.10.02</span>
+      <button class="mood-editor-close" id="moodEditorClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="mood-editor-tabs">
+      <button class="mood-editor-tab active" data-target="me" id="moodEditorTabMe">我的记录</button>
+      <button class="mood-editor-tab" data-target="partner" id="moodEditorTabPartner">Ta 的记录</button>
+    </div>
+    <div class="mood-editor-pages">
+      <!-- 第 1 页：选心情 -->
+      <div class="mood-editor-page active" id="moodEditorPage1">
+        <div class="mood-options-grid" id="moodOptionsGrid"></div>
+        <button class="mood-custom-add" id="moodCustomAddBtn">
+          <i class="fa-solid fa-plus"></i> 添加自定义心情
+        </button>
+      </div>
+      <!-- 第 2 页：随记 + 天气 -->
+      <div class="mood-editor-page" id="moodEditorPage2">
+        <div class="mood-editor-field">
+          <div class="mood-editor-field-label">随记</div>
+          <textarea class="mood-editor-textarea" id="moodNoteInput" placeholder="写点什么..."></textarea>
+        </div>
+        <div class="mood-editor-field">
+          <div class="mood-editor-field-label">天气</div>
+          <input type="text" class="mood-editor-input" id="moodWeatherInput" placeholder="例如：晴朗、小雨、多云...">
+        </div>
+      </div>
+    </div>
+    <div class="mood-editor-footer" id="moodEditorFooter">
+      <button class="mood-editor-btn mood-editor-btn-cancel" id="moodEditorCancel">取消</button>
+      <button class="mood-editor-btn mood-editor-btn-next" id="moodEditorNext">下一步</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 自定义心情弹窗 ==================== -->
+<div class="mood-custom-modal" id="moodCustomModal">
+  <div class="mood-custom-panel">
+    <div class="mood-custom-title">添加自定义心情</div>
+    <div class="mood-custom-field">
+      <div class="mood-custom-field-label">表情</div>
+      <input type="text" class="mood-custom-emoji-input" id="moodCustomEmoji" placeholder="😊" maxlength="2">
+    </div>
+    <div class="mood-custom-field">
+      <div class="mood-custom-field-label">名称</div>
+      <input type="text" class="mood-custom-label-input" id="moodCustomLabel" placeholder="例如：开心、摸鱼、想你..." maxlength="6">
+    </div>
+    <div class="mood-custom-field">
+      <div class="mood-custom-field-label">颜色</div>
+      <div class="mood-custom-colors" id="moodCustomColors"></div>
+    </div>
+    <div class="mood-custom-actions">
+      <button class="mood-custom-btn mood-custom-btn-cancel" id="moodCustomCancel">取消</button>
+      <button class="mood-custom-btn mood-custom-btn-confirm" id="moodCustomConfirm">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 详情弹层 ==================== -->
+<div class="mood-detail-overlay" id="moodDetailOverlay">
+  <div class="mood-detail-panel">
+    <div class="mood-detail-header">
+      <span class="mood-detail-date" id="moodDetailDate">2026.10.02</span>
+      <button class="mood-editor-close" id="moodDetailClose">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="mood-detail-body" id="moodDetailBody"></div>
+  </div>
+</div>
+
+<!-- ==================== 心晴手账 - 导入选择器 ==================== -->
+<div class="mood-import-overlay" id="moodImportOverlay">
+  <div class="mood-import-panel">
+    <div class="mood-import-title">选择导入内容</div>
+    <div class="mood-import-desc">合并导入，不会覆盖你现有的记录</div>
+    <div class="mood-import-options">
+      <label class="mood-import-option">
+        <input type="checkbox" id="moodImportCalendar" checked>
+        <span class="mood-import-check"><i class="fa-solid fa-check"></i></span>
+        <span class="mood-import-label">心情日历</span>
+      </label>
+      <label class="mood-import-option">
+        <input type="checkbox" id="moodImportCustom" checked>
+        <span class="mood-import-check"><i class="fa-solid fa-check"></i></span>
+        <span class="mood-import-label">自定义心情</span>
+      </label>
+      <label class="mood-import-option">
+        <input type="checkbox" id="moodImportTrash">
+        <span class="mood-import-check"><i class="fa-solid fa-check"></i></span>
+        <span class="mood-import-label">回收站</span>
+      </label>
+    </div>
+    <div class="mood-import-actions">
+      <button class="mood-import-btn mood-import-btn-cancel" id="moodImportCancel">取消</button>
+      <button class="mood-import-btn mood-import-btn-confirm" id="moodImportConfirm">确认导入</button>
+    </div>
+  </div>
+</div>
+  <!-- ==================== 传讯会话选择页（联系人 / 群聊） ==================== -->
+  <div class="page" id="pageChatHome">
+    <div class="chat-home-header">
+      <i class="fa-solid fa-chevron-left chat-home-back" id="chatHomeBackBtn" title="返回主页"></i>
+      <span class="chat-home-title">传讯</span>
+      <div class="chat-home-actions">
+        <i class="fa-solid fa-users chat-home-action" id="chatHomeGroupBtn" title="群聊管理"></i>
+        <i class="fa-solid fa-plus chat-home-action" id="chatHomeAddBtn" title="添加联系人"></i>
+      </div>
+    </div>
+    <div class="chat-home-tabs">
+      <button class="chat-home-tab active" id="chatHomeTabContacts">联系人</button>
+      <button class="chat-home-tab" id="chatHomeTabGroups">群聊</button>
+    </div>
+    <div class="chat-home-list" id="chatHomeContacts"></div>
+    <div class="chat-home-list" id="chatHomeGroups" style="display:none;"></div>
+    <div class="chat-home-empty" id="chatHomeEmpty" style="display:none;">
+      <i class="fa-regular fa-comment-dots"></i>
+      <p id="chatHomeEmptyText">还没有联系人 · 点右上角 ＋ 添加</p>
+    </div>
+  </div>
+
+  <!-- ==================== 传讯页面 ==================== -->
+  <div class="page" id="pageChat">
+    <!-- 顶部白色平铺区域（与聊天框淡纹理区分，更白） -->
+    <div class="chat-top-bg" id="chatTopBg"></div>
+    <!-- 顶部一行：返回键（左）＋ 头像昵称（中）＋ 昼夜/视频（右端同排） -->
+    <div class="chat-top-actions" id="chatTopActions">
+      <i class="fa-solid fa-chevron-left chat-back-btn" id="chatBackBtn" title="返回会话列表"></i>
+      <div id="chatContactArea" style="display:flex;flex-direction:column;align-items:center;">
+        <img class="chat-avatar" id="chatAvatar" src="https://picsum.photos/200/200?random=99" alt="Ta">
+        <div class="chat-name" id="chatName">Ta</div>
+      </div>
+      <div class="chat-top-right">
+        <div class="chat-action-icon chat-top-btn" title="月亮"><i class="fa-solid fa-moon"></i></div>
+        <div class="chat-action-icon chat-top-btn" title="视频通话"><i class="fa-solid fa-video"></i></div>
+      </div>
+    </div>
+    <!-- 头像下的提示横条（颜色区别于聊天框） -->
+    <div class="chat-start-bar" id="chatStartBar">
+      <span id="chatStartText"></span>
+    </div>
+
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="sos-btn" id="sosBtn" style="display: none;" title="急救">
+      <i class="fa-solid fa-kit-medical"></i>
+      <span>急救</span>
+    </div>
+
+    <div class="home-return-btn" id="homeReturnBtn" title="返回主页">
+      <i class="fa-solid fa-house"></i>
+    </div>
+
+    <div class="quote-preview-bar" id="quotePreviewBar" style="display:none;">
+  <div class="quote-preview-inner">
+    <span class="quote-preview-icon"><i class="fa-solid fa-quote-left"></i></span>
+    <span class="quote-preview-text" id="quotePreviewText"></span>
+    <button class="quote-preview-close" id="quotePreviewClose" type="button">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+</div>
+
+    <!-- 对方"思念送達中"浮层（挤在消息区和输入栏之间） -->
+       <!-- 对方"思念送達中"浮层（挤在消息区和输入栏之间） -->
+    <div class="typing-float-row" id="typingFloatRow" style="display:none;">
+      <div class="typing-float" id="typingFloat">
+        <img class="typing-float-avatar" id="typingFloatAvatar" src="" alt="">
+        <span class="typing-float-text">思念送達中</span>
+        <span class="typing-float-dots">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </span>
+      </div>
+    </div>
+    
+    <div class="chat-input-bar">
+      <div class="input-left-icons">
+        <i class="fa-regular fa-images" title="相册"></i>
+        <i class="fa-regular fa-image" title="图片"></i>
+        <i class="fa-regular fa-face-smile" title="表情"></i>
+        <i class="fa-solid fa-comment-dots" id="continueBtn" title="让 Ta 继续说"></i>
+      </div>
+      <input type="text" class="chat-input" id="chatInput" placeholder="输入消息...">
+      <button class="send-btn" id="sendBtn" disabled>
+        <i class="fa-solid fa-arrow-up"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- 编辑资料 -->
+  <div class="edit-profile-modal" id="editProfileModal">
+    <div class="edit-profile-panel">
+      <div class="edit-profile-title">编辑资料</div>
+      <div class="edit-avatar-wrap">
+        <img class="edit-avatar-preview" id="editAvatarPreview" src="https://picsum.photos/200/200?random=99" alt="头像预览">
+        <div class="edit-avatar-hint">点击头像上传图片</div>
+        <input type="file" id="editAvatarFileInput" class="hidden-file-input" accept="image/*">
+      </div>
+      <div class="edit-field-label">昵称</div>
+      <input type="text" class="edit-input" id="editNameInput" placeholder="输入昵称...">
+      <div class="edit-field-label">或粘贴图片 URL</div>
+      <input type="text" class="edit-input" id="editAvatarUrlInput" placeholder="https://...">
+      <div class="edit-actions">
+        <button class="edit-btn edit-btn-cancel" id="editCancelBtn">取消</button>
+        <button class="edit-btn edit-btn-save" id="editSaveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+ <!-- 角色面板 -->
+<div class="role-panel-modal" id="rolePanelModal">
+  <div class="role-panel">
+    <div class="role-panel-header">
+      <span class="role-panel-title">角色面板</span>
+      <!-- 顶部"关闭"按钮已移至面板底部，这里不再放 -->
+    </div>
+    <div id="roleListContainer"></div>
+  </div>
+</div>
+
+  <!-- 回复设定 -->
+  <div class="reply-settings-modal" id="replySettingsModal">
+    <div class="reply-settings-panel">
+      <div class="reply-settings-header">
+        <span class="reply-settings-title">回复设定</span>
+        <button class="reply-settings-close" id="replySettingsClose">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+           <div class="reply-settings-tabs">
+        <button class="reply-tab-btn active" data-tab="rhythm">回复节奏</button>
+        <button class="reply-tab-btn" data-tab="proactive">主动消息</button>
+      </div>
+      <div class="reply-settings-body">
+        <div class="reply-tab-panel active" id="panel-rhythm">
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">开启正常字卡回复</div>
+              <div class="setting-row-desc">关闭后随机箭头获取字卡，不生效</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleNormalReply" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="input-row">
+            <div class="input-item">
+              <div class="input-item-label">最短等待 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMinWait" value="3" min="1" max="600">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">最长等待 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMaxWait" value="12" min="1" max="600">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+          </div>
+          <div class="input-hint">等待时间可设为 1-600 秒，回复将在该区间内随机延迟</div>
+          <div class="input-row" style="margin-top:14px;">
+            <div class="input-item">
+              <div class="input-item-label">每次最少回复 / 条</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMinCount" value="0" min="0" max="10">
+                <span class="input-unit">条</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">每次最多回复 / 条</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputMaxCount" value="3" min="0" max="10">
+                <span class="input-unit">条</span>
+              </div>
+            </div>
+          </div>
+          <div class="setting-divider"></div>
+          <div class="setting-section-title">输入状态</div>
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">显示三点输入气泡</div>
+              <div class="setting-row-desc">对方回复前，先显示三点输入动画</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleTypingBubble" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+                    <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">显示"思念送達中"提示</div>
+              <div class="setting-row-desc">发送消息后，在输入框上方显示对方"思念送達中"</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleTypingFloat" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+                          <div class="setting-divider"></div>
+          <div class="setting-section-title">已读状态</div>
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">显示角色已读状态</div>
+              <div class="setting-row-desc">开启后，你发出的消息被 Ta 读过后，气泡下方出现已读标记</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleReadStatus">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">已读不回</div>
+              <div class="setting-row-desc">开启后，Ta 有一定概率读了你的消息但不回复</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleReadNoReply">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="auto-save-hint">修改后自动保存</div>
+        </div>
+
+              <div class="reply-tab-panel" id="panel-proactive">
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">允许他主动发消息</div>
+              <div class="setting-row-desc">开启后，角色会按照设定间隔主动给你发送消息</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleProactive">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="input-row" style="display:block;">
+            <div class="input-item" style="width:100%;">
+              <div class="input-item-label">给哪个联系人配间隔</div>
+              <select id="proactiveContactSelect" class="proactive-contact-select"></select>
+            </div>
+          </div>
+
+          <div class="input-row">
+            <div class="input-item">
+              <div class="input-item-label">最短间隔 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputProactiveMin" value="600" min="10" max="10800">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+            <div class="input-item">
+              <div class="input-item-label">最长间隔 / 秒</div>
+              <div class="input-with-unit">
+                <input type="number" id="inputProactiveMax" value="1800" min="10" max="10800">
+                <span class="input-unit">秒</span>
+              </div>
+            </div>
+          </div>
+                        <div class="input-hint">主动消息间隔可设为 10-10800 秒，每个联系人可单独配置</div>
+          <div class="setting-divider"></div>
+          <div class="setting-section-title">引用</div>
+          <div class="setting-row">
+            <div class="setting-row-label">
+              <div class="setting-row-title">允许随机引用</div>
+              <div class="setting-row-desc">开启后，角色回复时有一定概率引用你之前的消息</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleQuote" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="auto-save-hint">修改后自动保存</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用输入弹窗 -->
+  <div class="simple-modal" id="simpleModal">
+    <div class="simple-panel">
+      <div class="simple-title" id="simpleModalTitle">
+        <i class="fa-solid fa-pen-nib text-[#f8b4b4]"></i>
+        <span id="simpleModalTitleText">添加字卡</span>
+      </div>
+      <textarea class="simple-textarea" id="simpleModalInput" placeholder="输入内容..."></textarea>
+      <div class="simple-actions">
+        <button class="simple-btn simple-btn-cancel" id="simpleModalCancel">取消</button>
+        <button class="simple-btn simple-btn-confirm" id="simpleModalConfirm">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 音乐播放器弹窗 -->
+  <div class="playlist-sheet" id="playlistSheet">
+    <div class="playlist-sheet-panel">
+      <div class="playlist-sheet-header">
+        <span class="playlist-sheet-deco">.°♫.°</span>
+        <div class="playlist-sheet-actions">
+          <button class="playlist-sheet-icon-btn" id="openManageBtn" title="歌单管理">
+            <i class="fa-solid fa-folder-open"></i>
+          </button>
+          <button class="playlist-sheet-icon-btn" id="searchSongBtn" title="搜索">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <button class="playlist-sheet-icon-btn" id="openAddBtn" title="添加歌曲">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+      <div class="playlist-scroll" id="playlistScroll"></div>
+    </div>
+  </div>
+
+  <div class="add-modal" id="addModal">
+    <div class="add-panel">
+      <div class="add-title"><i class="fa-solid fa-music text-[#f8b4b4]"></i>添加自定义歌曲</div>
+      <input type="text" class="add-input" id="addTitle" placeholder="歌曲名称（例如：这里的风景）">
+      <input type="text" class="add-input" id="addArtist" placeholder="歌手 / 备注（例如：你的名字）">
+      <input type="text" class="add-input" id="addUrl" placeholder="音频链接 (mp3/m4a 链接)">
+      <div class="add-actions">
+        <button class="add-btn add-btn-cancel" id="addCancel">取消</button>
+        <button class="add-btn add-btn-confirm" id="addConfirm">添加播放</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="manage-modal" id="manageModal">
+    <div class="manage-panel">
+      <div class="manage-title">歌单管理</div>
+      <button class="manage-btn" id="importPlaylistBtn">
+        <i class="fa-solid fa-file-import"></i>
+        <span>导入歌单文件</span>
+      </button>
+      <input type="file" id="importFileInput" accept=".json,.txt,application/json" style="display:none;">
+      <button class="manage-btn" id="exportPlaylistBtn">
+        <i class="fa-solid fa-file-export"></i>
+        <span>导出当前歌单</span>
+      </button>
+      <button class="manage-cancel" id="manageCancel">取消</button>
+    </div>
+  </div>
+    <!-- ==================== 脚本引入 ==================== -->
+  <!-- 1) 依赖其它模块的底层逻辑：先加载 -->
+  <script src="./js/reply.js?v=20261005"></script>
+
+  <!-- 2) 全局路由 / 页面切换（挂载 window.showPage 等） -->
+  <script src="./js/router.js?v=20261005"></script>
+
+  <!-- 3) 音乐播放器（挂载 window.playlist / window.playSong 等） -->
+  <script src="./js/music-player.js?v=20261005"></script>
+
+  <!-- 4) 各功能模块 -->
+  <script src="./js/default-cards-data.js?v=20261005"></script>
+  <script src="./js/card.js?v=20261005"></script>
+  <script src="./js/chat.js?v=20261021"></script>
+  <script src="./js/public-cards.js?v=20261005"></script>
+  <script src="./js/public-cards-panel.js?v=20261005"></script>
+  <script src="./js/reply-settings.js?v=20261012"></script>
+  <script src="./js/proactive.js?v=20261012"></script>
+  <script src="./js/role-panel.js?v=20261017"></script>
+  <script src="./js/home-settings.js?v=20261009"></script>
+  <script src="./js/home-settings-panel.js?v=20261005"></script>
+  <script src="./js/chat-avatars.js?v=20261013"></script>
+  <script src="./js/chat-extras.js?v=20261017"></script>
+  <script src="./js/theme-mode.js?v=20261005"></script>
+  <script src="./js/video-call.js?v=20261005"></script>
+  <script src="./js/group-chat.js?v=20261021"></script>
+  <script src="./js/session-chat.js?v=20261017"></script>
+  <script src="./js/chat-settings-panel.js?v=20261018"></script>
+  <script src="./js/notify-keepalive.js?v=20261012"></script>
+
+  <!-- 5) 陪伴 / 重要日 -->
+  <script src="./js/companion.js?v=20261017"></script>
+  <script src="./js/important-day.js?v=20261005"></script>
+  <script src="./js/mood.js?v=20261010"></script>
+  <script src="./js/features/envelope.js?v=20261017"></script>
+  <script src="./js/feed.js?v=20261005"></script>
+  <script src="./js/features/stats.js?v=20261010"></script>
+  <script src="./js/dream-survey-questions.js?v=20261009"></script>
+  <script src="./js/dream-survey.js?v=20261010"></script>
+  <script src="./js/dream-survey-from-ta.js?v=20261005"></script>
+  <script src="./js/dream-survey-from-me.js?v=20261005"></script>
+  <!-- 【注意】下面这行是重复引用，交接书遗留事项 #5 提到过；此处按原样保留，未删。 -->
+  <script src="./js/dream-survey.js?v=20261010"></script>
+  <script src="./js/archive.js?v=20261005"></script>
+
+  <template id="ilk_template">
+  <div class="ilk-wall" data-ilk="wall"></div>
+
+  <div class="ilk-lock" data-ilk="lock">
+    <!-- 【删】原顶部状态栏 .ilk-sb（左时钟 + 右信号/WiFi/电量 SVG）整块已移除 -->
+
+    <div class="ilk-lock-main">
+      <!-- 【删】原挂锁 svg.ilk-padlock 已移除 -->
+
+      <div class="ilk-date" data-ilk="date"></div>
+      <div class="ilk-time" data-ilk="bigclock">3:47</div>
+
+      <div class="ilk-notifs" data-ilk="notifs"></div>
+    </div>
+
+    <div class="ilk-lock-bottom">
+      <button class="ilk-glass" type="button" aria-label="手电筒">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+          <path d="M8.4 2h7.2v2.6l-2.1 2.1V20a1.5 1.5 0 0 1-3 0V6.7L8.4 4.6V2Z"/>
+        </svg>
+      </button>
+      <div class="ilk-homebar"></div>
+      <button class="ilk-glass" type="button" aria-label="相机">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+          <path d="M9.2 3h5.6l1.2 2h3.4A2.6 2.6 0 0 1 22 7.6v9.8A2.6 2.6 0 0 1 19.4 20H4.6A2.6 2.6 0 0 1 2 17.4V7.6A2.6 2.6 0 0 1 4.6 5H8l1.2-2Zm2.8 4.9a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm0 1.9a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="ilk-scrim" data-ilk="scrim"></div>
+
+  <div class="ilk-stage" data-ilk="stage">
+    <div class="ilk-alert" data-ilk="alert" role="alertdialog">
+      <div class="ilk-panel ilk-on" data-panel="ask">
+        <div class="ilk-body">
+          <div class="ilk-title">系统提示</div>
+          <div class="ilk-amsg">一滴眼泪的重量是否大于1g？</div>
+        </div>
+        <div class="ilk-acts">
+          <button class="ilk-btn ilk-strong" type="button" data-act="yes">是</button>
+          <button class="ilk-btn" type="button" data-act="no">否</button>
+        </div>
+      </div>
+      <div class="ilk-panel" data-panel="wrong">
+        <div class="ilk-body">
+          <div class="ilk-title">系统提示</div>
+          <div class="ilk-amsg">回答错误</div>
+        </div>
+        <div class="ilk-acts">
+          <button class="ilk-btn" type="button" data-act="back">返回</button>
+        </div>
+      </div>
+      <div class="ilk-panel" data-panel="right">
+        <div class="ilk-body">
+          <div class="ilk-title">系统提示</div>
+          <div class="ilk-amsg">回答正确</div>
+          <div class="ilk-anote">一滴泪的重量取决于落在谁的心上</div>
+        </div>
+        <div class="ilk-acts">
+          <button class="ilk-btn ilk-strong" type="button" data-act="done">完成</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+      <div class="ilk-notif ilk-banner" data-ilk="banner" role="button" tabindex="-1" aria-label="信息">
+    <div class="ilk-ava">
+      <img src="https://i.postimg.cc/gJW0hgvF/IMG-3173.jpg" alt="">
+    </div>
+    <div class="ilk-nmain">
+      <div class="ilk-nhead">
+        <span class="ilk-napp">信息</span>
+        <span class="ilk-ntime">现在</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ilk-boot" data-ilk="boot"></div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+  var hostWin = window, hostDoc = document;
+
+  if (!hostDoc.body) {
+    hostDoc.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else { boot(); }
+
+  function boot() {
+    try { if (hostWin._ilkDestroy) hostWin._ilkDestroy(); } catch (e) {}
+    var stale = hostDoc.getElementById('ilk_root');
+    if (stale) stale.remove();
+
+    var tpl = document.getElementById('ilk_template');
+    if (!tpl) return;
+
+    var root = hostDoc.createElement('div');
+    root.id = 'ilk_root';
+    root.innerHTML = tpl.innerHTML;
+    hostDoc.body.appendChild(root);
+// 【修正】PWA 下 dvh/lvh 不可靠；但 visualViewport.height 会随滚动/键盘变化，不能用。
+// 只用 screen.height（物理屏高，稳定）兜底，配 innerHeight 作回退。
+function fitRootHeight() {
+  // screen.height 在 iPhone 上是物理像素下的"物理屏高"（含灵动岛+底条）
+  var h = Math.max(
+    hostWin.screen ? hostWin.screen.height : 0,
+    hostWin.outerHeight || 0,
+    hostWin.innerHeight || 0,
+    hostDoc.documentElement.clientHeight || 0
+  );
+  root.style.setProperty('height', 'calc(' + h + 'px + env(safe-area-inset-bottom, 0px))', 'important');
+  root.style.setProperty('min-height', 'calc(' + h + 'px + env(safe-area-inset-bottom, 0px))', 'important');
+  root.style.setProperty('bottom', 'auto', 'important');
+}
+fitRootHeight();
+
+// 只在窗口尺寸/方向真正变化时重算（不要监听 visualViewport.scroll）
+hostWin.addEventListener('resize', fitRootHeight);
+hostWin.addEventListener('orientationchange', fitRootHeight);
+fitRootHeight();
+
+// 视口一变就重算
+hostWin.addEventListener('resize', fitRootHeight);
+hostWin.addEventListener('orientationchange', fitRootHeight);
+if (hostWin.visualViewport) {
+  hostWin.visualViewport.addEventListener('resize', fitRootHeight);
+  hostWin.visualViewport.addEventListener('scroll', fitRootHeight);
+}
+
+    var q = function(name) { return root.querySelector('[data-ilk="' + name + '"]'); };
+    var qa = function(name) { return [].slice.call(root.querySelectorAll('[data-ilk="' + name + '"]')); };
+
+    var timers = [];
+    var wait = function(ms, fn) { var t = setTimeout(fn, ms); timers.push(t); return t; };
+
+    var blockScroll = function(e) {
+      if (e.target.closest('.ilk-scroll')) e.preventDefault();
+    };
+    root.addEventListener('touchmove', blockScroll, { passive: false });
+
+    var WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    // 【注意】.ilk-sb 已删，clocks 现在返回空数组；tick() 里 clocks.forEach 对空数组安全，不会报错
+    var clocks = qa('clock');
+    var bigClock = q('bigclock');
+    var dateEl = q('date');
+    function tick() {
+      var now = new Date();
+      var t = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+      clocks.forEach(function(el) { el.textContent = t; });
+      if (bigClock) bigClock.textContent = t;
+      if (dateEl) {
+        dateEl.textContent = now.getFullYear() + '年' + (now.getMonth() + 1) + '月' + now.getDate() + '日' + WEEK[now.getDay()];
+      }
+    }
+    tick();
+    var clockTimer = setInterval(tick, 1000);
+
+    var wall = q('wall');
+    var bootLayer = q('boot');
+       function bootOff() {
+      if (!bootLayer || !bootLayer.isConnected) return;
+      bootLayer.classList.add('ilk-off');
+      if (wall) wall.classList.add('ilk-settled');
+      wait(800, function() { if (bootLayer) bootLayer.remove(); });
+    }
+    var pre = new Image();
+    pre.onload = pre.onerror = function() { requestAnimationFrame(bootOff); };
+    pre.src = 'https://i.postimg.cc/DwR0vv08/IMG-3165.jpg';
+    wait(1400, bootOff);
+
+    var stage = q('stage');
+    var scrim = q('scrim');
+    var lock = q('lock');
+    var alertB = q('alert');
+    var panels = [].slice.call(alertB.querySelectorAll('.ilk-panel'));
+
+    function fit() {
+      var on = alertB.querySelector('.ilk-panel.ilk-on');
+      if (on) alertB.style.height = on.offsetHeight + 'px';
+    }
+    function show(name) {
+      panels.forEach(function(p) {
+        p.classList.toggle('ilk-on', p.dataset.panel === name);
+      });
+      fit();
+    }
+    show('ask');
+
+    if (hostDoc.fonts && hostDoc.fonts.ready) {
+      hostDoc.fonts.ready.then(fit).catch(function() {});
+    }
+    var rt;
+    var onResize = function() { clearTimeout(rt); rt = setTimeout(fit, 140); };
+    hostWin.addEventListener('resize', onResize);
+
+    wait(1250, function() {
+      scrim.classList.add('ilk-on');
+      stage.classList.add('ilk-in');
+      fit();
+    });
+
+    alertB.addEventListener('click', function(e) {
+      var btn = e.target.closest('.ilk-btn');
+      if (!btn) return;
+      switch (btn.dataset.act) {
+        case 'yes': show('right'); break;
+        case 'no': show('wrong'); break;
+        case 'back': show('ask'); break;
+        case 'done':
+          stage.classList.add('ilk-done');
+          scrim.classList.remove('ilk-on');
+          wait(420, function() { stage.classList.add('ilk-gone'); });
+          wait(620, dropBanner);
+          break;
+      }
+    });
+
+    var banner = q('banner');
+    var state = 'idle';
+
+    function dropBanner() {
+      state = 'in';
+      banner.classList.remove('ilk-out');
+      banner.classList.add('ilk-in');
+      banner.tabIndex = 0;
+    }
+    function bannerOut() {
+      state = 'out';
+      banner.classList.remove('ilk-in', 'ilk-press');
+      banner.classList.add('ilk-out');
+      banner.tabIndex = -1;
+    }
+
+    banner.addEventListener('pointerdown', function() {
+      if (state === 'in') banner.classList.add('ilk-press');
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function(ev) {
+      banner.addEventListener(ev, function() { banner.classList.remove('ilk-press'); });
+    });
+
+    // 【改】点横幅 → 整个开屏退场，露出主页
+    function onBannerClick() {
+      if (state !== 'in') return;
+      bannerOut();
+      wait(480, function() {
+        root.classList.add('ilk-bye');
+        wait(600, function() { teardown(); });
+      });
+    }
+
+    banner.addEventListener('click', onBannerClick);
+    banner.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onBannerClick();
+      }
+    });
+
+   function teardown() {
+  clearInterval(clockTimer);
+  timers.forEach(clearTimeout);
+  clearTimeout(rt);
+  hostWin.removeEventListener('resize', onResize);
+  // 【新增】移除高度监听，避免 ilk 退出后还在跑
+  hostWin.removeEventListener('resize', fitRootHeight);
+  hostWin.removeEventListener('orientationchange', fitRootHeight);
+  root.removeEventListener('touchmove', blockScroll);
+  if (root.isConnected) root.remove();
+  try { delete hostWin._ilkDestroy; } catch (e) { hostWin._ilkDestroy = null; }
+}
+    hostWin._ilkDestroy = teardown;
+  }
+})();
+</script>
+</body>
+</html>
