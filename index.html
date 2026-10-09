@@ -11,10 +11,9 @@
   <!-- PWA / 添加到主屏幕：全屏无地址栏 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- 【改】状态栏：default 会白底黑字 → 改为 black 纯黑底白字，与 ilk 黑屏统一 -->
+<!-- 状态栏：black-translucent 透明沉浸式，让壁纸铺到灵动岛/状态栏底下 -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="应许之地">
-<!-- 【改】theme-color 同步为黑，Android/Chrome PWA 生效 -->
 <meta name="theme-color" content="#000000">
 
   <!-- CDN -->
@@ -47,13 +46,24 @@
    iOS 锁屏开屏动画（ilk）
    注意：已删掉原版对 html/body 的破坏性规则，只作用于 #ilk_root
    ============================================================ */
+
+/* 兜底：整页背景黑，防止 #ilk_root 边缘差几像素时露出白/灰 */
+html, body {
+  background: #000;
+}
+
 #ilk_root {
   position: fixed !important;
   top: 0 !important; left: 0 !important;
-  right: 0 !important; bottom: 0 !important;
+  right: 0 !important;
+  /* 【改】不再用 bottom:0 拉伸（bottom:0 会被"布局视口"限制，避开系统条）；
+     改为靠 height 撑满物理屏，配合 dvh / lvh 兜底 */
+  bottom: auto !important;
   width: auto !important;
   height: 100vh !important;           /* 回退 */
-  height: 100lvh !important; 
+  height: 100dvh !important;          /* 动态视口，iOS 16.4+ */
+  min-height: 100vh !important;       /* 再兜底 */
+  min-height: 100lvh !important;      /* 最大视口，含系统条占位 */
   margin: 0 !important; padding: 0 !important; border: 0 !important;
   z-index: 2147483647 !important;
   overflow: hidden !important;
@@ -126,14 +136,7 @@
 #ilk_root .ilk-scrim.ilk-on { opacity: 1; visibility: visible; }
 
 /* 【删】.ilk-sb 顶部状态栏规则已整块移除（左时钟/右信号WiFi电量 不再需要） */
-
-#ilk_root .ilk-island {
-  position: absolute; top: calc(var(--ilk-safe-t) + 9px); left: 50%;
-  transform: translateX(-50%);
-  width: 112px; height: 32px; border-radius: 18px;
-  background: #000; z-index: 30; display: none; pointer-events: none;
-}
-@media (max-width: 520px) and (min-height: 600px) { #ilk_root .ilk-island { display: block; } }
+/* 【删】.ilk-island 假灵动岛规则 + 对应 @media 已整块移除 */
 
 #ilk_root .ilk-lock {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10;
@@ -147,7 +150,7 @@
 #ilk_root .ilk-lock-main {
   flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; align-items: center;
-  /* 【改】原顶部空间由 .ilk-sb 撑开（safe + 44px）；现已删 .ilk-sb，补回安全区，
+  /* 原顶部空间由 .ilk-sb 撑开（safe + 44px）；现已删 .ilk-sb，补回安全区，
      否则日期/大时钟会被灵动岛/状态栏硬件区域压住 */
   padding: calc(var(--ilk-safe-t) + 44px) 16px 0;
 }
@@ -2171,8 +2174,6 @@
       </button>
     </div>
   </div>
-
-  <div class="ilk-scrim" data-ilk="scrim"></div>
 
   <div class="ilk-stage" data-ilk="stage">
     <div class="ilk-alert" data-ilk="alert" role="alertdialog">
