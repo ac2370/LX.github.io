@@ -4,7 +4,7 @@
    - 不动 JS，不动路由，不动功能逻辑
    - 只覆盖颜色 / 字体 / 圆角 / 阴影 / 弹窗 / 顶栏 / 卡片
    - 昼夜模式跟随 body.theme-dark
-   - 所有选择器都限定在具体页面，避免误伤聊天页菜单
+   - 聊天页只换颜色，不碰布局
    ============================================================ */
 
 /* ============================================================
@@ -528,7 +528,6 @@ body {
 .ds-field-label,
 .edit-field-label,
 .mood-custom-field-label,
-.add-title,
 .card-group-label {
   font-family: var(--ov-font-sans) !important;
   font-size: 9px !important;
@@ -613,9 +612,6 @@ body {
 .card-search-input {
   color: var(--ov-text-primary) !important;
   font-family: var(--ov-font-serif) !important;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
 }
 .input-with-unit input::placeholder,
 .proactive-contact-select::placeholder,
@@ -919,80 +915,55 @@ body {
 }
 
 /* ============================================================
-   10. 聊天页（关键：不动布局，只换颜色）
+   10. 聊天页（只换颜色，不碰任何布局属性）
    ============================================================ */
 
-/* 顶栏背景透明 */
-.chat-top-bg,
-.chat-top-actions {
-  background: transparent !important;
-}
-
-/* 顶栏图标 */
+/* 顶栏图标颜色 */
 .chat-back-btn,
 .chat-action-icon {
   color: var(--ov-text-secondary) !important;
-  transition: color 0.3s ease;
 }
 .chat-back-btn:hover,
 .chat-action-icon:hover {
   color: var(--ov-text-primary) !important;
 }
 
-/* 头像下的名字 */
+/* 头像下的名字颜色 */
 .chat-name {
   color: var(--ov-text-primary) !important;
-  font-family: var(--ov-font-serif) !important;
-  letter-spacing: 2px !important;
 }
 
-/* 聊天开始提示条 */
+/* 聊天开始提示条颜色 */
 .chat-start-bar {
-  background: var(--ov-card-bg) !important;
-  border: 1px solid var(--ov-card-border) !important;
-  border-radius: var(--ov-radius-card) !important;
   color: var(--ov-text-muted) !important;
-  font-family: var(--ov-font-sans) !important;
 }
 
-/* 消息区背景透明 */
-.chat-messages {
-  background: transparent !important;
-}
-
-/* 输入栏：只覆盖颜色，布局完全交给 chat.css */
+/* 输入栏背景色（只改背景，不动布局） */
 .chat-input-bar {
   background: var(--ov-panel-bg) !important;
-  border-color: var(--ov-panel-border) !important;
 }
+
+/* 输入框文字颜色 */
 .chat-input {
   color: var(--ov-text-primary) !important;
 }
 .chat-input::placeholder {
   color: var(--ov-text-muted) !important;
 }
+
+/* 左侧图标颜色 */
 .input-left-icons i {
   color: var(--ov-text-secondary) !important;
 }
+
+/* 发送按钮颜色（只改颜色，不动尺寸） */
 .send-btn:not(:disabled) {
   background: var(--ov-text-primary) !important;
   color: var(--ov-bg-page) !important;
 }
 
 /* ============================================================
-   11. 消息操作菜单（明确排除，不加任何装饰）
-   ============================================================ */
-.msg-action-menu,
-.msg-action-menu *,
-.msg-action-btn {
-  background: inherit;
-  border: inherit;
-  border-radius: inherit;
-  font-family: var(--ov-font-sans) !important;
-}
-
-/* ============================================================
-   12. 滚动条统一
+   11. 滚动条统一
    ============================================================ */
 *::-webkit-scrollbar {
   width: 4px;
@@ -1008,19 +979,4 @@ body {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--ov-scrollbar) transparent;
-}
-
-/* ============================================================
-   13. 过渡（昼夜切换颜色平滑）
-   ============================================================ */
-body,
-body *:not(#ilk_root):not(#ilk_root *) {
-  transition-property: background-color, border-color, color, box-shadow;
-  transition-duration: 0.3s;
-  transition-timing-function: ease;
-}
-/* 动画元素不参与过渡 */
-[class*="spinning"],
-[class*="animation"] {
-  transition: none !important;
 }
