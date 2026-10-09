@@ -6,8 +6,8 @@
 /* 主页设置按钮 */
 .home-settings-btn {
   position: absolute;
-  right: 20px;
-  top: 44px;
+  right: 16px;
+  top: 90px;
   z-index: 70;
   width: 42px;
   height: 42px;
