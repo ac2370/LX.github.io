@@ -23,6 +23,7 @@ body {
   margin: 0 auto;
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: calc(100dvh + env(safe-area-inset-bottom, 0px));  /* 新增：底部多撑一个安全区，遮住漏出的浅蓝 */
   flex-direction: column;
 }
 .page.active {
