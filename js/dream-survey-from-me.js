@@ -56,40 +56,17 @@
 
   // ==================== Ta 答题 ====================
   // 从字卡库抽 1~3 句拼成一段文字
-  function generateTextAnswer() {
-    // ==================== 三层兜底 ====================
-    // 1) 用户字卡（getReplyCards）
-    // 2) 内置字卡库（DEFAULT_CARD_DATA.reply）
-    // 3) 公共字卡库勾选（publicCards.getSelectedCards('reply')）
+    function generateTextAnswer() {
+    // 从公共字卡库（已勾选的回复卡）随机抽 1~3 条拼成回答
     var pool = [];
     try {
-      if (typeof window.getReplyCards === 'function') {
-        var u = window.getReplyCards() || [];
-        if (Array.isArray(u) && u.length > 0) pool = pool.concat(u);
-      }
-    } catch (e) {}
-
-    if (pool.length === 0) {
-      try {
-        var d = window.DEFAULT_CARD_DATA;
-        if (d && d.reply && typeof d.reply === 'object') {
-          Object.keys(d.reply).forEach(function (g) {
-            if (Array.isArray(d.reply[g])) {
-              pool = pool.concat(d.reply[g]);
-            }
-          });
-        }
-      } catch (e) {}
-    }
-
-    if (pool.length === 0) {
-      try {
-        if (window.publicCards && typeof window.publicCards.getSelectedCards === 'function') {
+      if (window.publicCards && typeof window.publicCards.getSelectedCards === 'function') {
+        if (typeof window.publicCards.isReady !== 'function' || window.publicCards.isReady()) {
           var pub = window.publicCards.getSelectedCards('reply');
           if (Array.isArray(pub) && pub.length > 0) pool = pub;
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     if (pool.length === 0) {
       return '……';
@@ -112,6 +89,7 @@
     });
     return parts.join('');
   }
+
 
   // 单题作答
   function answerOneQuestion(q) {
