@@ -704,6 +704,15 @@
       return;
     }
 
+
+    // milk 式拍一拍：3% 概率用「拍一拍」顶替本次文字回复
+    if (typeof window.chatExtras === 'object' &&
+        typeof window.chatExtras.firePartnerPat === 'function' &&
+        Math.random() < 0.03) {
+      window.chatExtras.firePartnerPat();
+      return;
+    }
+
     // 检查是否有可用字卡（用户字卡 + 公共字卡 + 专属字卡）
     var allCards = getAllReplyCards();
     var publicCards = getPublicReplyCards();
