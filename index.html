@@ -2244,15 +2244,25 @@ html, body {
     root.id = 'ilk_root';
     root.innerHTML = tpl.innerHTML;
     hostDoc.body.appendChild(root);
-    // 【新增】PWA 下 dvh/lvh 不可靠：用 JS 量出物理视口高度，写死给 #ilk_root
+// 【修正】PWA 下 dvh/lvh 不可靠；但 visualViewport.height 会随滚动/键盘变化，不能用。
+// 只用 screen.height（物理屏高，稳定）兜底，配 innerHeight 作回退。
 function fitRootHeight() {
-  var h = (hostWin.visualViewport && hostWin.visualViewport.height)
-        || hostWin.innerHeight
-        || hostDoc.documentElement.clientHeight;
+  // screen.height 在 iPhone 上是物理像素下的"物理屏高"（含灵动岛+底条）
+  var h = Math.max(
+    hostWin.screen ? hostWin.screen.height : 0,
+    hostWin.outerHeight || 0,
+    hostWin.innerHeight || 0,
+    hostDoc.documentElement.clientHeight || 0
+  );
   root.style.setProperty('height', h + 'px', 'important');
   root.style.setProperty('min-height', h + 'px', 'important');
   root.style.setProperty('bottom', 'auto', 'important');
 }
+fitRootHeight();
+
+// 只在窗口尺寸/方向真正变化时重算（不要监听 visualViewport.scroll）
+hostWin.addEventListener('resize', fitRootHeight);
+hostWin.addEventListener('orientationchange', fitRootHeight);
 fitRootHeight();
 
 // 视口一变就重算
@@ -2392,15 +2402,18 @@ if (hostWin.visualViewport) {
       }
     });
 
-    function teardown() {
-      clearInterval(clockTimer);
-      timers.forEach(clearTimeout);
-      clearTimeout(rt);
-      hostWin.removeEventListener('resize', onResize);
-      root.removeEventListener('touchmove', blockScroll);
-      if (root.isConnected) root.remove();
-      try { delete hostWin._ilkDestroy; } catch (e) { hostWin._ilkDestroy = null; }
-    }
+   function teardown() {
+  clearInterval(clockTimer);
+  timers.forEach(clearTimeout);
+  clearTimeout(rt);
+  hostWin.removeEventListener('resize', onResize);
+  // 【新增】移除高度监听，避免 ilk 退出后还在跑
+  hostWin.removeEventListener('resize', fitRootHeight);
+  hostWin.removeEventListener('orientationchange', fitRootHeight);
+  root.removeEventListener('touchmove', blockScroll);
+  if (root.isConnected) root.remove();
+  try { delete hostWin._ilkDestroy; } catch (e) { hostWin._ilkDestroy = null; }
+}
     hostWin._ilkDestroy = teardown;
   }
 })();
