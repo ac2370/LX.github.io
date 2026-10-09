@@ -32,6 +32,7 @@
   mood:    window.cardDatabase.mood,
   sticker: window.cardDatabase.sticker,
   status:  window.cardDatabase.status
+  location: window.cardDatabase.location || { '默认分组': [] },
 };
     if (hasLocalforage) {
       localforage.setItem(STORE_KEY, data).catch(function (e) {
@@ -57,7 +58,7 @@
 
       // reply / pat / place / mood：期望是分组对象
       // 如果读到的是数组，先按「默认分组」包起来（不丢数据）
-      ['reply', 'pat', 'place', 'mood'].forEach(function (key) {
+      ['reply', 'pat', 'place', 'mood', 'location'].forEach(function (key) {
         var v = data[key];
         if (Array.isArray(v)) {
           window.cardDatabase[key] = { '默认分组': v.slice() };
@@ -101,6 +102,7 @@
   if (category === 'mood')    return window.cardDatabase.mood;
   if (category === 'sticker') return window.cardDatabase.sticker;
   if (category === 'status')  return window.cardDatabase.status;
+  if (category === 'location') return window.cardDatabase.location || { '默认分组': [] };
   return [];
 };
 
