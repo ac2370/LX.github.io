@@ -795,10 +795,12 @@
       chatMessages.appendChild(sysRow);
       scrollToBottom();
 
-      // 会话分桶：记录「我拍了拍」系统行 + 设置回复目标会话
+      // 会话分桶：记录「我拍了拍」系统行 + 记住拍一拍所在会话（供延迟回复使用）
+      var patKey = null;
       if (window.sessionChat) {
         try {
-          window.sessionChat.setReplyTarget(window.sessionChat.getCurrentKey());
+          patKey = window.sessionChat.getCurrentKey();
+          window.sessionChat.setReplyTarget(patKey);
           window.sessionChat.record('other', { kind: 'pat', by: 'me', text: text, name: contactName });
         } catch (e) {}
       }
@@ -817,11 +819,14 @@
         bubble.className = 'message-bubble';
         bubble.textContent = replyText;
         row.appendChild(bubble);
-        chatMessages.appendChild(row);
-        scrollToBottom();
+        // 只有仍在查看拍一拍所在会话时才追加到可见 DOM（切换会话后不串扰）
+        if (!window.sessionChat || !patKey || window.sessionChat.getCurrentKey() === patKey) {
+          chatMessages.appendChild(row);
+          scrollToBottom();
+        }
 
-        if (window.sessionChat) {
-          try { window.sessionChat.recordReply('other', replyText); } catch (e) {}
+        if (window.sessionChat && patKey) {
+          try { window.sessionChat.recordTo(patKey, 'other', replyText); } catch (e) {}
         }
 
         if (window.chatNotify && typeof window.chatNotify.show === 'function') {
