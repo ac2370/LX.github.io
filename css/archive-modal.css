@@ -1,5 +1,5 @@
 /* ============================================================
-archive-modal.css —— 字卡档案弹窗 · 统一皮肤层（Step 1）
+archive-modal.css —— 字卡档案弹窗 · 统一皮肤层（Step 1 + Step 2）
 
 功能：为全站小弹窗提供"字卡档案"视觉的两套主题变量（昼 / 暗），
       以及一套可复用的骨架类（.am-*）。Step 2 起由各弹窗复用。
@@ -427,3 +427,359 @@ body.theme-dark {
 .am-item:nth-child(4) { animation-delay: 0.28s; }
 .am-item:nth-child(5) { animation-delay: 0.34s; }
 .am-item:nth-child(6) { animation-delay: 0.4s; }
+
+/* ============================================================
+Step 2 · 8 个通用居中弹窗接入（覆盖原 css 外观，不改 HTML/JS）
+
+适用弹窗：
+  simple-modal      通用输入弹窗（添加字卡 / 重命名等）
+  group-modal       分组弹窗（JS 动态创建）
+  new-group-modal   新建分组弹窗（JS 动态创建）
+  add-modal         添加歌曲弹窗
+  manage-modal      歌单管理弹窗
+  mood-sw-modal     心晴 · 切换联系人
+  mood-custom-modal 心晴 · 添加自定义心情
+  stats-sw-modal    词云 · 切换联系人（原底部滑出 → 改居中卡片）
+
+规则说明：
+  · 覆盖选择器与原 css 同名且加载顺序在后（index.html 中本文件
+    放在最后一个 css 之后），昼 / 暗两套都写，压过原 body.theme-dark
+    暗色覆盖。
+  · 只换视觉（色 / 圆角 / 玻璃 / 字体 / 动画 / 圆角），不触碰
+    display、.active 开关、z-index 等交互布局，JS 无需改动。
+============================================================ */
+
+/* ---------- 遮罩层：统一居中 + 档案遮罩 ---------- */
+.simple-modal,
+.group-modal,
+.new-group-modal,
+.add-modal,
+.manage-modal,
+.mood-sw-modal,
+.mood-custom-modal,
+.stats-sw-modal {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--am-overlay-bg);
+  backdrop-filter: blur(var(--am-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--am-overlay-blur));
+}
+body.theme-dark .simple-modal,
+body.theme-dark .group-modal,
+body.theme-dark .new-group-modal,
+body.theme-dark .add-modal,
+body.theme-dark .manage-modal,
+body.theme-dark .mood-sw-modal,
+body.theme-dark .mood-custom-modal,
+body.theme-dark .stats-sw-modal {
+  background: var(--am-overlay-bg);
+  backdrop-filter: blur(var(--am-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--am-overlay-blur));
+}
+
+/* ---------- 面板：档案玻璃卡片 ---------- */
+.simple-panel,
+.group-modal-panel,
+.new-group-panel,
+.add-panel,
+.manage-panel,
+.mood-sw-panel,
+.mood-custom-panel,
+.stats-sw-panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--am-panel-width);
+  max-height: var(--am-panel-maxh);
+  overflow-y: auto;
+  background: var(--am-panel-bg);
+  border: 1px solid var(--am-panel-border);
+  border-radius: var(--am-panel-radius);
+  backdrop-filter: blur(var(--am-panel-blur));
+  -webkit-backdrop-filter: blur(var(--am-panel-blur));
+  box-shadow: var(--am-panel-shadow);
+  padding: 20px;
+  animation: amIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  scrollbar-width: thin;
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+.simple-panel::-webkit-scrollbar,
+.group-modal-panel::-webkit-scrollbar,
+.new-group-panel::-webkit-scrollbar,
+.add-panel::-webkit-scrollbar,
+.manage-panel::-webkit-scrollbar,
+.mood-sw-panel::-webkit-scrollbar,
+.mood-custom-panel::-webkit-scrollbar,
+.stats-sw-panel::-webkit-scrollbar { width: 4px; }
+.simple-panel::-webkit-scrollbar-track,
+.group-modal-panel::-webkit-scrollbar-track,
+.new-group-panel::-webkit-scrollbar-track,
+.add-panel::-webkit-scrollbar-track,
+.manage-panel::-webkit-scrollbar-track,
+.mood-sw-panel::-webkit-scrollbar-track,
+.mood-custom-panel::-webkit-scrollbar-track,
+.stats-sw-panel::-webkit-scrollbar-track { background: transparent; }
+.simple-panel::-webkit-scrollbar-thumb,
+.group-modal-panel::-webkit-scrollbar-thumb,
+.new-group-panel::-webkit-scrollbar-thumb,
+.add-panel::-webkit-scrollbar-thumb,
+.manage-panel::-webkit-scrollbar-thumb,
+.mood-sw-panel::-webkit-scrollbar-thumb,
+.mood-custom-panel::-webkit-scrollbar-thumb,
+.stats-sw-panel::-webkit-scrollbar-thumb {
+  background: var(--am-scrollbar);
+  border-radius: 2px;
+}
+body.theme-dark .simple-panel,
+body.theme-dark .group-modal-panel,
+body.theme-dark .new-group-panel,
+body.theme-dark .add-panel,
+body.theme-dark .manage-panel,
+body.theme-dark .mood-sw-panel,
+body.theme-dark .mood-custom-panel,
+body.theme-dark .stats-sw-panel {
+  background: var(--am-panel-bg);
+  border: 1px solid var(--am-panel-border);
+  box-shadow: var(--am-panel-shadow);
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+body.theme-dark .simple-panel::-webkit-scrollbar-thumb,
+body.theme-dark .group-modal-panel::-webkit-scrollbar-thumb,
+body.theme-dark .new-group-panel::-webkit-scrollbar-thumb,
+body.theme-dark .add-panel::-webkit-scrollbar-thumb,
+body.theme-dark .manage-panel::-webkit-scrollbar-thumb,
+body.theme-dark .mood-sw-panel::-webkit-scrollbar-thumb,
+body.theme-dark .mood-custom-panel::-webkit-scrollbar-thumb,
+body.theme-dark .stats-sw-panel::-webkit-scrollbar-thumb {
+  background: var(--am-scrollbar);
+}
+
+/* 面板顶线（档案细光条） */
+.simple-panel::before,
+.group-modal-panel::before,
+.new-group-panel::before,
+.add-panel::before,
+.manage-panel::before,
+.mood-sw-panel::before,
+.mood-custom-panel::before,
+.stats-sw-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--am-topline);
+  z-index: 3;
+}
+
+/* ---------- 标题：档案衬线字标 ---------- */
+.simple-title,
+.group-modal-title,
+.new-group-title,
+.add-title,
+.manage-title,
+.mood-sw-title,
+.mood-custom-title,
+.stats-sw-title {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+body.theme-dark .simple-title,
+body.theme-dark .group-modal-title,
+body.theme-dark .new-group-title,
+body.theme-dark .add-title,
+body.theme-dark .manage-title,
+body.theme-dark .mood-sw-title,
+body.theme-dark .mood-custom-title,
+body.theme-dark .stats-sw-title {
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+}
+.simple-title i,
+.add-title i,
+.new-group-title i,
+.group-modal-title i,
+.manage-title i,
+.mood-sw-title i,
+.mood-custom-title i,
+.stats-sw-title i { color: var(--am-sub-color); }
+
+/* 字段标签 */
+.new-group-label,
+.mood-custom-field-label {
+  color: var(--am-sub-color);
+  font-weight: 600;
+}
+body.theme-dark .new-group-label,
+body.theme-dark .mood-custom-field-label { color: var(--am-sub-color); }
+
+/* ---------- 输入框 / 文本域：档案表单 ---------- */
+.simple-textarea,
+.group-modal-input,
+.new-group-input,
+.new-group-hex-input,
+.add-input,
+.mood-custom-emoji-input,
+.mood-custom-label-input {
+  background: var(--am-input-bg);
+  border: 1px solid var(--am-input-border);
+  border-radius: var(--am-panel-radius);
+  color: var(--am-item-title-color);
+}
+body.theme-dark .simple-textarea,
+body.theme-dark .group-modal-input,
+body.theme-dark .new-group-input,
+body.theme-dark .new-group-hex-input,
+body.theme-dark .add-input,
+body.theme-dark .mood-custom-emoji-input,
+body.theme-dark .mood-custom-label-input {
+  background: var(--am-input-bg);
+  border-color: var(--am-input-border);
+  color: var(--am-item-title-color);
+}
+.simple-textarea:focus,
+.group-modal-input:focus,
+.new-group-input:focus,
+.new-group-hex-input:focus,
+.add-input:focus,
+.mood-custom-emoji-input:focus,
+.mood-custom-label-input:focus {
+  border-color: var(--am-input-focus);
+  box-shadow: none;
+}
+.simple-textarea::placeholder,
+.group-modal-input::placeholder,
+.new-group-input::placeholder,
+.new-group-hex-input::placeholder,
+.add-input::placeholder,
+.mood-custom-emoji-input::placeholder,
+.mood-custom-label-input::placeholder { color: var(--am-item-num-color); }
+
+/* ---------- 按钮：档案取消 / 确认 ---------- */
+.simple-btn,
+.group-modal-btn,
+.new-group-btn,
+.add-btn,
+.mood-custom-btn {
+  border-radius: var(--am-panel-radius);
+  font-size: 13px;
+}
+.simple-btn-cancel,
+.group-modal-btn-cancel,
+.new-group-btn-cancel,
+.add-btn-cancel,
+.mood-custom-btn-cancel,
+.manage-cancel,
+.mood-sw-cancel,
+.stats-sw-cancel {
+  background: var(--am-btn-cancel-bg);
+  color: var(--am-btn-cancel-color);
+  border: 1px solid var(--am-btn-cancel-border);
+}
+body.theme-dark .simple-btn-cancel,
+body.theme-dark .group-modal-btn-cancel,
+body.theme-dark .new-group-btn-cancel,
+body.theme-dark .add-btn-cancel,
+body.theme-dark .mood-custom-btn-cancel,
+body.theme-dark .manage-cancel,
+body.theme-dark .mood-sw-cancel,
+body.theme-dark .stats-sw-cancel {
+  background: var(--am-btn-cancel-bg);
+  color: var(--am-btn-cancel-color);
+  border-color: var(--am-btn-cancel-border);
+}
+.simple-btn-confirm,
+.group-modal-btn-confirm,
+.new-group-btn-confirm,
+.add-btn-confirm,
+.mood-custom-btn-confirm {
+  background: var(--am-btn-confirm-bg);
+  color: var(--am-btn-confirm-color);
+  box-shadow: none;
+}
+body.theme-dark .simple-btn-confirm,
+body.theme-dark .group-modal-btn-confirm,
+body.theme-dark .new-group-btn-confirm,
+body.theme-dark .add-btn-confirm,
+body.theme-dark .mood-custom-btn-confirm {
+  background: var(--am-btn-confirm-bg);
+  color: var(--am-btn-confirm-color);
+}
+/* 歌单管理大按钮 */
+.manage-btn {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: var(--am-panel-radius);
+  background: var(--am-btn-cancel-bg);
+  border: 1px solid var(--am-btn-cancel-border);
+  color: var(--am-btn-cancel-color);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.manage-btn:active { opacity: 0.85; transform: scale(0.98); }
+body.theme-dark .manage-btn {
+  background: var(--am-btn-cancel-bg);
+  border-color: var(--am-btn-cancel-border);
+  color: var(--am-btn-cancel-color);
+}
+.mood-sw-cancel,
+.stats-sw-cancel {
+  border-radius: var(--am-panel-radius);
+}
+
+/* ---------- 列表项（联系人切换）：档案卡片 ---------- */
+.mood-sw-list,
+.stats-sw-list { gap: 6px; }
+.mood-sw-item,
+.stats-sw-item {
+  background: var(--am-item-bg);
+  border: 1px solid var(--am-item-border);
+  border-radius: var(--am-panel-radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mood-sw-item:hover,
+.stats-sw-item:hover {
+  background: var(--am-item-hover-bg);
+  transform: translateX(3px);
+}
+.mood-sw-item.active,
+.stats-sw-item.active {
+  background: var(--am-item-hover-bg);
+  border-color: var(--am-item-hover-border);
+}
+body.theme-dark .mood-sw-item,
+body.theme-dark .stats-sw-item {
+  background: var(--am-item-bg);
+  border-color: var(--am-item-border);
+}
+body.theme-dark .mood-sw-item:hover,
+body.theme-dark .stats-sw-item:hover {
+  background: var(--am-item-hover-bg);
+}
+body.theme-dark .mood-sw-item.active,
+body.theme-dark .stats-sw-item.active {
+  background: var(--am-item-hover-bg);
+  border-color: var(--am-item-hover-border);
+}
+.mood-sw-name,
+.stats-sw-name {
+  color: var(--am-item-title-color);
+}
+body.theme-dark .mood-sw-name,
+body.theme-dark .stats-sw-name { color: var(--am-item-title-color); }
