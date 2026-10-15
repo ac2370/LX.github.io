@@ -2143,8 +2143,7 @@ body {
   <script src="./js/dream-survey.js?v=20261010"></script>
   <script src="./js/dream-survey-from-ta.js?v=20261005"></script>
   <script src="./js/dream-survey-from-me.js?v=20261005"></script>
-  <!-- 【注意】下面这行是重复引用，交接书遗留事项 #5 提到过；此处按原样保留，未删。 -->
-  <script src="./js/dream-survey.js?v=20261010"></script>
+  <!-- 【已修复 2026-10-15】dream-survey.js 曾重复引用（交接书遗留 #5）：脚本执行两遍导致事件双绑、高级模式点击无响应、问卷编辑状态互相覆盖；已删除下方重复行。 -->
   <script src="./js/archive.js?v=20261005"></script>
 
   <template id="ilk_template">
