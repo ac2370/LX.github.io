@@ -1142,6 +1142,8 @@
       icon.addEventListener('click', function (e) {
         e.stopImmediatePropagation();
         e.preventDefault();
+        // 手动「让 Ta 继续说」不显示/保留"思念送達中"浮层（浮层只在发送消息时出现）
+        hideTypingFloat();
         triggerAutoReply();
       });
       return;
