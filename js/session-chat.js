@@ -320,7 +320,7 @@
   function buildSurveyRow(m) {
     var row = document.createElement('div');
     var isMe = m.direction === 'from-me';
-    row.className = 'message-row ' + (isMe ? 'self' : 'other') + ' msg-survey-row';
+    row.className = 'message-row ' + (isMe ? 'self' : 'other') + ' msg-survey-row' + (isMe ? ' msg-survey-row-self' : '');
     row.dataset.surveyId = m.surveyId || '';
     row.dataset.surveyStatus = m.status || (isMe ? 'sent' : 'unanswered');
     row.dataset.sender = isMe ? 'me' : 'partner';
