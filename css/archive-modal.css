@@ -1,5 +1,5 @@
 /* ============================================================
-archive-modal.css —— 字卡档案弹窗 · 统一皮肤层（Step 1 + Step 2）
+archive-modal.css —— 字卡档案弹窗 · 统一皮肤层（Step 1）
 
 功能：为全站小弹窗提供"字卡档案"视觉的两套主题变量（昼 / 暗），
       以及一套可复用的骨架类（.am-*）。Step 2 起由各弹窗复用。
@@ -783,3 +783,685 @@ body.theme-dark .stats-sw-item.active {
 }
 body.theme-dark .mood-sw-name,
 body.theme-dark .stats-sw-name { color: var(--am-item-title-color); }
+
+/* ============================================================
+Step 3 + 4 · 截图弹窗 & 特殊类接入（覆盖原 css 外观，不改 HTML/JS）
+
+适用弹窗（用户 2026-10-15 截图清单 + 同类顺带）：
+  小弹窗（窄 340）：
+    env-write-modal      信箱 · 写一封信
+    env-read-modal       信箱 · 阅读信件（顺带）
+    feed-post-modal      朋友圈 · 发表动态
+    pat-modal            传讯 · 拍一拍
+    chat-option-panel    传讯 · 图片/表情包底部面板
+    imp-modal            重要日 · 添加重要日
+    companion-partner-modal  陪伴 · 选择陪伴对象
+    playlist-sheet       音乐播放器弹窗（顺带）
+    gmp-modal            群聊 · 选择成员弹层
+    edit-profile-modal   编辑资料（顺带）
+    ds-export-modal      传讯设置 · 数据导出（顺带）
+    role-panel-modal     角色面板（我的角色 / 所有角色 / 添加好友）
+  大面板（宽 560）：
+    home-settings-panel  主页 · 图片自定义 / 设置
+    chat-settings-panel  传讯 · 设置面板
+    reply-settings-modal 传讯 · 回复设定
+    group-chat-modal     群聊 · 群聊设置
+
+规则说明：
+  · 覆盖选择器与原 css 同名、本文件位于 css 序列最末，昼/暗两套都写；
+  · 只换视觉（遮罩 / 玻璃 / 圆角 / 字体 / 颜色 / 动画），不触碰
+    display、.active、z-index、内部 flex 布局，JS 无需改动；
+  · 底部滑出面板（pat / chat-option / companion-partner / gmp /
+    playlist-sheet）统一改为居中档案卡片，与定稿排版一致。
+============================================================ */
+
+/* ---------- 遮罩层：统一居中 + 档案遮罩 ---------- */
+.env-write-modal,
+.env-read-modal,
+.feed-post-modal,
+.pat-modal,
+.chat-option-panel,
+.imp-modal,
+.companion-partner-modal,
+.playlist-sheet,
+.gmp-modal,
+.edit-profile-modal,
+.ds-export-modal,
+.role-panel-modal,
+.cs-word-modal,
+.home-settings-panel,
+.chat-settings-panel,
+.reply-settings-modal,
+.group-chat-modal {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--am-overlay-bg);
+  backdrop-filter: blur(var(--am-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--am-overlay-blur));
+}
+body.theme-dark .env-write-modal,
+body.theme-dark .env-read-modal,
+body.theme-dark .feed-post-modal,
+body.theme-dark .pat-modal,
+body.theme-dark .chat-option-panel,
+body.theme-dark .imp-modal,
+body.theme-dark .companion-partner-modal,
+body.theme-dark .playlist-sheet,
+body.theme-dark .gmp-modal,
+body.theme-dark .edit-profile-modal,
+body.theme-dark .ds-export-modal,
+body.theme-dark .role-panel-modal,
+body.theme-dark .cs-word-modal,
+body.theme-dark .home-settings-panel,
+body.theme-dark .chat-settings-panel,
+body.theme-dark .reply-settings-modal,
+body.theme-dark .group-chat-modal {
+  background: var(--am-overlay-bg);
+  backdrop-filter: blur(var(--am-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--am-overlay-blur));
+}
+
+/* ---------- 面板：档案玻璃卡片（窄 340 / 宽 560） ---------- */
+.env-write-panel,
+.env-read-panel,
+.feed-post-panel,
+.pat-panel,
+.chat-option-inner,
+.imp-modal-panel,
+.companion-partner-modal-panel,
+.playlist-sheet-panel,
+.gmp-panel,
+.edit-profile-panel,
+.ds-export-panel,
+.role-panel,
+.cs-word-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--am-panel-width);
+  max-height: var(--am-panel-maxh);
+  background: var(--am-panel-bg);
+  border: 1px solid var(--am-panel-border);
+  border-radius: var(--am-panel-radius);
+  backdrop-filter: blur(var(--am-panel-blur));
+  -webkit-backdrop-filter: blur(var(--am-panel-blur));
+  box-shadow: var(--am-panel-shadow);
+  animation: amIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  scrollbar-width: thin;
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+.home-settings-panel-inner,
+.chat-settings-panel-inner,
+.reply-settings-panel,
+.group-chat-panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--am-panel-width-wide);
+  max-height: var(--am-panel-maxh);
+  background: var(--am-panel-bg);
+  border: 1px solid var(--am-panel-border);
+  border-radius: var(--am-panel-radius);
+  backdrop-filter: blur(var(--am-panel-blur));
+  -webkit-backdrop-filter: blur(var(--am-panel-blur));
+  box-shadow: var(--am-panel-shadow);
+  animation: amIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  scrollbar-width: thin;
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+body.theme-dark .env-write-panel,
+body.theme-dark .env-read-panel,
+body.theme-dark .feed-post-panel,
+body.theme-dark .pat-panel,
+body.theme-dark .chat-option-inner,
+body.theme-dark .imp-modal-panel,
+body.theme-dark .companion-partner-modal-panel,
+body.theme-dark .playlist-sheet-panel,
+body.theme-dark .gmp-panel,
+body.theme-dark .edit-profile-panel,
+body.theme-dark .ds-export-panel,
+body.theme-dark .role-panel,
+body.theme-dark .cs-word-modal-panel,
+body.theme-dark .home-settings-panel-inner,
+body.theme-dark .chat-settings-panel-inner,
+body.theme-dark .reply-settings-panel,
+body.theme-dark .group-chat-panel {
+  background: var(--am-panel-bg);
+  border: 1px solid var(--am-panel-border);
+  box-shadow: var(--am-panel-shadow);
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+.env-write-panel::-webkit-scrollbar,
+.env-read-panel::-webkit-scrollbar,
+.feed-post-panel::-webkit-scrollbar,
+.pat-panel::-webkit-scrollbar,
+.chat-option-inner::-webkit-scrollbar,
+.imp-modal-panel::-webkit-scrollbar,
+.companion-partner-modal-panel::-webkit-scrollbar,
+.playlist-sheet-panel::-webkit-scrollbar,
+.gmp-panel::-webkit-scrollbar,
+.edit-profile-panel::-webkit-scrollbar,
+.ds-export-panel::-webkit-scrollbar,
+.role-panel::-webkit-scrollbar,
+.cs-word-modal-panel::-webkit-scrollbar,
+.home-settings-panel-inner::-webkit-scrollbar,
+.chat-settings-panel-inner::-webkit-scrollbar,
+.reply-settings-panel::-webkit-scrollbar,
+.group-chat-panel::-webkit-scrollbar { width: 4px; }
+.env-write-panel::-webkit-scrollbar-track,
+.env-read-panel::-webkit-scrollbar-track,
+.feed-post-panel::-webkit-scrollbar-track,
+.pat-panel::-webkit-scrollbar-track,
+.chat-option-inner::-webkit-scrollbar-track,
+.imp-modal-panel::-webkit-scrollbar-track,
+.companion-partner-modal-panel::-webkit-scrollbar-track,
+.playlist-sheet-panel::-webkit-scrollbar-track,
+.gmp-panel::-webkit-scrollbar-track,
+.edit-profile-panel::-webkit-scrollbar-track,
+.ds-export-panel::-webkit-scrollbar-track,
+.role-panel::-webkit-scrollbar-track,
+.cs-word-modal-panel::-webkit-scrollbar-track,
+.home-settings-panel-inner::-webkit-scrollbar-track,
+.chat-settings-panel-inner::-webkit-scrollbar-track,
+.reply-settings-panel::-webkit-scrollbar-track,
+.group-chat-panel::-webkit-scrollbar-track { background: transparent; }
+.env-write-panel::-webkit-scrollbar-thumb,
+.env-read-panel::-webkit-scrollbar-thumb,
+.feed-post-panel::-webkit-scrollbar-thumb,
+.pat-panel::-webkit-scrollbar-thumb,
+.chat-option-inner::-webkit-scrollbar-thumb,
+.imp-modal-panel::-webkit-scrollbar-thumb,
+.companion-partner-modal-panel::-webkit-scrollbar-thumb,
+.playlist-sheet-panel::-webkit-scrollbar-thumb,
+.gmp-panel::-webkit-scrollbar-thumb,
+.edit-profile-panel::-webkit-scrollbar-thumb,
+.ds-export-panel::-webkit-scrollbar-thumb,
+.role-panel::-webkit-scrollbar-thumb,
+.cs-word-modal-panel::-webkit-scrollbar-thumb,
+.home-settings-panel-inner::-webkit-scrollbar-thumb,
+.chat-settings-panel-inner::-webkit-scrollbar-thumb,
+.reply-settings-panel::-webkit-scrollbar-thumb,
+.group-chat-panel::-webkit-scrollbar-thumb {
+  background: var(--am-scrollbar);
+  border-radius: 2px;
+}
+body.theme-dark .env-write-panel::-webkit-scrollbar-thumb,
+body.theme-dark .env-read-panel::-webkit-scrollbar-thumb,
+body.theme-dark .feed-post-panel::-webkit-scrollbar-thumb,
+body.theme-dark .pat-panel::-webkit-scrollbar-thumb,
+body.theme-dark .chat-option-inner::-webkit-scrollbar-thumb,
+body.theme-dark .imp-modal-panel::-webkit-scrollbar-thumb,
+body.theme-dark .companion-partner-modal-panel::-webkit-scrollbar-thumb,
+body.theme-dark .playlist-sheet-panel::-webkit-scrollbar-thumb,
+body.theme-dark .gmp-panel::-webkit-scrollbar-thumb,
+body.theme-dark .edit-profile-panel::-webkit-scrollbar-thumb,
+body.theme-dark .ds-export-panel::-webkit-scrollbar-thumb,
+body.theme-dark .role-panel::-webkit-scrollbar-thumb,
+body.theme-dark .cs-word-modal-panel::-webkit-scrollbar-thumb,
+body.theme-dark .home-settings-panel-inner::-webkit-scrollbar-thumb,
+body.theme-dark .chat-settings-panel-inner::-webkit-scrollbar-thumb,
+body.theme-dark .reply-settings-panel::-webkit-scrollbar-thumb,
+body.theme-dark .group-chat-panel::-webkit-scrollbar-thumb {
+  background: var(--am-scrollbar);
+}
+
+/* 面板顶线（档案细光条） */
+.env-write-panel::before,
+.env-read-panel::before,
+.feed-post-panel::before,
+.pat-panel::before,
+.chat-option-inner::before,
+.imp-modal-panel::before,
+.companion-partner-modal-panel::before,
+.playlist-sheet-panel::before,
+.gmp-panel::before,
+.edit-profile-panel::before,
+.ds-export-panel::before,
+.role-panel::before,
+.cs-word-modal-panel::before,
+.home-settings-panel-inner::before,
+.chat-settings-panel-inner::before,
+.reply-settings-panel::before,
+.group-chat-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--am-topline);
+  z-index: 3;
+}
+
+/* ---------- 标题：档案衬线字标（小弹窗居中） ---------- */
+.env-write-title,
+.env-read-title,
+.feed-post-title,
+.imp-modal-title,
+.companion-partner-modal-title,
+.gmp-title,
+.edit-profile-title,
+.ds-export-title,
+.role-panel-title,
+.chat-option-title,
+.cs-word-modal-title {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+body.theme-dark .env-write-title,
+body.theme-dark .env-read-title,
+body.theme-dark .feed-post-title,
+body.theme-dark .imp-modal-title,
+body.theme-dark .companion-partner-modal-title,
+body.theme-dark .gmp-title,
+body.theme-dark .edit-profile-title,
+body.theme-dark .ds-export-title,
+body.theme-dark .role-panel-title,
+body.theme-dark .chat-option-title,
+body.theme-dark .cs-word-modal-title {
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+}
+.env-write-title i,
+.feed-post-title i,
+.imp-modal-title i,
+.edit-profile-title i,
+.ds-export-title i,
+.chat-option-title i { color: var(--am-sub-color); }
+
+/* 大面板标题（保留原 header 布局，换档案字标） */
+.home-settings-title,
+.chat-settings-title,
+.reply-settings-title,
+.group-chat-title {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+}
+body.theme-dark .home-settings-title,
+body.theme-dark .chat-settings-title,
+body.theme-dark .reply-settings-title,
+body.theme-dark .group-chat-title {
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+}
+.home-settings-title i,
+.chat-settings-title i,
+.reply-settings-title i,
+.group-chat-title i { color: var(--am-sub-color); }
+
+/* ---------- 关闭按钮：档案圆形 ---------- */
+.env-write-close,
+.env-read-close,
+.feed-post-close,
+.reply-settings-close,
+.home-settings-close,
+.chat-settings-close,
+.pat-close {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--am-close-border);
+  background: transparent;
+  color: var(--am-close-color);
+  transition: all 0.3s ease;
+}
+.env-write-close:hover,
+.env-read-close:hover,
+.feed-post-close:hover,
+.reply-settings-close:hover,
+.home-settings-close:hover,
+.chat-settings-close:hover,
+.pat-close:hover {
+  border-color: var(--am-close-hover-border);
+  color: var(--am-close-hover-color);
+  transform: rotate(90deg);
+}
+body.theme-dark .env-write-close,
+body.theme-dark .env-read-close,
+body.theme-dark .feed-post-close,
+body.theme-dark .reply-settings-close,
+body.theme-dark .home-settings-close,
+body.theme-dark .chat-settings-close,
+body.theme-dark .pat-close {
+  border-color: var(--am-close-border);
+  color: var(--am-close-color);
+}
+body.theme-dark .env-write-close:hover,
+body.theme-dark .env-read-close:hover,
+body.theme-dark .feed-post-close:hover,
+body.theme-dark .reply-settings-close:hover,
+body.theme-dark .home-settings-close:hover,
+body.theme-dark .chat-settings-close:hover,
+body.theme-dark .pat-close:hover {
+  border-color: var(--am-close-hover-border);
+  color: var(--am-close-hover-color);
+}
+
+/* ---------- 输入框 / 文本域 / 下拉：档案表单 ---------- */
+.env-write-textarea,
+.feed-post-textarea,
+.imp-modal-input,
+.edit-input,
+.hs-input,
+.rp-edit-name,
+.rp-edit-url,
+.group-member-name,
+.group-member-url,
+.reply-settings-panel .input-with-unit input,
+.reply-settings-panel select,
+.chat-settings-panel input[type="text"],
+.chat-settings-panel input[type="number"] {
+  background: var(--am-input-bg);
+  border: 1px solid var(--am-input-border);
+  border-radius: var(--am-panel-radius);
+  color: var(--am-item-title-color);
+  outline: none;
+}
+body.theme-dark .env-write-textarea,
+body.theme-dark .feed-post-textarea,
+body.theme-dark .imp-modal-input,
+body.theme-dark .edit-input,
+body.theme-dark .hs-input,
+body.theme-dark .rp-edit-name,
+body.theme-dark .rp-edit-url,
+body.theme-dark .group-member-name,
+body.theme-dark .group-member-url,
+body.theme-dark .reply-settings-panel .input-with-unit input,
+body.theme-dark .reply-settings-panel select,
+body.theme-dark .chat-settings-panel input[type="text"],
+body.theme-dark .chat-settings-panel input[type="number"] {
+  background: var(--am-input-bg);
+  border-color: var(--am-input-border);
+  color: var(--am-item-title-color);
+}
+.env-write-textarea:focus,
+.feed-post-textarea:focus,
+.imp-modal-input:focus,
+.edit-input:focus,
+.hs-input:focus,
+.rp-edit-name:focus,
+.rp-edit-url:focus,
+.group-member-name:focus,
+.group-member-url:focus,
+.reply-settings-panel .input-with-unit input:focus,
+.reply-settings-panel select:focus,
+.chat-settings-panel input[type="text"]:focus,
+.chat-settings-panel input[type="number"]:focus {
+  border-color: var(--am-input-focus);
+  box-shadow: none;
+}
+.env-write-textarea::placeholder,
+.feed-post-textarea::placeholder,
+.imp-modal-input::placeholder,
+.edit-input::placeholder,
+.hs-input::placeholder,
+.rp-edit-name::placeholder,
+.rp-edit-url::placeholder,
+.group-member-name::placeholder,
+.group-member-url::placeholder { color: var(--am-item-num-color); }
+
+/* 字段标签 / 小节标题 / 提示 */
+.imp-modal-label,
+.edit-field-label,
+.hs-label,
+.reply-settings-panel .setting-section-title,
+.chat-settings-section-title,
+.group-list-title,
+.input-item-label {
+  color: var(--am-sub-color);
+  font-weight: 600;
+}
+body.theme-dark .imp-modal-label,
+body.theme-dark .edit-field-label,
+body.theme-dark .hs-label,
+body.theme-dark .reply-settings-panel .setting-section-title,
+body.theme-dark .chat-settings-section-title,
+body.theme-dark .group-list-title,
+body.theme-dark .input-item-label { color: var(--am-sub-color); }
+.reply-settings-panel .setting-row-desc,
+.reply-settings-panel .input-hint,
+.reply-settings-panel .auto-save-hint,
+.hs-hint,
+.hs-file-name,
+.edit-avatar-hint,
+.input-unit,
+.sticker-empty,
+.group-empty,
+.ds-export-desc {
+  color: var(--am-item-num-color);
+}
+body.theme-dark .reply-settings-panel .setting-row-desc,
+body.theme-dark .reply-settings-panel .input-hint,
+body.theme-dark .reply-settings-panel .auto-save-hint,
+body.theme-dark .hs-hint,
+body.theme-dark .hs-file-name,
+body.theme-dark .edit-avatar-hint,
+body.theme-dark .input-unit,
+body.theme-dark .sticker-empty,
+body.theme-dark .group-empty,
+body.theme-dark .ds-export-desc { color: var(--am-item-num-color); }
+.reply-settings-panel .setting-divider,
+.home-settings-footer,
+.chat-settings-panel .chat-settings-section {
+  border-color: var(--am-divider);
+}
+body.theme-dark .reply-settings-panel .setting-divider,
+body.theme-dark .home-settings-footer,
+body.theme-dark .chat-settings-panel .chat-settings-section { border-color: var(--am-divider); }
+
+/* ---------- 按钮：档案取消 / 确认 ---------- */
+.env-write-btn-cancel,
+.feed-post-btn-cancel,
+.imp-modal-cancel,
+.edit-btn-cancel,
+.ds-export-cancel,
+.hs-btn-cancel,
+.chat-option-cancel,
+.pat-cancel,
+.gmp-cancel,
+.companion-partner-modal-cancel,
+.rp-new-toggle,
+.rp-close-full,
+.group-add-member-btn,
+.cs-word-modal-cancel {
+  background: var(--am-btn-cancel-bg);
+  color: var(--am-btn-cancel-color);
+  border: 1px solid var(--am-btn-cancel-border);
+  border-radius: var(--am-panel-radius);
+}
+body.theme-dark .env-write-btn-cancel,
+body.theme-dark .feed-post-btn-cancel,
+body.theme-dark .imp-modal-cancel,
+body.theme-dark .edit-btn-cancel,
+body.theme-dark .ds-export-cancel,
+body.theme-dark .hs-btn-cancel,
+body.theme-dark .chat-option-cancel,
+body.theme-dark .pat-cancel,
+body.theme-dark .gmp-cancel,
+body.theme-dark .companion-partner-modal-cancel,
+body.theme-dark .rp-new-toggle,
+body.theme-dark .rp-close-full,
+body.theme-dark .group-add-member-btn,
+body.theme-dark .cs-word-modal-cancel {
+  background: var(--am-btn-cancel-bg);
+  color: var(--am-btn-cancel-color);
+  border-color: var(--am-btn-cancel-border);
+}
+.env-write-btn-send,
+.feed-post-btn-submit,
+.imp-modal-confirm,
+.edit-btn-save,
+.ds-export-confirm,
+.hs-btn-save,
+.rp-edit-save,
+.rp-edit-apply-url,
+.group-save-btn,
+.gmp-confirm,
+.cs-word-modal-confirm {
+  background: var(--am-btn-confirm-bg);
+  color: var(--am-btn-confirm-color);
+  border-radius: var(--am-panel-radius);
+  box-shadow: none;
+}
+body.theme-dark .env-write-btn-send,
+body.theme-dark .feed-post-btn-submit,
+body.theme-dark .imp-modal-confirm,
+body.theme-dark .edit-btn-save,
+body.theme-dark .ds-export-confirm,
+body.theme-dark .hs-btn-save,
+body.theme-dark .rp-edit-save,
+body.theme-dark .rp-edit-apply-url,
+body.theme-dark .group-save-btn,
+body.theme-dark .gmp-confirm,
+body.theme-dark .cs-word-modal-confirm {
+  background: var(--am-btn-confirm-bg);
+  color: var(--am-btn-confirm-color);
+}
+/* 角色面板 / 群聊面板内其余按钮兜底（统一档案圆角与配色） */
+.role-panel button,
+.group-chat-panel button,
+.chat-option-btn {
+  border-radius: var(--am-panel-radius);
+}
+.chat-option-btn {
+  background: var(--am-item-bg);
+  border: 1px solid var(--am-item-border);
+  color: var(--am-item-title-color);
+}
+body.theme-dark .chat-option-btn {
+  background: var(--am-item-bg);
+  border-color: var(--am-item-border);
+  color: var(--am-item-title-color);
+}
+
+/* ---------- 列表项：档案卡片 ---------- */
+.companion-partner-item,
+.gmp-item,
+.rp-item,
+.group-list-item {
+  background: var(--am-item-bg);
+  border: 1px solid var(--am-item-border);
+  border-radius: var(--am-panel-radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.companion-partner-item:hover,
+.gmp-item:hover,
+.rp-item:hover,
+.group-list-item:hover {
+  background: var(--am-item-hover-bg);
+  transform: translateX(3px);
+}
+body.theme-dark .companion-partner-item,
+body.theme-dark .gmp-item,
+body.theme-dark .rp-item,
+body.theme-dark .group-list-item {
+  background: var(--am-item-bg);
+  border-color: var(--am-item-border);
+}
+body.theme-dark .companion-partner-item:hover,
+body.theme-dark .gmp-item:hover,
+body.theme-dark .rp-item:hover,
+body.theme-dark .group-list-item:hover {
+  background: var(--am-item-hover-bg);
+}
+.companion-partner-item-name,
+.gmp-name,
+.rp-item-name,
+.group-list-name,
+.rp-item-info {
+  color: var(--am-item-title-color);
+}
+body.theme-dark .companion-partner-item-name,
+body.theme-dark .gmp-name,
+body.theme-dark .rp-item-name,
+body.theme-dark .group-list-name,
+body.theme-dark .rp-item-info { color: var(--am-item-title-color); }
+
+/* ---------- 开关（回复设定）：档案轨道 ---------- */
+.reply-settings-panel .toggle-slider {
+  background: var(--am-btn-cancel-bg);
+  border: 1px solid var(--am-btn-cancel-border);
+}
+.reply-settings-panel .toggle-switch input:checked + .toggle-slider {
+  background: var(--am-btn-confirm-bg);
+  border-color: var(--am-btn-confirm-bg);
+}
+body.theme-dark .reply-settings-panel .toggle-slider {
+  background: var(--am-btn-cancel-bg);
+  border-color: var(--am-btn-cancel-border);
+}
+body.theme-dark .reply-settings-panel .toggle-switch input:checked + .toggle-slider {
+  background: var(--am-btn-confirm-bg);
+  border-color: var(--am-btn-confirm-bg);
+}
+
+/* ---------- 角色面板：底部操作区 ---------- */
+.rp-bottom-actions {
+  border-top: 1px solid var(--am-divider);
+  margin-top: 14px;
+  padding-top: 12px;
+}
+body.theme-dark .rp-bottom-actions { border-top-color: var(--am-divider); }
+.rp-edit-avatar-wrap,
+.rp-item-avatar {
+  border-color: var(--am-panel-border);
+}
+body.theme-dark .rp-edit-avatar-wrap,
+body.theme-dark .rp-item-avatar { border-color: var(--am-panel-border); }
+.rp-item-btn.del {
+  background: var(--am-btn-cancel-bg);
+  border: 1px solid var(--am-btn-cancel-border);
+  color: var(--am-btn-cancel-color);
+  border-radius: var(--am-panel-radius);
+}
+body.theme-dark .rp-item-btn.del {
+  background: var(--am-btn-cancel-bg);
+  border-color: var(--am-btn-cancel-border);
+  color: var(--am-btn-cancel-color);
+}
+
+/* 拍一拍面板标题（.pat-header 含标题文字 + 关闭） */
+.pat-header {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+}
+body.theme-dark .pat-header { color: var(--am-title-color); text-shadow: var(--am-title-shadow); }
+
+/* ============================================================
+按钮精简 · 隐藏重复的关闭/取消（纯 CSS，不改 HTML/JS）
+
+原则：每个弹窗保留「一个明确的关闭入口 + 主操作按钮」。
+  · env-write（写一封信）   右上 ✕ 已可关闭 → 隐藏底部「取消」
+  · feed-post（发表动态）   右上 ✕ 已可关闭 → 隐藏底部「取消」
+  · home-settings（图片自定义）右上 ✕ 已可关闭 → 隐藏底部「取消」
+保留（面板内无 ✕，取消/关闭是唯一关闭途径，不隐藏）：
+  · imp-modal（添加重要日）· pat-modal（拍一拍）· gmp-modal（选成员）
+  · companion-partner-modal · ds-export-modal · edit-profile-modal
+  · mood-sw / stats-sw · group-chat · role-panel（×关闭为唯一入口）
+若想恢复某个按钮，删除对应一行即可。
+============================================================ */
+.env-write-btn-cancel,
+.feed-post-btn-cancel,
+.hs-btn-cancel {
+  display: none !important;
+}
+/* 隐藏取消后，主按钮自然伸展占满底部 */
+.env-write-btn-send,
+.feed-post-btn-submit {
+  flex: 1;
+}
