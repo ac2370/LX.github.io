@@ -321,7 +321,9 @@
     }
 
     state.currentKey = contactKey(id);
-    state.replyTarget = state.currentKey;
+    // 【修复串扰】切换会话时不再覆盖 replyTarget：
+    // 延迟的对方回复应留在「发送消息时的会话」，否则从 A 切到 B 后 A 的待回复会被写进 B 的桶
+    // replyTarget 由 sendMessage / 拍一拍在用户发消息时显式设置
 
     // 【解耦】传讯页进入会话时，不再写全局 my_current_contact，
     // 也不动角色面板的"当前角色"标记——角色面板的当前角色独立管理。
@@ -361,7 +363,7 @@
   function enterGroup(id) {
     if (!id) return;
     state.currentKey = groupKey(id);
-    state.replyTarget = groupKey(id);
+    // 群聊消息由 group-chat.js 分桶，recordReply 只处理 c: 会话，这里无需覆盖 replyTarget
     if (window.groupChat && window.groupChat.enter) {
       try { window.groupChat.enter(id); } catch (e) {}
     }
