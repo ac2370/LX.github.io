@@ -147,6 +147,47 @@
     state.replyTarget = key || state.currentKey;
   }
 
+  // ==================== 问卷卡片：写入会话桶（作为普通消息参与顺序） ====================
+  // 返回写入的消息对象；不在单聊会话时返回 null（调用方退回 DOM 追加）
+  function appendSurveyRow(survey, direction) {
+    if (!survey || !survey.id) return null;
+    if (!state.currentKey || state.currentKey.indexOf('c:') !== 0) return null;
+    var isMe = direction === 'from-me';
+    var m = {
+      type: isMe ? 'self' : 'other',
+      kind: 'survey',
+      direction: isMe ? 'from-me' : 'from-ta',
+      surveyId: survey.id,
+      title: survey.title || (isMe ? '我的问卷' : 'Ta 的问卷'),
+      qCount: (survey.qs || []).length,
+      status: survey.status || (isMe ? 'sent' : 'unanswered'),
+      t: Date.now(),
+      msgId: genMsgId()
+    };
+    getBucket(state.currentKey).push(m);
+    persist();
+    renderCurrent();
+    return m;
+  }
+
+  // 问卷作答状态变化时，同步桶里的消息（重建后仍保持最新状态）
+  function updateSurveyStatus(surveyId, status) {
+    if (!surveyId) return false;
+    var updated = false;
+    Object.keys(state.buckets).forEach(function (k) {
+      var arr = state.buckets[k];
+      if (!Array.isArray(arr)) return;
+      arr.forEach(function (m) {
+        if (m && m.kind === 'survey' && m.surveyId === surveyId) {
+          m.status = status;
+          updated = true;
+        }
+      });
+    });
+    if (updated) persist();
+    return updated;
+  }
+
   // ==================== 收藏（按 msgId 改桶里消息） ====================
   // key 不传则用当前会话
   function toggleFav(msgId, isFav, key) {
@@ -228,6 +269,11 @@
       return row;
     }
 
+    // 问卷卡片：作为普通消息参与顺序（新消息到达时正常上移）
+    if (m.kind === 'survey') {
+      return buildSurveyRow(m);
+    }
+
     var bubble = document.createElement('div');
     bubble.className = 'message-bubble';
 
@@ -255,6 +301,75 @@
     row.appendChild(bubble);
 
     // 时间戳（与 chat.js decorateMessageRow 一致）
+    var body = document.createElement('div');
+    body.className = 'message-body';
+    row.insertBefore(body, bubble);
+    body.appendChild(bubble);
+    var timeEl = document.createElement('div');
+    timeEl.className = 'message-time';
+    var timeText = document.createElement('span');
+    timeText.className = 'message-time-text';
+    timeText.textContent = formatTime(Number(row.dataset.time));
+    timeEl.appendChild(timeText);
+    body.appendChild(timeEl);
+
+    return row;
+  }
+
+  // ==================== 问卷卡片行（与 chat.js 卡片样式一致） ====================
+  function buildSurveyRow(m) {
+    var row = document.createElement('div');
+    var isMe = m.direction === 'from-me';
+    row.className = 'message-row ' + (isMe ? 'self' : 'other') + ' msg-survey-row';
+    row.dataset.surveyId = m.surveyId || '';
+    row.dataset.surveyStatus = m.status || (isMe ? 'sent' : 'unanswered');
+    row.dataset.sender = isMe ? 'me' : 'partner';
+    row.dataset.type = isMe ? 'survey-from-me' : 'ask-survey-from-ta';
+    row.dataset.time = String(m.t || Date.now());
+    row.dataset.favorited = 'false';
+    row.dataset.read = 'false';
+    if (m.msgId) row.dataset.msgid = m.msgId;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'message-bubble msg-survey-bubble';
+
+    var qCount = m.qCount || 0;
+    var title = m.title || (isMe ? '我的问卷' : 'Ta 的问卷');
+    var isAnswered = m.status === 'answered';
+    var html = '';
+    if (isMe) {
+      html += '<div class="msg-survey-head"><i class="fa-solid fa-paper-plane"></i><span class="msg-survey-tag">我发出的问卷</span></div>';
+      html += '<div class="msg-survey-title">' + escapeHtml(title) + '</div>';
+      html += '<div class="msg-survey-meta">' + qCount + ' 题</div>';
+      html += '<div class="msg-survey-foot">' +
+              '  <span class="msg-survey-status pending" data-status="sent"><i class="fa-solid fa-hourglass-half"></i> 等待 Ta 作答</span>' +
+              '</div>';
+    } else {
+      html += '<div class="msg-survey-head"><i class="fa-solid fa-clipboard-question"></i><span class="msg-survey-tag">问卷</span></div>';
+      html += '<div class="msg-survey-title">' + escapeHtml(title) + '</div>';
+      html += '<div class="msg-survey-meta">' + qCount + ' 题 · 点击作答</div>';
+      html += '<div class="msg-survey-foot">';
+      if (isAnswered) {
+        html += '  <span class="msg-survey-status done"><i class="fa-solid fa-check-circle"></i> 已作答</span>';
+      } else {
+        html += '  <span class="msg-survey-status pending"><i class="fa-regular fa-circle"></i> 待作答</span>';
+      }
+      html += '</div>';
+    }
+    bubble.innerHTML = html;
+
+    // Ta 的问卷：点击气泡 → 打开作答页
+    if (!isMe) {
+      bubble.addEventListener('click', function () {
+        if (typeof window.openTaSurveyAnswer === 'function') {
+          window.openTaSurveyAnswer(m.surveyId);
+        } else if (typeof window.dreamSurvey !== 'undefined' && window.dreamSurvey.openList) {
+          window.dreamSurvey.openList();
+        }
+      });
+    }
+
+    row.appendChild(bubble);
     var body = document.createElement('div');
     body.className = 'message-body';
     row.insertBefore(body, bubble);
@@ -346,6 +461,17 @@
       svList.forEach(function (sv) {
         if (!sv || sv.contactId !== id) return;
         if (sv.status !== 'sent' && sv.status !== 'done') return;
+        // 问卷现在已写入会话桶：若桶里已有该问卷则跳过，避免重复追加
+        var bucketArr = state.buckets[state.currentKey] || [];
+        var exists = bucketArr.some(function (x) {
+          return x && x.kind === 'survey' && x.surveyId === sv.id;
+        });
+        if (exists) {
+          if (typeof window.syncMySurveyCard === 'function') {
+            try { window.syncMySurveyCard(sv.id); } catch (e) {}
+          }
+          return;
+        }
         if (typeof window.appendMySurveyCardToChat === 'function') {
           window.appendMySurveyCardToChat(sv);
         }
@@ -609,7 +735,10 @@
     genMsgId: genMsgId,
     toggleFav: toggleFav,
     getMessagesOf: getMessagesOf,
-    getFavoritedOf: getFavoritedOf
+    getFavoritedOf: getFavoritedOf,
+    // ---------- 问卷卡片（作为普通消息） ----------
+    appendSurveyRow: appendSurveyRow,
+    updateSurveyStatus: updateSurveyStatus
   };
 
 })();
