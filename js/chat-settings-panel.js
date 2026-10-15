@@ -170,18 +170,6 @@
           } catch (e) {}
         });
 
-        // 【兜底 2】意外暂停 → 自动恢复（仅静音循环开启时）
-        silentAudioEl.addEventListener('pause', function () {
-          if (!notifyState || !notifyState.silentLoop) return;
-          setTimeout(function () {
-            if (notifyState && notifyState.silentLoop && silentAudioEl && silentAudioEl.paused) {
-              try {
-                silentAudioEl.currentTime = 0;
-                silentAudioEl.play().catch(function () {});
-              } catch (e) {}
-            }
-          }, 300);
-        });
       }
 
       silentAudioEl.onplay = function () {
@@ -246,6 +234,14 @@
     } catch (e) {}
     console.log('[静音循环] 已关闭');
   }
+
+  // 回到本页面时自动恢复播放（仅开关开启时）
+  // 注意：刻意不监听 pause 抢回播放——你在其他页面/App 看视频时，这里全程不打扰
+  document.addEventListener('visibilitychange', function () {
+    if (notifyState && notifyState.silentLoop && document.visibilityState === 'visible' && silentAudioEl && silentAudioEl.paused) {
+      silentAudioEl.play().catch(function () {});
+    }
+  });
 
   // ==================== 通知权限 ====================
   function requestNotificationPermission() {
