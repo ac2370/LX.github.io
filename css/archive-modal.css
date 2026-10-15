@@ -1465,3 +1465,129 @@ body.theme-dark .pat-header { color: var(--am-title-color); text-shadow: var(--a
 .feed-post-btn-submit {
   flex: 1;
 }
+
+/* ============================================================
+档案页 · Ta 的档案切换弹窗（arc-sw-*）
+
+来源：js/archive.js 动态创建（openContactSwitcher），挂到 body 下，
+    类名 arc-sw-modal / arc-sw-panel / arc-sw-title / arc-sw-list /
+    arc-sw-item(.current) / arc-sw-avatar / arc-sw-name / arc-sw-check /
+    arc-sw-cancel。
+说明：archive.css 的暗色规则写的是 #pageArchive .arc-sw-modal，
+    但弹窗实际挂在 body 下，原暗色样式不生效；这里不带 #pageArchive
+    前缀，昼/暗两套均由皮肤层接管（补遮罩、居中档案卡片）。
+============================================================ */
+.arc-sw-modal {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--am-overlay-bg);
+  backdrop-filter: blur(var(--am-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--am-overlay-blur));
+}
+body.theme-dark .arc-sw-modal {
+  background: var(--am-overlay-bg);
+  backdrop-filter: blur(var(--am-overlay-blur));
+  -webkit-backdrop-filter: blur(var(--am-overlay-blur));
+}
+.arc-sw-panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--am-panel-width);
+  max-height: var(--am-panel-maxh);
+  overflow-y: auto;
+  background: var(--am-panel-bg);
+  border: 1px solid var(--am-panel-border);
+  border-radius: var(--am-panel-radius);
+  backdrop-filter: blur(var(--am-panel-blur));
+  -webkit-backdrop-filter: blur(var(--am-panel-blur));
+  box-shadow: var(--am-panel-shadow);
+  padding: 20px;
+  animation: amIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  scrollbar-width: thin;
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+.arc-sw-panel::-webkit-scrollbar { width: 4px; }
+.arc-sw-panel::-webkit-scrollbar-track { background: transparent; }
+.arc-sw-panel::-webkit-scrollbar-thumb {
+  background: var(--am-scrollbar);
+  border-radius: 2px;
+}
+body.theme-dark .arc-sw-panel {
+  background: var(--am-panel-bg);
+  border-color: var(--am-panel-border);
+  box-shadow: var(--am-panel-shadow);
+  scrollbar-color: var(--am-scrollbar) transparent;
+}
+body.theme-dark .arc-sw-panel::-webkit-scrollbar-thumb {
+  background: var(--am-scrollbar);
+}
+.arc-sw-panel::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--am-topline);
+  z-index: 3;
+}
+.arc-sw-title {
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+  text-align: center;
+  margin-bottom: 16px;
+}
+body.theme-dark .arc-sw-title {
+  color: var(--am-title-color);
+  text-shadow: var(--am-title-shadow);
+}
+.arc-sw-list { gap: 6px; }
+.arc-sw-item {
+  background: var(--am-item-bg);
+  border: 1px solid var(--am-item-border);
+  border-radius: var(--am-panel-radius);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.arc-sw-item:hover {
+  background: var(--am-item-hover-bg);
+  transform: translateX(3px);
+}
+.arc-sw-item.current {
+  background: var(--am-item-hover-bg);
+  border-color: var(--am-item-hover-border);
+}
+body.theme-dark .arc-sw-item {
+  background: var(--am-item-bg);
+  border-color: var(--am-item-border);
+}
+body.theme-dark .arc-sw-item:hover,
+body.theme-dark .arc-sw-item.current {
+  background: var(--am-item-hover-bg);
+  border-color: var(--am-item-hover-border);
+}
+.arc-sw-avatar {
+  border: 1px solid var(--am-panel-border);
+}
+body.theme-dark .arc-sw-avatar { border-color: var(--am-panel-border); }
+.arc-sw-name {
+  color: var(--am-item-title-color);
+}
+body.theme-dark .arc-sw-name { color: var(--am-item-title-color); }
+.arc-sw-check {
+  color: var(--am-btn-confirm-bg);
+}
+body.theme-dark .arc-sw-check { color: var(--am-btn-confirm-bg); }
+.arc-sw-cancel {
+  background: var(--am-btn-cancel-bg);
+  color: var(--am-btn-cancel-color);
+  border: 1px solid var(--am-btn-cancel-border);
+  border-radius: var(--am-panel-radius);
+}
+body.theme-dark .arc-sw-cancel {
+  background: var(--am-btn-cancel-bg);
+  color: var(--am-btn-cancel-color);
+  border-color: var(--am-btn-cancel-border);
+}
