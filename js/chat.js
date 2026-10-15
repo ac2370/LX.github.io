@@ -900,6 +900,22 @@
   window.appendSurveyCardToChat = function (survey) {
     if (!survey || !survey.id) return;
 
+    // 优先：写入会话桶，作为普通消息参与顺序（新消息到达时正常上移）
+    if (window.sessionChat && typeof window.sessionChat.appendSurveyRow === 'function') {
+      try {
+        var m = window.sessionChat.appendSurveyRow(survey, 'from-ta');
+        if (m) {
+          if (window.chatNotify && typeof window.chatNotify.show === 'function') {
+            try { window.chatNotify.show('Ta', '想问你几个问题'); } catch (e) {}
+          }
+          return;
+        }
+      } catch (e) {
+        console.warn('[chat] 问卷写入会话桶失败，退回 DOM 追加', e);
+      }
+    }
+
+    // 兜底：不在单聊会话时，直接 DOM 追加（原逻辑）
     // 卡片 DOM
     var row = document.createElement('div');
     row.className = 'message-row other msg-survey-row';
@@ -1006,6 +1022,11 @@
         }
       }
     });
+
+    // 同步会话桶里的问卷状态（重建后保持最新）
+    if (window.sessionChat && typeof window.sessionChat.updateSurveyStatus === 'function') {
+      try { window.sessionChat.updateSurveyStatus(surveyId, s.status || 'unanswered'); } catch (e) {}
+    }
   };
 
   // 供卡片内部使用的转义
@@ -1020,6 +1041,17 @@
   window.appendMySurveyCardToChat = function (survey) {
     if (!survey || !survey.id) return;
 
+    // 优先：写入会话桶，作为普通消息参与顺序（新消息到达时正常上移）
+    if (window.sessionChat && typeof window.sessionChat.appendSurveyRow === 'function') {
+      try {
+        var m = window.sessionChat.appendSurveyRow(survey, 'from-me');
+        if (m) return;
+      } catch (e) {
+        console.warn('[chat] 我方问卷写入会话桶失败，退回 DOM 追加', e);
+      }
+    }
+
+    // 兜底：不在单聊会话时，直接 DOM 追加（原逻辑）
     var row = document.createElement('div');
     row.className = 'message-row self msg-survey-row msg-survey-row-self';
     row.dataset.surveyId = survey.id;
@@ -1125,6 +1157,11 @@
         statusEl.innerHTML = '<i class="fa-regular fa-circle"></i> 待发出';
       }
     });
+
+    // 同步会话桶里的问卷状态（重建后保持最新）
+    if (window.sessionChat && typeof window.sessionChat.updateSurveyStatus === 'function') {
+      try { window.sessionChat.updateSurveyStatus(surveyId, s.status || 'sent'); } catch (e) {}
+    }
   };
 
   // ==================== 顶栏图标点击（占位） ====================
