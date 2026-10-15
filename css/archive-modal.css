@@ -1603,3 +1603,24 @@ body.theme-dark .arc-sw-cancel {
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
+
+/* ============================================================
+图片自定义（home-settings-panel）微调
+
+① 隐藏右上角 ✕（.home-settings-close）：面板底部已有「保存」，
+   保存即完成设置并退出，✕ 属于多余关闭入口（用户要求删除）。
+   若想恢复 ✕，删除下面这一行即可。
+② 「主页 / 传讯背景」标签行平分撑满整行：原 .home-settings-tabs
+   缺少 display:flex，两个标签挤在左侧；补 flex 布局，
+   标签各占 50% 并居中文字。
+============================================================ */
+.home-settings-close {
+  display: none !important;
+}
+.home-settings-tabs {
+  display: flex;
+}
+.home-settings-tab {
+  flex: 1;
+  text-align: center;
+}
