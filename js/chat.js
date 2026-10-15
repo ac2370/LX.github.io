@@ -561,8 +561,10 @@
     lastUserMessage = text;
 
     // 会话分桶：记录我方消息（异步回复将写入同一会话）
+    var sendKey = null;
     if (window.sessionChat) {
-      window.sessionChat.setReplyTarget(window.sessionChat.getCurrentKey());
+      sendKey = window.sessionChat.getCurrentKey();
+      window.sessionChat.setReplyTarget(sendKey);
       window.sessionChat.record('self', content, msgId);
     }
 
@@ -586,7 +588,7 @@
       // 显示"思念送達中"浮层
       showTypingFloat();
       scheduleTypingFloatSafety();
-      triggerAutoReply();
+      triggerAutoReply(null, sendKey);
     } else {
       dlog('[传讯] 已读不回命中，跳过回复');
     }
@@ -685,8 +687,15 @@
   }
 
   // ==================== 自动回复核心逻辑 ====================
-  function triggerAutoReply(targetContactId) {
+  function triggerAutoReply(targetContactId, sendKey) {
     const settings = getSettings();
+
+    // 【修复串扰】回复归属会话：优先用「发送消息时的会话」，
+    // 手动触发（继续按钮等）未传 sendKey 时退回当前会话
+    var replyKey = sendKey || (window.sessionChat ? window.sessionChat.getCurrentKey() : null);
+    function stillOnReplySession() {
+      return !replyKey || !window.sessionChat || window.sessionChat.getCurrentKey() === replyKey;
+    }
 
     // ========== 主动消息分支：目标是「非当前会话」的联系人 ==========
     // 简化逻辑：只抽 1 条文字，写进他的桶 + 弹通知，不动当前 DOM
@@ -727,12 +736,15 @@
               var _mid = (window.sessionChat && window.sessionChat.genMsgId)
           ? window.sessionChat.genMsgId()
           : ('m_' + Date.now() + '_' + Math.floor(Math.random() * 100000));
-        const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~', _mid);
-        chatMessages.appendChild(row);
-        if (window.sessionChat) {
-          try { window.sessionChat.recordReply('other', '字卡库还没有内容哦，先去添加字卡吧~', _mid); } catch (e) {}
+        // 只有仍在查看该会话时才往可见 DOM 追加，避免切到 B 后 A 的回复出现在 B 里
+        if (stillOnReplySession()) {
+          const row = createMessageRow('other', '字卡库还没有内容哦，先去添加字卡吧~', _mid);
+          chatMessages.appendChild(row);
+          scrollToBottom();
         }
-        scrollToBottom();
+        if (window.sessionChat && replyKey) {
+          try { window.sessionChat.recordTo(replyKey, 'other', '字卡库还没有内容哦，先去添加字卡吧~', _mid); } catch (e) {}
+        }
         hideTypingFloat();
       }, 800);
       return;
@@ -748,7 +760,7 @@
 
     setTimeout(function () {
       let typingRow = null;
-      if (showTyping) {
+      if (showTyping && stillOnReplySession()) {
         typingRow = createTypingRow();
         chatMessages.appendChild(typingRow);
         scrollToBottom();
@@ -822,16 +834,19 @@
               row = createMessageRow('other', { type: 'image', url: item.url });
             }
             if (row) {
-              chatMessages.appendChild(row);
-              scrollToBottom();
+              // 只有仍在查看该会话时才追加到可见 DOM（切换会话后不串扰）
+              if (stillOnReplySession()) {
+                chatMessages.appendChild(row);
+                scrollToBottom();
+              }
 
-              // 会话分桶：记录对方回复（写入发送时所在的会话）
-              if (window.sessionChat) {
+              // 会话分桶：记录对方回复（始终写入发送时所在的会话）
+              if (window.sessionChat && replyKey) {
                 try {
                   if (item.type === 'text') {
-                    window.sessionChat.recordReply('other', item.content);
+                    window.sessionChat.recordTo(replyKey, 'other', item.content);
                   } else if (item.type === 'image') {
-                    window.sessionChat.recordReply('other', { type: 'image', url: item.url });
+                    window.sessionChat.recordTo(replyKey, 'other', { type: 'image', url: item.url });
                   }
                 } catch (e) {}
               }
