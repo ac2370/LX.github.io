@@ -1936,11 +1936,11 @@ body.theme-dark .pat-cancel {
   max-width: 78% !important;
   padding: 14px 16px !important;
   border-radius: 18px !important;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0fa 100%) !important;
-  border: 1px solid #d0e2f5 !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f2f6fa 100%) !important;
+  border: 1px solid #e3eaf2 !important;
   cursor: pointer !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-  box-shadow: 0 2px 8px rgba(90, 158, 214, 0.12) !important;
+  box-shadow: 0 3px 12px rgba(120, 150, 180, 0.14) !important;
   color: #333 !important;
 }
 .msg-survey-bubble:active {
@@ -2024,9 +2024,10 @@ body.theme-dark .pat-cancel {
   justify-content: flex-end !important;
 }
 .msg-survey-row-self .msg-survey-bubble {
-  background: linear-gradient(135deg, #e6f0fa 0%, #d0e2f5 100%) !important;
-  border-color: #b8d4ec !important;
+  background: linear-gradient(135deg, #fbfcfe 0%, #e7edf4 100%) !important;
+  border-color: #d7e0ea !important;
   cursor: default !important;
+  box-shadow: 0 3px 12px rgba(110, 140, 170, 0.16) !important;
 }
 .msg-survey-row-self .msg-survey-bubble:active {
   transform: none !important;
@@ -2042,6 +2043,20 @@ body.theme-dark .pat-cancel {
 .msg-survey-row-self .msg-survey-meta {
   text-align: center;
 }
+
+/* 暗色模式：问卷卡片用柔和深色，避免白卡刺眼 */
+body.theme-dark .msg-survey-bubble {
+  background: linear-gradient(135deg, #2c333b 0%, #262d35 100%) !important;
+  border-color: #3a434e !important;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35) !important;
+  color: #dbe4ee !important;
+}
+body.theme-dark .msg-survey-row-self .msg-survey-bubble {
+  background: linear-gradient(135deg, #262d35 0%, #20262d 100%) !important;
+  border-color: #343c46 !important;
+}
+body.theme-dark .msg-survey-title { color: #dbe4ee !important; }
+body.theme-dark .msg-survey-meta { color: #8fa0b0 !important; }
 
 /* ---------- 群聊拍一拍 · 成员下拉 ---------- */
 .pat-group-target {
