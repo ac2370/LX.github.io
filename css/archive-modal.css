@@ -1591,3 +1591,15 @@ body.theme-dark .arc-sw-cancel {
   color: var(--am-btn-cancel-color);
   border-color: var(--am-btn-cancel-border);
 }
+
+/* ============================================================
+表情包网格（sticker-grid）
+
+原因：皮肤层把表情面板从原 430px 收窄到 340px 后，若仍保持 4 列，
+    每格仅约 69px，表情变小、格子挨得太紧（用户反馈“太挤 / 像叠在一起”）。
+    改为 3 列 + 12px 间距：每格回到约 92px，整体更宽松。
+============================================================ */
+.sticker-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
