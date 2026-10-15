@@ -979,8 +979,6 @@
       libSelected = {};
       renderLibList();
       updateLibCount();
-    } else {
-      alert('没有可添加的题目');
     }
   }
 
@@ -1096,10 +1094,7 @@
           alert('请填写问卷标题');
           return;
         }
-        if (!editingSurvey.qs || editingSurvey.qs.length === 0) {
-          alert('至少添加一道题目');
-          return;
-        }
+        if (!editingSurvey.qs) editingSurvey.qs = [];
         for (var i = 0; i < editingSurvey.qs.length; i++) {
           var q = editingSurvey.qs[i];
           if (!q.text || !q.text.trim()) {
