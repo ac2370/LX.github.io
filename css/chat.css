@@ -2091,7 +2091,7 @@ body.theme-dark #pageChat .chat-messages .message-row {
   flex-shrink: 0;
   position: relative;
   z-index: 40;
-  background: #f2f4f7;
+  background: transparent;
   padding: 6px 0;
 }
 .typing-float {
@@ -2147,7 +2147,7 @@ body.theme-dark .typing-float {
   background: rgba(42, 48, 56, 0.9);
   border-color: var(--theme-card-border);
 }
-body.theme-dark .typing-float-row { background: rgba(26, 31, 38, 0.7); }
+body.theme-dark .typing-float-row { background: transparent; }
 body.theme-dark .typing-float-text { color: var(--theme-text-muted); }
 body.theme-dark .typing-float .typing-dot { background: #7a8a99; }
 
