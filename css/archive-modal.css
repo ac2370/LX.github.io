@@ -1624,3 +1624,23 @@ body.theme-dark .arc-sw-cancel {
   flex: 1;
   text-align: center;
 }
+
+/* ============================================================
+陪伴中页（#pageCompanionActive）· 隐藏左上角返回箭头
+
+用户要求删除「陪伴中」页左上角的返回箭头（.cpa-back-btn）——
+该页底部已有「结束陪伴」按钮作为退出入口，返回箭头冗余。
+同时隐藏右侧同宽占位（.cpa-topbar-placeholder）并让标题 flex:1
+居中，保持顶栏对称。
+若想恢复返回箭头，删除下面这一组即可。
+============================================================ */
+.cpa-back-btn {
+  display: none !important;
+}
+.cpa-topbar-placeholder {
+  display: none;
+}
+.cpa-topbar-title {
+  flex: 1;
+  text-align: center;
+}
