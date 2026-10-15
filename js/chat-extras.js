@@ -829,6 +829,11 @@
           try { window.sessionChat.recordTo(patKey, 'other', replyText); } catch (e) {}
         }
 
+        // 拍一拍延迟回复渲染完 → 收起"思念送達中"浮层（与普通回复路径保持一致）
+        if (typeof window.hideTypingFloat === 'function') {
+          window.hideTypingFloat();
+        }
+
         if (window.chatNotify && typeof window.chatNotify.show === 'function') {
           try { window.chatNotify.show(contactName, replyText); } catch (e) {}
         }
@@ -903,6 +908,11 @@
     sysRow.appendChild(sysBubble);
     chatMessages.appendChild(sysRow);
     scrollToBottom();
+
+    // 「拍一拍」顶替文字回复时：立即收起"思念送達中"浮层，避免浮层一直挂着
+    if (typeof window.hideTypingFloat === 'function') {
+      window.hideTypingFloat();
+    }
 
     // 会话分桶：记录「Ta 拍了拍我」系统行
     if (window.sessionChat) {
